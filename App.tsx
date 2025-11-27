@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Search, Book, Settings, Menu, X, Filter, Clock, ListIcon, Folder, BookOpen, Download, ArrowLeft, Pencil, ChevronDown, Share, Trash2, ToggleLeft, ToggleRight, Plus, Star, AlertCircle, ChevronUp, Minus, Check } from './components/Icons';
+import { Search, Book, Menu, X, Filter, Clock, ListIcon, Folder, BookOpen, Download, ArrowLeft, Pencil, ChevronDown, Share, Trash2, Plus, Star, ChevronUp, Minus, Check, ToggleLeft, ToggleRight } from './components/Icons';
 import { Toast, CollapsibleCard, Modal } from './components/UI';
 import EntryCard from './components/EntryCard';
 import EntryDetail from './components/EntryDetail';
-import { parseCSV, formatToneInput, downloadFile, exportNotebookToCSV, importNotebookFromCSV, initDB, getFromDB, saveToDB, saveAudioToDB, deleteAudioFromDB } from './utils';
+import { useCorpus } from './components/CorpusContext';
+import { formatToneInput, downloadFile, exportNotebookToCSV, importNotebookFromCSV, saveAudioToDB, deleteAudioFromDB } from './utils';
 
 // DEFINED SOURCE ORDER
 const SOURCE_ORDER = ['CED', 'RRD', 'CN', 'CWL', 'NOQ', 'MDS', 'MSCT'];
@@ -18,17 +19,23 @@ const DEFAULT_SETTINGS = {
 };
 
 function App() {
-    const [csvData, setCsvData] = useState<any[]>([]);
+    const { dictionary, sentences, entryToSentencesMap } = useCorpus();
+
+    // Legacy state replacements
+    const csvData = dictionary; // Map dictionary to csvData for compatibility
+
     const [personalWords, setPersonalWords] = useState<any[]>([]);
     const [notebooks, setNotebooks] = useState<Record<string, { id: string; name: string; date: number }>>({});
 
-    const [loading, setLoading] = useState(true);
-    const [loadingMessage, setLoadingMessage] = useState("Loading Dictionary...");
-    const [showManualUpload, setShowManualUpload] = useState(false);
+    // const [loading, setLoading] = useState(true); // Handled by CorpusContext internally
+    // const [loadingMessage, setLoadingMessage] = useState<string>('Loading...');
+    // const [showManualUpload, setShowManualUpload] = useState(false);
+    const loading = false;
 
-    const [activeTab, setActiveTab] = useState('search');
-    const [selectedEntry, setSelectedEntry] = useState(null);
-    const [activeNotebookId, setActiveNotebookId] = useState(null);
+    const [activeTab, setActiveTab] = useState<string>('search');
+    const [searchScope, setSearchScope] = useState<'dictionary' | 'sentences'>('dictionary');
+    const [selectedEntry, setSelectedEntry] = useState<any | null>(null);
+    const [activeNotebookId, setActiveNotebookId] = useState<string | null>(null);
 
     // Search & Input States
     const [inputValue, setInputValue] = useState('');
@@ -36,7 +43,7 @@ function App() {
     const [resultLimit, setResultLimit] = useState(50);
     const [posFilter, setPosFilter] = useState("All");
 
-    const [filters, setFilters] = useState({}); // Initialized dynamically now
+    const [filters, setFilters] = useState<Record<string, boolean>>({}); // Initialized dynamically now
     const [showFilters, setShowFilters] = useState(false);
     const [expandOthers, setExpandOthers] = useState(false);
 
@@ -52,28 +59,28 @@ function App() {
 
     const [showNewListModal, setShowNewListModal] = useState(false);
     const [newListName, setNewListName] = useState('');
-    const [listToDelete, setListToDelete] = useState(null);
+    const [listToDelete, setListToDelete] = useState<string | null>(null);
     const [isReordering, setIsReordering] = useState(false);
     const [toast, setToast] = useState({ show: false, message: '', type: 'error' });
     const [showWordModal, setShowWordModal] = useState(false);
     const [wordForm, setWordForm] = useState({ Entry: '', Syllabary: '', Definition: '', PoS: '', Entry_Tone: '', Notes: '' });
-    const [editingId, setEditingId] = useState(null);
+    const [editingId, setEditingId] = useState<string | null>(null);
     const [pdSort, setPdSort] = useState('date');
     const [showPdSortMenu, setShowPdSortMenu] = useState(false);
     const [showNotesModal, setShowNotesModal] = useState(false);
     const [currentNote, setCurrentNote] = useState('');
-    const [noteTargetId, setNoteTargetId] = useState(null);
-    const [wordToDelete, setWordToDelete] = useState(null);
+    const [noteTargetId, setNoteTargetId] = useState<string | null>(null);
+    const [wordToDelete, setWordToDelete] = useState<string | null>(null);
     const [showNewNotebookModal, setShowNewNotebookModal] = useState(false);
     const [newNotebookName, setNewNotebookName] = useState('');
-    const [notebookToDelete, setNotebookToDelete] = useState(null);
+    const [notebookToDelete, setNotebookToDelete] = useState<string | null>(null);
     const [showBackupConfirm, setShowBackupConfirm] = useState(false);
-    const restoreInputRef = useRef(null);
+    const restoreInputRef = useRef<any>(null);
 
     const [renameData, setRenameData] = useState<{ type: string | null; target: string | null; value: string; initialEntryIndex?: string | null }>({ type: null, target: null, value: '', initialEntryIndex: null });
 
     const [showMoveModal, setShowMoveModal] = useState(false);
-    const [wordToMove, setWordToMove] = useState(null);
+    const [wordToMove, setWordToMove] = useState<string | null>(null);
 
     console.log("⚡ APP RENDER. Current Selected Entry:", selectedEntry);
 
@@ -95,75 +102,48 @@ function App() {
         return () => clearTimeout(timer);
     }, [inputValue]);
 
-    // INITIAL DATA LOAD
+    // INITIAL DATA LOAD - User Data Only
     useEffect(() => {
         const initLoad = async () => {
             try {
-                try {
-                    const savedNotebooks = localStorage.getItem('cherokee_app_notebooks');
-                    const savedWords = localStorage.getItem('cherokee_app_personal_words');
-                    const savedNotes = localStorage.getItem('cherokee_app_user_notes');
-                    const savedAudioMeta = localStorage.getItem('cherokee_app_user_audio_meta');
-                    const savedSettings = localStorage.getItem('cherokee_app_settings');
-                    const savedHistory = localStorage.getItem('cherokee_app_history');
+                const savedNotebooks = localStorage.getItem('cherokee_app_notebooks');
+                const savedWords = localStorage.getItem('cherokee_app_personal_words');
+                const savedNotes = localStorage.getItem('cherokee_app_user_notes');
+                const savedAudioMeta = localStorage.getItem('cherokee_app_user_audio_meta');
+                const savedSettings = localStorage.getItem('cherokee_app_settings');
+                const savedHistory = localStorage.getItem('cherokee_app_history');
 
-                    if (savedHistory) setSearchHistory(JSON.parse(savedHistory));
-                    if (savedNotes) setUserNotes(JSON.parse(savedNotes));
-                    if (savedAudioMeta) setUserAudioMeta(JSON.parse(savedAudioMeta));
-                    if (savedSettings) {
-                        const parsed = JSON.parse(savedSettings);
-                        setSettings(prev => ({
-                            ...prev, ...parsed,
-                            searchLangs: { ...prev.searchLangs, ...parsed.searchLangs },
-                            searchScopes: { ...prev.searchScopes, ...parsed.searchScopes }
-                        }));
-                    }
-                    if (savedWords && !savedNotebooks) {
-                        const words = JSON.parse(savedWords);
-                        const defaultNotebookId = 'nb_' + Date.now();
-                        setNotebooks({ [defaultNotebookId]: { id: defaultNotebookId, name: 'My Dictionary', date: Date.now() } });
-                        setPersonalWords(words.map(w => ({ ...w, notebookId: defaultNotebookId })));
-                    } else {
-                        if (savedNotebooks) setNotebooks(JSON.parse(savedNotebooks));
-                        if (savedWords) setPersonalWords(JSON.parse(savedWords));
-                    }
-
-                    const savedFavs = localStorage.getItem('cherokee_app_favorites'); if (savedFavs) setFavorites(JSON.parse(savedFavs));
-                    const savedLists = localStorage.getItem('cherokee_app_custom_lists');
-                    if (savedLists) {
-                        setCustomLists(JSON.parse(savedLists));
-                        const savedOrder = localStorage.getItem('cherokee_app_list_order');
-                        setCustomListOrder(savedOrder ? JSON.parse(savedOrder) : Object.keys(JSON.parse(savedLists)));
-                    }
-
-                } catch (e) {
-                    console.warn("LocalStorage access failed:", e);
+                if (savedHistory) setSearchHistory(JSON.parse(savedHistory));
+                if (savedNotes) setUserNotes(JSON.parse(savedNotes));
+                if (savedAudioMeta) setUserAudioMeta(JSON.parse(savedAudioMeta));
+                if (savedSettings) {
+                    const parsed = JSON.parse(savedSettings);
+                    setSettings(prev => ({
+                        ...prev, ...parsed,
+                        searchLangs: { ...prev.searchLangs, ...parsed.searchLangs },
+                        searchScopes: { ...prev.searchScopes, ...parsed.searchScopes }
+                    }));
+                }
+                if (savedWords && !savedNotebooks) {
+                    const words = JSON.parse(savedWords);
+                    const defaultNotebookId = 'nb_' + Date.now();
+                    setNotebooks({ [defaultNotebookId]: { id: defaultNotebookId, name: 'My Dictionary', date: Date.now() } });
+                    setPersonalWords(words.map(w => ({ ...w, notebookId: defaultNotebookId })));
+                } else {
+                    if (savedNotebooks) setNotebooks(JSON.parse(savedNotebooks));
+                    if (savedWords) setPersonalWords(JSON.parse(savedWords));
                 }
 
-                let csvText = '';
-                try {
-                    csvText = await getFromDB() as string;
-                } catch (dbErr) {
-                    console.warn("IndexedDB access failed:", dbErr);
+                const savedFavs = localStorage.getItem('cherokee_app_favorites'); if (savedFavs) setFavorites(JSON.parse(savedFavs));
+                const savedLists = localStorage.getItem('cherokee_app_custom_lists');
+                if (savedLists) {
+                    setCustomLists(JSON.parse(savedLists));
+                    const savedOrder = localStorage.getItem('cherokee_app_list_order');
+                    setCustomListOrder(savedOrder ? JSON.parse(savedOrder) : Object.keys(JSON.parse(savedLists)));
                 }
 
-                if (!csvText) {
-                    console.log("Dictionary missing. Prompting manual upload.");
-                    setLoading(false);
-                    setShowManualUpload(true);
-                    return;
-                }
-
-                setLoadingMessage("Parsing Data...");
-                await new Promise(r => setTimeout(r, 10));
-                const parsed = parseCSV(csvText);
-                setCsvData(parsed);
-                setLoading(false);
-
-            } catch (err) {
-                console.error("Critical Init Error:", err);
-                setLoading(false);
-                setShowManualUpload(true);
+            } catch (e) {
+                console.warn("LocalStorage access failed:", e);
             }
         };
 
@@ -178,6 +158,7 @@ function App() {
                 const sources = new Set(csvData.map(d => d.Source));
                 sources.forEach((s) => {
                     const src = s as string;
+                    if (!src) return;
                     if (newFilters[src] === undefined) {
                         // Default MSCT and MDS to false, others to true. Case insensitive check.
                         const upper = src.toUpperCase();
@@ -257,7 +238,7 @@ function App() {
         });
 
         // Identify "Small Sources" (<= 500 entries, not personal)
-        const smallSourceCodes = [];
+        const smallSourceCodes: string[] = [];
         Object.keys(counts).forEach(src => {
             if (counts[src] <= 500 && !src.startsWith('nb_') && src !== 'pd') {
                 smallSourceCodes.push(src);
@@ -448,7 +429,7 @@ function App() {
 
     const handleRename = () => {
         const { type, target, value } = renameData;
-        if (!value.trim()) return;
+        if (!value.trim() || !target) return;
 
         if (type === 'notebook') {
             setNotebooks(prev => ({
@@ -479,30 +460,8 @@ function App() {
         setRenameData({ type: null, target: null, value: '', initialEntryIndex: null });
     };
 
-    const handleManualDictionaryUpload = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        setLoading(true);
-        setShowManualUpload(false);
-        setLoadingMessage("Reading File...");
-
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-            const text = event.target.result as string;
-            setLoadingMessage("Saving to Database...");
-            try {
-                await saveToDB(text);
-            } catch (err) {
-                console.warn("Could not save to DB, using in-memory only", err);
-            }
-            setLoadingMessage("Parsing Data...");
-            await new Promise(r => setTimeout(r, 10));
-            const parsed = parseCSV(text);
-            setCsvData(parsed);
-            setLoading(false);
-        };
-        reader.readAsText(file);
-    };
+    // Manual Upload Removed - Handled by CorpusContext
+    // Manual Upload Removed - Handled by CorpusContext
 
     const handleExportNotebook = () => {
         if (!activeNotebookId) return;
@@ -534,6 +493,7 @@ function App() {
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
+                if (!e.target) return;
                 const data = JSON.parse(e.target.result as string);
                 if (data.favorites) setFavorites(data.favorites);
                 if (data.customLists) setCustomLists(data.customLists);
@@ -559,9 +519,51 @@ function App() {
         showToast("Settings restored to defaults", "success");
     };
 
-    const openWordModal = (w = null) => { if (w) { setWordForm({ Entry: w.Entry || '', Syllabary: w.Syllabary || '', Definition: w.Definition || '', PoS: w.PoS || '', Entry_Tone: w.Entry_Tone || '', Notes: w.Notes || '' }); setEditingId(w.Index); } else { setWordForm({ Entry: '', Syllabary: '', Definition: '', PoS: '', Entry_Tone: '', Notes: '' }); setEditingId(null); } setShowWordModal(true); };
-    const saveWord = () => { if ((!wordForm.Entry && !wordForm.Syllabary) || !wordForm.Definition) { showToast("Missing fields"); return; } let target = activeNotebookId; if (editingId) { const o = personalWords.find(w => w.Index === editingId); if (o) target = o.notebookId; } if (!target && !editingId) { const k = Object.keys(notebooks); if (k.length) target = k[0]; else { const d = 'nb_' + Date.now(); setNotebooks({ [d]: { id: d, name: "My Dictionary", date: Date.now() } }); target = d; } } const nw = { ...wordForm, Index: editingId || Date.now().toString(), notebookId: target, DateCreated: editingId ? (personalWords.find(w => w.Index === editingId)?.DateCreated || Date.now()) : Date.now() }; if (editingId) { setPersonalWords(p => p.map(w => w.Index === editingId ? nw : w)); if (selectedEntry?.Index === editingId) setSelectedEntry({ ...nw, Source: nw.notebookId, Source_Long: notebooks[nw.notebookId].name }); } else { setPersonalWords(p => [nw, ...p]); } setShowWordModal(false); showToast("Saved", "success"); };
-    const confirmDeleteWord = () => { setPersonalWords(p => p.filter(w => w.Index !== wordToDelete)); if (favorites.includes(wordToDelete)) toggleFavorite(wordToDelete); setCustomLists(p => { const n: any = { ...p }; Object.keys(n).forEach(k => n[k] = n[k].filter(i => i !== wordToDelete)); return n; }); setSelectedEntry(null); setWordToDelete(null); showToast("Deleted"); };
+    const openWordModal = (w: any = null) => { if (w) { setWordForm({ Entry: w.Entry || '', Syllabary: w.Syllabary || '', Definition: w.Definition || '', PoS: w.PoS || '', Entry_Tone: w.Entry_Tone || '', Notes: w.Notes || '' }); setEditingId(w.Index); } else { setWordForm({ Entry: '', Syllabary: '', Definition: '', PoS: '', Entry_Tone: '', Notes: '' }); setEditingId(null); } setShowWordModal(true); };
+    const saveWord = () => {
+        if ((!wordForm.Entry && !wordForm.Syllabary) || !wordForm.Definition) { showToast("Missing fields"); return; }
+        let target = activeNotebookId;
+        if (editingId) {
+            const o = personalWords.find(w => w.Index === editingId);
+            if (o) target = o.notebookId;
+        }
+        if (!target && !editingId) {
+            const k = Object.keys(notebooks);
+            if (k.length) target = k[0];
+            else {
+                const d = 'nb_' + Date.now();
+                setNotebooks({ [d]: { id: d, name: "My Dictionary", date: Date.now() } });
+                target = d;
+            }
+        }
+        const nw = {
+            ...wordForm,
+            Index: editingId || Date.now().toString(),
+            notebookId: target,
+            DateCreated: editingId ? (personalWords.find(w => w.Index === editingId)?.DateCreated || Date.now()) : Date.now()
+        };
+        if (editingId) {
+            setPersonalWords(p => p.map(w => w.Index === editingId ? nw : w));
+            if (selectedEntry?.Index === editingId) setSelectedEntry({ ...nw, Source: nw.notebookId, Source_Long: notebooks[nw.notebookId!].name });
+        } else {
+            setPersonalWords(p => [nw, ...p]);
+        }
+        setShowWordModal(false);
+        showToast("Saved", "success");
+    };
+    const confirmDeleteWord = () => {
+        if (!wordToDelete) return;
+        setPersonalWords(p => p.filter(w => w.Index !== wordToDelete));
+        if (favorites.includes(wordToDelete)) toggleFavorite(wordToDelete);
+        setCustomLists(prev => {
+            const n: any = { ...prev };
+            Object.keys(n).forEach(k => n[k] = n[k].filter((i: any) => i !== wordToDelete));
+            return n;
+        });
+        setSelectedEntry(null);
+        setWordToDelete(null);
+        showToast("Deleted");
+    };
 
     const openNotesModal = (entry, content, isPersonal) => {
         if (isPersonal) {
@@ -570,7 +572,18 @@ function App() {
             setNoteTargetId(entry.Index); setCurrentNote(content || ''); setShowNotesModal(true);
         }
     };
-    const saveNote = () => { const isP = personalWords.some(w => w.Index === noteTargetId); if (isP) { setPersonalWords(p => p.map(w => w.Index === noteTargetId ? { ...w, Notes: currentNote } : w)); if (selectedEntry?.Index === noteTargetId) setSelectedEntry(p => ({ ...p, Notes: currentNote })); } else { setUserNotes(p => ({ ...p, [noteTargetId]: currentNote })); } setShowNotesModal(false); showToast("Note saved", "success"); };
+    const saveNote = () => {
+        if (!noteTargetId) return;
+        const isP = personalWords.some(w => w.Index === noteTargetId);
+        if (isP) {
+            setPersonalWords(p => p.map(w => w.Index === noteTargetId ? { ...w, Notes: currentNote } : w));
+            if (selectedEntry?.Index === noteTargetId) setSelectedEntry((p: any) => ({ ...p, Notes: currentNote }));
+        } else {
+            setUserNotes(p => ({ ...p, [noteTargetId]: currentNote }));
+        }
+        setShowNotesModal(false);
+        showToast("Note saved", "success");
+    };
     const addToHistory = (txt) => { if (!txt || txt.trim().length < 2) return; const c = txt.trim(); setSearchHistory(p => [c, ...p.filter(x => x !== c)].slice(0, 20)); };
     const deleteHistoryItem = (e, txt) => { e.stopPropagation(); setSearchHistory(p => p.filter(x => x !== txt)); };
 
@@ -589,7 +602,7 @@ function App() {
         }));
         if (selectedEntry && selectedEntry.Index === wordToMove) {
             const nb = notebooks[notebookId];
-            setSelectedEntry(prev => ({ ...prev, notebookId: notebookId, Source: notebookId, Source_Long: nb?.name }));
+            setSelectedEntry((prev: any) => ({ ...prev, notebookId: notebookId, Source: notebookId, Source_Long: nb?.name }));
         }
         setShowMoveModal(false);
         setWordToMove(null);
@@ -634,7 +647,7 @@ function App() {
         const queryWithTones = lowerQuery.replace(/[1234?]/g, m => ({ '1': '¹', '2': '²', '3': '³', '4': '⁴', '?': 'ʔ' }[m] || m));
         const { searchLangs, searchScopes } = settings;
 
-        let regex = null;
+        let regex: RegExp | null = null;
         if (settings.enableRegex) {
             try {
                 const regexQuery = query.replace(/[1234]/g, m => ({ '1': '¹', '2': '²', '3': '³', '4': '⁴' }[m] || m));
@@ -642,6 +655,52 @@ function App() {
             } catch (e) { }
         }
 
+        // SENTENCE MODE
+        if (searchScope === 'sentences') {
+            // 1. Text Match in Sentences
+            const textMatches: any[] = sentences.map(s => {
+                let score = 0;
+                const fields: string[] = [];
+                if (searchLangs.translit) fields.push(s.translit);
+                if (searchLangs.syllabary) fields.push(s.syllabary);
+                if (searchLangs.english) fields.push(s.english);
+
+                for (const f of fields) {
+                    if (!f) continue;
+                    const fLower = f.toLowerCase();
+                    if (fLower.includes(lowerQuery)) score = 50;
+                }
+                return { item: s, score, type: 'text' };
+            }).filter(x => x.score > 0);
+
+            // 2. Deep Search (Dictionary Links)
+            // Find dictionary entries that match, then get their sentences
+            const dictMatches = dictionary.filter(entry => {
+                // Simplified dictionary search for deep linking
+                const fields = [entry.Entry, entry.Syllabary, entry.Definition];
+                return fields.some(f => f && f.toLowerCase().includes(lowerQuery));
+            });
+
+            const deepMatches: any[] = [];
+            const seenSentences = new Set(textMatches.map(m => m.item.id));
+
+            dictMatches.forEach(entry => {
+                const linkedSentences = entryToSentencesMap.get(entry.id) || [];
+                linkedSentences.forEach(sId => {
+                    if (!seenSentences.has(sId)) {
+                        const s = sentences.find(x => x.id === sId);
+                        if (s) {
+                            deepMatches.push({ item: s, score: 25, type: 'deep', via: entry });
+                            seenSentences.add(sId);
+                        }
+                    }
+                });
+            });
+
+            return [...textMatches, ...deepMatches].sort((a, b) => b.score - a.score);
+        }
+
+        // DICTIONARY MODE (Legacy Logic)
         return allData.map(entry => {
             let score = 0;
 
@@ -649,7 +708,7 @@ function App() {
                 if (entry.PoS !== posFilter) return { ...entry, score: 0 };
             }
 
-            const fieldsToSearch = [];
+            const fieldsToSearch: string[] = [];
             const isPersonal = !!notebooks[entry.Source];
 
             if (searchScopes.main) {
@@ -671,13 +730,8 @@ function App() {
                 if (searchLangs.syllabary && entry.Plural_Syllabary) fieldsToSearch.push(entry.Plural_Syllabary);
                 if (searchLangs.tone && entry.Plural_Tone) fieldsToSearch.push(entry.Plural_Tone);
             }
-            if (searchScopes.sentences) {
-                if (searchLangs.translit && entry.Sentence_Transliteration) fieldsToSearch.push(entry.Sentence_Transliteration);
-                if (searchLangs.syllabary && entry.Sentence_Syllabary) fieldsToSearch.push(entry.Sentence_Syllabary);
-                if (searchLangs.english && entry.Sentence_English) fieldsToSearch.push(entry.Sentence_English);
-            }
+            // REMOVED: searchScopes.sentences (Legacy column search)
             if (searchScopes.notes) {
-                // CHANGE: Only search note content that we actually display
                 const note = isPersonal ? entry.Notes : userNotes[entry.Index];
                 if (note) fieldsToSearch.push(note);
             }
@@ -697,14 +751,13 @@ function App() {
             if (score > 0) {
                 if (entry.Source === 'ced') score += 5;
                 if (notebooks[entry.Source]) score += 10;
-                // BOOST Verbs slightly
                 if (entry.PoS && entry.PoS.toLowerCase().includes('v')) score += 1;
             }
             return { ...entry, score };
         })
             .filter(item => item.score > 0)
             .sort((a, b) => b.score - a.score);
-    }, [query, allData, notebooks, settings, userNotes, posFilter]);
+    }, [query, allData, notebooks, settings, userNotes, posFilter, searchScope, sentences, dictionary, entryToSentencesMap]);
 
     const filteredResults = useMemo(() => {
         if (!query && activeTab === 'search') return { active: [], inactive: [] };
@@ -746,98 +799,101 @@ function App() {
         updateUrl(entry);
     };
 
-    const handleOpenNewListModal = (initialEntryIndex: string | null = null) => {
-        setRenameData({ type: 'list', target: '', value: '', initialEntryIndex });
-        setShowNewListModal(true);
-    };
+    // handleOpenNewListModal removed as unused
 
 
 
 
-    if (showManualUpload) {
-        return (
-            <div className="h-screen w-full flex items-center justify-center bg-[#F9F9F7] dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex-col p-6 text-center">
-                <AlertCircle size={48} className="text-red-500 mb-4" />
-                <h2 className="text-xl font-bold mb-2">Dictionary Load Failed</h2>
-                <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-sm">
-                    We couldn't download the dictionary automatically. Please upload the <strong>dictionary.csv</strong> file manually.
-                </p>
-                <label className="bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 px-6 rounded-xl cursor-pointer transition-colors shadow-lg flex items-center gap-2">
-                    <Download size={20} />
-                    <span>Upload dictionary.csv</span>
-                    <input type="file" className="hidden" accept=".csv" onChange={handleManualDictionaryUpload} />
-                </label>
-                <a href="https://cherokee.neocities.org/dictionary.csv" download className="mt-8 text-sky-600 dark:text-sky-400 underline text-sm">
-                    Download dictionary.csv manually
-                </a>
-            </div>
-        );
-    }
-
-    if (loading) return <div className="h-screen w-full flex items-center justify-center bg-[#F9F9F7] dark:bg-slate-950 text-slate-400 font-noto-serif flex-col gap-3"><Book size={48} className="animate-pulse opacity-50" /><p>{loadingMessage}</p></div>;
+    // Manual Upload UI Removed
+    // if (showManualUpload) ...
+    // if (loading) ...
 
     return (
         <div className="h-screen w-full bg-[#F9F9F7] dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans flex flex-col overflow-hidden relative">
             <header className="bg-white dark:bg-slate-900 px-4 py-3 shadow-sm z-10 flex items-center justify-between shrink-0 h-[60px]"><h1 className="font-noto-serif text-xl text-slate-800 dark:text-slate-100">ᏣᎳᎩ-English Dictionary</h1><button onClick={() => setShowSettingsModal(true)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300"><Menu size={24} strokeWidth={1.5} /></button></header>
             <main className="flex-1 overflow-hidden relative flex flex-col">
                 {activeTab === 'search' && (
-                    <div className="flex flex-col h-full"><div className="p-4 bg-[#F9F9F7] dark:bg-slate-950"><div className="relative"><div className="absolute left-3 top-3.5 text-slate-400"><Search size={20} /></div><input type="text" className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-3 pl-10 pr-4 text-lg shadow-sm outline-none font-noto-serif text-slate-800 dark:text-slate-100" placeholder={settings.enableRegex ? "Regex Search..." : "Search..."} value={inputValue} onChange={(e) => setInputValue(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') addToHistory(query); }} />{inputValue ? <button onClick={() => { setInputValue(''); setQuery(''); }} className="absolute right-3 top-3.5 text-slate-300"><X size={20} /></button> : null}</div><div className="flex justify-end mt-2"><button onClick={() => setShowFilters(!showFilters)} className="flex items-center gap-1 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide hover:text-amber-700"><Filter size={12} /> Filter Sources</button></div>
-                        {showFilters && (
-                            <div className="mt-2 p-3 bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-2 animate-fade-in max-h-64 overflow-y-auto">
-                                {/* Source List */}
-                                {availableSources.map(src => {
-                                    if (src.code === 'Other') {
-                                        return (
-                                            <div key="OtherGroup" className="flex flex-col">
-                                                <div className="flex items-center justify-between p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded">
-                                                    <label className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer flex-1">
-                                                        {/* Tri-state Checkbox Implementation */}
-                                                        <div onClick={(e) => { e.preventDefault(); toggleAllSmallSources(); }} className="w-4 h-4 rounded border border-slate-300 dark:border-slate-600 flex items-center justify-center bg-white dark:bg-slate-800 overflow-hidden">
-                                                            {otherGroupState === 'all' && <div className="w-full h-full bg-amber-600 flex items-center justify-center"><Check size={12} className="text-white" /></div>}
-                                                            {otherGroupState === 'some' && <div className="w-full h-full bg-amber-600 flex items-center justify-center"><Minus size={12} className="text-white" /></div>}
-                                                        </div>
-
-                                                        <span className="font-bold uppercase text-xs text-slate-500 dark:text-slate-400 mr-2 min-w-[3rem] shrink-0 text-center bg-slate-100 dark:bg-slate-800 rounded px-1">...</span>
-                                                        <span className="font-bold text-slate-600 dark:text-slate-400">Other Sources</span>
-                                                        <span className="ml-auto text-xs text-slate-400 font-mono">({src.count})</span>
-                                                    </label>
-                                                    <button onClick={(e) => { e.preventDefault(); setExpandOthers(!expandOthers); }} className="p-1 ml-2 text-slate-400 hover:text-amber-600">
-                                                        {expandOthers ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                                                    </button>
-                                                </div>
-
-                                                {/* Indented Small Sources */}
-                                                {expandOthers && (
-                                                    <div className="ml-8 mt-1 border-l-2 border-slate-100 dark:border-slate-800 pl-2 space-y-1">
-                                                        {expandedSmallSources.map(smallSrc => (
-                                                            <label key={smallSrc.code} className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400 cursor-pointer p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded">
-                                                                <input type="checkbox" checked={filters[smallSrc.code] !== false} onChange={() => setFilters(prev => ({ ...prev, [smallSrc.code]: !prev[smallSrc.code] }))} className="accent-amber-600 w-3 h-3 rounded" />
-                                                                <div className="flex-1 flex items-center min-w-0">
-                                                                    <span className="truncate">{smallSrc.name}</span>
-                                                                    <span className="ml-auto text-[10px] text-slate-300 font-mono">({smallSrc.count})</span>
-                                                                </div>
-                                                            </label>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        );
-                                    }
-
-                                    return (
-                                        <label key={src.code} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded">
-                                            <input type="checkbox" checked={filters[src.code] !== false} onChange={() => setFilters(prev => ({ ...prev, [src.code]: !prev[src.code] }))} className="accent-amber-600 w-4 h-4 rounded" />
-                                            <div className="flex-1 flex items-center min-w-0">
-                                                <span className="font-bold uppercase text-xs text-slate-500 dark:text-slate-400 mr-2 min-w-[3rem] shrink-0 text-center bg-slate-100 dark:bg-slate-800 rounded px-1">{src.badge}</span>
-                                                <span className="truncate">{src.name}</span>
-                                                <span className="ml-auto text-xs text-slate-400 font-mono">({src.count})</span>
-                                            </div>
-                                        </label>
-                                    )
-                                })}
+                    <div className="flex flex-col h-full">
+                        <div className="p-4 bg-[#F9F9F7] dark:bg-slate-950">
+                            <div className="relative">
+                                <div className="absolute left-3 top-3.5 text-slate-400"><Search size={20} /></div>
+                                <input type="text" className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-3 pl-10 pr-4 text-lg shadow-sm outline-none font-noto-serif text-slate-800 dark:text-slate-100" placeholder={settings.enableRegex ? "Regex Search..." : "Search..."} value={inputValue} onChange={(e) => setInputValue(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') addToHistory(query); }} />
+                                {inputValue ? <button onClick={() => { setInputValue(''); setQuery(''); }} className="absolute right-3 top-3.5 text-slate-300"><X size={20} /></button> : null}
                             </div>
-                        )}
-                    </div>
+                            <div className="flex justify-end mt-2 items-center gap-4">
+                                {/* Search Scope Toggle */}
+                                <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-lg flex text-sm font-medium">
+                                    <button
+                                        onClick={() => setSearchScope('dictionary')}
+                                        className={`px-3 py-1 rounded-md transition-all ${searchScope === 'dictionary' ? 'bg-white dark:bg-slate-700 shadow text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                                    >
+                                        Dictionary
+                                    </button>
+                                    <button
+                                        onClick={() => setSearchScope('sentences')}
+                                        className={`px-3 py-1 rounded-md transition-all ${searchScope === 'sentences' ? 'bg-white dark:bg-slate-700 shadow text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                                    >
+                                        Sentences
+                                    </button>
+                                </div>
+                                <button onClick={() => setShowFilters(!showFilters)} className="flex items-center gap-1 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide hover:text-amber-700"><Filter size={12} /> Filter Sources</button>
+                            </div>
+                            {showFilters && (
+                                <div className="mt-2 p-3 bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-2 animate-fade-in max-h-64 overflow-y-auto">
+                                    {/* Source List */}
+                                    {availableSources.map(src => {
+                                        if (src.code === 'Other') {
+                                            return (
+                                                <div key="OtherGroup" className="flex flex-col">
+                                                    <div className="flex items-center justify-between p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded">
+                                                        <label className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer flex-1">
+                                                            {/* Tri-state Checkbox Implementation */}
+                                                            <div onClick={(e) => { e.preventDefault(); toggleAllSmallSources(); }} className="w-4 h-4 rounded border border-slate-300 dark:border-slate-600 flex items-center justify-center bg-white dark:bg-slate-800 overflow-hidden">
+                                                                {otherGroupState === 'all' && <div className="w-full h-full bg-amber-600 flex items-center justify-center"><Check size={12} className="text-white" /></div>}
+                                                                {otherGroupState === 'some' && <div className="w-full h-full bg-amber-600 flex items-center justify-center"><Minus size={12} className="text-white" /></div>}
+                                                            </div>
+
+                                                            <span className="font-bold uppercase text-xs text-slate-500 dark:text-slate-400 mr-2 min-w-[3rem] shrink-0 text-center bg-slate-100 dark:bg-slate-800 rounded px-1">...</span>
+                                                            <span className="font-bold text-slate-600 dark:text-slate-400">Other Sources</span>
+                                                            <span className="ml-auto text-xs text-slate-400 font-mono">({src.count})</span>
+                                                        </label>
+                                                        <button onClick={(e) => { e.preventDefault(); setExpandOthers(!expandOthers); }} className="p-1 ml-2 text-slate-400 hover:text-amber-600">
+                                                            {expandOthers ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Indented Small Sources */}
+                                                    {expandOthers && (
+                                                        <div className="ml-8 mt-1 border-l-2 border-slate-100 dark:border-slate-800 pl-2 space-y-1">
+                                                            {expandedSmallSources.map(smallSrc => (
+                                                                <label key={smallSrc.code} className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400 cursor-pointer p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded">
+                                                                    <input type="checkbox" checked={filters[smallSrc.code] !== false} onChange={() => setFilters(prev => ({ ...prev, [smallSrc.code]: !prev[smallSrc.code] }))} className="accent-amber-600 w-3 h-3 rounded" />
+                                                                    <div className="flex-1 flex items-center min-w-0">
+                                                                        <span className="truncate">{smallSrc.name}</span>
+                                                                        <span className="ml-auto text-[10px] text-slate-300 font-mono">({smallSrc.count})</span>
+                                                                    </div>
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        }
+
+                                        return (
+                                            <label key={src.code} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded">
+                                                <input type="checkbox" checked={filters[src.code] !== false} onChange={() => setFilters(prev => ({ ...prev, [src.code]: !prev[src.code] }))} className="accent-amber-600 w-4 h-4 rounded" />
+                                                <div className="flex-1 flex items-center min-w-0">
+                                                    <span className="font-bold uppercase text-xs text-slate-500 dark:text-slate-400 mr-2 min-w-[3rem] shrink-0 text-center bg-slate-100 dark:bg-slate-800 rounded px-1">{src.badge}</span>
+                                                    <span className="truncate">{src.name}</span>
+                                                    <span className="ml-auto text-xs text-slate-400 font-mono">({src.count})</span>
+                                                </div>
+                                            </label>
+                                        )
+                                    })}
+                                </div>
+                            )}
+                        </div>
                         <div className="flex-1 overflow-y-auto">{query ? (<>{paginatedResults.active.length === 0 && paginatedResults.inactive.length === 0 && <div className="text-center mt-12 text-slate-400">No results found</div>}{paginatedResults.active.map(entry => <EntryCard key={entry.Index} entry={entry} notebooks={notebooks} userNotes={userNotes} userAudioMeta={userAudioMeta} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} />)}{paginatedResults.inactive.length > 0 && <><div className="px-4 py-2 bg-slate-50 dark:bg-slate-900/50 text-xs font-bold text-slate-400 uppercase tracking-widest border-y border-slate-100 dark:border-slate-800 mt-4">Filtered</div>{paginatedResults.inactive.map(entry => <EntryCard key={entry.Index} entry={entry} notebooks={notebooks} userNotes={userNotes} userAudioMeta={userAudioMeta} favorites={favorites} customLists={customLists} onClick={handleEntryClick} isDimmed={true} showPos={settings.showPosInLists} />)}</>}
                             {paginatedResults.hasMore && (
                                 <div className="p-4">

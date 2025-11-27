@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Pencil, ListPlus, Star, ListIcon, X, Plus, Folder, Mic, Play, Pause, Trash2, MicPlus } from './Icons';
-import { AudioPlayer, SourceBadge, Modal } from './UI';
+import { ArrowLeft, Pencil, ListPlus, Star, ListIcon, X, Plus, Folder, Play, Pause, MicPlus, Book, Trash2 } from './Icons';
+import { AudioPlayer, SourceBadge } from './UI';
 import { renderStyledText, getAudioFromDB } from '../utils';
 import AudioRecorder from './AudioRecorder';
+import { useCorpus } from './CorpusContext';
+import { SentenceCard } from './SentenceCard';
 
 const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, onSaveAudio, onDeleteAudio, favorites, customLists, customListOrder, onClose, onEdit, onToggleFavorite, onToggleList, onDelete, onSearchTerm, onOpenNewListModal, onMove }) => {
     const [showListSheet, setShowListSheet] = useState(false);
@@ -10,6 +12,9 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, onSaveAudio, 
     const [recorderTarget, setRecorderTarget] = useState<'entry' | 'sentence'>('entry');
     const [playingAudioId, setPlayingAudioId] = useState(null);
     const audioRef = React.useRef(new Audio());
+    const [activeTab, setActiveTab] = useState('details');
+
+    const { entryToSentencesMap, sentences } = useCorpus();
 
     const handlePlayUserAudio = async (id) => {
         if (playingAudioId === id) {
@@ -49,6 +54,10 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, onSaveAudio, 
     // CHANGE: Ignore CSV notes (e.Notes) for non-personal words. Only use userNotes.
     const noteContent = isPersonal ? e.Notes : (userNotes[e.Index] || '');
 
+    // Get linked sentences
+    const linkedSentenceIds = entryToSentencesMap.get(e.Index) || [];
+    const linkedSentences = linkedSentenceIds.map(id => sentences.find(s => s.id === id)).filter(Boolean);
+
     const renderConjugation = (label, translit, tone, syllabary) => {
         if (!syllabary && !translit) return null;
         return (<div className="mb-3">{label && <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">{label}</div>}<div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-lg border border-slate-100 dark:border-slate-800"><div className="font-noto-cherokee text-xl text-slate-800 dark:text-slate-200 mb-1">{syllabary}</div><div className="flex flex-col">{translit && <span className="font-noto-serif text-md text-amber-700 dark:text-amber-400 font-medium">{translit}</span>}{tone && <span className="font-sans text-sm text-slate-500 dark:text-slate-400 italic">{tone}</span>}</div></div></div>);
@@ -63,75 +72,96 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, onSaveAudio, 
             <div className="flex-1 overflow-y-auto p-5 pb-24">
                 <div className="mb-2"><div className="flex items-start justify-between mb-2"><h1 className="font-noto-cherokee text-4xl font-bold text-slate-900 dark:text-slate-100">{e.Syllabary}</h1><SourceBadge source={e.Source} name={notebooks[e.Source]?.name} /></div><h2 className="font-noto-serif text-2xl text-amber-800 dark:text-amber-400 font-medium mb-1">{e.Entry}</h2>{e.Entry_Tone && <div className="font-sans text-lg text-slate-500 dark:text-slate-400 italic">{e.Entry_Tone}</div>}</div>
 
-                {/* METADATA ROW 1: Audio */}
-                {/* METADATA ROW 1: Audio */}
-                <div className="flex items-center gap-3 mb-4 flex-wrap">
-                    <AudioPlayer src={e.Entry_Audio} label="Play Word" />
-
-                    {/* User Audio Bubbles */}
-                    {userAudioMeta && userAudioMeta[e.Index] && userAudioMeta[e.Index].map(audio => (
-                        <button
-                            key={audio.id}
-                            onClick={() => handlePlayUserAudio(audio.id)}
-                            onContextMenu={(ev) => { ev.preventDefault(); handleLongPressAudio(audio.id); }}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors border ${playingAudioId === audio.id ? 'bg-amber-200 text-amber-900 border-amber-300' : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-100 dark:border-amber-800'}`}
-                        >
-                            {playingAudioId === audio.id ? <Pause size={14} className="fill-current" /> : <Play size={14} className="fill-current" />}
-                            <span>{audio.speaker}</span>
-                        </button>
-                    ))}
-
-                    <button onClick={() => { setRecorderTarget('entry'); setShowRecorder(true); }} className="p-1.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-                        <MicPlus size={18} />
-                    </button>
+                {/* TABS */}
+                <div className="flex items-center gap-6 border-b border-slate-100 dark:border-slate-800 mb-6">
+                    <button onClick={() => setActiveTab('details')} className={`pb-2 text-sm font-bold uppercase tracking-wide transition-colors ${activeTab === 'details' ? 'text-amber-600 border-b-2 border-amber-600' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}>Details</button>
+                    <button onClick={() => setActiveTab('sentences')} className={`pb-2 text-sm font-bold uppercase tracking-wide transition-colors ${activeTab === 'sentences' ? 'text-amber-600 border-b-2 border-amber-600' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}>Sentences ({linkedSentences.length})</button>
+                    <button onClick={() => setActiveTab('audio')} className={`pb-2 text-sm font-bold uppercase tracking-wide transition-colors ${activeTab === 'audio' ? 'text-amber-600 border-b-2 border-amber-600' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}>Audio ({userAudioMeta[e.Index]?.length || 0})</button>
                 </div>
 
-                {/* METADATA ROW 2: Tags */}
-                <div className="flex flex-wrap gap-2 mb-6">
-                    {favorites.includes(e.Index) && <span className="bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100 px-2 py-1 rounded border border-amber-200 dark:border-amber-800 font-medium text-xs flex items-center gap-1"><Star size={12} /> Favorites</span>}
-                    {Object.keys(customLists).filter(k => customLists[k].includes(e.Index)).map(listName => (
-                        <span key={listName} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-1 rounded border border-slate-200 dark:border-slate-700 font-medium text-xs flex items-center gap-1"><ListIcon size={12} /> {listName}</span>
-                    ))}
+                {/* CONTENT */}
+                <div className="flex-1 overflow-y-auto pr-2">
+                    {activeTab === 'details' && (
+                        <div className="space-y-6">
+                            {/* METADATA ROW 1: Audio */}
+                            <div className="flex items-center gap-3 mb-4 flex-wrap">
+                                <AudioPlayer src={e.Entry_Audio} label="Play Word" />
+                            </div>
+
+                            {/* METADATA ROW 2: Tags */}
+                            <div className="flex flex-wrap gap-2 mb-6">
+                                {favorites.includes(e.Index) && <span className="bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100 px-2 py-1 rounded border border-amber-200 dark:border-amber-800 font-medium text-xs flex items-center gap-1"><Star size={12} /> Favorites</span>}
+                                {Object.keys(customLists).filter(k => customLists[k].includes(e.Index)).map(listName => (
+                                    <span key={listName} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-1 rounded border border-slate-200 dark:border-slate-700 font-medium text-xs flex items-center gap-1"><ListIcon size={12} /> {listName}</span>
+                                ))}
+                            </div>
+
+                            <hr className="border-slate-200 dark:border-slate-800 mb-6" />
+
+                            {/* DEFINITION SECTION */}
+                            <div className="mb-8">
+                                <h3 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Definition</h3>
+                                <p className="font-noto-serif text-lg text-slate-800 dark:text-slate-200 leading-relaxed">
+                                    {renderStyledText(e.Definition)}
+                                    {/* PoS Moved Here (After) */}
+                                    {e.PoS && <span className="text-slate-400 dark:text-slate-500 italic ml-2 text-base font-normal">({e.PoS})</span>}
+                                    {e.Definition_Long && <span className="block mt-2 text-slate-600 dark:text-slate-400 text-base">{renderStyledText(e.Definition_Long)}</span>}
+                                </p>
+                            </div>
+
+                            {/* PLURAL SECTION */}
+                            {e.Plural && (<div className="mb-8"><h3 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">PLURAL</h3>{renderConjugation(null, e.Plural, e.Plural_Tone, e.Plural_Syllabary)}</div>)}
+
+                            {/* VERB FORMS SECTION */}
+                            {e.Verb_1st_Present && (<div className="mb-8"><h3 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">VERB FORMS</h3><div className="grid grid-cols-1 gap-2">{renderConjugation("1st Person Present", e.Verb_1st_Present, e.Verb_1st_Present_Tone, e.Verb_1st_Present_Syllabary)}{renderConjugation("3rd Person Past", e.Verb_3rd_Past, e.Verb_3rd_Past_Tone, e.Verb_3rd_Past_Syllabary)}{renderConjugation("3rd Person Habitual", e.Verb_3rd_Present_Habitual, e.Verb_3rd_Present_Habitual_Tone, e.Verb_3rd_Present_Habitual_Syllabary)}{renderConjugation("2nd Person Imperative", e.Verb_2nd_Imperative, e.Verb_2nd_Imperative_Tone, e.Verb_2nd_Imperative_Syllabary)}{renderConjugation("3rd Person Infinitive", e.Verb_3rd_Infinitive, e.Verb_3rd_Infinitive_Tone, e.Verb_3rd_Infinitive_Syllabary)}</div></div>)}
+
+                            {(e.Sentence_Syllabary || e.Sentence_English) && (<div className="mb-8 bg-amber-50/50 dark:bg-amber-900/20 p-4 rounded-xl border border-amber-100 dark:border-amber-900/30"><h3 className="text-sm font-bold text-amber-800/60 dark:text-amber-200/60 uppercase tracking-widest mb-3 flex items-center gap-2">Example Sentence</h3>{e.Sentence_Syllabary && <p className="font-noto-cherokee text-lg text-slate-800 dark:text-slate-200 mb-2">{renderStyledText(e.Sentence_Syllabary)}</p>}{e.Sentence_Transliteration && <p className="font-noto-serif text-md text-slate-600 dark:text-slate-400 italic mb-2">{renderStyledText(e.Sentence_Transliteration)}</p>}{e.Sentence_English && <p className="font-noto-serif text-md text-slate-800 dark:text-slate-200 font-medium">{renderStyledText(e.Sentence_English)}</p>}<div className="mt-4 flex items-center gap-3 flex-wrap"><AudioPlayer src={e.Sentence_Audio} label="Play Sentence" /></div></div>)}
+                            <div className="mb-8"><h3 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Notes</h3><div onClick={() => onEdit(e, noteContent, true)} className="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-300 whitespace-pre-wrap font-sans text-sm cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-amber-200 transition-colors relative group">{noteContent || <span className="text-slate-400 italic">Add a note...</span>}<div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white dark:bg-slate-800 p-1 rounded-full shadow-sm"><Pencil size={14} className="text-amber-600" /></div></div></div>
+                            {e.Cross_Reference && (<div className="mb-8"><h3 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">See Also</h3><div className="flex flex-wrap gap-2">{e.Cross_Reference.split(',').map((ref, i) => <button key={i} onClick={() => onSearchTerm(ref.trim())} className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full text-slate-600 dark:text-slate-300 text-sm shadow-sm hover:border-amber-500 hover:text-amber-600 transition-colors">{ref.trim()}</button>)}</div></div>)}
+                        </div>
+                    )}
+
+                    {activeTab === 'sentences' && (
+                        <div className="space-y-4">
+                            {linkedSentences.length > 0 ? (
+                                linkedSentences.map((s: any) => (
+                                    <SentenceCard key={s.id} sentence={s} />
+                                ))
+                            ) : (
+                                <div className="text-center py-12 text-slate-400 flex flex-col items-center">
+                                    <Book size={32} className="mb-3 opacity-20" />
+                                    <p>No linked sentences found.</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {activeTab === 'audio' && (
+                        <div className="space-y-4">
+                            {userAudioMeta && userAudioMeta[e.Index] && userAudioMeta[e.Index].map(audio => (
+                                <div key={audio.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800">
+                                    <div className="flex items-center gap-3">
+                                        <button
+                                            onClick={() => handlePlayUserAudio(audio.id)}
+                                            className={`p-2 rounded-full ${playingAudioId === audio.id ? 'bg-amber-100 text-amber-600' : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 shadow-sm'}`}
+                                        >
+                                            {playingAudioId === audio.id ? <Pause size={16} className="fill-current" /> : <Play size={16} className="fill-current" />}
+                                        </button>
+                                        <div>
+                                            <div className="font-bold text-slate-700 dark:text-slate-200 text-sm">{audio.speaker}</div>
+                                            <div className="text-xs text-slate-400">{new Date(audio.date).toLocaleDateString()}</div>
+                                        </div>
+                                    </div>
+                                    <button onClick={() => handleLongPressAudio(audio.id)} className="p-2 text-slate-300 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
+                                </div>
+                            ))}
+                            <button onClick={() => { setRecorderTarget('entry'); setShowRecorder(true); }} className="w-full py-4 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl flex flex-col items-center justify-center text-slate-400 hover:text-amber-600 hover:border-amber-200 transition-colors gap-2">
+                                <MicPlus size={24} />
+                                <span className="font-bold text-sm">Record New Audio</span>
+                            </button>
+                        </div>
+                    )}
                 </div>
-
-                <hr className="border-slate-200 dark:border-slate-800 mb-6" />
-
-                {/* DEFINITION SECTION */}
-                <div className="mb-8">
-                    <h3 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Definition</h3>
-                    <p className="font-noto-serif text-lg text-slate-800 dark:text-slate-200 leading-relaxed">
-                        {renderStyledText(e.Definition)}
-                        {/* PoS Moved Here (After) */}
-                        {e.PoS && <span className="text-slate-400 dark:text-slate-500 italic ml-2 text-base font-normal">({e.PoS})</span>}
-                        {e.Definition_Long && <span className="block mt-2 text-slate-600 dark:text-slate-400 text-base">{renderStyledText(e.Definition_Long)}</span>}
-                    </p>
-                </div>
-
-                {/* PLURAL SECTION */}
-                {e.Plural && (<div className="mb-8"><h3 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">PLURAL</h3>{renderConjugation(null, e.Plural, e.Plural_Tone, e.Plural_Syllabary)}</div>)}
-
-                {/* VERB FORMS SECTION */}
-                {e.Verb_1st_Present && (<div className="mb-8"><h3 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">VERB FORMS</h3><div className="grid grid-cols-1 gap-2">{renderConjugation("1st Person Present", e.Verb_1st_Present, e.Verb_1st_Present_Tone, e.Verb_1st_Present_Syllabary)}{renderConjugation("3rd Person Past", e.Verb_3rd_Past, e.Verb_3rd_Past_Tone, e.Verb_3rd_Past_Syllabary)}{renderConjugation("3rd Person Habitual", e.Verb_3rd_Present_Habitual, e.Verb_3rd_Present_Habitual_Tone, e.Verb_3rd_Present_Habitual_Syllabary)}{renderConjugation("2nd Person Imperative", e.Verb_2nd_Imperative, e.Verb_2nd_Imperative_Tone, e.Verb_2nd_Imperative_Syllabary)}{renderConjugation("3rd Person Infinitive", e.Verb_3rd_Infinitive, e.Verb_3rd_Infinitive_Tone, e.Verb_3rd_Infinitive_Syllabary)}</div></div>)}
-
-                {(e.Sentence_Syllabary || e.Sentence_English) && (<div className="mb-8 bg-amber-50/50 dark:bg-amber-900/20 p-4 rounded-xl border border-amber-100 dark:border-amber-900/30"><h3 className="text-sm font-bold text-amber-800/60 dark:text-amber-200/60 uppercase tracking-widest mb-3 flex items-center gap-2">Example Sentence</h3>{e.Sentence_Syllabary && <p className="font-noto-cherokee text-lg text-slate-800 dark:text-slate-200 mb-2">{renderStyledText(e.Sentence_Syllabary)}</p>}{e.Sentence_Transliteration && <p className="font-noto-serif text-md text-slate-600 dark:text-slate-400 italic mb-2">{renderStyledText(e.Sentence_Transliteration)}</p>}{e.Sentence_English && <p className="font-noto-serif text-md text-slate-800 dark:text-slate-200 font-medium">{renderStyledText(e.Sentence_English)}</p>}<div className="mt-4 flex items-center gap-3 flex-wrap"><AudioPlayer src={e.Sentence_Audio} label="Play Sentence" />
-                    {/* User Audio Bubbles for Sentence */}
-                    {userAudioMeta && userAudioMeta[e.Index + '_sentence'] && userAudioMeta[e.Index + '_sentence'].map(audio => (
-                        <button
-                            key={audio.id}
-                            onClick={() => handlePlayUserAudio(audio.id)}
-                            onContextMenu={(ev) => { ev.preventDefault(); handleLongPressAudio(audio.id, e.Index + '_sentence'); }}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors border ${playingAudioId === audio.id ? 'bg-amber-200 text-amber-900 border-amber-300' : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-100 dark:border-amber-800'}`}
-                        >
-                            {playingAudioId === audio.id ? <Pause size={14} className="fill-current" /> : <Play size={14} className="fill-current" />}
-                            <span>{audio.speaker}</span>
-                        </button>
-                    ))}
-                    <button onClick={() => { setRecorderTarget('sentence'); setShowRecorder(true); }} className="p-1.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-                        <MicPlus size={18} />
-                    </button>
-                </div></div>)}
-                <div className="mb-8"><h3 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Notes</h3><div onClick={() => onEdit(e, noteContent, true)} className="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-300 whitespace-pre-wrap font-sans text-sm cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-amber-200 transition-colors relative group">{noteContent || <span className="text-slate-400 italic">Add a note...</span>}<div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white dark:bg-slate-800 p-1 rounded-full shadow-sm"><Pencil size={14} className="text-amber-600" /></div></div></div>
-                {e.Cross_Reference && (<div className="mb-8"><h3 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">See Also</h3><div className="flex flex-wrap gap-2">{e.Cross_Reference.split(',').map((ref, i) => <button key={i} onClick={() => onSearchTerm(ref.trim())} className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full text-slate-600 dark:text-slate-300 text-sm shadow-sm hover:border-amber-500 hover:text-amber-600 transition-colors">{ref.trim()}</button>)}</div></div>)}
                 {isPersonal && (
                     <div className="mt-12 space-y-3">
                         <button onClick={() => onMove(e.Index)} className="w-full py-3 text-sky-700 dark:text-sky-400 font-bold bg-sky-50 dark:bg-sky-900/20 rounded-xl border border-sky-100 dark:border-sky-900/50 flex items-center justify-center gap-2">
