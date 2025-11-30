@@ -34,15 +34,20 @@ export interface Gloss {
     word_index: string; // "0,1"
     entry_id: string;
     notes?: string;
+    breakdown_cherokee?: string;
+    breakdown_english?: string;
     source: string; // "ced", "user", etc.
+    id?: string; // Unique ID for deletion
 }
 
 interface CorpusContextType {
     dictionary: DictionaryEntry[];
     sentences: Sentence[];
+    userSentences: Sentence[];
     glosses: Gloss[];
     loading: boolean;
     error: string | null;
+    audioManifest: string[];
 
     // Maps
     glossMap: Map<string, Gloss[]>; // SentenceID -> Gloss[]
@@ -52,7 +57,10 @@ interface CorpusContextType {
 
     // Actions
     addUserGloss: (gloss: Gloss) => void;
-    removeUserGloss: (sentenceId: string, wordIndex: string) => void;
+    removeUserGloss: (glossId: string) => void;
+    addUserSentence: (sentence: Sentence) => void;
+    removeUserSentence: (id: string) => void;
+    removeUserSentences: (ids: string[]) => void;
 }
 
 const CorpusContext = createContext<CorpusContextType | undefined>(undefined);
@@ -70,30 +78,42 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const [sentences, setSentences] = useState<Sentence[]>([]);
     const [staticGlosses, setStaticGlosses] = useState<Gloss[]>([]);
     const [userGlosses, setUserGlosses] = useState<Gloss[]>([]);
+    const [userSentences, setUserSentences] = useState<Sentence[]>([]);
+    const [audioManifest, setAudioManifest] = useState<string[]>([]);
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Load User Glosses from LocalStorage on mount
+    // Load User Data from LocalStorage on mount
     useEffect(() => {
         try {
-            const saved = localStorage.getItem('cherokee_app_user_glosses');
-            if (saved) {
-                setUserGlosses(JSON.parse(saved));
+            const savedGlosses = localStorage.getItem('cherokee_app_user_glosses');
+            if (savedGlosses) {
+                const parsed = JSON.parse(savedGlosses);
+                // Migration: Add IDs if missing
+                const migrated = parsed.map((g: Gloss) => ({ ...g, id: g.id || crypto.randomUUID() }));
+                setUserGlosses(migrated);
             }
+
+            const savedSentences = localStorage.getItem('cherokee_app_user_sentences');
+            if (savedSentences) setUserSentences(JSON.parse(savedSentences));
         } catch (e) {
-            console.error("Failed to load user glosses", e);
+            console.error("Failed to load user data", e);
         }
     }, []);
 
-    // Save User Glosses to LocalStorage when changed
+    // Save User Data to LocalStorage when changed
     useEffect(() => {
         try {
             localStorage.setItem('cherokee_app_user_glosses', JSON.stringify(userGlosses));
-        } catch (e) {
-            console.error("Failed to save user glosses", e);
-        }
+        } catch (e) { console.error("Failed to save user glosses", e); }
     }, [userGlosses]);
+
+    useEffect(() => {
+        try {
+            localStorage.setItem('cherokee_app_user_sentences', JSON.stringify(userSentences));
+        } catch (e) { console.error("Failed to save user sentences", e); }
+    }, [userSentences]);
 
     // Load CSVs
     useEffect(() => {
@@ -111,11 +131,14 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                     return text;
                 };
 
-                const [dictRes, sentRes, joinRes] = await Promise.all([
+                const [dictRes, sentRes, joinRes, manifestRes] = await Promise.all([
                     fetchCsv('/data/dictionary.csv'),
                     fetchCsv('/data/sentences.csv'),
-                    fetchCsv('/data/join_table.csv')
+                    fetchCsv('/data/join_table.csv'),
+                    fetch('/data/audio_manifest.json').then(r => r.ok ? r.json() : [])
                 ]);
+
+                setAudioManifest(manifestRes);
 
                 Papa.parse(dictRes, {
                     header: true,
@@ -160,7 +183,7 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                             translit: d.Transliteration,
                             english: d.English,
                             source: d.Source,
-                            audio: d.Audio
+                            audio: d.Audio,
                         }));
                         setSentences(mapped as Sentence[]);
                     }
@@ -209,7 +232,7 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         });
 
         // Index Sentences
-        sentences.forEach(s => {
+        [...sentences, ...userSentences].forEach(s => {
             if (s.id) sMap.set(s.id, s);
         });
 
@@ -230,6 +253,15 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             }
         });
 
+        // 3. Map User Sentences to Entries via Glosses
+        // The above loop iterates `allGlosses`, which includes `userGlosses`.
+        // So `eToSMap` ALREADY contains links from Entry -> UserSentenceID.
+        // We just need to make sure we aren't missing anything.
+        // The issue might be that `EntryDetail` uses `entryToSentencesMap` to find IDs,
+        // then looks up the sentence object.
+        // If the sentence object is in `userSentences` but not `sentences`, we need to make sure
+        // `EntryDetail` looks in both or uses `sentenceMap`.
+
         // Convert Set to Array for the final map
         const finalEToSMap = new Map<string, string[]>();
         eToSMap.forEach((val, key) => {
@@ -243,35 +275,70 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             sentenceMap: sMap,
             allGlosses
         };
-    }, [dictionary, sentences, staticGlosses, userGlosses]);
+    }, [dictionary, sentences, staticGlosses, userGlosses, userSentences]);
 
 
     // Actions
     const addUserGloss = (gloss: Gloss) => {
         setUserGlosses(prev => {
-            // If replacing a user gloss for the exact same index:
-            const filtered = prev.filter(g => !(g.sentence_id === gloss.sentence_id && g.word_index === gloss.word_index));
-            return [...filtered, { ...gloss, source: 'user' }];
+            // If ID is provided, try to update existing
+            if (gloss.id) {
+                const existingIndex = prev.findIndex(g => g.id === gloss.id);
+                if (existingIndex >= 0) {
+                    const newGlosses = [...prev];
+                    newGlosses[existingIndex] = { ...gloss, source: 'user' };
+                    return newGlosses;
+                }
+            }
+            // Append new gloss
+            const newGloss = { ...gloss, source: 'user', id: gloss.id || crypto.randomUUID() };
+            return [...prev, newGloss];
         });
     };
 
-    const removeUserGloss = (sentenceId: string, wordIndex: string) => {
-        setUserGlosses(prev => prev.filter(g => !(g.sentence_id === sentenceId && g.word_index === wordIndex)));
+    const removeUserGloss = (glossId: string) => {
+        setUserGlosses(prev => prev.filter(g => g.id !== glossId));
+    };
+
+    const addUserSentence = (sentence: Sentence) => {
+        setUserSentences(prev => {
+            const index = prev.findIndex(s => s.id === sentence.id);
+            if (index >= 0) {
+                const newSentences = [...prev];
+                newSentences[index] = { ...sentence, source: sentence.source || 'user' };
+                return newSentences;
+            }
+            return [...prev, { ...sentence, source: sentence.source || 'user' }];
+        });
+    };
+
+    const removeUserSentence = (id: string) => {
+        setUserSentences(prev => prev.filter(s => s.id !== id));
+    };
+
+    const removeUserSentences = (ids: string[]) => {
+        const idsSet = new Set(ids);
+        setUserSentences(prev => prev.filter(s => !idsSet.has(s.id)));
     };
 
     return (
         <CorpusContext.Provider value={{
             dictionary,
             sentences,
+            userSentences,
             glosses: allGlosses,
             loading,
             error,
+            audioManifest,
             glossMap,
             entryToSentencesMap,
             dictionaryMap,
             sentenceMap,
             addUserGloss,
-            removeUserGloss
+            removeUserGloss,
+            addUserSentence,
+            removeUserSentence,
+            removeUserSentences
         }}>
             {children}
         </CorpusContext.Provider>

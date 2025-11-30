@@ -1,18 +1,43 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { Sentence, useCorpus } from './CorpusContext';
 import { GlossPopover } from './GlossPopover';
 import { LinkerModal } from './LinkerModal';
-import { AudioPlayer } from './UI';
-import { Check, Plus } from './Icons';
+import { AudioPlayer, SourceBadge } from './UI';
+import { Check, Plus, Mic, Pencil, MicPlus, Trash2, Pause } from './Icons';
+import { getAudioFromDB } from '../utils';
+
+import AudioRecorder from './AudioRecorder';
 
 interface SentenceCardProps {
     sentence: Sentence;
+    onClick?: () => void;
+    isDimmed?: boolean;
+    notebooks?: any;
+    userNotes?: Record<string, string>;
+    onEditNote?: (id: string, note: string) => void;
+    onEditSentence?: (id: string) => void;
+    sourceMap?: Record<string, string>;
+    onSaveAudio?: (id: string, blob: Blob, speaker: string) => void;
+    userAudioMeta?: Record<string, any[]>;
+    personalWords?: any[];
+    onDeleteSentence?: (id: string) => void;
+    onDeleteAudio?: (targetId: string, audioId: string) => void;
+    onCreateWord?: () => void;
 }
 
-export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence }) => {
-    const { glossMap, dictionaryMap, addUserGloss } = useCorpus();
+export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, isDimmed, notebooks, userNotes, onEditNote, onEditSentence, sourceMap, onSaveAudio, userAudioMeta, personalWords, onDeleteSentence, onDeleteAudio, onCreateWord }) => {
+    const { glossMap, dictionaryMap, addUserGloss, removeUserGloss, removeUserSentence } = useCorpus();
     const [activePopover, setActivePopover] = useState<{ index: number, rect: { x: number, y: number } } | null>(null);
-    const [showLinker, setShowLinker] = useState<{ indices: number[], initialQuery: string } | null>(null);
+    const [showRecorder, setShowRecorder] = useState(false);
+    const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
+    const audioRef = useRef(new Audio());
+    const [showLinker, setShowLinker] = useState<{
+        indices: number[],
+        initialQuery: string,
+        targetWord?: { syllabary: string, translit: string } | { syllabary: string, translit: string }[],
+        initialData?: { entry: any, notes: string, breakdownCherokee: string, breakdownEnglish: string },
+        glossId?: string
+    } | null>(null);
     const [selectMode, setSelectMode] = useState(false);
     const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
 
@@ -29,6 +54,17 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence }) => {
         return res;
     }, [sentence]);
 
+    const handleDelete = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (window.confirm("Delete this sentence?")) {
+            if (onDeleteSentence) {
+                onDeleteSentence(sentence.id);
+            } else {
+                removeUserSentence(sentence.id);
+            }
+        }
+    };
+
     const getGlossStyle = (index: number) => {
         const wordGlosses = glosses.filter(g => {
             const indices = g.word_index.split(',').map(Number);
@@ -41,16 +77,17 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence }) => {
 
         // Conflict or Multiple
         if (wordGlosses.length > 1) {
-            return 'underline decoration-wavy decoration-amber-400 decoration-2 underline-offset-4';
+            // Double rainbow underline using background gradients
+            return 'bg-no-repeat bg-[length:100%_1.5px,100%_1.5px] bg-[position:0_100%,0_calc(100%-3px)] bg-[image:linear-gradient(90deg,#60a5fa,#c084fc,#fbbf24),linear-gradient(90deg,#60a5fa,#c084fc,#fbbf24)] pb-[1px]';
         }
 
         // Single User
         if (hasUser) {
-            return 'border-b-2 border-amber-400';
+            return 'shadow-[inset_0_-2px_0_0_#fbbf24]'; // amber-400
         }
 
         // Single Built-in
-        return 'border-b-2 border-slate-300 dark:border-slate-600';
+        return 'shadow-[inset_0_-2px_0_0_#cbd5e1] dark:shadow-[inset_0_-2px_0_0_#475569]'; // slate-300 / slate-600
     };
 
     const handleWordClick = (index: number, event: React.MouseEvent) => {
@@ -67,7 +104,12 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence }) => {
             setActivePopover({ index, rect: { x: rect.left, y: rect.bottom } });
         } else {
             // Open Linker
-            setShowLinker({ indices: [index], initialQuery: tokens[index]?.syl || '' });
+            const token = tokens[index];
+            setShowLinker({
+                indices: [index],
+                initialQuery: token.syl || '',
+                targetWord: { syllabary: token.syl, translit: token.tr }
+            });
         }
     };
 
@@ -75,17 +117,102 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence }) => {
         if (selectedIndices.length === 0) return;
         const sorted = [...selectedIndices].sort((a, b) => a - b);
         // Construct query from first selected word
-        const query = tokens[sorted[0]]?.syl || '';
-        setShowLinker({ indices: sorted, initialQuery: query });
+        const firstToken = tokens[sorted[0]];
+        const query = firstToken?.syl || '';
+
+        // Map all selected indices to tokens
+        const targetWords = sorted.map(i => ({ syllabary: tokens[i].syl, translit: tokens[i].tr }));
+
+        setShowLinker({
+            indices: sorted,
+            initialQuery: query,
+            targetWord: targetWords,
+        });
     };
 
+    const handlePlayUserAudio = async (audio: any) => {
+        if (playingAudioId === audio.id) {
+            audioRef.current.pause();
+            setPlayingAudioId(null);
+            return;
+        }
+
+        try {
+            if (audio.src) {
+                audioRef.current.src = audio.src;
+                audioRef.current.onended = () => setPlayingAudioId(null);
+                audioRef.current.play();
+                setPlayingAudioId(audio.id);
+                return;
+            }
+
+            const blob = await getAudioFromDB(audio.id);
+            if (blob) {
+                const url = URL.createObjectURL(blob as any);
+                audioRef.current.src = url;
+                audioRef.current.onended = () => {
+                    setPlayingAudioId(null);
+                    URL.revokeObjectURL(url);
+                };
+                audioRef.current.play();
+                setPlayingAudioId(audio.id);
+            }
+        } catch (e) {
+            console.error("Failed to play audio", e);
+        }
+    };
+
+
     return (
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm mb-4">
+        <div className={`bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm mb-4 ${isDimmed ? 'opacity-50 grayscale' : ''}`}>
             {/* Header / Controls */}
-            <div className="flex justify-between items-start mb-4">
-                <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">
-                    {sentence.source || 'Corpus'} • {sentence.id}
+            <div className={`flex justify-between items-start mb-2 ${onClick ? 'cursor-pointer' : ''}`} onClick={onClick}>
+                <div className="flex items-center gap-2">
+                    {/* Edit/Delete buttons for user sentences - Moved to Left */}
+                    {(sentence.source === 'user' || sentence.source.startsWith('nb_')) ? (
+                        <div className="flex gap-1">
+                            {onEditSentence && (
+                                <button onClick={(e) => { e.stopPropagation(); onEditSentence(sentence.id); }} className="text-slate-400 hover:text-amber-600 p-1 rounded-full hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors">
+                                    <Pencil size={14} />
+                                </button>
+                            )}
+                            <button onClick={handleDelete} className="text-slate-400 hover:text-red-500 p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                                <Trash2 size={14} />
+                            </button>
+                        </div>
+                    ) : null}
                 </div>
+                <div className="flex items-center gap-2">
+                    {sentence.audio && <div className="text-slate-400"><Mic size={14} /></div>}
+                    <SourceBadge source={sentence.source} name={notebooks?.[sentence.source]?.name || sourceMap?.[sentence.source] || sentence.source} />
+                </div>
+            </div>
+
+            {/* Sentence Tokens */}
+            <div className="flex flex-wrap gap-x-3 gap-y-4 mb-4">
+                {tokens.map((token, i) => {
+                    const isSelected = selectedIndices.includes(i);
+                    return (
+                        <div
+                            key={i}
+                            className={`flex flex-col items-center cursor-pointer group relative ${isSelected ? 'bg-amber-100 dark:bg-amber-900/40 rounded px-1 -mx-1' : ''}`}
+                            onClick={(e) => { e.stopPropagation(); handleWordClick(i, e); }}
+                        >
+                            <span className={`font-serif text-xl text-slate-900 dark:text-slate-100 leading-none mb-1 ${token.syl ? getGlossStyle(i) : ''}`}>
+                                {token.syl}
+                            </span>
+                            <span className={`text-lg text-slate-500 dark:text-slate-400 font-medium ${!token.syl ? getGlossStyle(i) : ''}`}>
+                                {token.tr}
+                            </span>
+                            {/* Selection Checkmark */}
+                            {isSelected && <div className="absolute -top-2 -right-2 bg-amber-500 text-white rounded-full p-0.5"><Check size={10} /></div>}
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Gloss Buttons & Audio Add - Moved Here */}
+            <div className="flex items-center justify-between mb-2" onClick={e => e.stopPropagation()}>
                 <div className="flex gap-2">
                     {selectMode ? (
                         <>
@@ -100,41 +227,27 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence }) => {
                                 disabled={selectedIndices.length === 0}
                                 className={`text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 transition-colors ${selectedIndices.length > 0 ? 'bg-amber-500 text-white shadow-md hover:bg-amber-600' : 'bg-slate-100 text-slate-400'}`}
                             >
-                                <Plus size={12} /> Link ({selectedIndices.length})
+                                <Plus size={12} /> Gloss ({selectedIndices.length})
                             </button>
                         </>
                     ) : (
                         <button
                             onClick={() => setSelectMode(true)}
-                            className="text-xs font-bold text-slate-400 hover:text-amber-600 px-2 py-1 rounded hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                            className="text-xs font-bold text-slate-500 hover:text-amber-600 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 hover:border-amber-200 transition-colors"
                         >
-                            Select Mode
+                            Gloss Multiple
                         </button>
                     )}
                 </div>
-            </div>
-
-            {/* Sentence Tokens */}
-            <div className="flex flex-wrap gap-x-3 gap-y-6 mb-6">
-                {tokens.map((token, i) => {
-                    const isSelected = selectedIndices.includes(i);
-                    return (
-                        <div
-                            key={i}
-                            className={`flex flex-col items-center cursor-pointer group relative ${isSelected ? 'bg-amber-100 dark:bg-amber-900/40 rounded px-1 -mx-1' : ''}`}
-                            onClick={(e) => handleWordClick(i, e)}
-                        >
-                            <span className={`font-serif text-xl text-slate-900 dark:text-slate-100 leading-none mb-1 ${getGlossStyle(i)}`}>
-                                {token.syl}
-                            </span>
-                            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                                {token.tr}
-                            </span>
-                            {/* Selection Checkmark */}
-                            {isSelected && <div className="absolute -top-2 -right-2 bg-amber-500 text-white rounded-full p-0.5"><Check size={10} /></div>}
-                        </div>
-                    );
-                })}
+                {/* Add User Audio Button */}
+                {onSaveAudio && (
+                    <button
+                        onClick={() => setShowRecorder(true)}
+                        className="text-slate-400 hover:text-amber-600 p-1 rounded-full hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                    >
+                        <MicPlus size={16} />
+                    </button>
+                )}
             </div>
 
             {/* English Translation */}
@@ -143,9 +256,48 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence }) => {
             </div>
 
             {/* Audio */}
+            {/* Official Audio */}
             {sentence.audio && (
-                <div className="mt-3">
-                    <AudioPlayer src={`/audio/${sentence.audio}`} label="Play Sentence" />
+                <div className="mt-3" onClick={e => e.stopPropagation()}>
+                    <AudioPlayer src={`/data/audio/${sentence.audio}`} label="Play Sentence" icon={Mic} variant="gray" />
+                </div>
+            )}
+            {/* User Audio */}
+            {userAudioMeta && userAudioMeta[sentence.id + '_sentence'] && (
+                <div className="mt-2 flex flex-wrap gap-2" onClick={e => e.stopPropagation()}>
+                    {userAudioMeta[sentence.id + '_sentence'].map((audio: any) => (
+                        <div key={audio.id} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors shadow-sm group ${playingAudioId === audio.id ? 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100' : (audio.isOfficial ? 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300' : 'bg-amber-500 text-white hover:bg-amber-600')}`}>
+                            <button
+                                onClick={() => handlePlayUserAudio(audio)}
+                                className="flex items-center gap-2"
+                            >
+                                {playingAudioId === audio.id ? <Pause size={12} className="fill-current" /> : <Mic size={12} />}
+                                <span>{playingAudioId === audio.id ? 'Playing...' : (audio.speaker || 'User')}</span>
+                            </button>
+                            {!audio.isOfficial && onDeleteAudio && (
+                                <button onClick={(e) => { e.stopPropagation(); if (window.confirm("Delete audio?")) onDeleteAudio(sentence.id + '_sentence', audio.id); }} className="ml-1 pl-2 border-l border-white/20 hover:text-red-200 transition-colors flex items-center">
+                                    <Trash2 size={14} />
+                                </button>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Notes */}
+            {onEditNote && (
+                <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800" onClick={e => e.stopPropagation()}>
+                    <div
+                        onClick={() => onEditNote(sentence.id, userNotes?.[sentence.id] || '')}
+                        className="text-xs text-slate-500 dark:text-slate-400 hover:text-amber-600 cursor-pointer flex items-center gap-1 group"
+                    >
+                        <Pencil size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                        {userNotes?.[sentence.id] ? (
+                            <span className="italic">{userNotes[sentence.id]}</span>
+                        ) : (
+                            <span className="opacity-50">Add note...</span>
+                        )}
+                    </div>
                 </div>
             )}
 
@@ -153,39 +305,132 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence }) => {
             {activePopover && (
                 <GlossPopover
                     glosses={glosses.filter(g => g.word_index.split(',').map(Number).includes(activePopover.index))}
+                    targetWord={{ syllabary: tokens[activePopover.index].syl, translit: tokens[activePopover.index].tr }}
                     dictionaryMap={dictionaryMap}
                     position={activePopover.rect}
                     onClose={() => setActivePopover(null)}
                     onEntryClick={(id) => {
-                        // Navigate to entry (using window location for now or callback?)
+                        // Navigate to entry
                         const url = new URL(window.location.href);
                         url.searchParams.set('word', id);
                         window.history.pushState({}, '', url.toString());
-                        // Trigger popstate to update App
                         window.dispatchEvent(new PopStateEvent('popstate'));
                         setActivePopover(null);
                     }}
+
+                    onDelete={(gloss) => {
+                        if (gloss.id) {
+                            removeUserGloss(gloss.id);
+                        } else {
+                            console.warn("Cannot delete gloss without ID");
+                        }
+                        setActivePopover(null);
+                    }}
+                    onAdd={() => {
+                        const index = activePopover.index;
+                        const token = tokens[index];
+                        setShowLinker({
+                            indices: [index],
+                            initialQuery: token.syl || '',
+                            targetWord: { syllabary: token.syl, translit: token.tr }
+                        });
+                        setActivePopover(null);
+                    }}
+                    onEdit={(gloss) => {
+                        let entry = dictionaryMap.get(gloss.entry_id);
+                        if (!entry && personalWords) {
+                            const pw = personalWords.find(w => w.Index === gloss.entry_id || w.id === gloss.entry_id);
+                            if (pw) entry = { ...pw, id: pw.Index, translit: pw.Entry, syllabary: pw.Syllabary, definition: pw.Definition };
+                        }
+
+                        if (entry) {
+                            const indices = gloss.word_index.split(',').map(Number);
+                            const targetWords = indices.map(i => ({ syllabary: tokens[i]?.syl || '', translit: tokens[i]?.tr || '' }));
+
+                            setShowLinker({
+                                indices: indices,
+                                initialQuery: entry.translit || '',
+                                targetWord: targetWords,
+                                initialData: {
+                                    entry,
+                                    notes: gloss.notes || '',
+                                    breakdownCherokee: gloss.breakdown_cherokee || '',
+                                    breakdownEnglish: gloss.breakdown_english || ''
+                                },
+                                glossId: gloss.id
+                            });
+                            setActivePopover(null);
+                        }
+                    }}
+                    personalWords={personalWords}
                 />
             )}
 
             {showLinker && (
                 <LinkerModal
                     initialQuery={showLinker.initialQuery}
+                    targetWord={showLinker.targetWord}
+                    initialData={showLinker.initialData}
                     dictionary={Array.from(dictionaryMap.values())}
+                    personalWords={personalWords}
                     onClose={() => setShowLinker(null)}
-                    onSelect={(entry) => {
-                        const gloss = {
-                            sentence_id: sentence.id,
-                            word_index: showLinker.indices.join(','),
-                            entry_id: entry.id || entry.Index || '', // Handle legacy Index
-                            source: 'user',
-                            notes: ''
-                        };
-                        addUserGloss(gloss);
+                    onSelect={(entry, notes, breakdownCherokee, breakdownEnglish) => {
+                        // If editing existing gloss (glossId present), update it.
+                        if (showLinker.glossId) {
+                            addUserGloss({
+                                sentence_id: sentence.id,
+                                word_index: showLinker.indices.join(','),
+                                entry_id: entry.id,
+                                notes,
+                                breakdown_cherokee: breakdownCherokee,
+                                breakdown_english: breakdownEnglish,
+                                source: 'user',
+                                id: showLinker.glossId
+                            });
+                        } else {
+                            // Creating new gloss - Single entry for multiple words
+                            addUserGloss({
+                                sentence_id: sentence.id,
+                                word_index: showLinker.indices.join(','),
+                                entry_id: entry.id,
+                                notes,
+                                breakdown_cherokee: breakdownCherokee,
+                                breakdown_english: breakdownEnglish,
+                                source: 'user'
+                            });
+                        }
                         setShowLinker(null);
                         setSelectMode(false);
                         setSelectedIndices([]);
                     }}
+                    onDelete={showLinker.initialData ? () => {
+                        if (showLinker.glossId) {
+                            removeUserGloss(showLinker.glossId);
+                        } else {
+                            // Fallback (shouldn't happen for existing user glosses)
+                            showLinker.indices.forEach(idx => {
+                                const g = glosses.find(g => g.word_index === idx.toString());
+                                if (g && g.id) removeUserGloss(g.id);
+                            });
+                        }
+                        setShowLinker(null);
+                    } : undefined}
+                    onCreateNew={onCreateWord}
+                    notebooks={notebooks}
+                />
+            )}
+            {showRecorder && (
+                <AudioRecorder
+                    title={sentence.english || "Sentence Audio"}
+                    syllabary={sentence.syllabary}
+                    transliteration={sentence.translit}
+                    onSave={(blob, speaker) => {
+                        if (onSaveAudio) {
+                            onSaveAudio(sentence.id + '_sentence', blob, speaker);
+                        }
+                        setShowRecorder(false);
+                    }}
+                    onCancel={() => setShowRecorder(false)}
                 />
             )}
         </div>

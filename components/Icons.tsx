@@ -19,6 +19,7 @@ export const Filter = (p) => <IconBase {...p} path={<polygon points="22 3 2 3 10
 export const ListIcon = (p) => <IconBase {...p} path={<><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></>} />;
 export const ChevronDown = (p) => <IconBase {...p} path={<polyline points="6 9 12 15 18 9" />} />;
 export const ChevronUp = (p) => <IconBase {...p} path={<polyline points="18 15 12 9 6 15" />} />;
+export const ChevronRight = (p) => <IconBase {...p} path={<polyline points="9 18 15 12 9 6" />} />;
 export const ListPlus = (p) => <IconBase {...p} path={<><path d="M11 12H3" /><path d="M16 6H3" /><path d="M16 18H3" /><path d="M18 9v6" /><path d="M21 12h-6" /></>} />;
 export const Plus = (p) => <IconBase {...p} path={<><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></>} />;
 export const Trash2 = (p) => <IconBase {...p} path={<><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /></>} />;
