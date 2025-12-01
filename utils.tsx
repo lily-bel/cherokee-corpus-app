@@ -1,10 +1,10 @@
-import React from 'react';
 
-export const parseCSV = (csvText) => {
-  const lines = csvText.split('\n').filter(line => line.trim() !== '');
+export const parseCSV = (csvText: string) => {
+  const lines: string[] = csvText.split('\n').filter((line: string) => line.trim() !== '');
+  if (lines.length === 0) return [];
   const headers = lines[0].split(',').map(h => h.trim());
-  const parseLine = (line) => {
-    const result = []; let current = ''; let inQuotes = false;
+  const parseLine = (line: string) => {
+    const result: string[] = []; let current = ''; let inQuotes = false;
     for (let i = 0; i < line.length; i++) {
       const char = line[i];
       if (char === '"') { inQuotes = !inQuotes; }
@@ -14,7 +14,7 @@ export const parseCSV = (csvText) => {
     result.push(current); return result;
   };
   return lines.slice(1).map(line => {
-    const values = parseLine(line); const entry = {};
+    const values = parseLine(line); const entry: any = {};
     headers.forEach((header, index) => {
       let val = values[index] ? values[index].trim() : '';
       if (val.startsWith('"') && val.endsWith('"')) { val = val.slice(1, -1); }
@@ -24,19 +24,19 @@ export const parseCSV = (csvText) => {
   });
 };
 
-export const renderStyledText = (text) => {
+export const renderStyledText = (text: string) => {
   if (!text) return null;
   const parts = text.split('*');
   if (parts.length % 2 === 0) { return text.replace(/\*/g, ''); }
   return parts.map((part, i) => i % 2 === 1 ? <span key={i} className="font-bold text-slate-900 dark:text-slate-200">{part}</span> : part);
 };
 
-export const formatToneInput = (value) => {
-  const map = { '1': '¹', '2': '²', '3': '³', '4': '⁴', '?': 'ʔ' };
+export const formatToneInput = (value: string) => {
+  const map: Record<string, string> = { '1': '¹', '2': '²', '3': '³', '4': '⁴', '?': 'ʔ' };
   return value.replace(/[1234?]/g, m => map[m]);
 };
 
-export const downloadFile = (content, filename, type) => {
+export const downloadFile = (content: any, filename: string, type: string) => {
   // Add BOM to content if type is CSV, else raw content
   const finalContent = type === 'text/csv' ? new Uint8Array([0xEF, 0xBB, 0xBF, ...new TextEncoder().encode(content)]) : content;
   const blob = new Blob([finalContent], { type: type + ';charset=utf-8;' });
@@ -46,7 +46,7 @@ export const downloadFile = (content, filename, type) => {
   URL.revokeObjectURL(url);
 };
 
-export const exportNotebookToCSV = (notebookId, name, words) => {
+export const exportNotebookToCSV = (notebookId: string, name: string, words: any[]) => {
   const nbWords = words.filter(w => w.notebookId === notebookId);
   const headers = ['Syllabary', 'Transliteration', 'Definition', 'PoS', 'Tone', 'Notes'];
   const rows = [headers.join(',')];
@@ -64,10 +64,10 @@ export const exportNotebookToCSV = (notebookId, name, words) => {
   downloadFile(rows.join('\n'), `${name.replace(/[^a-z0-9]/gi, '_')}.csv`, 'text/csv');
 };
 
-export const importNotebookFromCSV = (file, callback) => {
+export const importNotebookFromCSV = (file: File, callback: (data: any[]) => void) => {
   const reader = new FileReader();
   reader.onload = (e) => {
-    const text = e.target.result as string;
+    const text = (e.target as FileReader).result as string;
     try {
       const lines = text.split('\n').filter(l => l.trim());
       const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
@@ -85,7 +85,7 @@ export const importNotebookFromCSV = (file, callback) => {
       }));
       callback(mappedWords);
     } catch (err) {
-      alert("Import Failed: " + err.message);
+      alert("Import Failed: " + (err as Error).message);
     }
   };
   reader.readAsText(file);
@@ -114,7 +114,7 @@ export const initDB = () => {
   });
 };
 
-export const saveToDB = async (data) => {
+export const saveToDB = async (data: any) => {
   const db = await initDB() as IDBDatabase;
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(STORE_NAME, 'readwrite');
@@ -136,7 +136,7 @@ export const getFromDB = async () => {
   });
 };
 
-export const saveAudioToDB = async (id, blob) => {
+export const saveAudioToDB = async (id: string, blob: Blob) => {
   const db = await initDB() as IDBDatabase;
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(AUDIO_STORE_NAME, 'readwrite');
@@ -148,7 +148,7 @@ export const saveAudioToDB = async (id, blob) => {
   });
 };
 
-export const getAudioFromDB = async (id) => {
+export const getAudioFromDB = async (id: string) => {
   const db = await initDB() as IDBDatabase;
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(AUDIO_STORE_NAME, 'readonly');
@@ -159,7 +159,7 @@ export const getAudioFromDB = async (id) => {
   });
 };
 
-export const deleteAudioFromDB = async (id) => {
+export const deleteAudioFromDB = async (id: string) => {
   const db = await initDB() as IDBDatabase;
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(AUDIO_STORE_NAME, 'readwrite');
@@ -182,7 +182,7 @@ export const getAllUserAudioKeys = async () => {
 };
 
 // --- SEARCH ALGORITHM ---
-export const performSearch = (query, allData, sentences, entryToSentencesMap, settings, notebooks, userNotes, posFilter, searchScope) => {
+export const performSearch = (query: string, allData: any[], sentences: any[], entryToSentencesMap: Map<string, string[]>, settings: any, notebooks: any, userNotes: any, posFilter: string, searchScope: string, prioritizedSources: string[] = []) => {
   if (!query) return [];
   const lowerQuery = query.toLowerCase().trim();
   const queryWithTones = lowerQuery.replace(/[1234?]/g, m => ({ '1': '¹', '2': '²', '3': '³', '4': '⁴', '?': 'ʔ' }[m] || m));
@@ -258,19 +258,23 @@ export const performSearch = (query, allData, sentences, entryToSentencesMap, se
       if (searchLangs.english && entry.Definition) fieldsToSearch.push(entry.Definition);
       if (searchLangs.tone && entry.Entry_Tone) fieldsToSearch.push(entry.Entry_Tone);
     }
-    if (searchScopes.verbs) {
-      const verbCols = ['Verb_1st_Present', 'Verb_3rd_Past', 'Verb_3rd_Present_Habitual', 'Verb_2nd_Imperative', 'Verb_3rd_Infinitive'];
-      verbCols.forEach(col => {
-        if (searchLangs.translit && entry[col]) fieldsToSearch.push(entry[col]);
-        if (searchLangs.syllabary && entry[col + '_Syllabary']) fieldsToSearch.push(entry[col + '_Syllabary']);
-        if (searchLangs.tone && entry[col + '_Tone']) fieldsToSearch.push(entry[col + '_Tone']);
+
+    // OTHER FORMS SEARCH (Replaces Verbs/Plurals)
+    if (searchScopes.otherForms && entry.Other_Forms) {
+      const forms = entry.Other_Forms.split('|');
+      forms.forEach((form: string) => {
+        // Format: Label:Translit^Syllabary^Tone
+        const parts = form.split(':');
+        if (parts.length > 1) {
+          const values = parts[1].split('^');
+          // values[0] = Translit, values[1] = Syllabary, values[2] = Tone
+          if (searchLangs.translit && values[0]) fieldsToSearch.push(values[0]);
+          if (searchLangs.syllabary && values[1]) fieldsToSearch.push(values[1]);
+          if (searchLangs.tone && values[2]) fieldsToSearch.push(values[2]);
+        }
       });
     }
-    if (searchScopes.plurals) {
-      if (searchLangs.translit && entry.Plural) fieldsToSearch.push(entry.Plural);
-      if (searchLangs.syllabary && entry.Plural_Syllabary) fieldsToSearch.push(entry.Plural_Syllabary);
-      if (searchLangs.tone && entry.Plural_Tone) fieldsToSearch.push(entry.Plural_Tone);
-    }
+
     if (searchScopes.notes) {
       const note = isPersonal ? entry.Notes : userNotes[entry.Index];
       if (note) fieldsToSearch.push(note);
@@ -289,7 +293,7 @@ export const performSearch = (query, allData, sentences, entryToSentencesMap, se
     }
 
     if (score > 0) {
-      if (entry.Source === 'ced') score += 5;
+      if (prioritizedSources.includes(entry.Source)) score += 5;
       if (notebooks[entry.Source]) score += 10;
       if (entry.PoS && entry.PoS.toLowerCase().includes('v')) score += 1;
     }

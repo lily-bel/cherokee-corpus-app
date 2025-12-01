@@ -1,16 +1,15 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Mic, Square, Play, Pause, Save, RotateCcw, X } from './Icons';
+import { useState, useRef, useEffect } from 'react';
+import { Mic, Square, Play, Pause, RotateCcw, X, Save } from './Icons';
 import { renderStyledText } from '../utils';
 
-const AudioRecorder = ({ onSave, onCancel, title, syllabary, transliteration }) => {
+const AudioRecorder = ({ onSave, onCancel, title, syllabary, transliteration }: any) => {
     const [isRecording, setIsRecording] = useState(false);
     const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-    const [audioUrl, setAudioUrl] = useState<string | null>(null);
+    const [audioUrl, setAudioUrl] = useState<string | undefined>(undefined);
     const [isPlaying, setIsPlaying] = useState(false);
     const [recordingTime, setRecordingTime] = useState(0);
     const [speakerName, setSpeakerName] = useState('');
     const [error, setError] = useState<string | null>(null);
-    const [streamReady, setStreamReady] = useState(false);
 
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
@@ -24,7 +23,6 @@ const AudioRecorder = ({ onSave, onCancel, title, syllabary, transliteration }) 
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 streamRef.current = stream;
-                setStreamReady(true);
             } catch (err) {
                 console.error("Error accessing microphone:", err);
                 setError("Could not access microphone. Please check permissions.");
@@ -115,7 +113,7 @@ const AudioRecorder = ({ onSave, onCancel, title, syllabary, transliteration }) 
 
     const handleReRecord = () => {
         setAudioBlob(null);
-        setAudioUrl(null);
+        setAudioUrl(undefined);
         setIsPlaying(false);
         setRecordingTime(0);
     };
@@ -126,7 +124,7 @@ const AudioRecorder = ({ onSave, onCancel, title, syllabary, transliteration }) 
         }
     };
 
-    const formatTime = (seconds) => {
+    const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
         return `${mins}:${secs.toString().padStart(2, '0')}`;

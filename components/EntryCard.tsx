@@ -1,6 +1,4 @@
-
-import React from 'react';
-import { StickyNote, ListIcon, Audio, Mic } from './Icons';
+import { Mic, StickyNote, ListIcon, Audio } from './Icons';
 import { SourceBadge } from './UI';
 
 const EntryCard = ({ entry, notebooks, userNotes, userAudioMeta, favorites, customLists, onClick, isDimmed = false, showPos = false }: any) => {
@@ -17,7 +15,7 @@ const EntryCard = ({ entry, notebooks, userNotes, userAudioMeta, favorites, cust
   const totalLists = (inFav ? 1 : 0) + inLists;
 
   return (
-    <div key={entry.Index} onClick={() => onClick(entry)} className={`bg-white dark:bg-slate-900 p-4 border-b border-slate-100 dark:border-slate-800 active:bg-slate-50 dark:active:bg-slate-800 transition-colors cursor-pointer ${isDimmed ? 'opacity-50 grayscale' : ''}`}>
+    <div key={entry.Index} onClick={() => onClick(entry)} className={`bg-white dark:bg-slate-900 p-4 border-b border-slate-100 dark:border-slate-800 active:bg-slate-50 dark:active:bg-slate-800 transition-colors cursor-pointer ${isDimmed ? 'opacity-50 grayscale' : ''} `}>
       <div className="flex justify-between items-start mb-1">
         <div className="flex-1 min-w-0 pr-2">{entry.Syllabary && <span className="font-noto-cherokee text-xl font-bold text-slate-800 dark:text-slate-100 mr-2">{entry.Syllabary}</span>}<span className="font-noto-serif text-lg text-amber-700 dark:text-amber-400 font-medium break-words">{entry.Entry}</span></div>
         <div className="shrink-0 flex flex-col items-end gap-1">

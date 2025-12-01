@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import Papa from 'papaparse';
+
+import { usePackageManager } from './PackageManagerContext';
 
 // --- Types ---
 
@@ -18,6 +19,7 @@ export interface DictionaryEntry {
     Source?: string;
     Entry_Tone?: string;
     PoS?: string;
+    Source_Long?: string;
 }
 
 export interface Sentence {
@@ -40,13 +42,38 @@ export interface Gloss {
     id?: string; // Unique ID for deletion
 }
 
+export interface Notebook {
+    id: string;
+    name: string;
+    date: number; // Timestamp
+}
+
+export interface PersonalWord {
+    id: string;
+    notebookId: string;
+    syllabary: string;
+    translit: string;
+    definition: string;
+    source: string; // "user"
+    audio?: string;
+    // Legacy fields
+    Index?: string;
+    Entry?: string;
+    Syllabary?: string;
+    Definition?: string;
+    Source?: string;
+    Entry_Tone?: string;
+    PoS?: string;
+    Notes?: string;
+    DateCreated?: number;
+}
+
 interface CorpusContextType {
     dictionary: DictionaryEntry[];
     sentences: Sentence[];
     userSentences: Sentence[];
     glosses: Gloss[];
     loading: boolean;
-    error: string | null;
     audioManifest: string[];
 
     // Maps
@@ -54,6 +81,12 @@ interface CorpusContextType {
     entryToSentencesMap: Map<string, string[]>; // EntryID -> SentenceID[]
     dictionaryMap: Map<string, DictionaryEntry>; // EntryID -> Entry
     sentenceMap: Map<string, Sentence>; // SentenceID -> Sentence
+
+    // User Data
+    notebooks: Record<string, Notebook>;
+    personalWords: PersonalWord[];
+    setNotebooks: React.Dispatch<React.SetStateAction<Record<string, Notebook>>>;
+    setPersonalWords: React.Dispatch<React.SetStateAction<PersonalWord[]>>;
 
     // Actions
     addUserGloss: (gloss: Gloss) => void;
@@ -74,15 +107,16 @@ export const useCorpus = () => {
 };
 
 export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [dictionary, setDictionary] = useState<DictionaryEntry[]>([]);
-    const [sentences, setSentences] = useState<Sentence[]>([]);
-    const [staticGlosses, setStaticGlosses] = useState<Gloss[]>([]);
+    const { packages, importedData } = usePackageManager();
+
     const [userGlosses, setUserGlosses] = useState<Gloss[]>([]);
     const [userSentences, setUserSentences] = useState<Sentence[]>([]);
     const [audioManifest, setAudioManifest] = useState<string[]>([]);
 
+    const [notebooks, setNotebooks] = useState<Record<string, Notebook>>({});
+    const [personalWords, setPersonalWords] = useState<PersonalWord[]>([]);
+
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
 
     // Load User Data from LocalStorage on mount
     useEffect(() => {
@@ -97,6 +131,22 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
             const savedSentences = localStorage.getItem('cherokee_app_user_sentences');
             if (savedSentences) setUserSentences(JSON.parse(savedSentences));
+
+            // Load Notebooks and Personal Words
+            const savedNotebooks = localStorage.getItem('cherokee_app_notebooks');
+            const savedWords = localStorage.getItem('cherokee_app_personal_words');
+
+            if (savedWords && !savedNotebooks) {
+                // Migration for legacy data
+                const words = JSON.parse(savedWords);
+                const defaultNotebookId = 'nb_' + Date.now();
+                setNotebooks({ [defaultNotebookId]: { id: defaultNotebookId, name: 'My Dictionary', date: Date.now() } });
+                setPersonalWords(words.map((w: any) => ({ ...w, notebookId: defaultNotebookId })));
+            } else {
+                if (savedNotebooks) setNotebooks(JSON.parse(savedNotebooks));
+                if (savedWords) setPersonalWords(JSON.parse(savedWords));
+            }
+
         } catch (e) {
             console.error("Failed to load user data", e);
         }
@@ -115,110 +165,50 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         } catch (e) { console.error("Failed to save user sentences", e); }
     }, [userSentences]);
 
-    // Load CSVs
     useEffect(() => {
-        const loadData = async () => {
-            setLoading(true);
-            try {
-                const fetchCsv = async (path: string) => {
-                    console.log(`Fetching ${path}...`);
-                    const res = await fetch(path);
-                    if (!res.ok) {
-                        throw new Error(`Failed to fetch ${path}: ${res.status} ${res.statusText}`);
-                    }
-                    const text = await res.text();
-                    console.log(`Fetched ${path}: ${text.length} bytes`);
-                    return text;
-                };
+        try {
+            localStorage.setItem('cherokee_app_notebooks', JSON.stringify(notebooks));
+        } catch (e) { console.error("Failed to save notebooks", e); }
+    }, [notebooks]);
 
-                const [dictRes, sentRes, joinRes, manifestRes] = await Promise.all([
-                    fetchCsv('/data/dictionary.csv'),
-                    fetchCsv('/data/sentences.csv'),
-                    fetchCsv('/data/join_table.csv'),
-                    fetch('/data/audio_manifest.json').then(r => r.ok ? r.json() : [])
-                ]);
+    useEffect(() => {
+        try {
+            localStorage.setItem('cherokee_app_personal_words', JSON.stringify(personalWords));
+        } catch (e) { console.error("Failed to save personal words", e); }
+    }, [personalWords]);
 
-                setAudioManifest(manifestRes);
-
-                Papa.parse(dictRes, {
-                    header: true,
-                    skipEmptyLines: true,
-                    complete: (results) => {
-                        console.log("Dictionary Parsed:", results.data.length, "entries");
-                        if (results.errors.length) console.error("Dictionary Parse Errors:", results.errors);
-
-                        // Normalize keys and map to legacy fields
-                        const mapped = results.data.map((d: any) => ({
-                            ...d,
-                            // New Standard Fields
-                            id: d.Index,
-                            syllabary: d.Syllabary,
-                            translit: d.Entry,
-                            definition: d.Definition,
-                            source: d.Source,
-                            audio: d.Audio,
-
-                            // Legacy Compatibility
-                            Index: d.Index,
-                            Entry: d.Entry,
-                            Syllabary: d.Syllabary,
-                            Definition: d.Definition,
-                            Source: d.Source,
-                            Entry_Tone: d.Entry_Tone || d.Entry, // Fallback
-                            PoS: d.PoS || d.Part_of_Speech || 'Noun' // Default or missing
-                        }));
-                        console.log("Dictionary Mapped (First 5):", mapped.slice(0, 5));
-                        setDictionary(mapped as DictionaryEntry[]);
-                    }
-                });
-
-                Papa.parse(sentRes, {
-                    header: true,
-                    skipEmptyLines: true,
-                    complete: (results) => {
-                        console.log("Sentences Parsed:", results.data.length, "entries");
-                        const mapped = results.data.map((d: any) => ({
-                            id: d.ID,
-                            syllabary: d.Syllabary,
-                            translit: d.Transliteration,
-                            english: d.English,
-                            source: d.Source,
-                            audio: d.Audio,
-                        }));
-                        setSentences(mapped as Sentence[]);
-                    }
-                });
-
-                Papa.parse(joinRes, {
-                    header: true,
-                    skipEmptyLines: true,
-                    complete: (results) => {
-                        console.log("Join Table Parsed:", results.data.length, "entries");
-                        const mapped = results.data.map((d: any) => ({
-                            sentence_id: d.Sentence_ID,
-                            word_index: d.Word_Index,
-                            entry_id: d.Entry_ID,
-                            notes: d.Notes,
-                            source: d.Source
-                        }));
-                        setStaticGlosses(mapped as Gloss[]);
-                    }
-                });
-
-            } catch (err) {
-                console.error("Failed to load corpus data", err);
-                setError("Failed to load data. Please ensure CSVs are in /public/data/");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        loadData();
+    // Load Audio Manifest
+    useEffect(() => {
+        fetch('/data/audio_manifest.json')
+            .then(r => r.ok ? r.json() : [])
+            .then(setAudioManifest)
+            .catch(e => console.error("Failed to load audio manifest", e))
+            .finally(() => setLoading(false));
     }, []);
+
+    // Combine Base Data with Active Packages
+    const { dictionary, sentences, combinedGlosses } = useMemo(() => {
+        const activeIds = packages.filter(p => p.status === 'active' && (p.type === 'imported' || p.type === 'official')).map(p => p.id);
+
+        let d: DictionaryEntry[] = [];
+        let s: Sentence[] = [];
+        let g: Gloss[] = [];
+
+        activeIds.forEach(id => {
+            const data = importedData[id];
+            if (data) {
+                if (data.dictionary) d = [...d, ...data.dictionary];
+                if (data.sentences) s = [...s, ...data.sentences];
+                if (data.glosses) g = [...g, ...data.glosses];
+            }
+        });
+
+        return { dictionary: d, sentences: s, combinedGlosses: g };
+    }, [packages, importedData]);
 
     // Derived State: Maps
     const { glossMap, entryToSentencesMap, dictionaryMap, sentenceMap, allGlosses } = useMemo(() => {
-        const allGlosses = [...staticGlosses, ...userGlosses];
+        const allGlosses = [...combinedGlosses, ...userGlosses];
 
         const gMap = new Map<string, Gloss[]>();
         const eToSMap = new Map<string, Set<string>>(); // Use Set to avoid duplicates
@@ -253,15 +243,6 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             }
         });
 
-        // 3. Map User Sentences to Entries via Glosses
-        // The above loop iterates `allGlosses`, which includes `userGlosses`.
-        // So `eToSMap` ALREADY contains links from Entry -> UserSentenceID.
-        // We just need to make sure we aren't missing anything.
-        // The issue might be that `EntryDetail` uses `entryToSentencesMap` to find IDs,
-        // then looks up the sentence object.
-        // If the sentence object is in `userSentences` but not `sentences`, we need to make sure
-        // `EntryDetail` looks in both or uses `sentenceMap`.
-
         // Convert Set to Array for the final map
         const finalEToSMap = new Map<string, string[]>();
         eToSMap.forEach((val, key) => {
@@ -275,7 +256,7 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             sentenceMap: sMap,
             allGlosses
         };
-    }, [dictionary, sentences, staticGlosses, userGlosses, userSentences]);
+    }, [dictionary, sentences, combinedGlosses, userGlosses, userSentences]);
 
 
     // Actions
@@ -328,7 +309,6 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             userSentences,
             glosses: allGlosses,
             loading,
-            error,
             audioManifest,
             glossMap,
             entryToSentencesMap,
@@ -338,7 +318,11 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             removeUserGloss,
             addUserSentence,
             removeUserSentence,
-            removeUserSentences
+            removeUserSentences,
+            notebooks,
+            personalWords,
+            setNotebooks,
+            setPersonalWords
         }}>
             {children}
         </CorpusContext.Provider>

@@ -1,32 +1,33 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Search, Book, Menu, X, Filter, Clock, ListIcon, Folder, BookOpen, Download, ArrowLeft, Pencil, ChevronDown, Share, Trash2, Plus, Star, ChevronUp, Minus, Check, ToggleLeft, ToggleRight } from './components/Icons';
+import { Search, Book, Menu, X, Filter, Clock, ListIcon, Folder, BookOpen, Download, ArrowLeft, Pencil, ChevronDown, Share, Trash2, Plus, Star, ChevronUp, Minus, Check, ToggleLeft, ToggleRight, Box } from './components/Icons';
 import { Toast, CollapsibleCard, Modal } from './components/UI';
 import EntryCard from './components/EntryCard';
 import EntryDetail from './components/EntryDetail';
+
+import PackageManagerTab from './components/PackageManagerTab';
 import { useCorpus } from './components/CorpusContext';
 import { formatToneInput, downloadFile, exportNotebookToCSV, importNotebookFromCSV, saveAudioToDB, deleteAudioFromDB, getAllUserAudioKeys, performSearch } from './utils';
 import { SentenceCard } from './components/SentenceCard';
 
-// DEFINED SOURCE ORDER
-const SOURCE_ORDER = ['CED', 'RRD', 'CN', 'CWL', 'NOQ', 'MDS', 'MSCT'];
+import { usePackageManager } from './components/PackageManagerContext';
 
 const DEFAULT_SETTINGS = {
     darkMode: false,
     enableRegex: false,
     showPosInLists: false,
     searchLangs: { syllabary: true, translit: true, english: true, tone: false },
-    searchScopes: { main: true, verbs: false, plurals: false, sentences: false, notes: false },
+    searchScopes: { main: true, otherForms: true, sentences: false, notes: false },
 };
 
 function App() {
-    const { dictionary, sentences, userSentences, glosses, loading, audioManifest, entryToSentencesMap, addUserSentence, removeUserSentence, removeUserSentences, removeUserGloss } = useCorpus();
+    const { packages } = usePackageManager();
+    const { dictionary, sentences, userSentences, glosses, loading, audioManifest, entryToSentencesMap, addUserSentence, removeUserSentence, removeUserSentences, removeUserGloss, notebooks, personalWords, setNotebooks, setPersonalWords } = useCorpus();
 
     // Legacy state replacements
     const csvData = dictionary; // Map dictionary to csvData for compatibility
 
-    const [personalWords, setPersonalWords] = useState<any[]>([]);
-    const [notebooks, setNotebooks] = useState<Record<string, { id: string; name: string; date: number }>>({});
+
     const [notebookMode, setNotebookMode] = useState<'words' | 'sentences'>('words');
 
     // const [loadingMessage, setLoadingMessage] = useState<string>('Loading...');
@@ -109,8 +110,6 @@ function App() {
     useEffect(() => {
         const initLoad = async () => {
             try {
-                const savedNotebooks = localStorage.getItem('cherokee_app_notebooks');
-                const savedWords = localStorage.getItem('cherokee_app_personal_words');
                 const savedNotes = localStorage.getItem('cherokee_app_user_notes');
                 const savedAudioMeta = localStorage.getItem('cherokee_app_user_audio_meta');
                 const savedSettings = localStorage.getItem('cherokee_app_settings');
@@ -127,15 +126,7 @@ function App() {
                         searchScopes: { ...prev.searchScopes, ...parsed.searchScopes }
                     }));
                 }
-                if (savedWords && !savedNotebooks) {
-                    const words = JSON.parse(savedWords);
-                    const defaultNotebookId = 'nb_' + Date.now();
-                    setNotebooks({ [defaultNotebookId]: { id: defaultNotebookId, name: 'My Dictionary', date: Date.now() } });
-                    setPersonalWords(words.map(w => ({ ...w, notebookId: defaultNotebookId })));
-                } else {
-                    if (savedNotebooks) setNotebooks(JSON.parse(savedNotebooks));
-                    if (savedWords) setPersonalWords(JSON.parse(savedWords));
-                }
+
 
                 const savedFavs = localStorage.getItem('cherokee_app_favorites'); if (savedFavs) setFavorites(JSON.parse(savedFavs));
                 const savedLists = localStorage.getItem('cherokee_app_custom_lists');
@@ -159,18 +150,27 @@ function App() {
             setFilters(prev => {
                 const newFilters: Record<string, boolean> = { ...prev };
                 const sources = new Set(csvData.map(d => d.Source));
+
+                // Build Source Meta Map from all active packages
+                const sourceMeta: Record<string, "prioritize" | "filter"> = {};
+                packages.forEach(p => {
+                    if (p.status === 'active' && p.metadata.source_meta) {
+                        Object.assign(sourceMeta, p.metadata.source_meta);
+                    }
+                });
+
                 sources.forEach((s) => {
                     const src = s as string;
                     if (!src) return;
                     if (newFilters[src] === undefined) {
-                        const upper = src.toUpperCase();
-                        newFilters[src] = (upper === 'MSCT' || upper === 'MDS') ? false : true;
+                        // Default to true unless metadata says "filter"
+                        newFilters[src] = sourceMeta[src] !== 'filter';
                     }
                 });
                 return newFilters;
             });
         }
-    }, [csvData]);
+    }, [csvData, packages]);
 
     // Initialize Sentence Filters
     useEffect(() => {
@@ -194,10 +194,10 @@ function App() {
         }
     }, [sentences, userSentences]);
 
-    useEffect(() => { try { localStorage.setItem('cherokee_app_personal_words', JSON.stringify(personalWords)); } catch (e) { } }, [personalWords]);
+
     useEffect(() => { try { localStorage.setItem('cherokee_app_user_notes', JSON.stringify(userNotes)); } catch (e) { } }, [userNotes]);
     useEffect(() => { try { localStorage.setItem('cherokee_app_user_audio_meta', JSON.stringify(userAudioMeta)); } catch (e) { } }, [userAudioMeta]);
-    useEffect(() => { try { localStorage.setItem('cherokee_app_notebooks', JSON.stringify(notebooks)); } catch (e) { } }, [notebooks]);
+
     useEffect(() => { try { localStorage.setItem('cherokee_app_settings', JSON.stringify(settings)); } catch (e) { } }, [settings]);
     useEffect(() => { try { localStorage.setItem('cherokee_app_history', JSON.stringify(searchHistory)); } catch (e) { } }, [searchHistory]);
     useEffect(() => { try { localStorage.setItem('cherokee_app_favorites', JSON.stringify(favorites)); } catch (e) { } }, [favorites]);
@@ -209,7 +209,7 @@ function App() {
     }, [customLists]);
 
     const allData = useMemo(() => {
-        const notebookEntries = personalWords.map(w => ({ ...w, id: w.Index, Source: w.notebookId, Source_Long: notebooks[w.notebookId]?.name || 'Personal Dictionary' }));
+        const notebookEntries = personalWords.map(w => ({ ...w, id: w.Index, Source: w.notebookId, Source_Long: notebooks[w.notebookId || '']?.name || 'Personal Dictionary' }));
         return [...notebookEntries, ...csvData];
     }, [csvData, personalWords, notebooks]);
 
@@ -268,7 +268,7 @@ function App() {
         const counts = {};
         allData.forEach(d => {
             const src = d.Source;
-            counts[src] = (counts[src] || 0) + 1;
+            if (src) counts[src] = (counts[src] || 0) + 1;
         });
 
         // Identify "Small Sources" (<= 500 entries, not personal)
@@ -284,7 +284,15 @@ function App() {
 
     const availableSources = useMemo(() => {
         const unique = new Map();
-        const sources: { code: string; name: string; badge: string; count: number }[] = [];
+        const sources: { code: string; name: string; badge: string; count: number; packageId?: string; packageDate?: number }[] = [];
+
+        // Build Source Name Map from all active packages
+        const sourceNames: Record<string, string> = {};
+        packages.forEach(p => {
+            if (p.status === 'active' && p.metadata.source_names) {
+                Object.assign(sourceNames, p.metadata.source_names);
+            }
+        });
 
         allData.forEach(d => {
             if (d.Source && !unique.has(d.Source)) {
@@ -293,40 +301,46 @@ function App() {
                 if (sourceStats.smallSourceCodes.includes(d.Source)) return;
 
                 let code = d.Source;
-                let name = d.Source_Long || d.Source.toUpperCase();
+                let name = d.Source_Long || sourceNames[code] || d.Source.toUpperCase();
                 let badge = code.substring(0, 3).toUpperCase();
+                let packageId: string | undefined = undefined;
+                let packageDate = 0;
 
                 if (code.startsWith('nb_') || code === 'pd') {
-                    name = notebooks[code]?.name || d.Source_Long;
-                    badge = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                    name = notebooks[code]?.name || d.Source_Long || 'Imported Notebook';
+                    badge = (name || '??').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                    packageDate = Date.now(); // User data always on top
                 } else {
                     badge = code.toUpperCase();
+                    // Find which package this source belongs to (heuristic: check metadata)
+                    const pkg = packages.find(p => p.status === 'active' && p.metadata.source_names && p.metadata.source_names[code]);
+                    if (pkg) {
+                        packageId = pkg.id;
+                        packageDate = pkg.metadata.date_created || 0;
+                    }
                 }
-                sources.push({ code, name, badge, count: sourceStats.counts[code] || 0 });
+                sources.push({ code, name, badge, count: sourceStats.counts[code] || 0, packageId, packageDate });
             }
         });
 
-        // Custom Sort based on SOURCE_ORDER
+        // Custom Sort
         sources.sort((a, b) => {
-            // NEW LOGIC: Notebooks first
+            // 1. Notebooks/Personal Data First
             const isNbA = a.code.startsWith('nb_') || a.code === 'pd';
             const isNbB = b.code.startsWith('nb_') || b.code === 'pd';
             if (isNbA && !isNbB) return -1;
             if (!isNbA && isNbB) return 1;
-            if (isNbA && isNbB) return a.name.localeCompare(b.name);
 
-            // Ensure case-insensitive matching against SOURCE_ORDER
-            const idxA = SOURCE_ORDER.indexOf(a.code.toUpperCase());
-            const idxB = SOURCE_ORDER.indexOf(b.code.toUpperCase());
+            // 2. Sort by Package Date (Recent first, 0 last)
+            if (a.packageDate !== b.packageDate) {
+                // If one is 0 (official), push to bottom
+                if (a.packageDate === 0) return 1;
+                if (b.packageDate === 0) return -1;
+                return b.packageDate! - a.packageDate!;
+            }
 
-            // If both are in the list, sort by list order
-            if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-            // If A is in list, it comes first
-            if (idxA !== -1) return -1;
-            // If B is in list, it comes first
-            if (idxB !== -1) return 1;
-            // Otherwise sort by count descending
-            return b.count - a.count;
+            // 3. Alphabetical by Name
+            return a.name.localeCompare(b.name);
         });
 
         // Always add "Other" if small sources exist
@@ -595,7 +609,7 @@ function App() {
 
             const wordsWithId = importedWords.map((w, i) => ({ ...w, Index: newId + '_' + i, notebookId: newId, DateCreated: Date.now() }));
             setPersonalWords(prev => [...prev, ...wordsWithId]);
-            showToast(`Imported ${newName}`, "success");
+            showToast(`Imported ${newName} `, "success");
         });
         e.target.value = null;
     };
@@ -720,8 +734,14 @@ function App() {
         const nw = {
             ...wordForm,
             Index: editingId || Date.now().toString(),
-            notebookId: target,
-            DateCreated: editingId ? (personalWords.find(w => w.Index === editingId)?.DateCreated || Date.now()) : Date.now()
+            notebookId: target!,
+            DateCreated: editingId ? (personalWords.find(w => w.Index === editingId)?.DateCreated || Date.now()) : Date.now(),
+            // Standard Fields
+            id: editingId || Date.now().toString(),
+            syllabary: wordForm.Syllabary,
+            translit: wordForm.Entry,
+            definition: wordForm.Definition,
+            source: 'user'
         };
         if (editingId) {
             setPersonalWords(p => p.map(w => w.Index === editingId ? nw : w));
@@ -791,10 +811,6 @@ function App() {
     const addToHistory = (txt) => { if (!txt || txt.trim().length < 2) return; const c = txt.trim(); setSearchHistory(p => [c, ...p.filter(x => x !== c)].slice(0, 20)); };
     const deleteHistoryItem = (e, txt) => { e.stopPropagation(); setSearchHistory(p => p.filter(x => x !== txt)); };
 
-    const handleRemoveGloss = (glossId: string) => {
-        removeUserGloss(glossId);
-        showToast("Gloss removed");
-    };
 
     const openMoveModal = (wordIdx) => {
         setWordToMove(wordIdx);
@@ -804,6 +820,9 @@ function App() {
     const handleMoveWord = (notebookId) => {
         if (!wordToMove) return;
         setPersonalWords(prev => prev.map(w => {
+            if (w.Index === wordToMove) {
+                return { ...w, notebookId: notebookId };
+            }
             return w;
         }));
         if (selectedEntry && selectedEntry.Index === wordToMove) {
@@ -829,7 +848,7 @@ function App() {
                 if (parts.length >= 3) {
                     const speaker = parts[0];
                     const refPart = parts[1]; // W-123 or S-123
-                    const index = parts[2];
+                    // const index = parts[2];
 
                     // Parse ID
                     const type = refPart.startsWith('W') ? 'word' : 'sentence';
@@ -853,7 +872,7 @@ function App() {
                 if (parts.length >= 3) {
                     const speaker = parts[0];
                     const refPart = parts[1];
-                    const index = parts[2];
+                    // const index = parts[2];
                     const type = refPart.startsWith('W') ? 'word' : 'sentence';
                     const id = refPart.substring(2);
                     const entryKey = type === 'word' ? id : id + '_sentence';
@@ -865,7 +884,7 @@ function App() {
                     // User said "The 'official' audio will also come in with this format... I added two audio files... to work with."
                     // So we treat them similarly?
                     // Let's add them.
-                    meta[entryKey].push({ id: filename, speaker, date: 0, isOfficial: true, src: `/data/audio/${filename}` });
+                    meta[entryKey].push({ id: filename, speaker, date: 0, isOfficial: true, src: `/ data / audio / ${filename} ` });
                 }
             });
 
@@ -890,7 +909,7 @@ function App() {
         // User requested: "speakername_W-1234_index"
         // We can use timestamp as index to ensure uniqueness
         const index = Date.now();
-        const audioId = `${speaker}_${type}-${id}_${index}`;
+        const audioId = `${speaker}_${type} -${id}_${index} `;
 
         await saveAudioToDB(audioId, blob);
 
@@ -921,14 +940,26 @@ function App() {
         }
     };
 
-    const sortedNotebookWords = useMemo(() => { if (!activeNotebookId) return []; const w = personalWords.filter(x => x.notebookId === activeNotebookId).map(x => ({ ...x, Source: activeNotebookId, Source_Long: notebooks[activeNotebookId]?.name })); if (pdSort === 'date') return w.sort((a, b) => b.DateCreated - a.DateCreated); if (pdSort === 'syllabary') return w.sort((a, b) => (a.Syllabary || '').localeCompare(b.Syllabary || '')); if (pdSort === 'translit') return w.sort((a, b) => (a.Entry || '').localeCompare(b.Entry || '')); return w.sort((a, b) => (a.Definition || '').localeCompare(b.Definition || '')); }, [personalWords, activeNotebookId, pdSort, notebooks]);
+    const sortedNotebookWords = useMemo(() => { if (!activeNotebookId) return []; const w = personalWords.filter(x => x.notebookId === activeNotebookId).map(x => ({ ...x, Source: activeNotebookId, Source_Long: notebooks[activeNotebookId]?.name })); if (pdSort === 'date') return w.sort((a, b) => ((b.DateCreated || 0) - (a.DateCreated || 0))); if (pdSort === 'syllabary') return w.sort((a, b) => (a.Syllabary || '').localeCompare(b.Syllabary || '')); if (pdSort === 'translit') return w.sort((a, b) => (a.Entry || '').localeCompare(b.Entry || '')); return w.sort((a, b) => (a.Definition || '').localeCompare(b.Definition || '')); }, [personalWords, activeNotebookId, pdSort, notebooks]);
+
+    const prioritizedSources = useMemo(() => {
+        const prioritized = new Set<string>();
+        packages.forEach(p => {
+            if (p.metadata.source_meta) {
+                Object.entries(p.metadata.source_meta).forEach(([src, action]) => {
+                    if (action === 'prioritize') prioritized.add(src);
+                });
+            }
+        });
+        return Array.from(prioritized);
+    }, [packages]);
 
     // --- SEARCH ALGORITHM ---
     const searchResults = useMemo(() => {
         // Include user sentences in search if scope is sentences
         const combinedSentences = [...sentences, ...userSentences];
-        return performSearch(query, allData, combinedSentences, entryToSentencesMap, settings, notebooks, userNotes, posFilter, searchScope);
-    }, [query, allData, notebooks, settings, userNotes, posFilter, searchScope, sentences, userSentences, entryToSentencesMap]);
+        return performSearch(query, allData, combinedSentences, entryToSentencesMap, settings, notebooks, userNotes, posFilter, searchScope, prioritizedSources);
+    }, [query, allData, notebooks, settings, userNotes, posFilter, searchScope, sentences, userSentences, entryToSentencesMap, prioritizedSources]);
 
     const filteredResults = useMemo(() => {
         if (!query && activeTab === 'search') return { active: [], inactive: [] };
@@ -1004,13 +1035,13 @@ function App() {
                                 <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-lg flex text-sm font-medium">
                                     <button
                                         onClick={() => setSearchScope('dictionary')}
-                                        className={`px-3 py-1 rounded-md transition-all ${searchScope === 'dictionary' ? 'bg-white dark:bg-slate-700 shadow text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                                        className={`px-3 py-1 rounded-md transition-all ${searchScope === 'dictionary' ? 'bg-white dark:bg-slate-700 shadow text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'} `}
                                     >
                                         Dictionary
                                     </button>
                                     <button
                                         onClick={() => setSearchScope('sentences')}
-                                        className={`px-3 py-1 rounded-md transition-all ${searchScope === 'sentences' ? 'bg-white dark:bg-slate-700 shadow text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                                        className={`px-3 py-1 rounded-md transition-all ${searchScope === 'sentences' ? 'bg-white dark:bg-slate-700 shadow text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'} `}
                                     >
                                         Sentences
                                     </button>
@@ -1195,7 +1226,8 @@ function App() {
                         )}</div></div>
                 )
                 }
-                {activeTab === 'lists' && (<div className="flex flex-col h-full"><div className="px-4 py-4 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0"><h2 className="font-noto-serif text-2xl font-bold text-slate-800 dark:text-slate-100">My Lists</h2><button onClick={() => setIsReordering(!isReordering)} className={`text-xs font-bold uppercase tracking-wide px-3 py-1.5 rounded-full transition-colors ${isReordering ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-100' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>{isReordering ? 'Done' : 'Sort / Edit'}</button></div><div className="flex-1 overflow-y-auto p-4"><CollapsibleCard title="Favorites" count={favorites.length} icon={Star} defaultOpen={false} isReordering={false}>{favorites.length === 0 ? <div className="p-6 text-center text-slate-400 italic text-sm">No favorites yet.</div> : allData.filter(d => favorites.includes(d.Index)).map(entry => <EntryCard key={entry.Index} entry={entry} notebooks={notebooks} userNotes={userNotes} userAudioMeta={userAudioMeta} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} />)}</CollapsibleCard>{customListOrder.map((listName, index) => (<CollapsibleCard key={listName} title={listName} count={customLists[listName]?.length || 0} icon={ListIcon} defaultOpen={false} onDelete={() => setListToDelete(listName)} onMoveUp={() => moveList(index, 'up')} onMoveDown={() => moveList(index, 'down')} isReordering={isReordering} onEdit={() => { setRenameData({ type: 'list', target: listName, value: listName }); setShowNewListModal(true); }}>{(!customLists[listName] || customLists[listName].length === 0) ? <div className="p-6 text-center text-slate-400 italic text-sm">Empty list.</div> : allData.filter(d => customLists[listName].includes(d.Index)).map(entry => <EntryCard key={entry.Index} entry={entry} notebooks={notebooks} userNotes={userNotes} userAudioMeta={userAudioMeta} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} />)}</CollapsibleCard>))}</div></div>)}
+                {activeTab === 'lists' && (<div className="flex flex-col h-full"><div className="px-4 py-4 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0"><h2 className="font-noto-serif text-2xl font-bold text-slate-800 dark:text-slate-100">My Lists</h2><button onClick={() => setIsReordering(!isReordering)} className={`text-xs font-bold uppercase tracking-wide px-3 py-1.5 rounded-full transition-colors ${isReordering ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-100' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>{isReordering ? 'Done' : 'Sort / Edit'}</button></div><div className="flex-1 overflow-y-auto p-4"><CollapsibleCard title="Favorites" count={favorites.length} icon={Star} defaultOpen={false} isReordering={false}>{favorites.length === 0 ? <div className="p-6 text-center text-slate-400 italic text-sm">No favorites yet.</div> : allData.filter(d => d.Index && favorites.includes(d.Index)).map(entry => <EntryCard key={entry.Index} entry={entry} notebooks={notebooks} userNotes={userNotes} userAudioMeta={userAudioMeta} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} />)}</CollapsibleCard>{customListOrder.map((listName, index) => (<CollapsibleCard key={listName} title={listName} count={customLists[listName]?.length || 0} icon={ListIcon} defaultOpen={false} onDelete={() => setListToDelete(listName)} onMoveUp={() => moveList(index, 'up')} onMoveDown={() => moveList(index, 'down')} isReordering={isReordering} onEdit={() => { setRenameData({ type: 'list', target: listName || '', value: listName || '' }); setShowNewListModal(true); }}>{(!customLists[listName] || customLists[listName].length === 0) ? <div className="p-6 text-center text-slate-400 italic text-sm">Empty list.</div> : allData.filter(d => d.Index && customLists[listName].includes(d.Index)).map(entry => <EntryCard key={entry.Index} entry={entry} notebooks={notebooks} userNotes={userNotes} userAudioMeta={userAudioMeta} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} />)}</CollapsibleCard>))}</div></div>)}
+                {activeTab === 'packages' && <PackageManagerTab />}
                 {
                     activeTab === 'personal' && (!activeNotebookId ? (<div className="flex flex-col h-full"><div className="px-4 py-4 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0"><h2 className="font-noto-serif text-2xl font-bold text-slate-800 dark:text-slate-100">Notebooks</h2><button onClick={() => setShowNewNotebookModal(true)} className="bg-slate-900 dark:bg-slate-700 text-white p-2 rounded-full shadow-md"><Plus size={20} /></button></div><div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-4 content-start">{Object.values(notebooks).map((nb: any) => (<div key={nb.id} onClick={() => setActiveNotebookId(nb.id)} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 flex flex-col shadow-sm hover:shadow-md transition-shadow active:bg-slate-50 dark:active:bg-slate-800 cursor-pointer h-32 justify-between"><Folder size={32} className="text-sky-800 dark:text-sky-400 opacity-80" /><div><h3 className="font-bold text-slate-800 dark:text-slate-200 line-clamp-1">{nb.name}</h3><p className="text-xs text-slate-400">{personalWords.filter(w => w.notebookId === nb.id).length} words, {userSentences.filter(s => s.source === nb.id).length} sentences</p></div></div>))}{Object.keys(notebooks).length === 0 && (<div className="col-span-2 text-center py-12 text-slate-400 flex flex-col items-center"><BookOpen size={48} className="mb-4 opacity-20" /><p>No notebooks yet.</p><button onClick={() => setShowNewNotebookModal(true)} className="mt-4 text-sky-600 dark:text-sky-400 font-bold">Create one</button></div>)}</div><div className="p-4 border-t border-slate-200 dark:border-slate-800"><label className="w-full flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold py-3 rounded-xl cursor-pointer transition-colors"><Download size={20} /><span>Import CSV</span><input type="file" className="hidden" accept=".csv" onChange={handleImportNotebook} /></label></div></div>) : (<div className="flex flex-col h-full"><div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col gap-3 shrink-0">
                         <div className="flex items-center gap-3">
@@ -1204,8 +1236,8 @@ function App() {
                             <div className="flex gap-2 ml-auto"><button onClick={handleExportNotebook} className="p-1.5 text-slate-400 hover:text-amber-600 rounded"><Share size={20} /></button><button onClick={() => setNotebookToDelete(activeNotebookId)} className="p-1.5 text-slate-400 hover:text-red-500 rounded"><Trash2 size={20} /></button></div>
                         </div>
                         <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
-                            <button onClick={() => setNotebookMode('words')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${notebookMode === 'words' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}`}>Words</button>
-                            <button onClick={() => setNotebookMode('sentences')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${notebookMode === 'sentences' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}`}>Sentences</button>
+                            <button onClick={() => setNotebookMode('words')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${notebookMode === 'words' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'} `}>Words</button>
+                            <button onClick={() => setNotebookMode('sentences')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${notebookMode === 'sentences' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'} `}>Sentences</button>
                         </div>
                     </div>
                         <div className="flex-1 overflow-y-auto p-4">
@@ -1217,7 +1249,24 @@ function App() {
                         </div><button onClick={() => openWordModal()} className="absolute bottom-6 right-6 bg-slate-900 dark:bg-slate-700 text-white p-4 rounded-full shadow-xl z-20 hover:scale-105 transition-transform"><Plus size={24} /></button></div>))
                 }
             </main >
-            <nav className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 pb-safe pt-2 px-6 flex justify-between shrink-0 h-[80px] pb-5"><button onClick={() => { setActiveTab('search'); setIsReordering(false); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'search' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}><Search size={24} strokeWidth={2} /><span className="text-[10px] font-bold tracking-wide">Search</span></button><button onClick={() => { setActiveTab('lists'); setIsReordering(false); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'lists' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}><ListIcon size={24} strokeWidth={2} /><span className="text-[10px] font-bold tracking-wide">Lists</span></button><button onClick={() => { setActiveTab('personal'); setIsReordering(false); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'personal' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}><Book size={24} strokeWidth={2} /><span className="text-[10px] font-bold tracking-wide">Notebooks</span></button></nav>
+            <nav className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 pb-safe pt-2 px-6 flex justify-between shrink-0 h-[80px] pb-5">
+                <button onClick={() => { setActiveTab('search'); setIsReordering(false); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'search' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
+                    <Search size={24} strokeWidth={2} />
+                    <span className="text-[10px] font-bold tracking-wide">Search</span>
+                </button>
+                <button onClick={() => { setActiveTab('lists'); setIsReordering(false); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'lists' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
+                    <ListIcon size={24} strokeWidth={2} />
+                    <span className="text-[10px] font-bold tracking-wide">Lists</span>
+                </button>
+                <button onClick={() => { setActiveTab('personal'); setIsReordering(false); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'personal' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
+                    <Book size={24} strokeWidth={2} />
+                    <span className="text-[10px] font-bold tracking-wide">Notebooks</span>
+                </button>
+                <button onClick={() => { setActiveTab('packages'); setIsReordering(false); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'packages' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
+                    <Box size={24} strokeWidth={2} />
+                    <span className="text-[10px] font-bold tracking-wide">Packages</span>
+                </button>
+            </nav>
 
             {/* DETAIL VIEW MOUNT */}
             {
@@ -1253,11 +1302,11 @@ function App() {
                 showSettingsModal && (
                     <Modal title="Settings" onClose={() => setShowSettingsModal(false)}>
                         <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
-                            <div className="flex items-center justify-between"><div className="flex flex-col"><span className="text-sm font-bold text-slate-700 dark:text-slate-200">Dark Mode</span><span className="text-xs text-slate-400">Toggle app theme</span></div><button onClick={() => setSettings(s => ({ ...s, darkMode: !s.darkMode }))} className={`transition-colors ${settings.darkMode ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}>{settings.darkMode ? <ToggleRight size={32} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={32} />}</button></div>
+                            <div className="flex items-center justify-between"><div className="flex flex-col"><span className="text-sm font-bold text-slate-700 dark:text-slate-200">Dark Mode</span><span className="text-xs text-slate-400">Toggle app theme</span></div><button onClick={() => setSettings(s => ({ ...s, darkMode: !s.darkMode }))} className={`transition - colors ${settings.darkMode ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'} `}>{settings.darkMode ? <ToggleRight size={32} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={32} />}</button></div>
                             <hr className="border-slate-100 dark:border-slate-800" />
-                            <div className="flex items-center justify-between"><div className="flex flex-col"><span className="text-sm font-bold text-slate-700 dark:text-slate-200">Enable Regex Search</span><span className="text-xs text-slate-400">Use regular expressions</span></div><button onClick={() => setSettings(s => ({ ...s, enableRegex: !s.enableRegex }))} className={`transition-colors ${settings.enableRegex ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}>{settings.enableRegex ? <ToggleRight size={32} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={32} />}</button></div>
+                            <div className="flex items-center justify-between"><div className="flex flex-col"><span className="text-sm font-bold text-slate-700 dark:text-slate-200">Enable Regex Search</span><span className="text-xs text-slate-400">Use regular expressions</span></div><button onClick={() => setSettings(s => ({ ...s, enableRegex: !s.enableRegex }))} className={`transition - colors ${settings.enableRegex ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'} `}>{settings.enableRegex ? <ToggleRight size={32} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={32} />}</button></div>
                             <hr className="border-slate-100 dark:border-slate-800" />
-                            <div className="flex items-center justify-between"><div className="flex flex-col"><span className="text-sm font-bold text-slate-700 dark:text-slate-200">Show PoS in Lists</span><span className="text-xs text-slate-400">Display Part of Speech in search/lists</span></div><button onClick={() => setSettings(s => ({ ...s, showPosInLists: !s.showPosInLists }))} className={`transition-colors ${settings.showPosInLists ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}>{settings.showPosInLists ? <ToggleRight size={32} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={32} />}</button></div>
+                            <div className="flex items-center justify-between"><div className="flex flex-col"><span className="text-sm font-bold text-slate-700 dark:text-slate-200">Show PoS in Lists</span><span className="text-xs text-slate-400">Display Part of Speech in search/lists</span></div><button onClick={() => setSettings(s => ({ ...s, showPosInLists: !s.showPosInLists }))} className={`transition - colors ${settings.showPosInLists ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'} `}>{settings.showPosInLists ? <ToggleRight size={32} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={32} />}</button></div>
                             <hr className="border-slate-100 dark:border-slate-800" />
                             <div><h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Search Languages</h4><div className="space-y-2">{[{ k: 'syllabary', l: 'ᏣᎳᎩ (Syllabary)' }, { k: 'translit', l: 'Jalagi (Translit)' }, { k: 'english', l: 'English' }, { k: 'tone', l: 'Tone' }].map(opt => (<label key={opt.k} className="flex items-center justify-between cursor-pointer p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded"><span className="text-sm font-medium text-slate-700 dark:text-slate-300">{opt.l}</span><input type="checkbox" checked={settings.searchLangs[opt.k]} onChange={() => setSettings(s => ({ ...s, searchLangs: { ...s.searchLangs, [opt.k]: !s.searchLangs[opt.k] } }))} className="accent-amber-600 w-5 h-5 rounded" /></label>))}</div></div>
                             <hr className="border-slate-100 dark:border-slate-800" />
@@ -1265,7 +1314,7 @@ function App() {
                                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Search Scope</h4>
 
                                 {/* CHECKBOXES FIRST */}
-                                <div className="space-y-2 mb-4">{[{ k: 'main', l: 'Main Entry' }, { k: 'verbs', l: 'Verb Forms' }, { k: 'plurals', l: 'Plurals' }, { k: 'sentences', l: 'Sentences' }, { k: 'notes', l: 'Notes' }].map(opt => (<label key={opt.k} className="flex items-center justify-between cursor-pointer p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded"><span className="text-sm font-medium text-slate-700 dark:text-slate-300">{opt.l}</span><input type="checkbox" checked={settings.searchScopes[opt.k]} onChange={() => setSettings(s => ({ ...s, searchScopes: { ...s.searchScopes, [opt.k]: !s.searchScopes[opt.k] } }))} className="accent-amber-600 w-5 h-5 rounded" /></label>))}</div>
+                                <div className="space-y-2 mb-4">{[{ k: 'main', l: 'Main Entry' }, { k: 'otherForms', l: 'Other Word Forms' }, { k: 'sentences', l: 'Sentences' }, { k: 'notes', l: 'Notes' }].map(opt => (<label key={opt.k} className="flex items-center justify-between cursor-pointer p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded"><span className="text-sm font-medium text-slate-700 dark:text-slate-300">{opt.l}</span><input type="checkbox" checked={settings.searchScopes[opt.k]} onChange={() => setSettings(s => ({ ...s, searchScopes: { ...s.searchScopes, [opt.k]: !s.searchScopes[opt.k] } }))} className="accent-amber-600 w-5 h-5 rounded" /></label>))}</div>
 
                                 {/* POS FILTER Moved Here (Below Checkboxes) */}
                                 <div className="pt-2 border-t border-slate-100 dark:border-slate-800 mt-2">
@@ -1298,8 +1347,8 @@ function App() {
                 )
             }
             {/* REUSED MODAL FOR NEW LIST / NEW NOTEBOOK / RENAME */}
-            {showNewListModal && (<Modal title={renameData.type === 'list' ? "Rename List" : "New List"} onClose={() => { setShowNewListModal(false); setRenameData({ type: null, target: null, value: '' }); }}><input type="text" autoFocus placeholder={renameData.type === 'list' ? "Rename list..." : "Enter list name..."} value={renameData.value || newListName} onChange={(e) => renameData.type === 'list' ? setRenameData({ ...renameData, value: e.target.value }) : setNewListName(e.target.value)} className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-4 py-3 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 dark:focus:ring-amber-900 transition-all dark:text-white" /><button onClick={renameData.type === 'list' ? handleRename : createNewList} disabled={!(renameData.type === 'list' ? renameData.value : newListName).trim()} className="w-full mt-4 bg-amber-600 text-white font-bold py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">{renameData.type === 'list' ? "Rename" : "Create"}</button></Modal>)}
-            {showNewNotebookModal && (<Modal title={renameData.type === 'notebook' ? "Rename Notebook" : "New Notebook"} onClose={() => { setShowNewNotebookModal(false); setRenameData({ type: null, target: null, value: '' }); }}><input type="text" autoFocus placeholder={renameData.type === 'notebook' ? "Rename notebook..." : "Enter notebook name..."} value={renameData.value || newNotebookName} onChange={(e) => renameData.type === 'notebook' ? setRenameData({ ...renameData, value: e.target.value }) : setNewNotebookName(e.target.value)} className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-4 py-3 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 dark:focus:ring-amber-900 transition-all dark:text-white" /><button onClick={renameData.type === 'notebook' ? handleRename : createNotebook} disabled={!(renameData.type === 'notebook' ? renameData.value : newNotebookName).trim()} className="w-full mt-4 bg-sky-700 text-white font-bold py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">{renameData.type === 'notebook' ? "Rename" : "Create"}</button></Modal>)}
+            {showNewListModal && (<Modal title={renameData.type === 'list' ? "Rename List" : "New List"} onClose={() => { setShowNewListModal(false); setRenameData({ type: null, target: null, value: '' }); }}><input type="text" autoFocus placeholder={renameData.type === 'list' ? "Rename list..." : "Enter list name..."} value={renameData.value || newListName} onChange={(e) => renameData.type === 'list' ? setRenameData({ ...renameData, value: e.target.value }) : setNewListName(e.target.value)} className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-4 py-3 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 dark:focus:ring-amber-900 transition-all dark:text-white" /><button onClick={renameData.type === 'list' ? handleRename : createNewList} disabled={!(renameData.type === 'list' ? renameData.value : newListName).trim()} className="w-full mt-4 bg-amber-600 text-white font-bold py-3 rounded-lg">Save</button></Modal>)}
+            {showNewNotebookModal && (<Modal title={renameData.type === 'notebook' ? "Rename Notebook" : "New Notebook"} onClose={() => { setShowNewNotebookModal(false); setRenameData({ type: null, target: null, value: '' }); }}><input type="text" autoFocus placeholder={renameData.type === 'notebook' ? "Rename notebook..." : "Enter notebook name..."} value={renameData.value || newNotebookName} onChange={(e) => renameData.type === 'notebook' ? setRenameData({ ...renameData, value: e.target.value }) : setNewNotebookName(e.target.value)} className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-4 py-3 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 dark:focus:ring-amber-900 transition-all dark:text-white" /><button onClick={renameData.type === 'notebook' ? handleRename : createNotebook} disabled={!(renameData.type === 'notebook' ? renameData.value : newNotebookName).trim()} className="w-full mt-4 bg-sky-700 text-white font-bold py-3 rounded-lg">{renameData.type === 'notebook' ? "Rename" : "Create"}</button></Modal>)}
             {listToDelete && (<Modal title="Delete List?" onClose={() => setListToDelete(null)}><p className="text-slate-600 dark:text-slate-300 mb-6">Are you sure you want to delete <strong>"{listToDelete}"</strong>? This action cannot be undone.</p><button onClick={() => deleteList(listToDelete)} className="w-full bg-red-600 text-white font-bold py-3 rounded-lg">Delete</button></Modal>)}
             {wordToDelete && (<Modal title="Delete Word?" onClose={() => setWordToDelete(null)}><p className="text-slate-600 dark:text-slate-300 mb-6">Are you sure you want to delete this word? This will remove it from all your lists.</p><button onClick={confirmDeleteWord} className="w-full bg-red-600 text-white font-bold py-3 rounded-lg">Delete</button></Modal>)}
             {notebookToDelete && (<Modal title="Delete Notebook?" onClose={() => setNotebookToDelete(null)}><p className="text-slate-600 dark:text-slate-300 mb-6">Are you sure you want to delete this notebook? All words inside it will be lost.</p><button onClick={() => deleteNotebook(notebookToDelete)} className="w-full bg-red-600 text-white font-bold py-3 rounded-lg">Delete</button></Modal>)}
@@ -1337,10 +1386,10 @@ function App() {
                     <Modal title="Move to Notebook" onClose={() => setShowMoveModal(false)}>
                         <div className="space-y-2 max-h-[60vh] overflow-y-auto">
                             {Object.values(notebooks).length === 0 && <p className="text-slate-400 italic">No notebooks available.</p>}
-                            {Object.values(notebooks).map((nb: any) => (
-                                <button key={nb.id} onClick={() => handleMoveWord(nb.id)} className="w-full text-left p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3">
+                            {Object.entries(notebooks).map(([id, notebook]) => (
+                                <button key={id} onClick={() => handleMoveWord(id)} className="w-full text-left p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3">
                                     <Folder size={20} className="text-sky-600 dark:text-sky-400" />
-                                    <span className="font-bold text-slate-700 dark:text-slate-200">{nb.name}</span>
+                                    <span className="font-bold text-slate-700 dark:text-slate-200">{notebook.name || 'Unknown Notebook'}</span>
                                 </button>
                             ))}
                         </div>

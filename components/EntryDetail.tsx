@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Pencil, ListPlus, Star, ListIcon, X, Plus, Folder, Play, Pause, MicPlus, Book, Trash2, Mic } from './Icons';
+import { ArrowLeft, Pencil, ListPlus, Star, ListIcon, X, Plus, Folder, Pause, MicPlus, Trash2, Mic } from './Icons';
 import { AudioPlayer, SourceBadge } from './UI';
 import { renderStyledText, getAudioFromDB } from '../utils';
 import AudioRecorder from './AudioRecorder';
@@ -39,8 +39,9 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, onSaveAudio, 
                 return;
             }
 
-            const blob = await getAudioFromDB(audio.id);
-            if (blob) {
+            const data = await getAudioFromDB(audio.id);
+            if (data) {
+                const blob = new Blob([data as Blob], { type: 'audio/mp3' });
                 const url = URL.createObjectURL(blob);
                 audioRef.current.src = url;
                 audioRef.current.onended = () => {
@@ -108,7 +109,7 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, onSaveAudio, 
                         {/* METADATA ROW 1: Audio */}
                         <div className="flex items-center gap-3 mb-4 flex-wrap">
                             <AudioPlayer
-                                src={e.Entry_Audio ? `/data/audio/${e.Entry_Audio}` : undefined}
+                                src={e.Entry_Audio ? `/ data / audio / ${e.Entry_Audio} ` : undefined}
                                 label="Official"
                                 icon={Mic}
                                 variant="gray"
@@ -118,7 +119,7 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, onSaveAudio, 
                             {userAudioMeta && userAudioMeta[e.Index] && userAudioMeta[e.Index].map(audio => {
                                 const isOfficial = audioManifest.includes(audio.id) || audioManifest.includes(audio.id + '.mp3') || audioManifest.includes(audio.id + '.wav');
                                 return (
-                                    <div key={audio.id} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors shadow-sm group ${playingAudioId === audio.id ? 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100' : (isOfficial ? 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300' : 'bg-amber-500 text-white hover:bg-amber-600')}`}>
+                                    <div key={audio.id} className={`flex items - center gap - 2 px - 3 py - 1.5 rounded - full text - sm font - medium transition - colors shadow - sm group ${playingAudioId === audio.id ? 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100' : (isOfficial ? 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300' : 'bg-amber-500 text-white hover:bg-amber-600')} `}>
                                         <button
                                             onClick={() => handlePlayUserAudio(audio)}
                                             className="flex items-center gap-2"
@@ -160,11 +161,26 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, onSaveAudio, 
                             </p>
                         </div>
 
-                        {/* PLURAL SECTION */}
-                        {e.Plural && (<div className="mb-8"><h3 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">PLURAL</h3>{renderConjugation(null, e.Plural, e.Plural_Tone, e.Plural_Syllabary)}</div>)}
-
-                        {/* VERB FORMS SECTION */}
-                        {e.Verb_1st_Present && (<div className="mb-8"><h3 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">VERB FORMS</h3><div className="grid grid-cols-1 gap-2">{renderConjugation("1st Person Present", e.Verb_1st_Present, e.Verb_1st_Present_Tone, e.Verb_1st_Present_Syllabary)}{renderConjugation("3rd Person Past", e.Verb_3rd_Past, e.Verb_3rd_Past_Tone, e.Verb_3rd_Past_Syllabary)}{renderConjugation("3rd Person Habitual", e.Verb_3rd_Present_Habitual, e.Verb_3rd_Present_Habitual_Tone, e.Verb_3rd_Present_Habitual_Syllabary)}{renderConjugation("2nd Person Imperative", e.Verb_2nd_Imperative, e.Verb_2nd_Imperative_Tone, e.Verb_2nd_Imperative_Syllabary)}{renderConjugation("3rd Person Infinitive", e.Verb_3rd_Infinitive, e.Verb_3rd_Infinitive_Tone, e.Verb_3rd_Infinitive_Syllabary)}</div></div>)}
+                        {/* OTHER FORMS SECTION */}
+                        {e.Other_Forms && (
+                            <div className="mb-8">
+                                <h3 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">Other Word Forms</h3>
+                                <div className="grid grid-cols-1 gap-2">
+                                    {e.Other_Forms.split('|').map((form, i) => {
+                                        const parts = form.split(':');
+                                        if (parts.length < 2) return null;
+                                        const label = parts[0];
+                                        const values = parts[1].split('^');
+                                        // values[0] = Translit, values[1] = Syllabary, values[2] = Tone
+                                        return (
+                                            <div key={i}>
+                                                {renderConjugation(label, values[0], values[2], values[1])}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
 
                         {(e.Sentence_Syllabary || e.Sentence_English) && (<div className="mb-8 bg-amber-50/50 dark:bg-amber-900/20 p-4 rounded-xl border border-amber-100 dark:border-amber-900/30"><h3 className="text-sm font-bold text-amber-800/60 dark:text-amber-200/60 uppercase tracking-widest mb-3 flex items-center gap-2">Example Sentence</h3>{e.Sentence_Syllabary && <p className="font-noto-cherokee text-lg text-slate-800 dark:text-slate-200 mb-2">{renderStyledText(e.Sentence_Syllabary)}</p>}{e.Sentence_Transliteration && <p className="font-noto-serif text-md text-slate-600 dark:text-slate-400 italic mb-2">{renderStyledText(e.Sentence_Transliteration)}</p>}{e.Sentence_English && <p className="font-noto-serif text-md text-slate-800 dark:text-slate-200 font-medium">{renderStyledText(e.Sentence_English)}</p>}<div className="mt-4 flex items-center gap-3 flex-wrap"><AudioPlayer src={e.Sentence_Audio} label="Play Sentence" icon={Mic} /></div></div>)}
 
@@ -175,7 +191,7 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, onSaveAudio, 
                                 <div ref={sentenceListRef} className="flex overflow-x-auto gap-4 pb-4 snap-x">
                                     {linkedSentences.map((s: any) => (
                                         <div key={s.id} className="min-w-[85vw] md:min-w-[400px] snap-center">
-                                            <SentenceCard sentence={s} userNotes={userNotes} onEditNote={(id, note) => onEdit(s, note, true)} onSaveAudio={onSaveAudio} userAudioMeta={userAudioMeta} onEditSentence={onEditSentence} onDeleteSentence={onDeleteSentence} onCreateWord={onCreateWord} personalWords={personalWords} notebooks={notebooks} />
+                                            <SentenceCard sentence={s} userNotes={userNotes} onEditNote={(_, note) => onEdit(s, note, true)} onSaveAudio={onSaveAudio} userAudioMeta={userAudioMeta} onEditSentence={onEditSentence} onDeleteSentence={onDeleteSentence} onCreateWord={onCreateWord} personalWords={personalWords} notebooks={notebooks} />
                                         </div>
                                     ))}
                                 </div>

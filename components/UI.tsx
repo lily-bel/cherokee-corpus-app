@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { AlertCircle, Volume2, ChevronUp, ChevronDown, Pencil, ArrowUp, ArrowDown, Trash2 } from './Icons';
 
 export const Toast = ({ show, message, type = 'error' }) => {
@@ -54,15 +54,13 @@ export const AudioPlayer = ({ src, label = "Audio", icon: Icon = Volume2, varian
 
 export const SourceBadge = ({ source, name }) => {
   let colorClass = "bg-gray-200 text-gray-600 dark:bg-slate-700 dark:text-slate-300";
-  let label = source;
-  if (source?.toLowerCase() === 'ced') { colorClass = "bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-900/40 dark:text-amber-200 dark:border-amber-800"; label = "CED"; }
-  else if (source?.toLowerCase() === 'mds') { colorClass = "bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"; label = "MDS"; }
-  else if (source && (source === 'pd' || source.startsWith('nb_'))) {
+
+  if (source && (source === 'pd' || source.startsWith('nb_'))) {
     let initials = "NB";
     if (name) { initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase(); }
     return <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border border-slate-400 text-slate-500 uppercase tracking-wide bg-white dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600">{initials}</span>;
   }
-  return <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${colorClass}`}>{label}</span>;
+  return <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${colorClass}`}>{source?.toUpperCase()}</span>;
 };
 
 export const CollapsibleCard = ({ title, icon: Icon, count, children, defaultOpen = false, onDelete = undefined, onMoveUp = undefined, onMoveDown = undefined, isReordering, onEdit = undefined }: any) => {
