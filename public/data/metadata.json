@@ -13,6 +13,7 @@
     "locked": "yes",
     "source_names": {
         "ced": "Dr Durbin Feeling Cherokee English Dictionary 1975",
+        "bible": "Cherokee New Testament Full Text",
         "rrd": "Raven Rock Dictionary",
         "cn": "Cherokee Nation",
         "cwl": "Consortium Word List",
@@ -30,8 +31,7 @@
         "magok": "Montgomery-Anderson, B. (2008). A reference grammar of Oklahoma Cherokee.",
         "kpep": "Kituwah Preservation & Education Program, EBCI",
         "vrb": "Kirk, W. (2012). Verb Reference Book Didehloqwasgi. Northeastern State University",
-        "cccc": "Carnegie Corporation Cross-Cultural Education Project",
-        "bible": "Cherokee New Testament Full Text"
+        "cccc": "Carnegie Corporation Cross-Cultural Education Project"
     },
     "source_meta": {
         "ced": "prioritize",
