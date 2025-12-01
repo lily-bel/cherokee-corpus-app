@@ -10,6 +10,28 @@ export const usePackageExport = () => {
     const exportPackage = async (notebookIds: string[], metadata: Partial<PackageMetadata>) => {
         const zip = new JSZip();
 
+        // 0. Generate Shorthands
+        const shorthandMap: Record<string, string> = {};
+        const usedShorthands = new Set<string>();
+
+        notebookIds.forEach(id => {
+            const nb = notebooks[id];
+            if (!nb) return;
+
+            let base = nb.name.replace(/[^a-zA-Z0-9]/g, '').substring(0, 4).toUpperCase();
+            if (base.length === 0) base = 'NB';
+
+            let shorthand = base;
+            let counter = 1;
+            while (usedShorthands.has(shorthand)) {
+                counter++;
+                shorthand = `${base}${counter}`;
+            }
+
+            usedShorthands.add(shorthand);
+            shorthandMap[id] = shorthand;
+        });
+
         // 1. Filter Data
         const wordsToExport = personalWords.filter(w => notebookIds.includes(w.notebookId));
         const sentencesToExport = userSentences.filter(s => notebookIds.includes(s.source));
@@ -22,15 +44,16 @@ export const usePackageExport = () => {
         const dictHeader = ['Index', 'Source', 'Entry', 'Syllabary', 'Part_of_Speech', 'PoS', 'PoS_Family', 'Definition', 'Cross_Reference', 'Entry_Tone', 'Other_Forms', 'Notes'];
         const dictRows = [dictHeader.join(',')];
         wordsToExport.forEach(w => {
+            const src = shorthandMap[w.notebookId] || w.notebookId;
             dictRows.push([
                 `"${w.id || ''}"`,
-                `"${w.notebookId || ''}"`,
-                `"${(w.translit || '').replace(/"/g, '""')}"`,
-                `"${(w.syllabary || '').replace(/"/g, '""')}"`,
+                `"${src}"`,
+                `"${(w.translit || w.Entry || '').replace(/"/g, '""')}"`,
+                `"${(w.syllabary || w.Syllabary || '').replace(/"/g, '""')}"`,
                 `"${(w.PoS || '').replace(/"/g, '""')}"`,
                 `"${(w.PoS || '').replace(/"/g, '""')}"`,
                 `"${(w.PoS || '').replace(/"/g, '""')}"`,
-                `"${(w.definition || '').replace(/"/g, '""')}"`,
+                `"${(w.definition || w.Definition || '').replace(/"/g, '""')}"`,
                 `""`, // Cross_Reference
                 `"${(w.Entry_Tone || '').replace(/"/g, '""')}"`,
                 `""`, // Other_Forms
@@ -43,9 +66,10 @@ export const usePackageExport = () => {
         const sentHeader = ['ID', 'Source', 'Syllabary', 'Transliteration', 'English', 'Story', 'Chapter', 'Line', 'Author', 'Speaker'];
         const sentRows = [sentHeader.join(',')];
         sentencesToExport.forEach(s => {
+            const src = shorthandMap[s.source] || s.source;
             sentRows.push([
                 `"${s.id || ''}"`,
-                `"${s.source || ''}"`,
+                `"${src}"`,
                 `"${(s.syllabary || '').replace(/"/g, '""')}"`,
                 `"${(s.translit || '').replace(/"/g, '""')}"`,
                 `"${(s.english || '').replace(/"/g, '""')}"`,
@@ -63,9 +87,20 @@ export const usePackageExport = () => {
         const joinRows = [joinHeader.join(',')];
         glossesToExport.forEach(g => {
             const glossId = crypto.randomUUID();
+            // Gloss source is usually 'user', but if it's linked to a sentence, maybe we should use the sentence source?
+            // But glosses are independent.
+            // If we export glosses, they are part of this package.
+            // We can use the package name or just 'user'?
+            // Actually, glosses don't strictly have a source in the same way.
+            // But let's use the shorthand of the sentence's source if possible, or just 'user'.
+            // Wait, glossesToExport are filtered by sentenceIds.
+            // Let's find the sentence for this gloss.
+            const sentence = sentencesToExport.find(s => s.id === g.sentence_id);
+            const src = sentence ? (shorthandMap[sentence.source] || sentence.source) : 'user';
+
             joinRows.push([
                 `"${glossId}"`,
-                `"${g.source}"`,
+                `"${src}"`,
                 `"${g.sentence_id}"`,
                 `"${g.entry_id}"`,
                 `"${g.word_index}"`,
@@ -97,7 +132,11 @@ export const usePackageExport = () => {
         notebookIds.forEach(id => {
             if (notebooks[id]) {
                 if (!meta.source_names) meta.source_names = {};
-                meta.source_names[id] = notebooks[id].name;
+                // Use Shorthand as Key
+                const short = shorthandMap[id];
+                if (short) {
+                    meta.source_names[short] = notebooks[id].name;
+                }
             }
         });
 
@@ -184,9 +223,58 @@ export const usePackageImport = () => {
 
         const parse = (csv: string) => Papa.parse(csv, { header: true, skipEmptyLines: true }).data;
 
-        const dictionary = parse(dictText);
-        const sentences = parse(sentText);
-        const glosses = parse(joinText);
+        const rawDictionary = parse(dictText);
+        const rawSentences = parse(sentText);
+        const rawGlosses = parse(joinText);
+
+        // Normalize Data
+        const dictionary = rawDictionary.map((d: any) => ({
+            ...d,
+            id: d.Index,
+            syllabary: d.Syllabary,
+            translit: d.Entry,
+            definition: d.Definition,
+            source: d.Source,
+            audio: d.Audio,
+            // Keep original fields for legacy compatibility if needed
+            Index: d.Index,
+            Entry: d.Entry,
+            Syllabary: d.Syllabary,
+            Definition: d.Definition,
+            Source: d.Source,
+            Entry_Tone: d.Entry_Tone,
+            PoS: d.PoS || d.Part_of_Speech,
+            Source_Long: meta.source_names?.[d.Source] || d.Source
+        }));
+
+        const sentences = rawSentences.map((d: any) => ({
+            id: d.ID,
+            syllabary: d.Syllabary,
+            translit: d.Transliteration,
+            english: d.English,
+            source: d.Source,
+            audio: d.Audio,
+            // Keep originals
+            ID: d.ID,
+            Syllabary: d.Syllabary,
+            Transliteration: d.Transliteration,
+            English: d.English,
+            Source: d.Source
+        }));
+
+        const glosses = rawGlosses.map((d: any) => ({
+            sentence_id: d.Sentence_ID,
+            word_index: d.Word_Index,
+            entry_id: d.Entry_ID,
+            notes: d.Notes,
+            source: d.Source,
+            // Keep originals
+            Sentence_ID: d.Sentence_ID,
+            Word_Index: d.Word_Index,
+            Entry_ID: d.Entry_ID,
+            Notes: d.Notes,
+            Source: d.Source
+        }));
 
         // 3. Audio
         const audioFolder = zip.folder('audio');

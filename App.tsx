@@ -209,9 +209,12 @@ function App() {
     }, [customLists]);
 
     const allData = useMemo(() => {
-        const notebookEntries = personalWords.map(w => ({ ...w, id: w.Index, Source: w.notebookId, Source_Long: notebooks[w.notebookId || '']?.name || 'Personal Dictionary' }));
+        const isUserLibraryActive = packages.find(p => p.id === 'user')?.status === 'active';
+        const notebookEntries = isUserLibraryActive
+            ? personalWords.map(w => ({ ...w, id: w.Index, Source: w.notebookId, Source_Long: notebooks[w.notebookId || '']?.name || 'Personal Dictionary' }))
+            : [];
         return [...notebookEntries, ...csvData];
-    }, [csvData, personalWords, notebooks]);
+    }, [csvData, personalWords, notebooks, packages]);
 
     const updateUrl = (entry) => {
         try {
@@ -271,16 +274,28 @@ function App() {
             if (src) counts[src] = (counts[src] || 0) + 1;
         });
 
-        // Identify "Small Sources" (<= 500 entries, not personal)
+        // Identify "Small Sources" based on Metadata
         const smallSourceCodes: string[] = [];
+
+        // Build Metadata Map
+        const sourceMeta: Record<string, string> = {};
+        packages.forEach(p => {
+            if (p.status === 'active' && p.metadata.source_meta) {
+                Object.assign(sourceMeta, p.metadata.source_meta);
+            }
+        });
+
         Object.keys(counts).forEach(src => {
-            if (counts[src] <= 500 && !src.startsWith('nb_') && src !== 'pd') {
+            if (src.startsWith('nb_') || src === 'pd') return; // Always main
+
+            const meta = sourceMeta[src];
+            if (meta === 'other') {
                 smallSourceCodes.push(src);
             }
         });
 
         return { counts, smallSourceCodes };
-    }, [allData]);
+    }, [allData, packages]);
 
     const availableSources = useMemo(() => {
         const unique = new Map();
@@ -339,7 +354,22 @@ function App() {
                 return b.packageDate! - a.packageDate!;
             }
 
-            // 3. Alphabetical by Name
+            // 3. Sort by Metadata Order (for official sources)
+            const sourceOrder: string[] = [];
+            packages.forEach(p => {
+                if (p.status === 'active' && p.metadata.source_names) {
+                    sourceOrder.push(...Object.keys(p.metadata.source_names));
+                }
+            });
+
+            const idxA = sourceOrder.indexOf(a.code);
+            const idxB = sourceOrder.indexOf(b.code);
+
+            if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+            if (idxA !== -1) return 1; // If A is not in order, put it after B (if B is in order)
+            if (idxB !== -1) return -1;
+
+            // 4. Alphabetical by Name (Fallback)
             return a.name.localeCompare(b.name);
         });
 
@@ -350,7 +380,7 @@ function App() {
         }
 
         return sources;
-    }, [allData, notebooks, sourceStats]);
+    }, [allData, notebooks, sourceStats, packages]);
 
     // SENTENCE SOURCES
     const availableSentenceSources = useMemo(() => {
@@ -361,33 +391,111 @@ function App() {
             if (src) counts[src] = (counts[src] || 0) + 1;
         });
 
-        const sortedSources = Object.entries(counts).map(([code, count]) => ({
-            code,
-            name: notebooks[code]?.name || code, // Use notebook name if it's a notebook, otherwise code
-            count,
-            badge: code.startsWith('nb_') ? notebooks[code]?.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : (code === 'user' ? 'USER' : code.substring(0, 3).toUpperCase())
-        })).sort((a, b) => {
+        const sortedSources = Object.entries(counts).map(([code, count]) => {
+            // Try to find name in notebooks
+            let name = notebooks[code]?.name;
+            let badge = '';
+
+            if (name) {
+                // It's a user notebook
+                badge = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+            } else {
+                // Try to find in packages
+                const pkg = packages.find(p => p.status === 'active' && p.metadata.source_names && p.metadata.source_names[code]);
+                if (pkg) {
+                    name = pkg.metadata.source_names?.[code] || code;
+                    badge = code.substring(0, 3).toUpperCase();
+                } else if (code === 'user') {
+                    name = 'My Library';
+                    badge = 'MY';
+                } else {
+                    // Fallback
+                    name = code;
+                    badge = code.substring(0, 3).toUpperCase();
+                }
+            }
+
+            return { code, name, count, badge };
+        }).sort((a, b) => {
             // User sentences/notebooks first
-            const isUserA = a.code === 'user' || a.code.startsWith('nb_');
-            const isUserB = b.code === 'user' || b.code.startsWith('nb_');
+            const isUserA = a.code === 'user' || !!notebooks[a.code];
+            const isUserB = b.code === 'user' || !!notebooks[b.code];
             if (isUserA && !isUserB) return -1;
             if (!isUserA && isUserB) return 1;
             if (isUserA && isUserB) return a.name.localeCompare(b.name); // Sort user sources by name
 
-            // Then sort by count descending for other sources
+            // Sort by Metadata Order
+            const sourceOrder: string[] = [];
+            packages.forEach(p => {
+                if (p.status === 'active' && p.metadata.source_names) {
+                    sourceOrder.push(...Object.keys(p.metadata.source_names));
+                }
+            });
+
+            const idxA = sourceOrder.indexOf(a.code);
+            const idxB = sourceOrder.indexOf(b.code);
+
+            if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+            if (idxA !== -1) return 1;
+            if (idxB !== -1) return -1;
+
+            // Then sort by count descending for other sources (Fallback)
             return b.count - a.count;
         });
 
-        // Group sources with < 50 items into "Other"
-        const mainSources = sortedSources.filter(s => s.count >= 50 || s.code === 'user' || s.code.startsWith('nb_'));
-        const otherSources = sortedSources.filter(s => s.count < 50 && s.code !== 'user' && !s.code.startsWith('nb_'));
+        // Split into Main and Other based on Metadata
+        const mainSources: any[] = [];
+        const otherSources: any[] = [];
+
+        // Build Metadata Map
+        const sourceMeta: Record<string, string> = {};
+        packages.forEach(p => {
+            if (p.status === 'active' && p.metadata.source_meta) {
+                Object.assign(sourceMeta, p.metadata.source_meta);
+            }
+        });
+
+        sortedSources.forEach(s => {
+            if (s.code === 'user' || notebooks[s.code]) {
+                mainSources.push(s);
+                return;
+            }
+
+            const meta = sourceMeta[s.code];
+            if (meta === 'other') {
+                s.name = `[${s.code}] ${s.name}`;
+                otherSources.push(s);
+            } else {
+                mainSources.push(s);
+            }
+        });
+
+        // Ensure we don't have too many main sources (Legacy check removed as per user request to rely on metadata)
+        // if (mainSources.length > 10) { ... }
 
         if (otherSources.length > 0) {
+            // Sort otherSources by metadata order
+            const sourceOrder: string[] = [];
+            packages.forEach(p => {
+                if (p.status === 'active' && p.metadata.source_names) {
+                    sourceOrder.push(...Object.keys(p.metadata.source_names));
+                }
+            });
+
+            otherSources.sort((a, b) => {
+                const idxA = sourceOrder.indexOf(a.code);
+                const idxB = sourceOrder.indexOf(b.code);
+                if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                if (idxA !== -1) return -1;
+                if (idxB !== -1) return 1;
+                return b.count - a.count;
+            });
+
             mainSources.push({ code: 'other_group', name: 'Other Sources', count: otherSources.length, badge: '...' });
         }
 
         return { mainSources, otherSources };
-    }, [sentences, userSentences, notebooks]);
+    }, [sentences, userSentences, notebooks, packages]);
 
 
     const sourceMap = useMemo(() => {
@@ -398,16 +506,29 @@ function App() {
         return map;
     }, [availableSources, availableSentenceSources]);
 
-    // Compute Small Sources List for the Expanded View, sorted by count
+    // Compute Small Sources List for the Expanded View, sorted by metadata order
     const expandedSmallSourcesDict = useMemo(() => {
+        // Get source order from metadata
+        const sourceOrder: string[] = [];
+        packages.forEach(p => {
+            if (p.status === 'active' && p.metadata.source_names) {
+                sourceOrder.push(...Object.keys(p.metadata.source_names));
+            }
+        });
+
         return sourceStats.smallSourceCodes.map(code => {
-            // Find a representative entry to get full name? Or just use code if not efficient
-            // We can find one entry in allData just to get the long name
             const sample = allData.find(d => d.Source === code);
             const name = sample?.Source_Long || code;
             return { code, name, count: sourceStats.counts[code] };
-        }).sort((a, b) => b.count - a.count);
-    }, [sourceStats, allData]);
+        }).sort((a, b) => {
+            const idxA = sourceOrder.indexOf(a.code);
+            const idxB = sourceOrder.indexOf(b.code);
+            if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+            if (idxA !== -1) return -1;
+            if (idxB !== -1) return 1;
+            return b.count - a.count; // Fallback to count
+        });
+    }, [sourceStats, allData, packages]);
 
     const otherGroupState = useMemo(() => {
         const smallCodes = sourceStats.smallSourceCodes;
@@ -956,10 +1077,11 @@ function App() {
 
     // --- SEARCH ALGORITHM ---
     const searchResults = useMemo(() => {
-        // Include user sentences in search if scope is sentences
-        const combinedSentences = [...sentences, ...userSentences];
+        const isUserLibraryActive = packages.find(p => p.id === 'user')?.status === 'active';
+        // Include user sentences in search if scope is sentences AND user library is active
+        const combinedSentences = [...sentences, ...(isUserLibraryActive ? userSentences : [])];
         return performSearch(query, allData, combinedSentences, entryToSentencesMap, settings, notebooks, userNotes, posFilter, searchScope, prioritizedSources);
-    }, [query, allData, notebooks, settings, userNotes, posFilter, searchScope, sentences, userSentences, entryToSentencesMap, prioritizedSources]);
+    }, [query, allData, notebooks, settings, userNotes, posFilter, searchScope, sentences, userSentences, entryToSentencesMap, prioritizedSources, packages]);
 
     const filteredResults = useMemo(() => {
         if (!query && activeTab === 'search') return { active: [], inactive: [] };
@@ -1084,6 +1206,7 @@ function App() {
                                                                         className="accent-amber-600 w-4 h-4 rounded"
                                                                     />
                                                                     <div className="flex-1 flex items-center min-w-0">
+                                                                        <span className="font-bold uppercase text-xs text-slate-500 dark:text-slate-400 mr-2 min-w-[3rem] shrink-0 text-center bg-slate-100 dark:bg-slate-800 rounded px-1">{smallSrc.code}</span>
                                                                         <span className="truncate">{smallSrc.name}</span>
                                                                         <span className="ml-auto text-[10px] text-slate-300 font-mono">({smallSrc.count})</span>
                                                                     </div>
@@ -1142,7 +1265,8 @@ function App() {
                                                                                 className="accent-amber-600 w-4 h-4 rounded"
                                                                             />
                                                                             <div className="flex-1 flex items-center min-w-0">
-                                                                                <span className="truncate">{smallSrc.name}</span>
+                                                                                <span className="font-bold uppercase text-xs text-slate-500 dark:text-slate-400 mr-2 min-w-[3rem] shrink-0 text-center bg-slate-100 dark:bg-slate-800 rounded px-1">{smallSrc.code}</span>
+                                                                                <span className="truncate">{smallSrc.name.replace(`[${smallSrc.code}] `, '')}</span>
                                                                                 <span className="ml-auto text-[10px] text-slate-300 font-mono">({smallSrc.count})</span>
                                                                             </div>
                                                                         </label>

@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useCorpus } from './CorpusContext';
 import { usePackageManager, Package } from './PackageManagerContext';
 import { usePackageImport } from './usePackageHooks';
 import PackageExportModal from './PackageExportModal';
@@ -8,6 +9,7 @@ import { Toast } from './UI';
 const PackageManagerTab: React.FC = () => {
     const { packages, togglePackage, removePackage } = usePackageManager();
     const { importPackage } = usePackageImport();
+    const { personalWords, userSentences } = useCorpus();
 
     const [showExportModal, setShowExportModal] = useState(false);
     const [importing, setImporting] = useState(false);
@@ -44,6 +46,9 @@ const PackageManagerTab: React.FC = () => {
         const isOfficial = pkg.type === 'official';
         const isUser = pkg.type === 'user';
 
+        const wordCount = isUser ? personalWords.length : (pkg.metadata?.stats?.words || 0);
+        const sentCount = isUser ? userSentences.length : (pkg.metadata?.stats?.sentences || 0);
+
         return (
             <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 flex flex-col gap-3 shadow-sm">
                 <div className="flex items-center justify-between">
@@ -66,8 +71,8 @@ const PackageManagerTab: React.FC = () => {
 
                 <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
                     <div className="flex gap-4 text-xs text-slate-500 dark:text-slate-400 font-mono">
-                        <span>{pkg.metadata?.stats?.words || 0} words</span>
-                        <span>{pkg.metadata?.stats?.sentences || 0} sentences</span>
+                        <span>{wordCount} words</span>
+                        <span>{sentCount} sentences</span>
                     </div>
 
                     {!isOfficial && !isUser && (

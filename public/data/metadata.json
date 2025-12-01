@@ -36,6 +36,18 @@
     "source_meta": {
         "ced": "prioritize",
         "mds": "filter",
-        "msct": "filter"
+        "msct": "filter",
+        "cnmed": "other",
+        "cnld": "other",
+        "ncmed": "other",
+        "banks": "other",
+        "cnt": "other",
+        "hsbc": "other",
+        "sskil": "other",
+        "fbgp": "other",
+        "magok": "other",
+        "kpep": "other",
+        "vrb": "other",
+        "cccc": "other"
     }
 }
