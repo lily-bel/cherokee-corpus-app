@@ -153,7 +153,7 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                         name: 'My Library',
                         type: 'user',
                         status: 'active',
-                        color: 'amber',
+                        color: '#f59e0b', // Amber-500
                         metadata: {
                             id: 'user',
                             name: 'My Library',

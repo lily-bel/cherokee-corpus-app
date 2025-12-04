@@ -176,7 +176,9 @@ const ColorPickerModal = ({ pkgId, onClose }: { pkgId: string, onClose: () => vo
 
                 <div className="flex items-center gap-3 mb-6 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
                     <div className="w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-sm transition-colors duration-300" style={{ backgroundColor: pkg.color }}>
-                        {pkg.type === 'official' ? 'OF' : (pkg.type === 'user' ? 'MY' : pkg.name.substring(0, 2).toUpperCase())}
+                        <div className="w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-sm transition-colors duration-300" style={{ backgroundColor: pkg.color }}>
+                            {(pkg.name.split(' ').length > 1 ? (pkg.name.split(' ')[0][0] + pkg.name.split(' ')[1][0]).toUpperCase() : pkg.name.substring(0, 2).toUpperCase())}
+                        </div>
                     </div>
                     <div>
                         <div className="font-bold text-slate-800 dark:text-slate-100">{pkg.name}</div>
@@ -248,7 +250,9 @@ const PackageItem = ({ pkg, onColorClick, showToast, togglePackage, removePackag
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-sm transition-colors duration-300" style={{ backgroundColor: pkg.color }}>
-                        {pkg.type === 'official' ? 'OF' : (pkg.type === 'user' ? 'MY' : pkg.name.substring(0, 2).toUpperCase())}
+                        <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-sm transition-colors duration-300" style={{ backgroundColor: pkg.color }}>
+                            {(pkg.name.split(' ').length > 1 ? (pkg.name.split(' ')[0][0] + pkg.name.split(' ')[1][0]).toUpperCase() : pkg.name.substring(0, 2).toUpperCase())}
+                        </div>
                     </div>
                     <div>
                         <h3 className="font-bold text-slate-800 dark:text-slate-100">{pkg.name}</h3>
