@@ -43,6 +43,8 @@ interface PackageManagerContextType {
     installPackage: (pkg: Package, data: ImportedPackageData) => void;
     removePackage: (id: string) => void;
     togglePackage: (id: string) => void;
+    updatePackageColor: (id: string, color: string) => void;
+    getPackageColor: (sourceId: string) => string | undefined;
 }
 
 const PackageManagerContext = createContext<PackageManagerContextType | undefined>(undefined);
@@ -192,13 +194,44 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
         setPackages(prev => prev.map(p => p.id === id ? { ...p, status: p.status === 'active' ? 'inactive' : 'active' } : p));
     };
 
+    const updatePackageColor = (id: string, color: string) => {
+        setPackages(prev => prev.map(p => p.id === id ? { ...p, color } : p));
+    };
+
+    const getPackageColor = (sourceId: string) => {
+        // 1. Check if sourceId matches a package ID directly
+        const pkg = packages.find(p => p.id === sourceId);
+        if (pkg) return pkg.color;
+
+        // 2. Check if sourceId is a shorthand in a package's source_names
+        // This is a bit more complex because multiple packages might have the same shorthand key if not careful,
+        // but usually shorthands are unique per package scope?
+        // Actually, the app seems to use 'source' field in data which might be a shorthand.
+        // Let's iterate packages and check metadata.source_names
+        for (const p of packages) {
+            if (p.metadata.source_names && p.metadata.source_names[sourceId]) {
+                return p.color;
+            }
+            // Also check if the sourceId matches the package name or ID logic used elsewhere
+            if (p.id === sourceId) return p.color;
+        }
+
+        // 3. Fallback for specific known IDs if they aren't in packages list yet or are special
+        if (sourceId === 'official-cherokee-data') return 'slate'; // Should be in packages though
+        if (sourceId === 'user') return 'amber';
+
+        return undefined;
+    };
+
     return (
         <PackageManagerContext.Provider value={{
             packages,
             importedData,
             installPackage,
             removePackage,
-            togglePackage
+            togglePackage,
+            updatePackageColor,
+            getPackageColor
         }}>
             {children}
         </PackageManagerContext.Provider>

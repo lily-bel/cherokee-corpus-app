@@ -94,6 +94,11 @@ interface CorpusContextType {
     addUserSentence: (sentence: Sentence) => void;
     removeUserSentence: (id: string) => void;
     removeUserSentences: (ids: string[]) => void;
+
+    // Audio
+    userAudioMeta: Record<string, any[]>;
+    saveAudio: (targetId: string, blob: Blob, speaker: string) => Promise<void>;
+    deleteAudio: (targetId: string, audioId: string) => Promise<void>;
 }
 
 const CorpusContext = createContext<CorpusContextType | undefined>(undefined);
@@ -112,6 +117,7 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const [userGlosses, setUserGlosses] = useState<Gloss[]>([]);
     const [userSentences, setUserSentences] = useState<Sentence[]>([]);
     const [audioManifest, setAudioManifest] = useState<string[]>([]);
+    const [userAudioMeta, setUserAudioMeta] = useState<Record<string, any[]>>({});
 
     const [notebooks, setNotebooks] = useState<Record<string, Notebook>>({});
     const [personalWords, setPersonalWords] = useState<PersonalWord[]>([]);
@@ -176,6 +182,12 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             localStorage.setItem('cherokee_app_personal_words', JSON.stringify(personalWords));
         } catch (e) { console.error("Failed to save personal words", e); }
     }, [personalWords]);
+
+    useEffect(() => {
+        try {
+            localStorage.setItem('cherokee_app_user_audio_meta', JSON.stringify(userAudioMeta));
+        } catch (e) { console.error("Failed to save audio meta", e); }
+    }, [userAudioMeta]);
 
     // Load Audio Manifest
     useEffect(() => {
@@ -302,6 +314,47 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setUserSentences(prev => prev.filter(s => !idsSet.has(s.id)));
     };
 
+    // Audio Actions
+    const saveAudio = async (targetId: string, blob: Blob, speaker: string) => {
+        const { saveAudioToDB } = await import('../utils');
+
+        let type = 'W';
+        let id = targetId;
+
+        if (targetId.endsWith('_sentence')) {
+            type = 'S';
+            id = targetId.replace('_sentence', '');
+        }
+
+        const index = Date.now();
+        const audioId = `${speaker}_${type}-${id}_${index}`;
+
+        await saveAudioToDB(audioId, blob);
+
+        setUserAudioMeta(prev => {
+            const newMeta = { ...prev };
+            if (!newMeta[targetId]) newMeta[targetId] = [];
+            newMeta[targetId].push({ id: audioId, speaker, date: Date.now() });
+            return newMeta;
+        });
+    };
+
+    const deleteAudio = async (targetId: string, audioId: string) => {
+        const { deleteAudioFromDB } = await import('../utils');
+        try {
+            await deleteAudioFromDB(audioId);
+            setUserAudioMeta(prev => {
+                const newMeta = { ...prev };
+                if (newMeta[targetId]) {
+                    newMeta[targetId] = newMeta[targetId].filter(a => a.id !== audioId);
+                }
+                return newMeta;
+            });
+        } catch (e) {
+            console.error("Failed to delete audio", e);
+        }
+    };
+
     return (
         <CorpusContext.Provider value={{
             dictionary,
@@ -322,7 +375,10 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             notebooks,
             personalWords,
             setNotebooks,
-            setPersonalWords
+            setPersonalWords,
+            userAudioMeta,
+            saveAudio,
+            deleteAudio
         }}>
             {children}
         </CorpusContext.Provider>

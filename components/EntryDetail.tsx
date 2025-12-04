@@ -109,7 +109,7 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, onSaveAudio, 
                         {/* METADATA ROW 1: Audio */}
                         <div className="flex items-center gap-3 mb-4 flex-wrap">
                             <AudioPlayer
-                                src={e.Entry_Audio ? `/ data / audio / ${e.Entry_Audio} ` : undefined}
+                                src={e.Entry_Audio ? `/data/audio/${e.Entry_Audio}` : undefined}
                                 label="Official"
                                 icon={Mic}
                                 variant="gray"
@@ -119,7 +119,7 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, onSaveAudio, 
                             {userAudioMeta && userAudioMeta[e.Index] && userAudioMeta[e.Index].map(audio => {
                                 const isOfficial = audioManifest.includes(audio.id) || audioManifest.includes(audio.id + '.mp3') || audioManifest.includes(audio.id + '.wav');
                                 return (
-                                    <div key={audio.id} className={`flex items - center gap - 2 px - 3 py - 1.5 rounded - full text - sm font - medium transition - colors shadow - sm group ${playingAudioId === audio.id ? 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100' : (isOfficial ? 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300' : 'bg-amber-500 text-white hover:bg-amber-600')} `}>
+                                    <div key={audio.id} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors shadow-sm group ${playingAudioId === audio.id ? 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100' : (isOfficial ? 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300' : 'bg-amber-500 text-white hover:bg-amber-600')}`}>
                                         <button
                                             onClick={() => handlePlayUserAudio(audio)}
                                             className="flex items-center gap-2"

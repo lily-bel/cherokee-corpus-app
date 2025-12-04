@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Search, Book, Menu, X, Filter, Clock, ListIcon, Folder, BookOpen, Download, ArrowLeft, Pencil, ChevronDown, Share, Trash2, Plus, Star, ChevronUp, Minus, Check, ToggleLeft, ToggleRight, Box } from './components/Icons';
+import { Search, Book, Menu, X, Filter, Clock, ListIcon, Folder, BookOpen, Download, ArrowLeft, Pencil, ChevronDown, Share, Trash2, Plus, Star, ChevronUp, Minus, Check, ToggleLeft, ToggleRight, Box, Layout } from './components/Icons';
 import { Toast, CollapsibleCard, Modal } from './components/UI';
 import EntryCard from './components/EntryCard';
 import EntryDetail from './components/EntryDetail';
@@ -9,6 +9,7 @@ import PackageManagerTab from './components/PackageManagerTab';
 import { useCorpus } from './components/CorpusContext';
 import { formatToneInput, downloadFile, exportNotebookToCSV, importNotebookFromCSV, saveAudioToDB, deleteAudioFromDB, getAllUserAudioKeys, performSearch } from './utils';
 import { SentenceCard } from './components/SentenceCard';
+import WidgetsTab from './components/WidgetsTab';
 
 import { usePackageManager } from './components/PackageManagerContext';
 
@@ -22,7 +23,7 @@ const DEFAULT_SETTINGS = {
 
 function App() {
     const { packages } = usePackageManager();
-    const { dictionary, sentences, userSentences, glosses, loading, audioManifest, entryToSentencesMap, addUserSentence, removeUserSentence, removeUserSentences, removeUserGloss, notebooks, personalWords, setNotebooks, setPersonalWords } = useCorpus();
+    const { dictionary, sentences, userSentences, glosses, loading, audioManifest, entryToSentencesMap, addUserSentence, removeUserSentence, removeUserSentences, removeUserGloss, notebooks, personalWords, setNotebooks, setPersonalWords, userAudioMeta, saveAudio, deleteAudio } = useCorpus();
 
     // Legacy state replacements
     const csvData = dictionary; // Map dictionary to csvData for compatibility
@@ -55,7 +56,6 @@ function App() {
     const [customLists, setCustomLists] = useState<Record<string, string[]>>({});
     const [customListOrder, setCustomListOrder] = useState<string[]>([]);
     const [userNotes, setUserNotes] = useState<Record<string, string>>({});
-    const [userAudioMeta, setUserAudioMeta] = useState<Record<string, any[]>>({}); // { entryIndex: [{ id, speaker, date }] }
     const [searchHistory, setSearchHistory] = useState<string[]>([]);
 
     const [settings, setSettings] = useState(DEFAULT_SETTINGS);
@@ -117,7 +117,6 @@ function App() {
 
                 if (savedHistory) setSearchHistory(JSON.parse(savedHistory));
                 if (savedNotes) setUserNotes(JSON.parse(savedNotes));
-                if (savedAudioMeta) setUserAudioMeta(JSON.parse(savedAudioMeta));
                 if (savedSettings) {
                     const parsed = JSON.parse(savedSettings);
                     setSettings(prev => ({
@@ -196,7 +195,6 @@ function App() {
 
 
     useEffect(() => { try { localStorage.setItem('cherokee_app_user_notes', JSON.stringify(userNotes)); } catch (e) { } }, [userNotes]);
-    useEffect(() => { try { localStorage.setItem('cherokee_app_user_audio_meta', JSON.stringify(userAudioMeta)); } catch (e) { } }, [userAudioMeta]);
 
     useEffect(() => { try { localStorage.setItem('cherokee_app_settings', JSON.stringify(settings)); } catch (e) { } }, [settings]);
     useEffect(() => { try { localStorage.setItem('cherokee_app_history', JSON.stringify(searchHistory)); } catch (e) { } }, [searchHistory]);
@@ -753,7 +751,10 @@ function App() {
                 if (data.notebooks) setNotebooks(data.notebooks);
                 if (data.personalWords) setPersonalWords(data.personalWords);
                 if (data.userNotes) setUserNotes(data.userNotes);
-                if (data.userAudioMeta) setUserAudioMeta(data.userAudioMeta);
+                // Audio meta is now managed by CorpusContext and IDB scanning, but if backup has it, maybe we should restore?
+                // The restore logic for audio meta is tricky because it depends on files in IDB.
+                // If we restore backup, we assume audio files are also restored or present?
+                // For now, let's skip restoring audio meta state directly as it auto-rebuilds.
                 if (data.settings) setSettings(data.settings);
                 if (data.searchHistory) setSearchHistory(data.searchHistory);
                 setActiveNotebookId(null);
@@ -955,111 +956,7 @@ function App() {
         showToast("Word moved", "success");
     };
 
-    // Load User Audio Metadata
-    useEffect(() => {
-        const loadAudioMeta = async () => {
-            const keys = await getAllUserAudioKeys();
-            const meta: Record<string, any[]> = {};
-
-            // Process User Audio
-            keys.forEach(key => {
-                // Format: speaker_W-ID_index or speaker_S-ID_index
-                // Example: Lily_S-1063_1
-                const parts = key.split('_');
-                if (parts.length >= 3) {
-                    const speaker = parts[0];
-                    const refPart = parts[1]; // W-123 or S-123
-                    // const index = parts[2];
-
-                    // Parse ID
-                    const type = refPart.startsWith('W') ? 'word' : 'sentence';
-                    const id = refPart.substring(2); // Remove W- or S-
-
-                    // For Words, we map to Entry Index (which is the ID)
-                    // For Sentences, we map to Sentence ID
-
-                    const entryKey = type === 'word' ? id : id + '_sentence'; // Use suffix for sentences in the meta map
-
-                    if (!meta[entryKey]) meta[entryKey] = [];
-                    meta[entryKey].push({ id: key, speaker, date: Date.now() }); // Date is fake for now, could store in value
-                }
-            });
-
-            // Process Official Audio from Manifest
-            audioManifest.forEach(filename => {
-                // Format: Lily_S-1063_1.m4a
-                const name = filename.replace(/\.[^/.]+$/, ""); // Remove extension
-                const parts = name.split('_');
-                if (parts.length >= 3) {
-                    const speaker = parts[0];
-                    const refPart = parts[1];
-                    // const index = parts[2];
-                    const type = refPart.startsWith('W') ? 'word' : 'sentence';
-                    const id = refPart.substring(2);
-                    const entryKey = type === 'word' ? id : id + '_sentence';
-
-                    if (!meta[entryKey]) meta[entryKey] = [];
-                    // Check if already exists (user override?) - No, official is separate.
-                    // But we want to show it.
-                    // We'll mark it as official or just list it.
-                    // User said "The 'official' audio will also come in with this format... I added two audio files... to work with."
-                    // So we treat them similarly?
-                    // Let's add them.
-                    meta[entryKey].push({ id: filename, speaker, date: 0, isOfficial: true, src: `/ data / audio / ${filename} ` });
-                }
-            });
-
-            setUserAudioMeta(meta);
-        };
-        loadAudioMeta();
-    }, [audioManifest]); // Reload when manifest loads
-
-    const handleSaveAudio = async (targetId: string, blob: Blob, speaker: string) => {
-        // targetId comes from EntryDetail: e.Index or e.Index + '_sentence'
-        // We need to convert this back to W-ID or S-ID format
-
-        let type = 'W';
-        let id = targetId;
-
-        if (targetId.endsWith('_sentence')) {
-            type = 'S';
-            id = targetId.replace('_sentence', '');
-        }
-
-        // Generate new ID: speaker_TYPE-ID_timestamp
-        // User requested: "speakername_W-1234_index"
-        // We can use timestamp as index to ensure uniqueness
-        const index = Date.now();
-        const audioId = `${speaker}_${type} -${id}_${index} `;
-
-        await saveAudioToDB(audioId, blob);
-
-        // Update Meta
-        setUserAudioMeta(prev => {
-            const newMeta = { ...prev };
-            if (!newMeta[targetId]) newMeta[targetId] = [];
-            newMeta[targetId].push({ id: audioId, speaker, date: Date.now() });
-            return newMeta;
-        });
-        showToast("Audio saved", "success");
-    };
-
-    const handleDeleteAudio = async (targetId: string, audioId: string) => {
-        try {
-            await deleteAudioFromDB(audioId);
-            setUserAudioMeta(prev => {
-                const newMeta = { ...prev };
-                if (newMeta[targetId]) {
-                    newMeta[targetId] = newMeta[targetId].filter(a => a.id !== audioId);
-                }
-                return newMeta;
-            });
-            showToast("Audio deleted");
-        } catch (e) {
-            console.error(e);
-            showToast("Failed to delete audio");
-        }
-    };
+    // Audio Logic Moved to CorpusContext
 
     const sortedNotebookWords = useMemo(() => { if (!activeNotebookId) return []; const w = personalWords.filter(x => x.notebookId === activeNotebookId).map(x => ({ ...x, Source: activeNotebookId, Source_Long: notebooks[activeNotebookId]?.name })); if (pdSort === 'date') return w.sort((a, b) => ((b.DateCreated || 0) - (a.DateCreated || 0))); if (pdSort === 'syllabary') return w.sort((a, b) => (a.Syllabary || '').localeCompare(b.Syllabary || '')); if (pdSort === 'translit') return w.sort((a, b) => (a.Entry || '').localeCompare(b.Entry || '')); return w.sort((a, b) => (a.Definition || '').localeCompare(b.Definition || '')); }, [personalWords, activeNotebookId, pdSort, notebooks]);
 
@@ -1299,7 +1196,7 @@ function App() {
                             const data = item.item || item;
 
                             return isSentence ? (
-                                <SentenceCard key={data.id} sentence={data} onClick={() => handleEntryClick(data)} notebooks={notebooks} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} onSaveAudio={handleSaveAudio} userAudioMeta={userAudioMeta} personalWords={personalWords} onCreateWord={() => openWordModal(null)} />
+                                <SentenceCard key={data.id} sentence={data} onClick={() => handleEntryClick(data)} notebooks={notebooks} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} personalWords={personalWords} onCreateWord={() => openWordModal(null)} />
                             ) : (
                                 <EntryCard key={item.Index} entry={item} notebooks={notebooks} userNotes={userNotes} userAudioMeta={userAudioMeta} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} />
                             );
@@ -1309,7 +1206,7 @@ function App() {
 
                             {paginatedResults.inactive.length > 0 && <><div className="px-4 py-2 bg-slate-50 dark:bg-slate-900/50 text-xs font-bold text-slate-400 uppercase tracking-widest border-y border-slate-100 dark:border-slate-800 mt-4">Filtered</div>{paginatedResults.inactive.map(entry => {
                                 if (entry.item && (entry.type === 'text' || entry.type === 'deep')) {
-                                    return <SentenceCard key={entry.item.id} sentence={entry.item} onClick={() => handleEntryClick(entry.item)} isDimmed={true} notebooks={notebooks} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} onSaveAudio={handleSaveAudio} userAudioMeta={userAudioMeta} personalWords={personalWords} onCreateWord={() => openWordModal(null)} />;
+                                    return <SentenceCard key={entry.item.id} sentence={entry.item} onClick={() => handleEntryClick(entry.item)} isDimmed={true} notebooks={notebooks} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} personalWords={personalWords} onCreateWord={() => openWordModal(null)} />;
                                 }
                                 return <EntryCard key={entry.Index} entry={entry} notebooks={notebooks} userNotes={userNotes} userAudioMeta={userAudioMeta} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} isDimmed={true} />;
                             })}</>}
@@ -1351,6 +1248,7 @@ function App() {
                 )
                 }
                 {activeTab === 'lists' && (<div className="flex flex-col h-full"><div className="px-4 py-4 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0"><h2 className="font-noto-serif text-2xl font-bold text-slate-800 dark:text-slate-100">My Lists</h2><button onClick={() => setIsReordering(!isReordering)} className={`text-xs font-bold uppercase tracking-wide px-3 py-1.5 rounded-full transition-colors ${isReordering ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-100' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>{isReordering ? 'Done' : 'Sort / Edit'}</button></div><div className="flex-1 overflow-y-auto p-4"><CollapsibleCard title="Favorites" count={favorites.length} icon={Star} defaultOpen={false} isReordering={false}>{favorites.length === 0 ? <div className="p-6 text-center text-slate-400 italic text-sm">No favorites yet.</div> : allData.filter(d => d.Index && favorites.includes(d.Index)).map(entry => <EntryCard key={entry.Index} entry={entry} notebooks={notebooks} userNotes={userNotes} userAudioMeta={userAudioMeta} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} />)}</CollapsibleCard>{customListOrder.map((listName, index) => (<CollapsibleCard key={listName} title={listName} count={customLists[listName]?.length || 0} icon={ListIcon} defaultOpen={false} onDelete={() => setListToDelete(listName)} onMoveUp={() => moveList(index, 'up')} onMoveDown={() => moveList(index, 'down')} isReordering={isReordering} onEdit={() => { setRenameData({ type: 'list', target: listName || '', value: listName || '' }); setShowNewListModal(true); }}>{(!customLists[listName] || customLists[listName].length === 0) ? <div className="p-6 text-center text-slate-400 italic text-sm">Empty list.</div> : allData.filter(d => d.Index && customLists[listName].includes(d.Index)).map(entry => <EntryCard key={entry.Index} entry={entry} notebooks={notebooks} userNotes={userNotes} userAudioMeta={userAudioMeta} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} />)}</CollapsibleCard>))}</div></div>)}
+                {activeTab === 'widgets' && <WidgetsTab />}
                 {activeTab === 'packages' && <PackageManagerTab />}
                 {
                     activeTab === 'personal' && (!activeNotebookId ? (<div className="flex flex-col h-full"><div className="px-4 py-4 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0"><h2 className="font-noto-serif text-2xl font-bold text-slate-800 dark:text-slate-100">Notebooks</h2><button onClick={() => setShowNewNotebookModal(true)} className="bg-slate-900 dark:bg-slate-700 text-white p-2 rounded-full shadow-md"><Plus size={20} /></button></div><div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-4 content-start">{Object.values(notebooks).map((nb: any) => (<div key={nb.id} onClick={() => setActiveNotebookId(nb.id)} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 flex flex-col shadow-sm hover:shadow-md transition-shadow active:bg-slate-50 dark:active:bg-slate-800 cursor-pointer h-32 justify-between"><Folder size={32} className="text-sky-800 dark:text-sky-400 opacity-80" /><div><h3 className="font-bold text-slate-800 dark:text-slate-200 line-clamp-1">{nb.name}</h3><p className="text-xs text-slate-400">{personalWords.filter(w => w.notebookId === nb.id).length} words, {userSentences.filter(s => s.source === nb.id).length} sentences</p></div></div>))}{Object.keys(notebooks).length === 0 && (<div className="col-span-2 text-center py-12 text-slate-400 flex flex-col items-center"><BookOpen size={48} className="mb-4 opacity-20" /><p>No notebooks yet.</p><button onClick={() => setShowNewNotebookModal(true)} className="mt-4 text-sky-600 dark:text-sky-400 font-bold">Create one</button></div>)}</div><div className="p-4 border-t border-slate-200 dark:border-slate-800"><label className="w-full flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold py-3 rounded-xl cursor-pointer transition-colors"><Download size={20} /><span>Import CSV</span><input type="file" className="hidden" accept=".csv" onChange={handleImportNotebook} /></label></div></div>) : (<div className="flex flex-col h-full"><div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col gap-3 shrink-0">
@@ -1368,7 +1266,7 @@ function App() {
                             {notebookMode === 'words' ? (
                                 sortedNotebookWords.length === 0 ? <div className="text-center py-12 text-slate-400">Empty notebook.<br />Tap + to add a word.</div> : sortedNotebookWords.map(entry => <EntryCard key={entry.Index} entry={entry} notebooks={notebooks} userNotes={userNotes} userAudioMeta={userAudioMeta} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} />)
                             ) : (
-                                userSentences.filter(s => s.source === activeNotebookId).length === 0 ? <div className="text-center py-12 text-slate-400">No sentences yet.<br />Tap + to add one.</div> : userSentences.filter(s => s.source === activeNotebookId).map(s => <SentenceCard key={s.id} sentence={s} notebooks={notebooks} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} personalWords={personalWords} onSaveAudio={handleSaveAudio} userAudioMeta={userAudioMeta} onDeleteAudio={handleDeleteAudio} />)
+                                userSentences.filter(s => s.source === activeNotebookId).length === 0 ? <div className="text-center py-12 text-slate-400">No sentences yet.<br />Tap + to add one.</div> : userSentences.filter(s => s.source === activeNotebookId).map(s => <SentenceCard key={s.id} sentence={s} notebooks={notebooks} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} personalWords={personalWords} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} onDeleteAudio={deleteAudio} />)
                             )}
                         </div><button onClick={() => openWordModal()} className="absolute bottom-6 right-6 bg-slate-900 dark:bg-slate-700 text-white p-4 rounded-full shadow-xl z-20 hover:scale-105 transition-transform"><Plus size={24} /></button></div>))
                 }
@@ -1390,6 +1288,10 @@ function App() {
                     <Box size={24} strokeWidth={2} />
                     <span className="text-[10px] font-bold tracking-wide">Packages</span>
                 </button>
+                <button onClick={() => { setActiveTab('widgets'); setIsReordering(false); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'widgets' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
+                    <Layout size={24} strokeWidth={2} />
+                    <span className="text-[10px] font-bold tracking-wide">Widgets</span>
+                </button>
             </nav>
 
             {/* DETAIL VIEW MOUNT */}
@@ -1400,8 +1302,8 @@ function App() {
                         notebooks={notebooks}
                         userNotes={userNotes}
                         userAudioMeta={userAudioMeta}
-                        onSaveAudio={handleSaveAudio}
-                        onDeleteAudio={handleDeleteAudio}
+                        onSaveAudio={saveAudio}
+                        onDeleteAudio={deleteAudio}
                         favorites={favorites}
                         customLists={customLists}
                         customListOrder={customListOrder}

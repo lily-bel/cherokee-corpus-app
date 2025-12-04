@@ -52,15 +52,21 @@ export const AudioPlayer = ({ src, label = "Audio", icon: Icon = Volume2, varian
   );
 };
 
-export const SourceBadge = ({ source, name }) => {
+export const SourceBadge = ({ source, name, customColor }: { source: string, name?: string, customColor?: string }) => {
   let colorClass = "bg-gray-200 text-gray-600 dark:bg-slate-700 dark:text-slate-300";
+  let style = {};
+
+  if (customColor) {
+    style = { backgroundColor: customColor, color: '#fff' }; // Assuming white text for custom colors, or could calculate contrast
+    colorClass = "";
+  }
 
   if (source && (source === 'pd' || source.startsWith('nb_'))) {
     let initials = "NB";
     if (name) { initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase(); }
     return <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border border-slate-400 text-slate-500 uppercase tracking-wide bg-white dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600">{initials}</span>;
   }
-  return <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${colorClass}`}>{source?.toUpperCase()}</span>;
+  return <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${colorClass}`} style={style}>{source?.toUpperCase()}</span>;
 };
 
 export const CollapsibleCard = ({ title, icon: Icon, count, children, defaultOpen = false, onDelete = undefined, onMoveUp = undefined, onMoveDown = undefined, isReordering, onEdit = undefined }: any) => {

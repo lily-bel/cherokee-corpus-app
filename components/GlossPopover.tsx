@@ -16,7 +16,10 @@ interface GlossPopoverProps {
     personalWords?: any[];
 }
 
+import { usePackageManager } from './PackageManagerContext';
+
 export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord, dictionaryMap, position, onClose, onEntryClick, onEdit, onDelete, onAdd, personalWords }) => {
+    const { getPackageColor } = usePackageManager();
     const popoverRef = useRef<HTMLDivElement>(null);
     const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
     const [showActionsFor, setShowActionsFor] = useState<string | null>(null); // gloss entry_id
@@ -69,6 +72,7 @@ export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord,
                         if (pw) entry = { ...pw, id: pw.Index };
                     }
                     const isUser = gloss.source === 'user';
+                    const pkgColor = getPackageColor(gloss.source);
 
                     // IGT Segments
                     let igtSegments: { c: string, e: string }[] = [];
@@ -107,7 +111,7 @@ export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord,
                             )}
 
                             <div className="flex justify-between items-start mb-2">
-                                <SourceBadge source={gloss.source} name={gloss.source} />
+                                <SourceBadge source={gloss.source} name={gloss.source} customColor={pkgColor} />
                                 <div className="flex items-center gap-3">
                                     {isUser && onEdit && (
                                         <button onClick={() => onEdit(gloss)} className="text-slate-400 hover:text-amber-600 transition-colors">

@@ -5,9 +5,9 @@ import Papa from 'papaparse';
 import { downloadFile, saveAudioToDB, getAudioFromDB } from '../utils';
 
 export const usePackageExport = () => {
-    const { personalWords, userSentences, glosses, notebooks } = useCorpus();
+    const { personalWords, userSentences, glosses, notebooks, userAudioMeta } = useCorpus();
 
-    const exportPackage = async (notebookIds: string[], metadata: Partial<PackageMetadata>) => {
+    const exportPackage = async (notebookIds: string[], metadata: Partial<PackageMetadata>, dependencyAudioIds: string[] = []) => {
         const zip = new JSZip();
 
         // 0. Generate Shorthands
@@ -165,27 +165,112 @@ export const usePackageExport = () => {
         let audioCount = 0;
 
         // Collect all audio IDs
-        const audioIds = new Set<string>();
-        wordsToExport.forEach(w => { if (w.audio) audioIds.add(w.audio); });
-        sentencesToExport.forEach(s => { if (s.audio) audioIds.add(s.audio); });
+        // 1. From Words (legacy field)
+        const legacyAudioIds = new Set<string>();
+        wordsToExport.forEach(w => { if (w.audio) legacyAudioIds.add(w.audio); });
+        sentencesToExport.forEach(s => { if (s.audio) legacyAudioIds.add(s.audio); });
 
-        for (const aid of audioIds) {
-            try {
-                const blob = await getAudioFromDB(aid);
-                if (blob) {
-                    // Filename: aid is usually "speaker_W-123_0" or similar.
-                    // We need to append extension if missing.
-                    // Usually blobs from IDB might not have type info if just stored as blob.
-                    // But saveAudioToDB stores blob.
-                    // Assuming mp3 for now as per spec "Naming Convention: ... .mp3"
-                    const filename = aid.endsWith('.mp3') ? aid : `${aid}.mp3`;
-                    audioFolder?.file(filename, blob as Blob);
-                    audioCount++;
+        // 2. From userAudioMeta (The new standard)
+        // We need to find all audio attached to the exported words/sentences
+        const exportAudioItems: { id: string, speaker: string, targetId: string, type: 'W' | 'S' }[] = [];
+
+        // Check Words
+        wordsToExport.forEach(w => {
+            const meta = userAudioMeta[w.id];
+            if (meta) {
+                meta.forEach(a => {
+                    if (!a.isOfficial) {
+                        exportAudioItems.push({ id: a.id, speaker: a.speaker, targetId: w.id, type: 'W' });
+                    }
+                });
+            }
+        });
+
+        // Check Sentences
+        sentencesToExport.forEach(s => {
+            const key = s.id + '_sentence';
+            const meta = userAudioMeta[key];
+            if (meta) {
+                meta.forEach(a => {
+                    if (!a.isOfficial) {
+                        exportAudioItems.push({ id: a.id, speaker: a.speaker, targetId: s.id, type: 'S' });
+                    }
+                });
+            }
+        });
+
+        // 3. Dependency Audio (Passed in)
+        // These are audio files attached to items NOT in the export list, but user chose to include them.
+        // We need to look them up in userAudioMeta to get speaker/target info.
+        // But wait, dependencyAudioIds are just IDs. We need to find where they belong.
+        // We can scan userAudioMeta for them.
+        if (dependencyAudioIds.length > 0) {
+            const depSet = new Set(dependencyAudioIds);
+            Object.entries(userAudioMeta).forEach(([key, audioList]) => {
+                audioList.forEach(a => {
+                    if (depSet.has(a.id) && !a.isOfficial) {
+                        // Determine Type/ID from key
+                        let type: 'W' | 'S' = 'W';
+                        let targetId = key;
+                        if (key.endsWith('_sentence')) {
+                            type = 'S';
+                            targetId = key.replace('_sentence', '');
+                        }
+                        exportAudioItems.push({ id: a.id, speaker: a.speaker, targetId, type });
+                    }
+                });
+            });
+        }
+
+        // Process and Rename
+        // Group by Target to assign indices
+        const audioByTarget: Record<string, typeof exportAudioItems> = {};
+        exportAudioItems.forEach(item => {
+            const k = `${item.type}-${item.targetId}`;
+            if (!audioByTarget[k]) audioByTarget[k] = [];
+            audioByTarget[k].push(item);
+        });
+
+        for (const key in audioByTarget) {
+            const items = audioByTarget[key];
+            // Sort by something deterministic? ID or Date? 
+            // We don't have date easily here unless we look it up again, but ID contains timestamp usually.
+            // Let's sort by ID (which has timestamp).
+            items.sort((a, b) => a.id.localeCompare(b.id));
+
+            // Assign indices per speaker?
+            // "Index is a simple count starting at 0, in case there are multiple audios with the same speaker for a single word."
+            const speakerCounts: Record<string, number> = {};
+
+            for (const item of items) {
+                const speaker = item.speaker || 'User';
+                const idx = speakerCounts[speaker] || 0;
+                speakerCounts[speaker] = idx + 1;
+
+                // New Filename: [speaker_name]_[W/S-][id]_[index].mp3
+                // Sanitize speaker name
+                const safeSpeaker = speaker.replace(/[^a-zA-Z0-9]/g, '');
+                const newFilename = `${safeSpeaker}_${item.type}-${item.targetId}_${idx}.mp3`;
+
+                try {
+                    const blob = await getAudioFromDB(item.id);
+                    if (blob) {
+                        audioFolder?.file(newFilename, blob as Blob);
+                        audioCount++;
+                    }
+                } catch (e) {
+                    console.warn(`Failed to export audio ${item.id}`, e);
                 }
-            } catch (e) {
-                console.warn(`Failed to export audio ${aid}`, e);
             }
         }
+
+        // Also export legacy audio (direct links) if they exist and aren't covered?
+        // Legacy audio in `w.audio` is usually just an ID.
+        // If it matches the new format, we might have double exported?
+        // Let's assume `userAudioMeta` is the source of truth for user audio.
+        // `w.audio` might be official audio (which we don't export usually, unless it's user recorded and put there?)
+        // If `w.audio` is in `userAudioMeta`, it's covered.
+        // If not, it might be an orphan or official. We skip official.
 
         meta.stats.audio_files = audioCount;
         // Update metadata with audio count

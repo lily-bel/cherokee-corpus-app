@@ -1,7 +1,10 @@
 import { Mic, StickyNote, ListIcon, Audio } from './Icons';
 import { SourceBadge } from './UI';
 
+import { usePackageManager } from './PackageManagerContext';
+
 const EntryCard = ({ entry, notebooks, userNotes, userAudioMeta, favorites, customLists, onClick, isDimmed = false, showPos = false }: any) => {
+  const { getPackageColor } = usePackageManager();
   const isPersonal = !!notebooks[entry.Source];
   const hasUserNote = isPersonal ? (entry.Notes && entry.Notes.trim().length > 0) : (userNotes[entry.Index] !== undefined && userNotes[entry.Index].trim().length > 0);
 
@@ -14,6 +17,8 @@ const EntryCard = ({ entry, notebooks, userNotes, userAudioMeta, favorites, cust
   const inLists = Object.keys(customLists).filter(k => customLists[k].includes(entry.Index)).length;
   const totalLists = (inFav ? 1 : 0) + inLists;
 
+  const pkgColor = getPackageColor(entry.Source);
+
   return (
     <div key={entry.Index} onClick={() => onClick(entry)} className={`bg-white dark:bg-slate-900 p-4 border-b border-slate-100 dark:border-slate-800 active:bg-slate-50 dark:active:bg-slate-800 transition-colors cursor-pointer ${isDimmed ? 'opacity-50 grayscale' : ''} `}>
       <div className="flex justify-between items-start mb-1">
@@ -23,7 +28,7 @@ const EntryCard = ({ entry, notebooks, userNotes, userAudioMeta, favorites, cust
             {hasCnAudio && <Audio size={14} className="text-slate-400" />}
             {hasUserAudio && <Mic size={14} className="text-amber-500 fill-amber-100" />}
             {hasUserNote && <StickyNote size={16} className="text-amber-500 fill-amber-100" />}
-            <SourceBadge source={entry.Source} name={notebooks[entry.Source]?.name} />
+            <SourceBadge source={entry.Source} name={notebooks[entry.Source]?.name} customColor={pkgColor} />
           </div>
           {totalLists > 0 && <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-0.5"><ListIcon size={10} /> {totalLists}</span>}
         </div>
