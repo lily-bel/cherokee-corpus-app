@@ -99,6 +99,8 @@ interface CorpusContextType {
     userAudioMeta: Record<string, any[]>;
     saveAudio: (targetId: string, blob: Blob, speaker: string) => Promise<void>;
     deleteAudio: (targetId: string, audioId: string) => Promise<void>;
+    importAudioMeta: (newMeta: Record<string, any[]>) => void;
+    removePackageAudio: (packageId: string) => Promise<void>;
 }
 
 const CorpusContext = createContext<CorpusContextType | undefined>(undefined);
@@ -152,6 +154,9 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 if (savedNotebooks) setNotebooks(JSON.parse(savedNotebooks));
                 if (savedWords) setPersonalWords(JSON.parse(savedWords));
             }
+
+            const savedAudioMeta = localStorage.getItem('cherokee_app_user_audio_meta');
+            if (savedAudioMeta) setUserAudioMeta(JSON.parse(savedAudioMeta));
 
         } catch (e) {
             console.error("Failed to load user data", e);
@@ -355,6 +360,54 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
     };
 
+    const importAudioMeta = (newMeta: Record<string, any[]>) => {
+        setUserAudioMeta(prev => {
+            const updated = { ...prev };
+            Object.entries(newMeta).forEach(([key, list]) => {
+                if (!updated[key]) updated[key] = [];
+                // Avoid duplicates based on ID
+                const existingIds = new Set(updated[key].map(a => a.id));
+                list.forEach(item => {
+                    if (!existingIds.has(item.id)) {
+                        updated[key].push(item);
+                        existingIds.add(item.id);
+                    }
+                });
+            });
+            return updated;
+        });
+    };
+
+    const removePackageAudio = async (packageId: string) => {
+        const newMeta = { ...userAudioMeta };
+        let hasChanges = false;
+
+        for (const entryIndex in newMeta) {
+            const audios = newMeta[entryIndex];
+            const filtered = audios.filter(a => a.packageId !== packageId);
+
+            if (filtered.length !== audios.length) {
+                hasChanges = true;
+                // Delete removed audio from DB
+                const removed = audios.filter(a => a.packageId === packageId);
+                for (const audio of removed) {
+                    await deleteAudio(entryIndex, audio.id);
+                }
+
+                if (filtered.length === 0) {
+                    delete newMeta[entryIndex];
+                } else {
+                    newMeta[entryIndex] = filtered;
+                }
+            }
+        }
+
+        if (hasChanges) {
+            setUserAudioMeta(newMeta);
+            localStorage.setItem('cherokee_user_audio_meta', JSON.stringify(newMeta));
+        }
+    };
+
     return (
         <CorpusContext.Provider value={{
             dictionary,
@@ -378,7 +431,9 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             setPersonalWords,
             userAudioMeta,
             saveAudio,
-            deleteAudio
+            deleteAudio,
+            importAudioMeta,
+            removePackageAudio
         }}>
             {children}
         </CorpusContext.Provider>

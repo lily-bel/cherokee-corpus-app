@@ -285,6 +285,7 @@ export const usePackageExport = () => {
 
 export const usePackageImport = () => {
     const { installPackage } = usePackageManager();
+    const { importAudioMeta } = useCorpus();
 
     const importPackage = async (file: File, color: string) => {
         const zip = await JSZip.loadAsync(file);
@@ -363,6 +364,8 @@ export const usePackageImport = () => {
 
         // 3. Audio
         const audioFolder = zip.folder('audio');
+        const newAudioMeta: Record<string, any[]> = {};
+
         if (audioFolder) {
             const files: any[] = [];
             audioFolder.forEach((path, file) => files.push({ path, file }));
@@ -370,33 +373,46 @@ export const usePackageImport = () => {
             for (const { path, file } of files) {
                 if (!file.dir) {
                     const blob = await file.async('blob');
-                    // Filename is path (relative to audio folder).
-                    // ID is filename without extension?
-                    // Spec: "[speaker_name]_[W/S-][id]_[index].mp3"
-                    // ID in DB should match what is in CSV.
-                    // CSV has "Audio" column.
-                    // If CSV says "foo.mp3", we store as "foo.mp3".
-                    // If CSV says "foo", we store as "foo".
-                    // Let's assume ID = filename (stripping extension if CSV doesn't use it? or keeping it?)
-                    // The export adds .mp3 if missing.
-                    // The import should probably store as is, or match CSV.
-                    // Let's store using the filename as the key.
-                    // But we need to make sure it doesn't overwrite existing user audio with same name?
-                    // Imported packages are read-only reference.
-                    // But audio is global in IDB?
-                    // "Save Audio to IndexedDB".
-                    // If multiple packages use same audio ID, it's fine if content is same.
-                    // If different, we have a collision.
-                    // For now, overwrite.
-                    const id = path.replace(/\.mp3$/i, ''); // Strip extension for ID?
-                    // Wait, export code: `const filename = aid.endsWith('.mp3') ? aid : ${aid}.mp3;`
-                    // So if ID is "foo", filename is "foo.mp3".
-                    // So we should strip .mp3 to get ID.
+                    // Filename format: [speaker]_[type]-[id]_[index].mp3
+                    const filename = path.split('/').pop() || path;
+                    const id = filename.replace(/\.mp3$/i, '');
+
                     await saveAudioToDB(id, blob);
-                    // Also save with extension just in case?
-                    await saveAudioToDB(path, blob);
+
+                    // Parse metadata from filename
+                    // Regex: ^(.+)_([WS])-(.+)_(\d+)$
+                    // But speaker might contain underscores?
+                    // The export logic: `${safeSpeaker}_${item.type}-${item.targetId}_${idx}.mp3`
+                    // safeSpeaker removes non-alphanumeric, so no underscores.
+                    // So we can split by underscore safely?
+                    // Wait, `safeSpeaker` might be empty? No, usually 'User'.
+                    // Let's try regex.
+                    const match = id.match(/^([^_]+)_([WS])-(.+)_\d+$/);
+                    if (match) {
+                        const speaker = match[1];
+                        const type = match[2];
+                        const targetId = match[3];
+
+                        // Reconstruct target key
+                        // If type is W, key is targetId
+                        // If type is S, key is targetId + '_sentence'
+                        const metaKey = type === 'W' ? targetId : `${targetId}_sentence`;
+
+                        if (!newAudioMeta[metaKey]) newAudioMeta[metaKey] = [];
+                        newAudioMeta[metaKey].push({
+                            id: id,
+                            speaker: speaker,
+                            date: Date.now(), // We don't have original date, use now
+                            packageId: meta.id // Store package ID for coloring
+                        });
+                    }
                 }
             }
+        }
+
+        // Import Audio Meta
+        if (Object.keys(newAudioMeta).length > 0) {
+            importAudioMeta(newAudioMeta);
         }
 
         // 4. Install

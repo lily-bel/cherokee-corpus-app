@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ArrowLeft, Pencil, ListPlus, Star, ListIcon, X, Plus, Folder, Pause, MicPlus, Trash2, Mic } from './Icons';
 import { AudioPlayer, SourceBadge } from './UI';
 import { renderStyledText, getAudioFromDB } from '../utils';
+import { usePackageManager } from './PackageManagerContext';
 import AudioRecorder from './AudioRecorder';
 import { useCorpus } from './CorpusContext';
 import { SentenceCard } from './SentenceCard';
@@ -94,6 +95,27 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, onSaveAudio, 
         );
     }
 
+    // Determine audio color based on package
+    const { getPackageColor, packages } = usePackageManager(); // Need to import this hook
+    const pkgColor = getPackageColor(e.Source);
+    const isCustomColor = pkgColor && pkgColor.startsWith('#');
+
+    // Helper to get color styles
+    const getAudioStyles = (isPlaying: boolean) => {
+        if (!isCustomColor) return {}; // Use default classes
+        if (isPlaying) {
+            return {
+                backgroundColor: pkgColor + '20', // ~12% opacity
+                color: pkgColor,
+                borderColor: pkgColor
+            };
+        }
+        return {
+            backgroundColor: pkgColor,
+            color: 'white'
+        };
+    };
+
     return (
         <div className="fixed inset-0 z-50 bg-[#F9F9F7] dark:bg-slate-950 flex flex-col animate-slide-up overflow-hidden">
             <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex items-center justify-between shadow-sm shrink-0 h-[60px]">
@@ -116,25 +138,65 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, onSaveAudio, 
                                 showNoAudioMessage={!((userAudioMeta && userAudioMeta[e.Index] && userAudioMeta[e.Index].length > 0) || e.Entry_Audio)}
                             />
                             {/* USER AUDIO LIST */}
-                            {userAudioMeta && userAudioMeta[e.Index] && userAudioMeta[e.Index].map(audio => {
-                                const isOfficial = audioManifest.includes(audio.id) || audioManifest.includes(audio.id + '.mp3') || audioManifest.includes(audio.id + '.wav');
-                                return (
-                                    <div key={audio.id} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors shadow-sm group ${playingAudioId === audio.id ? 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100' : (isOfficial ? 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300' : 'bg-amber-500 text-white hover:bg-amber-600')}`}>
-                                        <button
-                                            onClick={() => handlePlayUserAudio(audio)}
-                                            className="flex items-center gap-2"
-                                        >
-                                            {playingAudioId === audio.id ? <Pause size={12} className="fill-current" /> : <Mic size={12} />}
-                                            <span>{playingAudioId === audio.id ? 'Playing...' : (audio.speaker || 'User')}</span>
-                                        </button>
-                                        {!isOfficial && (
-                                            <button onClick={(e) => { e.stopPropagation(); handleLongPressAudio(audio.id); }} className="ml-1 pl-2 border-l border-white/20 hover:text-red-200 transition-colors flex items-center">
-                                                <Trash2 size={14} />
+                            {userAudioMeta && userAudioMeta[e.Index] && userAudioMeta[e.Index]
+                                .filter(audio => {
+                                    if (!audio.packageId) {
+                                        const userPkg = packages.find(p => p.id === 'user');
+                                        return userPkg ? userPkg.status === 'active' : true;
+                                    }
+                                    const pkg = packages.find(p => p.id === audio.packageId);
+                                    return pkg && pkg.status === 'active';
+                                })
+                                .map(audio => {
+                                    const isOfficial = audioManifest.includes(audio.id) || audioManifest.includes(audio.id + '.mp3') || audioManifest.includes(audio.id + '.wav');
+
+                                    // Determine color for this specific audio file
+                                    const audioPkgColor = audio.packageId ? getPackageColor(audio.packageId) : null;
+                                    const isCustomAudioColor = audioPkgColor && audioPkgColor.startsWith('#');
+
+                                    let className = "flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors shadow-sm group ";
+                                    let style = {};
+
+                                    if (isOfficial) {
+                                        className += playingAudioId === audio.id ? 'bg-slate-300 text-slate-800' : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300';
+                                    } else if (isCustomAudioColor) {
+                                        // Use custom package color
+                                        if (playingAudioId === audio.id) {
+                                            style = {
+                                                backgroundColor: audioPkgColor + '20', // ~12% opacity
+                                                color: audioPkgColor,
+                                                borderColor: audioPkgColor
+                                            };
+                                        } else {
+                                            style = {
+                                                backgroundColor: audioPkgColor,
+                                                color: 'white'
+                                            };
+                                        }
+                                    } else if (audioPkgColor && audioPkgColor !== 'slate') {
+                                        className += playingAudioId === audio.id ? `bg-${audioPkgColor}-100 dark:bg-${audioPkgColor}-900 text-${audioPkgColor}-800 dark:text-${audioPkgColor}-100` : `bg-${audioPkgColor}-500 text-white hover:bg-${audioPkgColor}-600`;
+                                    } else {
+                                        // Default Amber behavior
+                                        className += playingAudioId === audio.id ? 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100' : 'bg-amber-500 text-white hover:bg-amber-600';
+                                    }
+
+                                    return (
+                                        <div key={audio.id} className={className} style={style}>
+                                            <button
+                                                onClick={() => handlePlayUserAudio(audio)}
+                                                className="flex items-center gap-2"
+                                            >
+                                                {playingAudioId === audio.id ? <Pause size={12} className="fill-current" /> : <Mic size={12} />}
+                                                <span>{playingAudioId === audio.id ? 'Playing...' : (audio.speaker || 'User')}</span>
                                             </button>
-                                        )}
-                                    </div>
-                                )
-                            })}
+                                            {!isOfficial && (
+                                                <button onClick={(e) => { e.stopPropagation(); handleLongPressAudio(audio.id); }} className="ml-1 pl-2 border-l border-white/20 hover:text-red-200 transition-colors flex items-center">
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    )
+                                })}
                             <button onClick={() => { setRecorderTarget('entry'); setShowRecorder(true); }} className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-full transition-colors">
                                 <MicPlus size={20} />
                             </button>

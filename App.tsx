@@ -7,7 +7,7 @@ import EntryDetail from './components/EntryDetail';
 
 import PackageManagerTab from './components/PackageManagerTab';
 import { useCorpus } from './components/CorpusContext';
-import { formatToneInput, downloadFile, exportNotebookToCSV, importNotebookFromCSV, saveAudioToDB, deleteAudioFromDB, getAllUserAudioKeys, performSearch } from './utils';
+import { formatToneInput, downloadFile, exportNotebookToCSV, importNotebookFromCSV, performSearch } from './utils';
 import { SentenceCard } from './components/SentenceCard';
 import WidgetsTab from './components/WidgetsTab';
 
@@ -23,7 +23,7 @@ const DEFAULT_SETTINGS = {
 
 function App() {
     const { packages } = usePackageManager();
-    const { dictionary, sentences, userSentences, glosses, loading, audioManifest, entryToSentencesMap, addUserSentence, removeUserSentence, removeUserSentences, removeUserGloss, notebooks, personalWords, setNotebooks, setPersonalWords, userAudioMeta, saveAudio, deleteAudio } = useCorpus();
+    const { dictionary, sentences, userSentences, glosses, loading, entryToSentencesMap, addUserSentence, removeUserSentence, removeUserSentences, removeUserGloss, notebooks, personalWords, setNotebooks, setPersonalWords, userAudioMeta, saveAudio, deleteAudio } = useCorpus();
 
     // Legacy state replacements
     const csvData = dictionary; // Map dictionary to csvData for compatibility
@@ -111,7 +111,6 @@ function App() {
         const initLoad = async () => {
             try {
                 const savedNotes = localStorage.getItem('cherokee_app_user_notes');
-                const savedAudioMeta = localStorage.getItem('cherokee_app_user_audio_meta');
                 const savedSettings = localStorage.getItem('cherokee_app_settings');
                 const savedHistory = localStorage.getItem('cherokee_app_history');
 

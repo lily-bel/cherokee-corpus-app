@@ -9,7 +9,7 @@ import { Toast, AudioPlayer, SourceBadge } from './UI';
 const PackageManagerTab: React.FC = () => {
     const { packages, togglePackage, removePackage, updatePackageColor } = usePackageManager();
     const { importPackage } = usePackageImport();
-    const { personalWords, userSentences } = useCorpus();
+    const { personalWords, userSentences, removePackageAudio, userAudioMeta } = useCorpus();
 
     const [showExportModal, setShowExportModal] = useState(false);
     const [importing, setImporting] = useState(false);
@@ -82,7 +82,21 @@ const PackageManagerTab: React.FC = () => {
                 {/* User Library */}
                 <div className="space-y-3">
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">My Library</h3>
-                    {packages.filter(p => p.type === 'user').map(p => <PackageItem key={p.id} pkg={p} onColorClick={(id) => setColorPicker({ show: true, pkgId: id })} showToast={showToast} togglePackage={togglePackage} removePackage={removePackage} />)}
+                    {packages.filter(p => p.type === 'user').map(p => {
+                        // Calculate actual user audio count
+                        const userAudioCount = Object.values(userAudioMeta || {}).reduce((acc, list) => acc + list.length, 0);
+                        const pkgWithStats = {
+                            ...p,
+                            metadata: {
+                                ...p.metadata,
+                                stats: {
+                                    ...p.metadata.stats,
+                                    audio_files: userAudioCount
+                                }
+                            }
+                        };
+                        return <PackageItem key={p.id} pkg={pkgWithStats} onColorClick={(id) => setColorPicker({ show: true, pkgId: id })} showToast={showToast} togglePackage={togglePackage} removePackage={removePackage} />;
+                    })}
                 </div>
 
                 {/* Imported Packages */}
@@ -94,7 +108,19 @@ const PackageManagerTab: React.FC = () => {
                             <p className="text-sm">No imported packages.</p>
                         </div>
                     )}
-                    {packages.filter(p => p.type === 'imported').map(p => <PackageItem key={p.id} pkg={p} onColorClick={(id) => setColorPicker({ show: true, pkgId: id })} showToast={showToast} togglePackage={togglePackage} removePackage={removePackage} />)}
+                    {packages.filter(p => p.type === 'imported').map(p => (
+                        <PackageItem
+                            key={p.id}
+                            pkg={p}
+                            onColorClick={(id) => setColorPicker({ show: true, pkgId: id })}
+                            showToast={showToast}
+                            togglePackage={togglePackage}
+                            removePackage={(id) => {
+                                removePackageAudio(id);
+                                removePackage(id);
+                            }}
+                        />
+                    ))}
                 </div>
             </div>
 
