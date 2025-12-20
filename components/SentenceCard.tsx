@@ -120,9 +120,10 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
         if (wordGlosses.length > 1) {
             const uniqueColors = Array.from(new Set(colors));
 
+            // If same color, use double underline
             if (uniqueColors.length === 1) {
                 return {
-                    className: 'shadow-[inset_0_-2px_0_0_var(--gloss-color)]',
+                    className: 'border-b-4 border-double border-[var(--gloss-color)] pb-0',
                     style: { '--gloss-color': uniqueColors[0] } as React.CSSProperties
                 };
             }
@@ -131,8 +132,12 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
             const gradient = uniqueColors.map((c, i, arr) => `${c} ${(i / (arr.length - 1)) * 100}%`).join(', ');
 
             return {
-                className: 'bg-no-repeat bg-[length:100%_2px] bg-[position:0_100%] pb-[2px]',
-                style: { backgroundImage: `linear-gradient(90deg, ${gradient})` }
+                className: 'bg-no-repeat pb-[4px]',
+                style: {
+                    backgroundImage: `linear-gradient(90deg, ${gradient}), linear-gradient(90deg, ${gradient})`,
+                    backgroundSize: '100% 2px, 100% 2px',
+                    backgroundPosition: '0 100%, 0 calc(100% - 4px)'
+                }
             };
         }
 
@@ -160,7 +165,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
             const token = tokens[index];
             setShowLinker({
                 indices: [index],
-                initialQuery: token.syl || '',
+                initialQuery: token.syl || token.tr || '',
                 targetWord: { syllabary: token.syl, translit: token.tr }
             });
         }
@@ -171,7 +176,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
         const sorted = [...selectedIndices].sort((a, b) => a - b);
         // Construct query from first selected word
         const firstToken = tokens[sorted[0]];
-        const query = firstToken?.syl || '';
+        const query = firstToken?.syl || firstToken?.tr || '';
 
         // Map all selected indices to tokens
         const targetWords = sorted.map(i => ({ syllabary: tokens[i].syl, translit: tokens[i].tr }));
@@ -449,7 +454,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                         const token = tokens[index];
                         setShowLinker({
                             indices: [index],
-                            initialQuery: token.syl || '',
+                            initialQuery: token.syl || token.tr || '',
                             targetWord: { syllabary: token.syl, translit: token.tr }
                         });
                         setActivePopover(null);
