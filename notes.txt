@@ -1,0 +1,6 @@
+show imported notebooks
+click to gloss word without syllabary should auto search translit
+double gloss line broke
+keep spaces in official audio speaker names
+
+list stuff

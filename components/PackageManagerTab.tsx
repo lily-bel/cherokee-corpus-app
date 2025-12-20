@@ -76,7 +76,21 @@ const PackageManagerTab: React.FC = () => {
                 {/* Official Packages */}
                 <div className="space-y-3">
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Official Sources</h3>
-                    {packages.filter(p => p.type === 'official').map(p => <PackageItem key={p.id} pkg={p} onColorClick={(id) => setColorPicker({ show: true, pkgId: id })} showToast={showToast} togglePackage={togglePackage} removePackage={removePackage} />)}
+                    {packages.filter(p => p.type === 'official').map(p => {
+                        // Calculate audio count from meta
+                        const audioCount = Object.values(userAudioMeta || {}).reduce((acc, list) => acc + list.filter(a => a.packageId === p.id).length, 0);
+                        const pkgWithStats = {
+                            ...p,
+                            metadata: {
+                                ...p.metadata,
+                                stats: {
+                                    ...p.metadata?.stats,
+                                    audio_files: audioCount
+                                }
+                            }
+                        };
+                        return <PackageItem key={p.id} pkg={pkgWithStats} onColorClick={(id) => setColorPicker({ show: true, pkgId: id })} showToast={showToast} togglePackage={togglePackage} removePackage={removePackage} />;
+                    })}
                 </div>
 
                 {/* User Library */}
@@ -88,7 +102,7 @@ const PackageManagerTab: React.FC = () => {
                         // Actually 'glosses' from useCorpus is 'allGlosses'
                         const { glosses: allGlosses } = useCorpus();
                         const userGlossCount = allGlosses ? allGlosses.filter(g => g.source === 'user').length : 0;
-                        const userAudioCount = Object.values(userAudioMeta || {}).reduce((acc, list) => acc + list.length, 0);
+                        const userAudioCount = Object.values(userAudioMeta || {}).reduce((acc, list) => acc + list.filter(a => !a.packageId || a.packageId === 'user').length, 0);
                         const pkgWithStats = {
                             ...p,
                             metadata: {

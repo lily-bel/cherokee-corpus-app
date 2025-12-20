@@ -74,7 +74,7 @@ interface CorpusContextType {
     userSentences: Sentence[];
     glosses: Gloss[];
     loading: boolean;
-    audioManifest: string[];
+
 
     // Maps
     glossMap: Map<string, Gloss[]>; // SentenceID -> Gloss[]
@@ -118,7 +118,6 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     const [userGlosses, setUserGlosses] = useState<Gloss[]>([]);
     const [userSentences, setUserSentences] = useState<Sentence[]>([]);
-    const [audioManifest, setAudioManifest] = useState<string[]>([]);
     const [userAudioMeta, setUserAudioMeta] = useState<Record<string, any[]>>({});
 
     const [notebooks, setNotebooks] = useState<Record<string, Notebook>>({});
@@ -194,13 +193,56 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         } catch (e) { console.error("Failed to save audio meta", e); }
     }, [userAudioMeta]);
 
-    // Load Audio Manifest
+    // Load Audio Manifest - REMOVED per user request
+    /*
     useEffect(() => {
         fetch('/data/audio_manifest.json')
             .then(r => r.ok ? r.json() : [])
             .then(setAudioManifest)
             .catch(e => console.error("Failed to load audio manifest", e))
             .finally(() => setLoading(false));
+    }, []);
+    */
+
+    // Set loading false immediately or after data load?
+    // Previously audioManifest fetch was the last "loading" check.
+    // We should set loading to false after data is ready.
+    useEffect(() => {
+        setLoading(false);
+        // Load Audio Manifest and Parse Dynamically
+        fetch('/data/audio_manifest.json')
+            .then(r => r.ok ? r.json() : [])
+            .then((files: string[]) => {
+                const newMeta: Record<string, any[]> = {};
+                files.forEach(file => {
+                    // Parse Filename: [speaker]_[W/S]-[ID].[subid]_[index].ext
+                    // Regex: /^(.+)_([WS])-(.+)_\d+\.(.+)$/
+                    const match = file.match(/^(.+)_([WS])-(.+)_\d+\.(.+)$/);
+                    if (match) {
+                        const speaker = match[1];
+                        const type = match[2];
+                        let idSection = match[3];
+
+                        // Strip subid for key (e.g. 1.1 -> 1) if present
+                        let targetId = idSection;
+                        if (targetId.includes('.')) targetId = targetId.split('.')[0];
+
+                        const key = type === 'W' ? targetId : `${targetId}_sentence`;
+
+                        if (!newMeta[key]) newMeta[key] = [];
+                        newMeta[key].push({
+                            id: file, // Use filename as ID for official audio
+                            speaker: speaker.replace(/_/g, ' '), // Normalize underscores to spaces if needed (though new export allows spaces)
+                            packageId: 'official-cherokee-data'
+                        });
+                    }
+                });
+
+                if (Object.keys(newMeta).length > 0) {
+                    importAudioMeta(newMeta);
+                }
+            })
+            .catch(e => console.error("Failed to load audio manifest", e));
     }, []);
 
     // Combine Base Data with Active Packages
@@ -415,7 +457,6 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             userSentences,
             glosses: allGlosses,
             loading,
-            audioManifest,
             glossMap,
             entryToSentencesMap,
             dictionaryMap,

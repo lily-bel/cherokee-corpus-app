@@ -397,11 +397,20 @@ function App() {
                 // It's a user notebook
                 badge = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
             } else {
-                // Try to find in packages
-                const pkg = packages.find(p => p.status === 'active' && p.metadata.source_names && p.metadata.source_names[code]);
-                if (pkg) {
-                    name = pkg.metadata.source_names?.[code] || code;
+                // Try to find in packages - Check by source_names shorthand
+                const pkgBySource = packages.find(p => p.status === 'active' && p.metadata.source_names && p.metadata.source_names[code]);
+                // Check by Package ID direct match
+                const pkgById = packages.find(p => p.status === 'active' && p.id === code);
+
+                if (pkgBySource) {
+                    name = pkgBySource.metadata.source_names?.[code] || code;
                     badge = code.substring(0, 3).toUpperCase();
+                } else if (pkgById) {
+                    name = pkgById.name;
+                    // Use initials for badge
+                    const parts = pkgById.name.split(' ');
+                    if (parts.length >= 2) badge = (parts[0][0] + parts[1][0]).toUpperCase();
+                    else badge = pkgById.name.substring(0, 2).toUpperCase();
                 } else if (code === 'user') {
                     name = 'My Library';
                     badge = 'MY';

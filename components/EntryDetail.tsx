@@ -22,7 +22,7 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, onSaveAudio, 
         if (sentenceListRef.current) sentenceListRef.current.scrollLeft = 0;
     }, [entry.Index]);
 
-    const { entryToSentencesMap, sentenceMap, audioManifest } = useCorpus();
+    const { entryToSentencesMap, sentenceMap } = useCorpus();
 
     const handlePlayUserAudio = async (audio: any) => {
         if (playingAudioId === audio.id) {
@@ -34,6 +34,16 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, onSaveAudio, 
         try {
             if (audio.src) {
                 audioRef.current.src = audio.src;
+                audioRef.current.onended = () => setPlayingAudioId(null);
+                audioRef.current.play();
+                setPlayingAudioId(audio.id);
+                return;
+            }
+
+            // Official Audio (File-based)
+            if (audio.packageId === 'official-cherokee-data' || audio.packageId?.startsWith('official')) {
+                const url = `/data/audio/${audio.id}`;
+                audioRef.current.src = url;
                 audioRef.current.onended = () => setPlayingAudioId(null);
                 audioRef.current.play();
                 setPlayingAudioId(audio.id);
@@ -148,7 +158,7 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, onSaveAudio, 
                                     return pkg && pkg.status === 'active';
                                 })
                                 .map(audio => {
-                                    const isOfficial = audioManifest.includes(audio.id) || audioManifest.includes(audio.id + '.mp3') || audioManifest.includes(audio.id + '.wav');
+                                    const isOfficial = !!audio.packageId;
 
                                     // Determine color for this specific audio file
                                     const audioPkgColor = audio.packageId ? getPackageColor(audio.packageId) : null;

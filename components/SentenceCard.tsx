@@ -67,29 +67,80 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
         }
     };
 
-    const getGlossStyle = (index: number) => {
+    const COLORS: Record<string, string> = {
+        slate: '#cbd5e1',
+        gray: '#cbd5e1',
+        zinc: '#d4d4d8',
+        neutral: '#d4d4d8',
+        stone: '#d6d3d1',
+        red: '#f87171',
+        orange: '#fb923c',
+        amber: '#fbbf24',
+        yellow: '#facc15',
+        lime: '#a3e635',
+        green: '#4ade80',
+        emerald: '#34d399',
+        teal: '#2dd4bf',
+        cyan: '#22d3ee',
+        sky: '#38bdf8',
+        blue: '#60a5fa',
+        indigo: '#818cf8',
+        violet: '#a78bfa',
+        purple: '#c084fc',
+        fuchsia: '#e879f9',
+        pink: '#f472b6',
+        rose: '#fb7185',
+    };
+
+    const getGlossStyle = (index: number): { className: string, style?: React.CSSProperties } => {
         const wordGlosses = glosses.filter(g => {
             const indices = g.word_index.split(',').map(Number);
             return indices.includes(index);
         });
 
-        if (wordGlosses.length === 0) return '';
+        if (wordGlosses.length === 0) return { className: '' };
 
-        const hasUser = wordGlosses.some(g => g.source === 'user');
+        // Get colors for all glosses
+        const colors = wordGlosses.map(g => {
+            const colorName = getPackageColor(g.source);
+            if (colorName) {
+                if (colorName.startsWith('#')) return colorName;
+                if (COLORS[colorName]) return COLORS[colorName];
+            }
+
+            // Fallbacks
+            if (g.source === 'user' || (notebooks && notebooks[g.source]) || g.source.startsWith('nb_')) {
+                return COLORS.amber; // #fbbf24
+            }
+
+            return COLORS.slate; // #cbd5e1 (default)
+        });
 
         // Conflict or Multiple
         if (wordGlosses.length > 1) {
-            // Double rainbow underline using background gradients
-            return 'bg-no-repeat bg-[length:100%_1.5px,100%_1.5px] bg-[position:0_100%,0_calc(100%-3px)] bg-[image:linear-gradient(90deg,#60a5fa,#c084fc,#fbbf24),linear-gradient(90deg,#60a5fa,#c084fc,#fbbf24)] pb-[1px]';
+            const uniqueColors = Array.from(new Set(colors));
+
+            if (uniqueColors.length === 1) {
+                return {
+                    className: 'shadow-[inset_0_-2px_0_0_var(--gloss-color)]',
+                    style: { '--gloss-color': uniqueColors[0] } as React.CSSProperties
+                };
+            }
+
+            // Gradient for multiple different colors
+            const gradient = uniqueColors.map((c, i, arr) => `${c} ${(i / (arr.length - 1)) * 100}%`).join(', ');
+
+            return {
+                className: 'bg-no-repeat bg-[length:100%_2px] bg-[position:0_100%] pb-[2px]',
+                style: { backgroundImage: `linear-gradient(90deg, ${gradient})` }
+            };
         }
 
-        // Single User
-        if (hasUser) {
-            return 'shadow-[inset_0_-2px_0_0_#fbbf24]'; // amber-400
-        }
-
-        // Single Built-in
-        return 'shadow-[inset_0_-2px_0_0_#cbd5e1] dark:shadow-[inset_0_-2px_0_0_#475569]'; // slate-300 / slate-600
+        // Single Gloss
+        return {
+            className: 'shadow-[inset_0_-2px_0_0_var(--gloss-color)]',
+            style: { '--gloss-color': colors[0] } as React.CSSProperties
+        };
     };
 
     const handleWordClick = (index: number, event: React.MouseEvent) => {
@@ -148,6 +199,16 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                 return;
             }
 
+            // Official Audio (File-based)
+            if (audio.packageId === 'official-cherokee-data' || audio.packageId?.startsWith('official')) {
+                const url = `/data/audio/${audio.id}`;
+                audioRef.current.src = url;
+                audioRef.current.onended = () => setPlayingAudioId(null);
+                audioRef.current.play();
+                setPlayingAudioId(audio.id);
+                return;
+            }
+
             const blob = await getAudioFromDB(audio.id);
             if (blob) {
                 const url = URL.createObjectURL(blob as any);
@@ -163,6 +224,13 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
             console.error("Failed to play audio", e);
         }
     };
+
+    // DEBUG: Log audio availability
+    console.log(`SentenceCard [${sentence.id}]:`, {
+        key: sentence.id + '_sentence',
+        hasMeta: !!(userAudioMeta && userAudioMeta[sentence.id + '_sentence']),
+        files: userAudioMeta ? userAudioMeta[sentence.id + '_sentence'] : []
+    });
 
 
     return (
@@ -194,16 +262,23 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
             <div className="flex flex-wrap gap-x-3 gap-y-4 mb-4">
                 {tokens.map((token, i) => {
                     const isSelected = selectedIndices.includes(i);
+                    const glossStyle = getGlossStyle(i);
                     return (
                         <div
                             key={i}
                             className={`flex flex-col items-center cursor-pointer group relative ${isSelected ? 'bg-amber-100 dark:bg-amber-900/40 rounded px-1 -mx-1' : ''}`}
                             onClick={(e) => { e.stopPropagation(); handleWordClick(i, e); }}
                         >
-                            <span className={`font-serif text-xl text-slate-900 dark:text-slate-100 leading-none mb-1 ${token.syl ? getGlossStyle(i) : ''}`}>
+                            <span
+                                className={`font-serif text-xl text-slate-900 dark:text-slate-100 leading-none mb-1 ${glossStyle.className}`}
+                                style={glossStyle.style}
+                            >
                                 {token.syl}
                             </span>
-                            <span className={`text-lg text-slate-500 dark:text-slate-400 font-medium ${!token.syl ? getGlossStyle(i) : ''}`}>
+                            <span
+                                className={`text-lg text-slate-500 dark:text-slate-400 font-medium ${!token.syl ? glossStyle.className : ''}`}
+                                style={!token.syl ? glossStyle.style : undefined}
+                            >
                                 {token.tr}
                             </span>
                             {/* Selection Checkmark */}
@@ -278,13 +353,14 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                         })
                         .map((audio: any) => {
                             // Determine color
+                            const isOfficial = !!audio.packageId;
                             const pkgColor = audio.packageId ? getPackageColor(audio.packageId) : null;
                             const isCustomColor = pkgColor && pkgColor.startsWith('#');
                             const isPlaying = playingAudioId === audio.id;
                             let style = {};
                             let className = "flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors shadow-sm group ";
 
-                            if (audio.isOfficial) {
+                            if (isOfficial) {
                                 className += isPlaying ? 'bg-slate-300 text-slate-800' : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300';
                             } else if (isCustomColor) {
                                 if (isPlaying) {
@@ -315,7 +391,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                                         {isPlaying ? <Pause size={12} className="fill-current" /> : <Mic size={12} />}
                                         <span>{isPlaying ? 'Playing...' : (audio.speaker || 'User')}</span>
                                     </button>
-                                    {!audio.isOfficial && onDeleteAudio && (
+                                    {!isOfficial && onDeleteAudio && (
                                         <button onClick={(e) => { e.stopPropagation(); if (window.confirm("Delete audio?")) onDeleteAudio(sentence.id + '_sentence', audio.id); }} className="ml-1 pl-2 border-l border-white/20 hover:text-red-200 transition-colors flex items-center">
                                             <Trash2 size={14} />
                                         </button>

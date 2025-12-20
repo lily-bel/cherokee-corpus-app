@@ -14,6 +14,14 @@ export const usePackageExport = () => {
         const shorthandMap: Record<string, string> = {};
         const usedShorthands = new Set<string>();
 
+        // 0.1 Package Shorthand (for glosses on official sentences)
+        let pkgBase = (metadata.name || 'Package').replace(/[^a-zA-Z0-9]/g, '').substring(0, 4).toUpperCase();
+        if (pkgBase.length === 0) pkgBase = 'PKG';
+        // Ensure package shorthand doesn't conflict with notebook shorthands later? 
+        // We'll treat it as a reserved base if needed, but for now just use it.
+        const packageShorthand = pkgBase;
+        usedShorthands.add(packageShorthand);
+
         notebookIds.forEach(id => {
             const nb = notebooks[id];
             if (!nb) return;
@@ -99,7 +107,7 @@ export const usePackageExport = () => {
             // Wait, glossesToExport are filtered by sentenceIds.
             // Let's find the sentence for this gloss.
             const sentence = sentencesToExport.find(s => s.id === g.sentence_id);
-            const src = sentence ? (shorthandMap[sentence.source] || sentence.source) : 'user';
+            const src = sentence ? (shorthandMap[sentence.source] || sentence.source) : packageShorthand;
 
             joinRows.push([
                 `"${glossId}"`,
@@ -131,8 +139,9 @@ export const usePackageExport = () => {
                 audio_files: 0,
                 glosses: glossesToExport.length
             },
-            source_names: {}
+            source_names: { [packageShorthand]: metadata.name || 'Untitled Package' }
         };
+
         notebookIds.forEach(id => {
             if (notebooks[id]) {
                 if (!meta.source_names) meta.source_names = {};
@@ -253,7 +262,7 @@ export const usePackageExport = () => {
 
                 // New Filename: [speaker_name]_[W/S-][id]_[index].mp3
                 // Sanitize speaker name
-                const safeSpeaker = speaker.replace(/[^a-zA-Z0-9]/g, '');
+                const safeSpeaker = speaker.replace(/[^a-zA-Z0-9 ]/g, '');
                 const newFilename = `${safeSpeaker}_${item.type}-${item.targetId}_${idx}.mp3`;
 
                 try {
