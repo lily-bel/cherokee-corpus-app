@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { Sentence, useCorpus } from './CorpusContext';
+import { usePackageManager } from './PackageManagerContext';
 import { GlossPopover } from './GlossPopover';
 import { LinkerModal } from './LinkerModal';
 import { AudioPlayer, SourceBadge } from './UI';
@@ -27,6 +28,7 @@ interface SentenceCardProps {
 
 export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, isDimmed, notebooks, userNotes, onEditNote, onEditSentence, sourceMap, onSaveAudio, userAudioMeta, personalWords, onDeleteSentence, onDeleteAudio, onCreateWord }) => {
     const { glossMap, dictionaryMap, addUserGloss, removeUserGloss, removeUserSentence } = useCorpus();
+    const { packages, getPackageColor } = usePackageManager(); // Add this line
     const [activePopover, setActivePopover] = useState<{ index: number, rect: { x: number, y: number } } | null>(null);
     const [showRecorder, setShowRecorder] = useState(false);
     const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
@@ -265,22 +267,62 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
             {/* User Audio */}
             {userAudioMeta && userAudioMeta[sentence.id + '_sentence'] && (
                 <div className="mt-2 flex flex-wrap gap-2" onClick={e => e.stopPropagation()}>
-                    {userAudioMeta[sentence.id + '_sentence'].map((audio: any) => (
-                        <div key={audio.id} className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors shadow-sm group ${playingAudioId === audio.id ? 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100' : (audio.isOfficial ? 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300' : 'bg-amber-500 text-white hover:bg-amber-600')}`}>
-                            <button
-                                onClick={() => handlePlayUserAudio(audio)}
-                                className="flex items-center gap-2"
-                            >
-                                {playingAudioId === audio.id ? <Pause size={12} className="fill-current" /> : <Mic size={12} />}
-                                <span>{playingAudioId === audio.id ? 'Playing...' : (audio.speaker || 'User')}</span>
-                            </button>
-                            {!audio.isOfficial && onDeleteAudio && (
-                                <button onClick={(e) => { e.stopPropagation(); if (window.confirm("Delete audio?")) onDeleteAudio(sentence.id + '_sentence', audio.id); }} className="ml-1 pl-2 border-l border-white/20 hover:text-red-200 transition-colors flex items-center">
-                                    <Trash2 size={14} />
-                                </button>
-                            )}
-                        </div>
-                    ))}
+                    {userAudioMeta[sentence.id + '_sentence']
+                        .filter(audio => {
+                            if (!audio.packageId) {
+                                const userPkg = packages.find(p => p.id === 'user');
+                                return userPkg ? userPkg.status === 'active' : true;
+                            }
+                            const pkg = packages.find(p => p.id === audio.packageId);
+                            return pkg && pkg.status === 'active';
+                        })
+                        .map((audio: any) => {
+                            // Determine color
+                            const pkgColor = audio.packageId ? getPackageColor(audio.packageId) : null;
+                            const isCustomColor = pkgColor && pkgColor.startsWith('#');
+                            const isPlaying = playingAudioId === audio.id;
+                            let style = {};
+                            let className = "flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors shadow-sm group ";
+
+                            if (audio.isOfficial) {
+                                className += isPlaying ? 'bg-slate-300 text-slate-800' : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300';
+                            } else if (isCustomColor) {
+                                if (isPlaying) {
+                                    style = {
+                                        backgroundColor: pkgColor + '20',
+                                        color: pkgColor,
+                                        borderColor: pkgColor
+                                    };
+                                } else {
+                                    style = {
+                                        backgroundColor: pkgColor,
+                                        color: 'white'
+                                    };
+                                }
+                            } else if (pkgColor && pkgColor !== 'slate') {
+                                className += isPlaying ? `bg-${pkgColor}-100 dark:bg-${pkgColor}-900 text-${pkgColor}-800 dark:text-${pkgColor}-100` : `bg-${pkgColor}-500 text-white hover:bg-${pkgColor}-600`;
+                            } else {
+                                // Default Amber
+                                className += isPlaying ? 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100' : 'bg-amber-500 text-white hover:bg-amber-600';
+                            }
+
+                            return (
+                                <div key={audio.id} className={className} style={style}>
+                                    <button
+                                        onClick={() => handlePlayUserAudio(audio)}
+                                        className="flex items-center gap-2"
+                                    >
+                                        {isPlaying ? <Pause size={12} className="fill-current" /> : <Mic size={12} />}
+                                        <span>{isPlaying ? 'Playing...' : (audio.speaker || 'User')}</span>
+                                    </button>
+                                    {!audio.isOfficial && onDeleteAudio && (
+                                        <button onClick={(e) => { e.stopPropagation(); if (window.confirm("Delete audio?")) onDeleteAudio(sentence.id + '_sentence', audio.id); }} className="ml-1 pl-2 border-l border-white/20 hover:text-red-200 transition-colors flex items-center">
+                                            <Trash2 size={14} />
+                                        </button>
+                                    )}
+                                </div>
+                            );
+                        })}
                 </div>
             )}
 

@@ -289,7 +289,7 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 }
             }
             // Append new gloss
-            const newGloss = { ...gloss, source: 'user', id: gloss.id || crypto.randomUUID() };
+            const newGloss = { ...gloss, source: 'user', id: gloss.id || Date.now().toString() };
             return [...prev, newGloss];
         });
     };
@@ -306,7 +306,7 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 newSentences[index] = { ...sentence, source: sentence.source || 'user' };
                 return newSentences;
             }
-            return [...prev, { ...sentence, source: sentence.source || 'user' }];
+            return [...prev, { ...sentence, source: sentence.source || 'user', id: sentence.id || Date.now().toString() }];
         });
     };
 

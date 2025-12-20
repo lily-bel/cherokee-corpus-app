@@ -14,11 +14,13 @@ interface GlossPopoverProps {
     onDelete?: (gloss: Gloss) => void;
     onAdd?: () => void;
     personalWords?: any[];
+    notebooks?: any;
+    sourceMap?: Record<string, string>;
 }
 
 import { usePackageManager } from './PackageManagerContext';
 
-export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord, dictionaryMap, position, onClose, onEntryClick, onEdit, onDelete, onAdd, personalWords }) => {
+export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord, dictionaryMap, position, onClose, onEntryClick, onEdit, onDelete, onAdd, personalWords, notebooks, sourceMap }) => {
     const { getPackageColor } = usePackageManager();
     const popoverRef = useRef<HTMLDivElement>(null);
     const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
@@ -71,8 +73,11 @@ export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord,
                         const pw = personalWords.find(w => w.Index === gloss.entry_id || w.id === gloss.entry_id);
                         if (pw) entry = { ...pw, id: pw.Index };
                     }
-                    const isUser = gloss.source === 'user';
-                    const pkgColor = getPackageColor(gloss.source);
+                    const isUser = gloss.source === 'user' || (notebooks && notebooks[gloss.source]);
+                    const pkgColor = getPackageColor(gloss.source) || (isUser ? '#fbbf24' : undefined);
+
+                    // Resolve Source Name
+                    const sourceName = notebooks?.[gloss.source]?.name || sourceMap?.[gloss.source] || gloss.source;
 
                     // IGT Segments
                     let igtSegments: { c: string, e: string }[] = [];
@@ -111,7 +116,7 @@ export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord,
                             )}
 
                             <div className="flex justify-between items-start mb-2">
-                                <SourceBadge source={gloss.source} name={gloss.source} customColor={pkgColor} />
+                                <SourceBadge source={gloss.source} name={sourceName} customColor={pkgColor} />
                                 <div className="flex items-center gap-3">
                                     {isUser && onEdit && (
                                         <button onClick={() => onEdit(gloss)} className="text-slate-400 hover:text-amber-600 transition-colors">

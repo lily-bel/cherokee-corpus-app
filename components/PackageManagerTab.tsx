@@ -83,7 +83,11 @@ const PackageManagerTab: React.FC = () => {
                 <div className="space-y-3">
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">My Library</h3>
                     {packages.filter(p => p.type === 'user').map(p => {
-                        // Calculate actual user audio count
+                        // Calculate actual user audio count and gloss count
+                        // userGlosses is not directly available, so filter all glosses (which include user glosses)
+                        // Actually 'glosses' from useCorpus is 'allGlosses'
+                        const { glosses: allGlosses } = useCorpus();
+                        const userGlossCount = allGlosses ? allGlosses.filter(g => g.source === 'user').length : 0;
                         const userAudioCount = Object.values(userAudioMeta || {}).reduce((acc, list) => acc + list.length, 0);
                         const pkgWithStats = {
                             ...p,
@@ -91,7 +95,8 @@ const PackageManagerTab: React.FC = () => {
                                 ...p.metadata,
                                 stats: {
                                     ...p.metadata.stats,
-                                    audio_files: userAudioCount
+                                    audio_files: userAudioCount,
+                                    glosses: userGlossCount
                                 }
                             }
                         };
@@ -237,13 +242,14 @@ const ColorPickerModal = ({ pkgId, onClose }: { pkgId: string, onClose: () => vo
 };
 
 const PackageItem = ({ pkg, onColorClick, showToast, togglePackage, removePackage }: { pkg: Package, onColorClick: (id: string) => void, showToast: (message: string, type?: string) => void, togglePackage: (id: string) => void, removePackage: (id: string) => void }) => {
-    const { personalWords, userSentences } = useCorpus();
+    const { personalWords, userSentences, glosses: allGlosses } = useCorpus();
     const isOfficial = pkg.type === 'official';
     const isUser = pkg.type === 'user';
     const isLocked = pkg.metadata?.locked === 'yes' || isOfficial || isUser;
 
     const wordCount = isUser ? personalWords.length : (pkg.metadata?.stats?.words || 0);
     const sentCount = isUser ? userSentences.length : (pkg.metadata?.stats?.sentences || 0);
+    const glossCount = isUser ? allGlosses.filter(g => g.source === 'user').length : (pkg.metadata?.stats?.glosses || 0);
 
     return (
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 flex flex-col gap-3 shadow-sm">
@@ -283,6 +289,7 @@ const PackageItem = ({ pkg, onColorClick, showToast, togglePackage, removePackag
                     <span>{wordCount} words</span>
                     <span>{sentCount} sentences</span>
                     {pkg.metadata?.stats?.audio_files !== undefined && <span>{pkg.metadata.stats.audio_files} audio</span>}
+                    <span>{glossCount} glosses</span>
                 </div>
 
                 {!isOfficial && !isUser && (

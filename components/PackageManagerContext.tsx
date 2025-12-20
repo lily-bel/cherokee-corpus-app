@@ -15,6 +15,7 @@ export interface PackageMetadata {
         words: number;
         sentences: number;
         audio_files: number;
+        glosses?: number;
     };
     source_names?: Record<string, string>;
     source_meta?: Record<string, "prioritize" | "filter">;
@@ -95,6 +96,10 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                     parseCSV(joinRes)
                 ]);
 
+                // Update metadata stats with actual counts
+                metadata.stats.words = dictionary.length;
+                metadata.stats.sentences = sentences.length;
+                metadata.stats.glosses = glosses.length;
                 // Normalize Dictionary Data (Map legacy fields if needed)
                 const normalizedDictionary = dictionary.map((d: any) => ({
                     ...d,

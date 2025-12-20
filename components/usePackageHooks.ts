@@ -5,7 +5,7 @@ import Papa from 'papaparse';
 import { downloadFile, saveAudioToDB, getAudioFromDB } from '../utils';
 
 export const usePackageExport = () => {
-    const { personalWords, userSentences, glosses, notebooks, userAudioMeta } = useCorpus();
+    const { personalWords, userSentences, glosses, notebooks, userAudioMeta, sentences } = useCorpus();
 
     const exportPackage = async (notebookIds: string[], metadata: Partial<PackageMetadata>, dependencyAudioIds: string[] = []) => {
         const zip = new JSZip();
@@ -36,7 +36,10 @@ export const usePackageExport = () => {
         const wordsToExport = personalWords.filter(w => notebookIds.includes(w.notebookId));
         const sentencesToExport = userSentences.filter(s => notebookIds.includes(s.source));
         const sentenceIds = new Set(sentencesToExport.map(s => s.id));
-        const glossesToExport = glosses.filter(g => sentenceIds.has(g.sentence_id) && g.source === 'user');
+
+        // Include glosses on exported sentences AND glosses on official sentences (orphaned from this export's sentences but valid user data)
+        const officialSentenceIds = new Set(sentences.map(s => s.id));
+        const glossesToExport = glosses.filter(g => g.source === 'user' && (sentenceIds.has(g.sentence_id) || officialSentenceIds.has(g.sentence_id)));
 
         // 2. Generate CSVs
         // Dictionary CSV
@@ -125,7 +128,8 @@ export const usePackageExport = () => {
             stats: {
                 words: wordsToExport.length,
                 sentences: sentencesToExport.length,
-                audio_files: 0
+                audio_files: 0,
+                glosses: glossesToExport.length
             },
             source_names: {}
         };
@@ -320,14 +324,14 @@ export const usePackageImport = () => {
             syllabary: d.Syllabary,
             translit: d.Entry,
             definition: d.Definition,
-            source: d.Source,
+            source: d.Source === 'user' ? meta.id : d.Source,
             audio: d.Audio,
             // Keep original fields for legacy compatibility if needed
             Index: d.Index,
             Entry: d.Entry,
             Syllabary: d.Syllabary,
             Definition: d.Definition,
-            Source: d.Source,
+            Source: d.Source === 'user' ? meta.id : d.Source,
             Entry_Tone: d.Entry_Tone,
             PoS: d.PoS || d.Part_of_Speech,
             Source_Long: meta.source_names?.[d.Source] || d.Source
@@ -338,14 +342,14 @@ export const usePackageImport = () => {
             syllabary: d.Syllabary,
             translit: d.Transliteration,
             english: d.English,
-            source: d.Source,
+            source: d.Source === 'user' ? meta.id : d.Source,
             audio: d.Audio,
             // Keep originals
             ID: d.ID,
             Syllabary: d.Syllabary,
             Transliteration: d.Transliteration,
             English: d.English,
-            Source: d.Source
+            Source: d.Source === 'user' ? meta.id : d.Source
         }));
 
         const glosses = rawGlosses.map((d: any) => ({
@@ -353,13 +357,13 @@ export const usePackageImport = () => {
             word_index: d.Word_Index,
             entry_id: d.Entry_ID,
             notes: d.Notes,
-            source: d.Source,
+            source: d.Source === 'user' ? meta.id : d.Source,
             // Keep originals
             Sentence_ID: d.Sentence_ID,
             Word_Index: d.Word_Index,
             Entry_ID: d.Entry_ID,
             Notes: d.Notes,
-            Source: d.Source
+            Source: d.Source === 'user' ? meta.id : d.Source
         }));
 
         // 3. Audio
@@ -413,6 +417,20 @@ export const usePackageImport = () => {
         // Import Audio Meta
         if (Object.keys(newAudioMeta).length > 0) {
             importAudioMeta(newAudioMeta);
+        }
+
+        // Update stats with actual counts
+        if (!meta.stats) {
+            meta.stats = {
+                words: dictionary.length,
+                sentences: sentences.length,
+                audio_files: Object.keys(newAudioMeta).length,
+                glosses: glosses.length
+            };
+        } else {
+            meta.stats.words = dictionary.length;
+            meta.stats.sentences = sentences.length;
+            meta.stats.glosses = glosses.length;
         }
 
         // 4. Install
