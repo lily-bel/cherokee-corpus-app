@@ -293,9 +293,13 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
     }
 
     if (score > 0) {
-      if (prioritizedSources.includes(entry.Source)) score += 5;
+      const entryId = parseInt(entry.Index || entry.id || "0");
+
       if (notebooks[entry.Source]) score += 10;
-      if (entry.PoS && entry.PoS.toLowerCase().includes('v')) score += 1;
+      if (entryId >= 100000) score += 4;
+      if (prioritizedSources.includes(entry.Source)) score += 2;
+
+      if (entry.PoS && entry.PoS.toLowerCase().startsWith('v')) score += 1;
     }
     return { ...entry, score };
   })

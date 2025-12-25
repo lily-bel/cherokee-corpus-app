@@ -207,9 +207,19 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, onSaveAudio, 
                         {/* METADATA ROW 2: Tags */}
                         <div className="flex flex-wrap gap-2 mb-6">
                             {favorites.includes(e.Index) && <span className="bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100 px-2 py-1 rounded border border-amber-200 dark:border-amber-800 font-medium text-xs flex items-center gap-1"><Star size={12} /> Favorites</span>}
-                            {Object.keys(customLists).filter(k => customLists[k].includes(e.Index)).map(listName => (
-                                <span key={listName} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-1 rounded border border-slate-200 dark:border-slate-700 font-medium text-xs flex items-center gap-1"><ListIcon size={12} /> {listName}</span>
-                            ))}
+                            {Object.keys(customLists).filter(k => {
+                                const list = customLists[k];
+                                if (Array.isArray(list)) return list.includes(e.Index);
+                                return list?.items?.includes(e.Index);
+                            }).map(id => {
+                                const list = customLists[id];
+                                const name = Array.isArray(list) ? id : list.name;
+                                return (
+                                    <span key={id} className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-1 rounded border border-slate-200 dark:border-slate-700 font-medium text-xs flex items-center gap-1">
+                                        <ListIcon size={12} /> {name}
+                                    </span>
+                                );
+                            })}
                         </div>
 
                         <hr className="border-slate-200 dark:border-slate-800 mb-6" />
@@ -278,7 +288,21 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, onSaveAudio, 
                 )}
                 <div className="mt-12 text-xs text-slate-300 font-mono text-center">Ref Index: {e.Index} | Source: {e.Source_Long}</div>
             </div>
-            {showListSheet && (<div className="absolute inset-0 z-[60] flex flex-col justify-end"><div className="absolute inset-0 bg-black/30 backdrop-blur-sm animate-fade-in" onClick={() => setShowListSheet(false)}></div><div className="bg-white dark:bg-slate-900 w-full rounded-t-2xl p-4 shadow-2xl animate-slide-up-sheet relative z-10 max-h-[70vh] flex flex-col"><div className="flex justify-between items-center mb-4 shrink-0"><h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Add to List</h3><button onClick={() => setShowListSheet(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full"><X size={20} className="dark:text-slate-200" /></button></div><div className="overflow-y-auto flex-1 space-y-2 mb-4"><label className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 dark:border-slate-800 active:bg-slate-50 dark:active:bg-slate-800 cursor-pointer"><input type="checkbox" checked={favorites.includes(e.Index)} onChange={() => onToggleFavorite(e.Index)} className="w-5 h-5 accent-amber-500" /><div className="flex items-center gap-2"><Star size={18} className="text-amber-500 fill-amber-500" /><span className="font-bold text-slate-700 dark:text-slate-200">Favorites</span></div></label>{customListOrder.map(listName => (<label key={listName} className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 dark:border-slate-800 active:bg-slate-50 dark:active:bg-slate-800 cursor-pointer"><input type="checkbox" checked={customLists[listName]?.includes(e.Index)} onChange={() => onToggleList(listName, e.Index)} className="w-5 h-5 accent-amber-500" /><div className="flex items-center gap-2"><ListIcon size={18} className="text-slate-500" /><span className="font-medium text-slate-700 dark:text-slate-200">{listName}</span></div></label>))}</div><button onClick={() => { setShowListSheet(false); onOpenNewListModal(e.Index); }} className="w-full py-3 bg-slate-900 dark:bg-slate-800 text-white font-bold rounded-xl flex items-center justify-center gap-2 shrink-0"><Plus size={20} /> Create New List</button></div></div>)}
+            {showListSheet && (<div className="absolute inset-0 z-[60] flex flex-col justify-end"><div className="absolute inset-0 bg-black/30 backdrop-blur-sm animate-fade-in" onClick={() => setShowListSheet(false)}></div><div className="bg-white dark:bg-slate-900 w-full rounded-t-2xl p-4 shadow-2xl animate-slide-up-sheet relative z-10 max-h-[70vh] flex flex-col"><div className="flex justify-between items-center mb-4 shrink-0"><h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Add to List</h3><button onClick={() => setShowListSheet(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full"><X size={20} className="dark:text-slate-200" /></button></div><div className="overflow-y-auto flex-1 space-y-2 mb-4"><label className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 dark:border-slate-800 active:bg-slate-50 dark:active:bg-slate-800 cursor-pointer"><input type="checkbox" checked={favorites.includes(e.Index)} onChange={() => onToggleFavorite(e.Index)} className="w-5 h-5 accent-amber-500" /><div className="flex items-center gap-2"><Star size={18} className="text-amber-500 fill-amber-500" /><span className="font-bold text-slate-700 dark:text-slate-200">Favorites</span></div></label>{customListOrder.map(listId => {
+                const list = customLists[listId];
+                if (!list) return null;
+                const isChecked = Array.isArray(list) ? list.includes(e.Index) : list.items.includes(e.Index);
+                const name = Array.isArray(list) ? listId : list.name;
+                return (
+                    <label key={listId} className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 dark:border-slate-800 active:bg-slate-50 dark:active:bg-slate-800 cursor-pointer">
+                        <input type="checkbox" checked={isChecked} onChange={() => onToggleList(listId, e.Index)} className="w-5 h-5 accent-amber-500" />
+                        <div className="flex items-center gap-2">
+                            <ListIcon size={18} className="text-slate-500" />
+                            <span className="font-medium text-slate-700 dark:text-slate-200">{name}</span>
+                        </div>
+                    </label>
+                );
+            })}</div><button onClick={() => { setShowListSheet(false); onOpenNewListModal(e.Index); }} className="w-full py-3 bg-slate-900 dark:bg-slate-800 text-white font-bold rounded-xl flex items-center justify-center gap-2 shrink-0"><Plus size={20} /> Create New List</button></div></div>)}
             {
                 showRecorder && (
                     <AudioRecorder

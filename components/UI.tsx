@@ -77,8 +77,13 @@ export const SourceBadge = ({ source, name, customColor }: { source: string, nam
 
   if (source && (source === 'pd' || source.startsWith('nb_'))) {
     let initials = "NB";
-    if (name) { initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase(); }
-    return <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border border-slate-400 text-slate-500 uppercase tracking-wide bg-white dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600">{initials}</span>;
+    if (name) { initials = name.substring(0, 4).trim().toUpperCase(); }
+
+    // Respect customColor if provided, otherwise default to a thematic amber/gold for user content
+    const style = customColor ? { backgroundColor: customColor, color: '#fff', borderColor: 'transparent' } : {};
+    const colorClasses = customColor ? "" : "bg-amber-500 text-white border-transparent";
+
+    return <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border uppercase tracking-wide ${colorClasses}`} style={style}>{initials}</span>;
   }
   return <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${colorClass}`} style={style}>{source?.toUpperCase()}</span>;
 };

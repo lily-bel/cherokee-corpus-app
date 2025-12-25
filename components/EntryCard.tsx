@@ -22,18 +22,14 @@ const EntryCard = ({ entry, notebooks, userNotes, userAudioMeta, favorites, cust
 
   // LIST COUNT
   const inFav = favorites.includes(entry.Index);
-  const inLists = Object.keys(customLists).filter(k => customLists[k].includes(entry.Index)).length;
+  const inLists = Object.keys(customLists).filter(k => {
+    const list = customLists[k];
+    if (Array.isArray(list)) return list.includes(entry.Index);
+    return list?.items?.includes(entry.Index);
+  }).length;
   const totalLists = (inFav ? 1 : 0) + inLists;
 
   const pkgColor = getPackageColor(entry.Source);
-  // If pkgColor is a hex code (starts with #), use it directly. 
-  // If it's a tailwind color name (like 'slate'), map it or fallback.
-  // Based on PackageManagerTab, colors are hex codes.
-  // Official/User packages might use 'slate' or 'amber' strings?
-  // Let's check getPackageColor return value.
-  // Assuming it returns what is stored in package.color.
-
-  const isCustomColor = pkgColor && pkgColor.startsWith('#');
 
   // Determine audio icon color
   let audioIconStyle = {};

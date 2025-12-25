@@ -2,9 +2,12 @@ import / export notes
 audio on word forms
 change index to ID in dictionary sheet
 
-hold down drag to reorder lists
+source bubble for user generated is still different and not gold
 
-speaker name drop-down / bubbles
+Lists:
+importing / exporting lists
+dragging still weird
+
 "editable" packages - make sure they're editable in all circumstances
 
 package exporter lets you choose which notebooks to export, and lists (and audio/glosses/notes from words in that list)
@@ -14,4 +17,4 @@ add other forms to the create word modal (you can add as many as you want, form 
 
 keep spaces in official audio speaker names
 
-list stuff
+some sort of complex issue with importing packages that you made and still have the words from... needs to merge somehow

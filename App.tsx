@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Search, Book, Menu, X, Filter, Clock, ListIcon, Folder, BookOpen, Download, ArrowLeft, Pencil, ChevronDown, Share, Trash2, Plus, Star, ChevronUp, Minus, Check, ToggleLeft, ToggleRight, Box, Layout } from './components/Icons';
-import { Toast, CollapsibleCard, Modal } from './components/UI';
+import { Search, Book, Menu, X, Filter, Clock, ListIcon, Folder, BookOpen, Download, ArrowLeft, Pencil, ChevronDown, Share, Trash2, Plus, ChevronUp, Minus, Check, ToggleLeft, ToggleRight, Box, Layout } from './components/Icons';
+import { Toast, Modal } from './components/UI';
 import EntryCard from './components/EntryCard';
 import EntryDetail from './components/EntryDetail';
 
@@ -12,6 +12,7 @@ import { SentenceCard } from './components/SentenceCard';
 import WidgetsTab from './components/WidgetsTab';
 
 import { usePackageManager } from './components/PackageManagerContext';
+import ListsTab, { ListData } from './components/ListsTab';
 
 const DEFAULT_SETTINGS = {
     darkMode: false,
@@ -53,7 +54,7 @@ function App() {
     const [expandedSmallSources, setExpandedSmallSources] = useState(false);
 
     const [favorites, setFavorites] = useState<string[]>([]);
-    const [customLists, setCustomLists] = useState<Record<string, string[]>>({});
+    const [customLists, setCustomLists] = useState<Record<string, ListData | string[]>>({});
     const [customListOrder, setCustomListOrder] = useState<string[]>([]);
     const [userNotes, setUserNotes] = useState<Record<string, string>>({});
     const [searchHistory, setSearchHistory] = useState<string[]>([]);
@@ -63,8 +64,6 @@ function App() {
 
     const [showNewListModal, setShowNewListModal] = useState(false);
     const [newListName, setNewListName] = useState('');
-    const [listToDelete, setListToDelete] = useState<string | null>(null);
-    const [isReordering, setIsReordering] = useState(false);
     const [toast, setToast] = useState({ show: false, message: '', type: 'error' });
     const [showWordModal, setShowWordModal] = useState(false);
     const [wordForm, setWordForm] = useState({ Entry: '', Syllabary: '', Definition: '', PoS: '', Entry_Tone: '', Notes: '', notebookId: '' });
@@ -129,9 +128,37 @@ function App() {
                 const savedFavs = localStorage.getItem('cherokee_app_favorites'); if (savedFavs) setFavorites(JSON.parse(savedFavs));
                 const savedLists = localStorage.getItem('cherokee_app_custom_lists');
                 if (savedLists) {
-                    setCustomLists(JSON.parse(savedLists));
+                    let parsedLists = JSON.parse(savedLists);
+
+                    // MIGRATION: Convert Array<string> to ListData
+                    // We can just set it as is, and the type safety allows string[], 
+                    // BUT let's aggressively migrate on load if possible or just handle mixed types.
+                    // Actually, let's migrate right here to ensure clean state.
+                    let migrated = false;
+                    Object.keys(parsedLists).forEach(key => {
+                        const val = parsedLists[key];
+                        if (Array.isArray(val)) {
+                            parsedLists[key] = {
+                                id: key, // Use name as ID for legacy
+                                name: key,
+                                items: val,
+                                type: 'user',
+                                color: 'gold'
+                            };
+                            migrated = true;
+                        }
+                    });
+
+                    setCustomLists(parsedLists);
+
                     const savedOrder = localStorage.getItem('cherokee_app_list_order');
-                    setCustomListOrder(savedOrder ? JSON.parse(savedOrder) : Object.keys(JSON.parse(savedLists)));
+                    setCustomListOrder(savedOrder ? JSON.parse(savedOrder) : Object.keys(parsedLists));
+
+                    if (migrated) {
+                        try {
+                            localStorage.setItem('cherokee_app_custom_lists', JSON.stringify(parsedLists));
+                        } catch (e) { }
+                    }
                 }
 
             } catch (e) {
@@ -631,10 +658,45 @@ function App() {
     }, [allData, settings, userNotes, posFilter]);
 
     const toggleFavorite = (idx) => setFavorites(prev => prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]);
-    const toggleInList = (name, idx) => { if (name === 'Favorites') { toggleFavorite(idx); return; } setCustomLists(prev => { const l = prev[name] || []; return { ...prev, [name]: l.includes(idx) ? l.filter(i => i !== idx) : [...l, idx] }; }); };
-    const createNewList = () => { if (!newListName.trim() || customLists[newListName] || newListName === 'Favorites') { showToast("Invalid Name"); return; } setCustomLists(prev => ({ ...prev, [newListName]: [] })); setCustomListOrder(prev => [...prev, newListName]); setNewListName(''); setShowNewListModal(false); };
-    const deleteList = (name) => { const n = { ...customLists }; delete n[name]; setCustomLists(n); setCustomListOrder(prev => prev.filter(x => x !== name)); setListToDelete(null); };
-    const moveList = (i, dir) => { const o = [...customListOrder]; if (dir === 'up' && i > 0) [o[i], o[i - 1]] = [o[i - 1], o[i]]; else if (dir === 'down' && i < o.length - 1) [o[i], o[i + 1]] = [o[i + 1], o[i]]; setCustomListOrder(o); };
+    const toggleInList = (listId, idx) => {
+        if (listId === 'Favorites') { toggleFavorite(idx); return; }
+        setCustomLists(prev => {
+            const list = prev[listId];
+            if (!list) return prev;
+
+            let items = Array.isArray(list) ? list : (list.items || []);
+            const newItems = items.includes(idx) ? items.filter(i => i !== idx) : [...items, idx];
+
+            if (Array.isArray(list)) {
+                return { ...prev, [listId]: newItems };
+            } else {
+                return {
+                    ...prev,
+                    [listId]: { ...list, items: newItems }
+                };
+            }
+        });
+    };
+    const createNewList = () => {
+        if (!newListName.trim() || newListName === 'Favorites') { showToast("Invalid Name"); return; }
+        const exists = Object.values(customLists).some((l: any) => l.name === newListName);
+        if (exists) { showToast("A list with this name already exists"); return; }
+
+        const id = 'list_' + Date.now();
+        const newList: ListData = {
+            id: id,
+            name: newListName,
+            items: [],
+            type: 'user',
+            color: 'gold'
+        };
+        setCustomLists(prev => ({ ...prev, [id]: newList }));
+        setCustomListOrder(prev => [...prev, id]);
+        setNewListName('');
+        setShowNewListModal(false);
+        showToast("List created", "success");
+    };
+
 
     const createNotebook = () => { if (!newNotebookName.trim()) return; const id = 'nb_' + Date.now(); setNotebooks(p => ({ ...p, [id]: { id, name: newNotebookName, date: Date.now() } })); setNewNotebookName(''); setShowNewNotebookModal(false); showToast("Notebook created!", "success"); };
     const deleteNotebook = (id) => {
@@ -662,21 +724,27 @@ function App() {
 
     const handleCreateList = () => {
         if (!renameData.value.trim()) return;
-        const newListName = renameData.value.trim();
+        const name = renameData.value.trim();
 
         if (renameData.type === 'list') {
-            if (customLists[newListName]) {
+            const exists = Object.values(customLists).some((l: any) => l.name === name);
+            if (exists) {
                 showToast("List already exists!");
                 return;
             }
-            const newList = renameData.initialEntryIndex ? [renameData.initialEntryIndex] : [];
-            const newLists = { ...customLists, [newListName]: newList };
-            setCustomLists(newLists);
-            setCustomListOrder([...customListOrder, newListName]);
-            localStorage.setItem('cherokee_app_custom_lists', JSON.stringify(newLists));
-            localStorage.setItem('cherokee_app_custom_list_order', JSON.stringify([...customListOrder, newListName]));
+            const id = 'list_' + Date.now();
+            const newList: ListData = {
+                id,
+                name,
+                items: renameData.initialEntryIndex ? [renameData.initialEntryIndex] : [],
+                type: 'user',
+                color: 'gold'
+            };
+            setCustomLists(prev => ({ ...prev, [id]: newList }));
+            setCustomListOrder(prev => [...prev, id]);
+
             if (renameData.initialEntryIndex) {
-                showToast(`Added to "${newListName}"`, 'success');
+                showToast(`Added to "${name}"`, 'success');
             }
         } else if (renameData.type === 'notebook') {
             // ... notebook logic
@@ -701,17 +769,19 @@ function App() {
                 handleCreateList();
                 return;
             }
-            if (customLists[value] || value === 'Favorites') {
-                showToast("List already exists"); return;
+
+            const exists = Object.values(customLists).some((l: any) => l.name === value && l.id !== target);
+            if (exists || value === 'Favorites') {
+                showToast("List name already exists"); return;
             }
-            const oldData = customLists[target];
-            setCustomLists(prev => {
-                const next = { ...prev };
-                next[value] = oldData;
-                delete next[target];
-                return next;
-            });
-            setCustomListOrder(prev => prev.map(n => n === target ? value : n));
+
+            setCustomLists(prev => ({
+                ...prev,
+                [target]: {
+                    ...prev[target],
+                    name: value
+                }
+            }));
             setShowNewListModal(false);
             showToast("List renamed", "success");
         }
@@ -1305,7 +1375,36 @@ function App() {
                         )}</div></div>
                 )
                 }
-                {activeTab === 'lists' && (<div className="flex flex-col h-full"><div className="px-4 py-4 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0"><h2 className="font-noto-serif text-2xl font-bold text-slate-800 dark:text-slate-100">My Lists</h2><button onClick={() => setIsReordering(!isReordering)} className={`text-xs font-bold uppercase tracking-wide px-3 py-1.5 rounded-full transition-colors ${isReordering ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-100' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>{isReordering ? 'Done' : 'Sort / Edit'}</button></div><div className="flex-1 overflow-y-auto p-4"><CollapsibleCard title="Favorites" count={favorites.length} icon={Star} defaultOpen={false} isReordering={false}>{favorites.length === 0 ? <div className="p-6 text-center text-slate-400 italic text-sm">No favorites yet.</div> : allData.filter(d => d.Index && favorites.includes(d.Index)).map(entry => <EntryCard key={entry.Index} entry={entry} notebooks={notebooks} userNotes={userNotes} userAudioMeta={userAudioMeta} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} />)}</CollapsibleCard>{customListOrder.map((listName, index) => (<CollapsibleCard key={listName} title={listName} count={customLists[listName]?.length || 0} icon={ListIcon} defaultOpen={false} onDelete={() => setListToDelete(listName)} onMoveUp={() => moveList(index, 'up')} onMoveDown={() => moveList(index, 'down')} isReordering={isReordering} onEdit={() => { setRenameData({ type: 'list', target: listName || '', value: listName || '' }); setShowNewListModal(true); }}>{(!customLists[listName] || customLists[listName].length === 0) ? <div className="p-6 text-center text-slate-400 italic text-sm">Empty list.</div> : allData.filter(d => d.Index && customLists[listName].includes(d.Index)).map(entry => <EntryCard key={entry.Index} entry={entry} notebooks={notebooks} userNotes={userNotes} userAudioMeta={userAudioMeta} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} />)}</CollapsibleCard>))}</div></div>)}
+                {activeTab === 'lists' && (
+                    <ListsTab
+                        customLists={customLists}
+                        setCustomLists={setCustomLists}
+                        customListOrder={customListOrder}
+                        setCustomListOrder={setCustomListOrder}
+                        favorites={favorites}
+                        setFavorites={setFavorites}
+                        allData={allData}
+                        notebooks={notebooks}
+                        userNotes={userNotes}
+                        userAudioMeta={userAudioMeta}
+                        onEntryClick={handleEntryClick}
+                        onPerformSearch={(q, scope) => {
+                            const isModal = scope === 'modal';
+                            const activeSettings = isModal ? {
+                                searchLangs: { syllabary: true, translit: true, english: true, tone: false },
+                                searchScopes: { main: true, otherForms: true, sentences: false, notes: false },
+                                enableRegex: false
+                            } : settings;
+                            const activePos = isModal ? "All" : posFilter;
+                            const activeNotes = isModal ? {} : userNotes;
+                            const activePrioritized = isModal ? [] : prioritizedSources;
+
+                            return performSearch(q, allData, [...sentences, ...userSentences], entryToSentencesMap, activeSettings, notebooks, activeNotes, activePos, isModal ? 'dictionary' : (scope || 'dictionary'), activePrioritized);
+                        }}
+                        settings={settings}
+                        openWordModal={openWordModal}
+                    />
+                )}
                 {activeTab === 'widgets' && <WidgetsTab />}
                 {activeTab === 'packages' && <PackageManagerTab />}
                 {
@@ -1340,23 +1439,23 @@ function App() {
                 }
             </main >
             <nav className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 pb-safe pt-2 px-6 flex justify-between shrink-0 h-[80px] pb-5">
-                <button onClick={() => { setActiveTab('search'); setIsReordering(false); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'search' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
+                <button onClick={() => { setActiveTab('search'); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'search' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
                     <Search size={24} strokeWidth={2} />
                     <span className="text-[10px] font-bold tracking-wide">Search</span>
                 </button>
-                <button onClick={() => { setActiveTab('lists'); setIsReordering(false); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'lists' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
+                <button onClick={() => { setActiveTab('lists'); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'lists' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
                     <ListIcon size={24} strokeWidth={2} />
                     <span className="text-[10px] font-bold tracking-wide">Lists</span>
                 </button>
-                <button onClick={() => { setActiveTab('personal'); setIsReordering(false); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'personal' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
+                <button onClick={() => { setActiveTab('personal'); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'personal' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
                     <Book size={24} strokeWidth={2} />
                     <span className="text-[10px] font-bold tracking-wide">Notebooks</span>
                 </button>
-                <button onClick={() => { setActiveTab('packages'); setIsReordering(false); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'packages' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
+                <button onClick={() => { setActiveTab('packages'); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'packages' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
                     <Box size={24} strokeWidth={2} />
                     <span className="text-[10px] font-bold tracking-wide">Packages</span>
                 </button>
-                <button onClick={() => { setActiveTab('widgets'); setIsReordering(false); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'widgets' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
+                <button onClick={() => { setActiveTab('widgets'); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'widgets' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
                     <Layout size={24} strokeWidth={2} />
                     <span className="text-[10px] font-bold tracking-wide">Widgets</span>
                 </button>
@@ -1443,7 +1542,7 @@ function App() {
             {/* REUSED MODAL FOR NEW LIST / NEW NOTEBOOK / RENAME */}
             {showNewListModal && (<Modal title={renameData.type === 'list' ? "Rename List" : "New List"} onClose={() => { setShowNewListModal(false); setRenameData({ type: null, target: null, value: '' }); }}><input type="text" autoFocus placeholder={renameData.type === 'list' ? "Rename list..." : "Enter list name..."} value={renameData.value || newListName} onChange={(e) => renameData.type === 'list' ? setRenameData({ ...renameData, value: e.target.value }) : setNewListName(e.target.value)} className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-4 py-3 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 dark:focus:ring-amber-900 transition-all dark:text-white" /><button onClick={renameData.type === 'list' ? handleRename : createNewList} disabled={!(renameData.type === 'list' ? renameData.value : newListName).trim()} className="w-full mt-4 bg-amber-600 text-white font-bold py-3 rounded-lg">Save</button></Modal>)}
             {showNewNotebookModal && (<Modal title={renameData.type === 'notebook' ? "Rename Notebook" : "New Notebook"} onClose={() => { setShowNewNotebookModal(false); setRenameData({ type: null, target: null, value: '' }); }}><input type="text" autoFocus placeholder={renameData.type === 'notebook' ? "Rename notebook..." : "Enter notebook name..."} value={renameData.value || newNotebookName} onChange={(e) => renameData.type === 'notebook' ? setRenameData({ ...renameData, value: e.target.value }) : setNewNotebookName(e.target.value)} className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-4 py-3 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 dark:focus:ring-amber-900 transition-all dark:text-white" /><button onClick={renameData.type === 'notebook' ? handleRename : createNotebook} disabled={!(renameData.type === 'notebook' ? renameData.value : newNotebookName).trim()} className="w-full mt-4 bg-sky-700 text-white font-bold py-3 rounded-lg">{renameData.type === 'notebook' ? "Rename" : "Create"}</button></Modal>)}
-            {listToDelete && (<Modal title="Delete List?" onClose={() => setListToDelete(null)}><p className="text-slate-600 dark:text-slate-300 mb-6">Are you sure you want to delete <strong>"{listToDelete}"</strong>? This action cannot be undone.</p><button onClick={() => deleteList(listToDelete)} className="w-full bg-red-600 text-white font-bold py-3 rounded-lg">Delete</button></Modal>)}
+
             {wordToDelete && (<Modal title="Delete Word?" onClose={() => setWordToDelete(null)}><p className="text-slate-600 dark:text-slate-300 mb-6">Are you sure you want to delete this word? This will remove it from all your lists.</p><button onClick={confirmDeleteWord} className="w-full bg-red-600 text-white font-bold py-3 rounded-lg">Delete</button></Modal>)}
             {notebookToDelete && (<Modal title="Delete Notebook?" onClose={() => setNotebookToDelete(null)}><p className="text-slate-600 dark:text-slate-300 mb-6">Are you sure you want to delete this notebook? All words inside it will be lost.</p><button onClick={() => deleteNotebook(notebookToDelete)} className="w-full bg-red-600 text-white font-bold py-3 rounded-lg">Delete</button></Modal>)}
             {
