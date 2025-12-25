@@ -2,11 +2,8 @@ import / export notes
 audio on word forms
 change index to ID in dictionary sheet
 
-source bubble for user generated is still different and not gold
-
 Lists:
 importing / exporting lists
-dragging still weird
 
 "editable" packages - make sure they're editable in all circumstances
 

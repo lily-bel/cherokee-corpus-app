@@ -556,7 +556,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                     <tr>
                                         <th className="p-3 border-b border-slate-100 dark:border-slate-700">Word</th>
                                         <th className="p-3 border-b border-slate-100 dark:border-slate-700">English</th>
-                                        <th className="p-3 border-b border-slate-100 dark:border-slate-700 w-24"></th>
+                                        <th className="p-3 border-b border-slate-100 dark:border-slate-700"></th>
                                         <th className="p-3 border-b border-slate-100 dark:border-slate-700 w-10"></th>
                                     </tr>
                                 </thead>
@@ -574,12 +574,16 @@ const ListsTab: React.FC<ListsTabProps> = ({
 
                                         return (
                                             <tr key={word.Index} onClick={() => onEntryClick(word)} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors active:bg-amber-50 dark:active:bg-amber-900/20">
-                                                <td className="p-3">
+                                                <td className="p-3 align-middle">
                                                     <div className="font-noto-cherokee text-lg text-slate-800 dark:text-slate-100 leading-tight">{word?.Syllabary || ''}</div>
                                                     <div className="font-noto-serif text-sm text-slate-500 dark:text-slate-400 font-medium">{word?.Entry || ''}</div>
                                                 </td>
-                                                <td className="p-3 font-noto-serif text-slate-600 dark:text-slate-300 text-sm line-clamp-2">{word?.Definition || ''}</td>
-                                                <td className="p-3">
+                                                <td className="p-3 align-middle">
+                                                    <div className="font-noto-serif text-slate-600 dark:text-slate-300 text-sm line-clamp-2">
+                                                        {word?.Definition || ''}
+                                                    </div>
+                                                </td>
+                                                <td className="p-3 align-middle">
                                                     <div className="flex flex-wrap gap-1.5" onClick={e => e.stopPropagation()}>
                                                         {(word.Entry_Audio || word.entry_audio) && (
                                                             <MiniAudioButton audio={word.Entry_Audio || word.entry_audio} isOfficial={true} />
@@ -645,7 +649,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                         </div>
                         <div>
                             <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">Favorites</h3>
-                            <p className="text-xs text-slate-400">{favorites.length} words</p>
+                            <p className="text-xs text-slate-400">{favorites.filter(id => allData.some(d => d.Index === id)).length} words</p>
                         </div>
                     </div>
                     <ChevronRight size={20} className="text-slate-300" />
@@ -679,7 +683,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                 </div>
                                 <div>
                                     <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">{list.name}</h3>
-                                    <p className="text-xs text-slate-400">{list.items.length} words</p>
+                                    <p className="text-xs text-slate-400">{list.items.filter(id => allData.some(d => d.Index === id)).length} words</p>
                                 </div>
                             </div>
                             <ChevronRight size={20} className="text-slate-300" />
