@@ -6,6 +6,7 @@
     "version": "1.0.0",
     "color": "Gray",
     "date": 0,
+    "editable": "No",
     "stats": {
         "words": 25160,
         "sentences": 9824

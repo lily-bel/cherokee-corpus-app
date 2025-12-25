@@ -92,13 +92,13 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
         rose: '#fb7185',
     };
 
-    const getGlossStyle = (index: number): { className: string, style?: React.CSSProperties } => {
+    const getGlossMeta = (index: number): { uniqueColors: string[], isMultiple: boolean } | null => {
         const wordGlosses = glosses.filter(g => {
             const indices = g.word_index.split(',').map(Number);
             return indices.includes(index);
         });
 
-        if (wordGlosses.length === 0) return { className: '' };
+        if (wordGlosses.length === 0) return null;
 
         // Get colors for all glosses
         const colors = wordGlosses.map(g => {
@@ -116,36 +116,34 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
             return COLORS.slate; // #cbd5e1 (default)
         });
 
-        // Conflict or Multiple
-        if (wordGlosses.length > 1) {
-            const uniqueColors = Array.from(new Set(colors));
-
-            // If same color, use double underline
-            if (uniqueColors.length === 1) {
-                return {
-                    className: 'border-b-4 border-double border-[var(--gloss-color)] pb-0',
-                    style: { '--gloss-color': uniqueColors[0] } as React.CSSProperties
-                };
-            }
-
-            // Gradient for multiple different colors
-            const gradient = uniqueColors.map((c, i, arr) => `${c} ${(i / (arr.length - 1)) * 100}%`).join(', ');
-
-            return {
-                className: 'bg-no-repeat pb-[4px]',
-                style: {
-                    backgroundImage: `linear-gradient(90deg, ${gradient}), linear-gradient(90deg, ${gradient})`,
-                    backgroundSize: '100% 2px, 100% 2px',
-                    backgroundPosition: '0 100%, 0 calc(100% - 4px)'
-                }
-            };
-        }
-
-        // Single Gloss
         return {
-            className: 'shadow-[inset_0_-2px_0_0_var(--gloss-color)]',
-            style: { '--gloss-color': colors[0] } as React.CSSProperties
+            uniqueColors: Array.from(new Set(colors)),
+            isMultiple: wordGlosses.length > 1
         };
+    };
+
+    const UnderlineBars = ({ colors, isMultiple }: { colors: string[], isMultiple: boolean }) => {
+        if (!colors || colors.length === 0) return null;
+
+        const isGradient = colors.length > 1;
+        const gradientStr = isGradient ? `linear-gradient(90deg, ${colors.map((c, i, arr) => `${c} ${(i / (arr.length - 1)) * 100}%`).join(', ')})` : colors[0];
+
+        return (
+            <div className={`absolute left-0 right-0 ${isMultiple ? 'bottom-[2px]' : 'bottom-[6px]'} pointer-events-none flex flex-col gap-[2px]`}>
+                {/* Top/Single Bar */}
+                <div
+                    className="h-[2px] rounded-full w-full"
+                    style={{ background: gradientStr }}
+                />
+                {/* Secondary Bar for multiple glosses */}
+                {isMultiple && (
+                    <div
+                        className="h-[2px] rounded-full w-full"
+                        style={{ background: gradientStr }}
+                    />
+                )}
+            </div>
+        );
     };
 
     const handleWordClick = (index: number, event: React.MouseEvent) => {
@@ -267,25 +265,40 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
             <div className="flex flex-wrap gap-x-3 gap-y-4 mb-4">
                 {tokens.map((token, i) => {
                     const isSelected = selectedIndices.includes(i);
-                    const glossStyle = getGlossStyle(i);
+                    const glossMeta = getGlossMeta(i);
+
+                    // Determine if the sentence has ANY syllabary at all to reserve vertical space
+                    const hasAnySyllabary = tokens.some(t => t.syl && t.syl.trim().length > 0);
+
                     return (
                         <div
                             key={i}
                             className={`flex flex-col items-center cursor-pointer group relative ${isSelected ? 'bg-amber-100 dark:bg-amber-900/40 rounded px-1 -mx-1' : ''}`}
                             onClick={(e) => { e.stopPropagation(); handleWordClick(i, e); }}
                         >
-                            <span
-                                className={`font-serif text-xl text-slate-900 dark:text-slate-100 leading-none mb-1 ${glossStyle.className}`}
-                                style={glossStyle.style}
-                            >
-                                {token.syl}
-                            </span>
-                            <span
-                                className={`text-lg text-slate-500 dark:text-slate-400 font-medium ${!token.syl ? glossStyle.className : ''}`}
-                                style={!token.syl ? glossStyle.style : undefined}
-                            >
-                                {token.tr}
-                            </span>
+                            {/* Syllabary Row */}
+                            <div className={`relative flex flex-col items-center justify-end ${hasAnySyllabary ? 'min-h-[2.5rem]' : ''}`}>
+                                <span
+                                    className="font-serif text-xl text-slate-900 dark:text-slate-100 leading-none pb-2 block"
+                                >
+                                    {token.syl}
+                                </span>
+                                {token.syl && glossMeta && (
+                                    <UnderlineBars colors={glossMeta.uniqueColors} isMultiple={glossMeta.isMultiple} />
+                                )}
+                            </div>
+
+                            {/* Transliteration Row */}
+                            <div className="relative flex flex-col items-center justify-start min-h-[1.75rem]">
+                                <span
+                                    className="text-lg text-slate-500 dark:text-slate-400 font-medium pb-2 block"
+                                >
+                                    {token.tr}
+                                </span>
+                                {!token.syl && glossMeta && (
+                                    <UnderlineBars colors={glossMeta.uniqueColors} isMultiple={glossMeta.isMultiple} />
+                                )}
+                            </div>
                             {/* Selection Checkmark */}
                             {isSelected && <div className="absolute -top-2 -right-2 bg-amber-500 text-white rounded-full p-0.5"><Check size={10} /></div>}
                         </div>
@@ -337,13 +350,17 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                 {sentence.english}
             </div>
 
-            {/* Audio */}
             {/* Official Audio */}
-            {sentence.audio && (
-                <div className="mt-3" onClick={e => e.stopPropagation()}>
-                    <AudioPlayer src={`/data/audio/${sentence.audio}`} label="Play Sentence" icon={Mic} variant="gray" />
-                </div>
-            )}
+            {sentence.audio && (() => {
+                const sColor = getPackageColor(sentence.source);
+                const isOfficial = packages.find(p => (p.id === sentence.source || p.metadata.source_names?.[sentence.source]) && p.type === 'official');
+                const customColor = isOfficial ? undefined : sColor;
+                return (
+                    <div className="mt-3" onClick={e => e.stopPropagation()}>
+                        <AudioPlayer src={`/data/audio/${sentence.audio}`} label="Play Sentence" icon={Mic} variant="gray" customColor={customColor} />
+                    </div>
+                );
+            })()}
             {/* User Audio */}
             {userAudioMeta && userAudioMeta[sentence.id + '_sentence'] && (
                 <div className="mt-2 flex flex-wrap gap-2" onClick={e => e.stopPropagation()}>
@@ -358,8 +375,9 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                         })
                         .map((audio: any) => {
                             // Determine color
-                            const isOfficial = !!audio.packageId;
-                            const pkgColor = audio.packageId ? getPackageColor(audio.packageId) : null;
+                            const audioPkg = packages.find(p => p.id === audio.packageId);
+                            const isOfficial = audioPkg ? audioPkg.type === 'official' : false;
+                            const pkgColor = getPackageColor(audio.packageId || 'user');
                             const isCustomColor = pkgColor && pkgColor.startsWith('#');
                             const isPlaying = playingAudioId === audio.id;
                             let style = {};

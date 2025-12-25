@@ -966,7 +966,57 @@ function App() {
 
     // Audio Logic Moved to CorpusContext
 
-    const sortedNotebookWords = useMemo(() => { if (!activeNotebookId) return []; const w = personalWords.filter(x => x.notebookId === activeNotebookId).map(x => ({ ...x, Source: activeNotebookId, Source_Long: notebooks[activeNotebookId]?.name })); if (pdSort === 'date') return w.sort((a, b) => ((b.DateCreated || 0) - (a.DateCreated || 0))); if (pdSort === 'syllabary') return w.sort((a, b) => (a.Syllabary || '').localeCompare(b.Syllabary || '')); if (pdSort === 'translit') return w.sort((a, b) => (a.Entry || '').localeCompare(b.Entry || '')); return w.sort((a, b) => (a.Definition || '').localeCompare(b.Definition || '')); }, [personalWords, activeNotebookId, pdSort, notebooks]);
+    const notebookList = useMemo(() => {
+        const list: any[] = Object.values(notebooks).map((nb: any) => ({
+            id: nb.id,
+            name: nb.name,
+            date: nb.date,
+            type: 'user',
+            countWords: personalWords.filter(w => w.notebookId === nb.id).length,
+            countSentences: userSentences.filter(s => s.source === nb.id).length,
+            color: 'amber'
+        }));
+
+        packages.forEach(p => {
+            if (p.type === 'imported' && p.status === 'active') {
+                if (p.metadata.source_names) {
+                    Object.entries(p.metadata.source_names).forEach(([code, name]) => {
+                        list.push({
+                            id: code,
+                            name: name,
+                            date: p.metadata.date_created,
+                            type: 'imported',
+                            packageId: p.id,
+                            color: p.color,
+                            countWords: allData.filter(d => d.Source === code).length,
+                            countSentences: sentences.filter(s => s.source === code).length
+                        });
+                    });
+                }
+            }
+        });
+
+        return list.sort((a, b) => {
+            if (a.type === 'user' && b.type !== 'user') return -1;
+            if (a.type !== 'user' && b.type === 'user') return 1;
+            return (b.date || 0) - (a.date || 0);
+        });
+    }, [notebooks, packages, personalWords, userSentences, allData, sentences]);
+
+    const sortedNotebookWords = useMemo(() => {
+        if (!activeNotebookId) return [];
+        let w: any[] = [];
+        if (notebooks[activeNotebookId]) {
+            w = personalWords.filter(x => x.notebookId === activeNotebookId).map(x => ({ ...x, Source: activeNotebookId, Source_Long: notebooks[activeNotebookId]?.name }));
+        } else {
+            w = allData.filter(x => x.Source === activeNotebookId);
+        }
+
+        if (pdSort === 'date') return w.sort((a, b) => ((b.DateCreated || 0) - (a.DateCreated || 0)));
+        if (pdSort === 'syllabary') return w.sort((a, b) => (a.Syllabary || '').localeCompare(b.Syllabary || ''));
+        if (pdSort === 'translit') return w.sort((a, b) => (a.Entry || '').localeCompare(b.Entry || ''));
+        return w.sort((a, b) => (a.Definition || '').localeCompare(b.Definition || ''));
+    }, [personalWords, activeNotebookId, pdSort, notebooks, allData]);
 
     const prioritizedSources = useMemo(() => {
         const prioritized = new Set<string>();
@@ -1259,10 +1309,19 @@ function App() {
                 {activeTab === 'widgets' && <WidgetsTab />}
                 {activeTab === 'packages' && <PackageManagerTab />}
                 {
-                    activeTab === 'personal' && (!activeNotebookId ? (<div className="flex flex-col h-full"><div className="px-4 py-4 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0"><h2 className="font-noto-serif text-2xl font-bold text-slate-800 dark:text-slate-100">Notebooks</h2><button onClick={() => setShowNewNotebookModal(true)} className="bg-slate-900 dark:bg-slate-700 text-white p-2 rounded-full shadow-md"><Plus size={20} /></button></div><div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-4 content-start">{Object.values(notebooks).map((nb: any) => (<div key={nb.id} onClick={() => setActiveNotebookId(nb.id)} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 flex flex-col shadow-sm hover:shadow-md transition-shadow active:bg-slate-50 dark:active:bg-slate-800 cursor-pointer h-32 justify-between"><Folder size={32} className="text-sky-800 dark:text-sky-400 opacity-80" /><div><h3 className="font-bold text-slate-800 dark:text-slate-200 line-clamp-1">{nb.name}</h3><p className="text-xs text-slate-400">{personalWords.filter(w => w.notebookId === nb.id).length} words, {userSentences.filter(s => s.source === nb.id).length} sentences</p></div></div>))}{Object.keys(notebooks).length === 0 && (<div className="col-span-2 text-center py-12 text-slate-400 flex flex-col items-center"><BookOpen size={48} className="mb-4 opacity-20" /><p>No notebooks yet.</p><button onClick={() => setShowNewNotebookModal(true)} className="mt-4 text-sky-600 dark:text-sky-400 font-bold">Create one</button></div>)}</div><div className="p-4 border-t border-slate-200 dark:border-slate-800"><label className="w-full flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold py-3 rounded-xl cursor-pointer transition-colors"><Download size={20} /><span>Import CSV</span><input type="file" className="hidden" accept=".csv" onChange={handleImportNotebook} /></label></div></div>) : (<div className="flex flex-col h-full"><div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col gap-3 shrink-0">
+                    activeTab === 'personal' && (!activeNotebookId ? (<div className="flex flex-col h-full"><div className="px-4 py-4 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0"><h2 className="font-noto-serif text-2xl font-bold text-slate-800 dark:text-slate-100">Notebooks</h2><button onClick={() => setShowNewNotebookModal(true)} className="bg-slate-900 dark:bg-slate-700 text-white p-2 rounded-full shadow-md"><Plus size={20} /></button></div><div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-4 content-start">{notebookList.map((nb: any) => {
+                        const isImported = nb.type === 'imported';
+                        const colorClass = isImported ? `text-${nb.color === 'amber' ? 'amber' : (nb.color === 'slate' ? 'slate' : nb.color)}-600 dark:text-${nb.color === 'amber' ? 'amber' : (nb.color === 'slate' ? 'slate' : nb.color)}-400` : 'text-amber-500 hover:text-amber-600';
+                        // Handle hex colors
+                        const style = (isImported && nb.color.startsWith('#')) ? { color: nb.color } : {};
+
+                        return (<div key={nb.id} onClick={() => setActiveNotebookId(nb.id)} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 flex flex-col shadow-sm hover:shadow-md transition-shadow active:bg-slate-50 dark:active:bg-slate-800 cursor-pointer h-32 justify-between"><Folder size={32} className={isImported && nb.color.startsWith('#') ? "" : (isImported ? colorClass : "text-amber-500")} style={style} /><div><h3 className="font-bold text-slate-800 dark:text-slate-200 line-clamp-1">{nb.name}</h3><p className="text-xs text-slate-400">{nb.countWords} words, {nb.countSentences} sentences</p></div></div>);
+                    })}{notebookList.length === 0 && (<div className="col-span-2 text-center py-12 text-slate-400 flex flex-col items-center"><BookOpen size={48} className="mb-4 opacity-20" /><p>No notebooks yet.</p><button onClick={() => setShowNewNotebookModal(true)} className="mt-4 text-sky-600 dark:text-sky-400 font-bold">Create one</button></div>)}</div><div className="p-4 border-t border-slate-200 dark:border-slate-800"><label className="w-full flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold py-3 rounded-xl cursor-pointer transition-colors"><Download size={20} /><span>Import CSV</span><input type="file" className="hidden" accept=".csv" onChange={handleImportNotebook} /></label></div></div>) : (<div className="flex flex-col h-full"><div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col gap-3 shrink-0">
                         <div className="flex items-center gap-3">
                             <button onClick={() => setActiveNotebookId(null)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full -ml-2"><ArrowLeft size={20} className="text-slate-500 dark:text-slate-400" /></button>
-                            <div className="flex-1 flex items-center gap-2"><h2 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100">{notebooks[activeNotebookId]?.name}</h2><button onClick={() => { setRenameData({ type: 'notebook', target: activeNotebookId, value: notebooks[activeNotebookId].name }); setShowNewNotebookModal(true); }} className="p-1 text-slate-400 hover:text-sky-600 rounded-full"><Pencil size={14} /></button></div>
+                            <div className="flex-1 flex items-center gap-2"><h2 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100">{notebooks[activeNotebookId]?.name || notebookList.find(n => n.id === activeNotebookId)?.name || 'Notebook'}</h2>
+                                {notebooks[activeNotebookId] && <button onClick={() => { setRenameData({ type: 'notebook', target: activeNotebookId, value: notebooks[activeNotebookId].name }); setShowNewNotebookModal(true); }} className="p-1 text-slate-400 hover:text-sky-600 rounded-full"><Pencil size={14} /></button>}
+                            </div>
                             <div className="flex gap-2 ml-auto"><button onClick={handleExportNotebook} className="p-1.5 text-slate-400 hover:text-amber-600 rounded"><Share size={20} /></button><button onClick={() => setNotebookToDelete(activeNotebookId)} className="p-1.5 text-slate-400 hover:text-red-500 rounded"><Trash2 size={20} /></button></div>
                         </div>
                         <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
@@ -1270,13 +1329,14 @@ function App() {
                             <button onClick={() => setNotebookMode('sentences')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${notebookMode === 'sentences' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'} `}>Sentences</button>
                         </div>
                     </div>
-                        <div className="flex-1 overflow-y-auto p-4">
+                        <div className="flex-1 overflow-y-auto p-4" key={activeNotebookId + '-' + notebookMode}>
                             {notebookMode === 'words' ? (
                                 sortedNotebookWords.length === 0 ? <div className="text-center py-12 text-slate-400">Empty notebook.<br />Tap + to add a word.</div> : sortedNotebookWords.map(entry => <EntryCard key={entry.Index} entry={entry} notebooks={notebooks} userNotes={userNotes} userAudioMeta={userAudioMeta} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} />)
                             ) : (
-                                userSentences.filter(s => s.source === activeNotebookId).length === 0 ? <div className="text-center py-12 text-slate-400">No sentences yet.<br />Tap + to add one.</div> : userSentences.filter(s => s.source === activeNotebookId).map(s => <SentenceCard key={s.id} sentence={s} notebooks={notebooks} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} personalWords={personalWords} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} onDeleteAudio={deleteAudio} />)
+                                (notebooks[activeNotebookId] ? userSentences : sentences).filter(s => s.source === activeNotebookId).length === 0 ? <div className="text-center py-12 text-slate-400">No sentences yet.<br />Tap + to add one.</div> : (notebooks[activeNotebookId] ? userSentences : sentences).filter(s => s.source === activeNotebookId).map(s => <SentenceCard key={s.id} sentence={s} notebooks={notebooks} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} personalWords={personalWords} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} onDeleteAudio={deleteAudio} />)
                             )}
-                        </div><button onClick={() => openWordModal()} className="absolute bottom-6 right-6 bg-slate-900 dark:bg-slate-700 text-white p-4 rounded-full shadow-xl z-20 hover:scale-105 transition-transform"><Plus size={24} /></button></div>))
+                        </div>{notebooks[activeNotebookId] && <button onClick={() => openWordModal()} className="absolute bottom-6 right-6 bg-slate-900 dark:bg-slate-700 text-white p-4 rounded-full shadow-xl z-20 hover:scale-105 transition-transform"><Plus size={24} /></button>}</div>))
+
                 }
             </main >
             <nav className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 pb-safe pt-2 px-6 flex justify-between shrink-0 h-[80px] pb-5">

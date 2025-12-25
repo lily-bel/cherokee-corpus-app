@@ -13,7 +13,7 @@ export const Toast = ({ show, message, type = 'error' }) => {
   );
 };
 
-export const AudioPlayer = ({ src, label = "Audio", icon: Icon = Volume2, variant = "gray", showNoAudioMessage = true, onDelete = undefined }: any) => {
+export const AudioPlayer = ({ src, label = "Audio", icon: Icon = Volume2, variant = "gray", showNoAudioMessage = true, onDelete = undefined, customColor = undefined }: any) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [error, setError] = useState(false);
   const playAudio = () => {
@@ -31,13 +31,27 @@ export const AudioPlayer = ({ src, label = "Audio", icon: Icon = Volume2, varian
   }
 
   const baseClass = "flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors shadow-sm group";
-  const activeClass = variant === 'gold'
+  let activeClass = variant === 'gold'
     ? (isPlaying ? 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100' : 'bg-amber-500 text-white hover:bg-amber-600')
     : (isPlaying ? 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600');
 
+  let style = {};
+  if (customColor) {
+    if (customColor.startsWith('#')) {
+      if (isPlaying) {
+        style = { backgroundColor: customColor + '20', color: customColor, borderColor: customColor };
+      } else {
+        style = { backgroundColor: customColor, color: '#fff' };
+      }
+      activeClass = "";
+    } else if (customColor !== 'slate' && customColor !== 'amber') {
+      activeClass = isPlaying ? `bg-${customColor}-100 dark:bg-${customColor}-900 text-${customColor}-800 dark:text-${customColor}-100` : `bg-${customColor}-500 text-white hover:bg-${customColor}-600`;
+    }
+  }
+
   return (
     <div className="relative flex items-center">
-      <div className={`${baseClass} ${activeClass}`}>
+      <div className={`${baseClass} ${activeClass}`} style={style}>
         <button onClick={playAudio} disabled={isPlaying} className="flex items-center gap-2">
           <Icon size={16} className={isPlaying ? 'animate-pulse' : ''} /> <span>{isPlaying ? 'Playing...' : label}</span>
         </button>

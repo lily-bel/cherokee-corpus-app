@@ -107,30 +107,20 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, onSaveAudio, 
 
     // Determine audio color based on package
     const { getPackageColor, packages } = usePackageManager(); // Need to import this hook
-    const pkgColor = getPackageColor(e.Source);
-    const isCustomColor = pkgColor && pkgColor.startsWith('#');
 
-    // Helper to get color styles
-    const getAudioStyles = (isPlaying: boolean) => {
-        if (!isCustomColor) return {}; // Use default classes
-        if (isPlaying) {
-            return {
-                backgroundColor: pkgColor + '20', // ~12% opacity
-                color: pkgColor,
-                borderColor: pkgColor
-            };
-        }
-        return {
-            backgroundColor: pkgColor,
-            color: 'white'
-        };
-    };
+
+    // Check editable status
+    const pkg = packages.find(p => p.status === 'active' && (p.id === e.Source || (p.metadata.source_names && p.metadata.source_names[e.Source])));
+    const isEditablePackage = pkg?.metadata.editable === 'Yes';
+    const canEdit = isPersonal || isEditablePackage;
+
+
 
     return (
         <div className="fixed inset-0 z-50 bg-[#F9F9F7] dark:bg-slate-950 flex flex-col animate-slide-up overflow-hidden">
             <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex items-center justify-between shadow-sm shrink-0 h-[60px]">
                 <button onClick={onClose} className="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full"><ArrowLeft size={24} className="text-slate-700 dark:text-slate-200" /></button>
-                <div className="flex gap-2">{isPersonal && <button onClick={() => onEdit(e)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-400"><Pencil size={20} /></button>}<button onClick={() => setShowListSheet(true)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-400"><ListPlus size={24} /></button><button onClick={() => onToggleFavorite(e.Index)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full"><Star size={24} className={isFav ? "fill-amber-400 text-amber-400" : "text-slate-400 dark:text-slate-500"} /></button></div>
+                <div className="flex gap-2">{canEdit && <button onClick={() => onEdit(e)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-400"><Pencil size={20} /></button>}<button onClick={() => setShowListSheet(true)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-400"><ListPlus size={24} /></button><button onClick={() => onToggleFavorite(e.Index)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full"><Star size={24} className={isFav ? "fill-amber-400 text-amber-400" : "text-slate-400 dark:text-slate-500"} /></button></div>
             </div>
             <div ref={containerRef} className="flex-1 overflow-y-auto p-5 pb-24">
                 <div className="mb-2"><div className="flex items-start justify-between mb-2"><h1 className="font-noto-cherokee text-4xl font-bold text-slate-900 dark:text-slate-100">{e.Syllabary}</h1><SourceBadge source={e.Source} name={notebooks[e.Source]?.name} /></div><h2 className="font-noto-serif text-2xl text-amber-800 dark:text-amber-400 font-medium mb-1">{e.Entry}</h2>{e.Entry_Tone && <div className="font-sans text-lg text-slate-500 dark:text-slate-400 italic">{e.Entry_Tone}</div>}</div>
@@ -145,6 +135,7 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, onSaveAudio, 
                                 label="Official"
                                 icon={Mic}
                                 variant="gray"
+                                customColor={pkg?.type !== 'official' ? pkg?.color : undefined}
                                 showNoAudioMessage={!((userAudioMeta && userAudioMeta[e.Index] && userAudioMeta[e.Index].length > 0) || e.Entry_Audio)}
                             />
                             {/* USER AUDIO LIST */}
@@ -158,10 +149,11 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, onSaveAudio, 
                                     return pkg && pkg.status === 'active';
                                 })
                                 .map(audio => {
-                                    const isOfficial = !!audio.packageId;
+                                    const audioPkg = packages.find(p => p.id === audio.packageId);
+                                    const isOfficial = audioPkg ? audioPkg.type === 'official' : false;
 
                                     // Determine color for this specific audio file
-                                    const audioPkgColor = audio.packageId ? getPackageColor(audio.packageId) : null;
+                                    const audioPkgColor = getPackageColor(audio.packageId || 'user');
                                     const isCustomAudioColor = audioPkgColor && audioPkgColor.startsWith('#');
 
                                     let className = "flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors shadow-sm group ";
@@ -254,7 +246,7 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, onSaveAudio, 
                             </div>
                         )}
 
-                        {(e.Sentence_Syllabary || e.Sentence_English) && (<div className="mb-8 bg-amber-50/50 dark:bg-amber-900/20 p-4 rounded-xl border border-amber-100 dark:border-amber-900/30"><h3 className="text-sm font-bold text-amber-800/60 dark:text-amber-200/60 uppercase tracking-widest mb-3 flex items-center gap-2">Example Sentence</h3>{e.Sentence_Syllabary && <p className="font-noto-cherokee text-lg text-slate-800 dark:text-slate-200 mb-2">{renderStyledText(e.Sentence_Syllabary)}</p>}{e.Sentence_Transliteration && <p className="font-noto-serif text-md text-slate-600 dark:text-slate-400 italic mb-2">{renderStyledText(e.Sentence_Transliteration)}</p>}{e.Sentence_English && <p className="font-noto-serif text-md text-slate-800 dark:text-slate-200 font-medium">{renderStyledText(e.Sentence_English)}</p>}<div className="mt-4 flex items-center gap-3 flex-wrap"><AudioPlayer src={e.Sentence_Audio} label="Play Sentence" icon={Mic} /></div></div>)}
+                        {(e.Sentence_Syllabary || e.Sentence_English) && (<div className="mb-8 bg-amber-50/50 dark:bg-amber-900/20 p-4 rounded-xl border border-amber-100 dark:border-amber-900/30"><h3 className="text-sm font-bold text-amber-800/60 dark:text-amber-200/60 uppercase tracking-widest mb-3 flex items-center gap-2">Example Sentence</h3>{e.Sentence_Syllabary && <p className="font-noto-cherokee text-lg text-slate-800 dark:text-slate-200 mb-2">{renderStyledText(e.Sentence_Syllabary)}</p>}{e.Sentence_Transliteration && <p className="font-noto-serif text-md text-slate-600 dark:text-slate-400 italic mb-2">{renderStyledText(e.Sentence_Transliteration)}</p>}{e.Sentence_English && <p className="font-noto-serif text-md text-slate-800 dark:text-slate-200 font-medium">{renderStyledText(e.Sentence_English)}</p>}<div className="mt-4 flex items-center gap-3 flex-wrap"><AudioPlayer src={e.Sentence_Audio} label="Play Sentence" icon={Mic} customColor={pkg?.type !== 'official' ? pkg?.color : undefined} /></div></div>)}
 
                         {/* SENTENCES SECTION (Horizontal Scroll) - Moved Above Notes */}
                         {linkedSentences.length > 0 && (

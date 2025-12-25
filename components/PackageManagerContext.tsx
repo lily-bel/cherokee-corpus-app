@@ -21,6 +21,7 @@ export interface PackageMetadata {
     source_meta?: Record<string, "prioritize" | "filter">;
     color?: string;
     locked?: string;
+    editable?: string;
 }
 
 export interface Package {

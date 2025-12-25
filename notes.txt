@@ -1,4 +1,18 @@
 show imported notebooks
+import / export notes
+audio on word forms
+change index to ID in dictionary sheet
+
+hold down drag to reorder lists
+
+speaker name drop-down / bubbles
+"editable" packages - make sure they're editable in all circumstances
+
+package exporter lets you choose which notebooks to export, and lists (and audio/glosses/notes from words in that list)
+lists need to export / import and have color attached to them etc
+
+add other forms to the create word modal (you can add as many as you want, form name is a dropdown of all that have been used, or you can type your own)
+
 keep spaces in official audio speaker names
 
 list stuff
