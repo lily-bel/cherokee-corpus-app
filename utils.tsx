@@ -296,7 +296,7 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
       const entryId = parseInt(entry.Index || entry.id || "0");
 
       if (notebooks[entry.Source]) score += 10;
-      if (entryId >= 100000) score += 4;
+      else if (entryId >= 100000) score += 4;
       if (prioritizedSources.includes(entry.Source)) score += 2;
 
       if (entry.PoS && entry.PoS.toLowerCase().startsWith('v')) score += 1;
