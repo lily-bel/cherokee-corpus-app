@@ -163,7 +163,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
             const token = tokens[index];
             setShowLinker({
                 indices: [index],
-                initialQuery: token.syl || token.tr || '',
+                initialQuery: (token.syl || token.tr || '').replace(/[.,!?;:"()]/g, '').trim(),
                 targetWord: { syllabary: token.syl, translit: token.tr }
             });
         }
@@ -174,7 +174,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
         const sorted = [...selectedIndices].sort((a, b) => a - b);
         // Construct query from first selected word
         const firstToken = tokens[sorted[0]];
-        const query = firstToken?.syl || firstToken?.tr || '';
+        const query = (firstToken?.syl || firstToken?.tr || '').replace(/[.,!?;:"()]/g, '').trim();
 
         // Map all selected indices to tokens
         const targetWords = sorted.map(i => ({ syllabary: tokens[i].syl, translit: tokens[i].tr }));
@@ -472,7 +472,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                         const token = tokens[index];
                         setShowLinker({
                             indices: [index],
-                            initialQuery: token.syl || token.tr || '',
+                            initialQuery: (token.syl || token.tr || '').replace(/[.,!?;:"()]/g, '').trim(),
                             targetWord: { syllabary: token.syl, translit: token.tr }
                         });
                         setActivePopover(null);

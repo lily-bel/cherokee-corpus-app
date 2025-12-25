@@ -13,5 +13,7 @@ lists need to export / import and have color attached to them etc
 add other forms to the create word modal (you can add as many as you want, form name is a dropdown of all that have been used, or you can type your own)
 
 keep spaces in official audio speaker names
+check for offset syllabary / translit word numbers in app data
+also add punctuation back sometimes (?, !)
 
 some sort of complex issue with importing packages that you made and still have the words from... needs to merge somehow
