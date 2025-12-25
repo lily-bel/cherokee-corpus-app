@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Mic, Square, Play, Pause, RotateCcw, X, Save } from './Icons';
 import { renderStyledText } from '../utils';
+import { useCorpus } from './CorpusContext';
 
 const AudioRecorder = ({ onSave, onCancel, title, syllabary, transliteration }: any) => {
     const [isRecording, setIsRecording] = useState(false);
@@ -9,6 +10,8 @@ const AudioRecorder = ({ onSave, onCancel, title, syllabary, transliteration }: 
     const [isPlaying, setIsPlaying] = useState(false);
     const [recordingTime, setRecordingTime] = useState(0);
     const [speakerName, setSpeakerName] = useState('');
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const { usedSpeakers } = useCorpus();
     const [error, setError] = useState<string | null>(null);
 
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -132,7 +135,7 @@ const AudioRecorder = ({ onSave, onCancel, title, syllabary, transliteration }: 
 
     return (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in p-4">
-            <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+            <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl flex flex-col">
                 <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
                     <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">Record Audio</h3>
                     <button onClick={onCancel} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-500">
@@ -200,16 +203,49 @@ const AudioRecorder = ({ onSave, onCancel, title, syllabary, transliteration }: 
                                 </button>
                             </div>
 
-                            <div className="space-y-2">
+                            <div className="space-y-2 relative">
                                 <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">Speaker Name</label>
-                                <input
-                                    type="text"
-                                    value={speakerName}
-                                    onChange={(e) => setSpeakerName(e.target.value)}
-                                    placeholder="Enter your name..."
-                                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-amber-500 transition-colors"
-                                    autoFocus
-                                />
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        value={speakerName}
+                                        onChange={(e) => {
+                                            setSpeakerName(e.target.value);
+                                            setShowSuggestions(true);
+                                        }}
+                                        onFocus={() => setShowSuggestions(true)}
+                                        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                                        placeholder="Select or enter name..."
+                                        className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:border-amber-500 transition-colors"
+                                    />
+                                </div>
+                                {showSuggestions && (
+                                    <div className="absolute z-50 w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg max-h-48 overflow-y-auto bottom-full mb-1">
+                                        {usedSpeakers.filter(s => s.toLowerCase().includes(speakerName.toLowerCase())).map(s => (
+                                            <button
+                                                key={s}
+                                                type="button"
+                                                onClick={() => {
+                                                    setSpeakerName(s);
+                                                    setShowSuggestions(false);
+                                                }}
+                                                className="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200"
+                                            >
+                                                {s}
+                                            </button>
+                                        ))}
+                                        {speakerName && !usedSpeakers.includes(speakerName) && (
+                                            <div className="px-4 py-2 text-xs text-slate-400 italic border-t border-slate-100 dark:border-slate-700">
+                                                New Speaker: "{speakerName}"
+                                            </div>
+                                        )}
+                                        {usedSpeakers.length === 0 && !speakerName && (
+                                            <div className="px-4 py-2 text-xs text-slate-400 italic">
+                                                No existing speakers. Type to create.
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
                             <button

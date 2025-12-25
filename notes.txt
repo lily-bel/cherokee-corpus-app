@@ -1,4 +1,3 @@
-show imported notebooks
 import / export notes
 audio on word forms
 change index to ID in dictionary sheet

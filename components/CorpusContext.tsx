@@ -101,6 +101,7 @@ interface CorpusContextType {
     deleteAudio: (targetId: string, audioId: string) => Promise<void>;
     importAudioMeta: (newMeta: Record<string, any[]>) => void;
     removePackageAudio: (packageId: string) => Promise<void>;
+    usedSpeakers: string[];
 }
 
 const CorpusContext = createContext<CorpusContextType | undefined>(undefined);
@@ -474,7 +475,16 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             saveAudio,
             deleteAudio,
             importAudioMeta,
-            removePackageAudio
+            removePackageAudio,
+            usedSpeakers: useMemo(() => {
+                const s = new Set<string>();
+                Object.values(userAudioMeta).forEach(list => {
+                    list.forEach(item => {
+                        if (item.speaker) s.add(item.speaker);
+                    });
+                });
+                return Array.from(s).sort();
+            }, [userAudioMeta])
         }}>
             {children}
         </CorpusContext.Provider>
