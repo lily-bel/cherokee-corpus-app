@@ -98,7 +98,13 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, onSaveAudio, 
                     <button onClick={onClose} className="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full"><ArrowLeft size={24} className="text-slate-700 dark:text-slate-200" /></button>
                 </div>
                 <div className="flex-1 overflow-y-auto p-5 pb-24">
-                    <SentenceCard sentence={e} onSaveAudio={onSaveAudio} userAudioMeta={userAudioMeta} personalWords={personalWords} onDeleteAudio={onDeleteAudio} />
+                    <SentenceCard sentence={e} onSaveAudio={onSaveAudio} userAudioMeta={userAudioMeta} personalWords={personalWords} onDeleteAudio={onDeleteAudio}
+                        favorites={favorites}
+                        customLists={customLists}
+                        onToggleFavorite={onToggleFavorite}
+                        onToggleList={onToggleList}
+                        onOpenNewListModal={onOpenNewListModal}
+                    />
                     <div className="mt-12 text-xs text-slate-300 font-mono text-center">Ref ID: {e.id}</div>
                 </div>
             </div>
@@ -265,7 +271,13 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, onSaveAudio, 
                                 <div ref={sentenceListRef} className="flex overflow-x-auto gap-4 pb-4 snap-x">
                                     {linkedSentences.map((s: any) => (
                                         <div key={s.id} className="min-w-[85vw] md:min-w-[400px] snap-center">
-                                            <SentenceCard sentence={s} userNotes={userNotes} onEditNote={(_, note) => onEdit(s, note, true)} onSaveAudio={onSaveAudio} userAudioMeta={userAudioMeta} onEditSentence={onEditSentence} onDeleteSentence={onDeleteSentence} onCreateWord={onCreateWord} personalWords={personalWords} notebooks={notebooks} />
+                                            <SentenceCard sentence={s} userNotes={userNotes} onEditNote={(_, note) => onEdit(s, note, true)} onSaveAudio={onSaveAudio} userAudioMeta={userAudioMeta} onEditSentence={onEditSentence} onDeleteSentence={onDeleteSentence} onCreateWord={onCreateWord} personalWords={personalWords} notebooks={notebooks}
+                                                favorites={favorites}
+                                                customLists={customLists}
+                                                onToggleFavorite={onToggleFavorite}
+                                                onToggleList={onToggleList}
+                                                onOpenNewListModal={onOpenNewListModal}
+                                            />
                                         </div>
                                     ))}
                                 </div>

@@ -25,9 +25,11 @@ interface ListsTabProps {
     userNotes: any;
     userAudioMeta: any;
     onEntryClick: (entry: any) => void;
-    onPerformSearch: (query: string, scope?: 'dictionary' | 'sentences' | 'modal') => any[];
+    onPerformSearch: (query: string, scope?: 'dictionary' | 'sentences' | 'modal' | 'modal_sentences') => any[];
     settings: any;
     openWordModal: (word?: any) => void;
+    sentences?: any[];
+    userSentences?: any[];
 }
 
 const MiniAudioButton = ({ audio, isOfficial = false, color }: { audio: any, isOfficial?: boolean, color?: string }) => {
@@ -104,6 +106,130 @@ const MiniAudioButton = ({ audio, isOfficial = false, color }: { audio: any, isO
     );
 };
 
+const AddWordsModal = ({
+    isOpen,
+    onClose,
+    listMode,
+    activeList,
+    onToggleItem,
+    onPerformSearch,
+    notebooks
+}: {
+    isOpen: boolean,
+    onClose: () => void,
+    listMode: 'words' | 'sentences',
+    activeList: ListData | null,
+    onToggleItem: (id: string) => void,
+    onPerformSearch: (query: string, scope?: 'dictionary' | 'sentences' | 'modal' | 'modal_sentences') => any[],
+    notebooks: any
+}) => {
+    const { getPackageColor } = usePackageManager();
+    const [query, setQuery] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [results, setResults] = useState<any[]>([]);
+    const [limit, setLimit] = useState(50);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setSearchTerm(query);
+            setLimit(50); // Reset limit on new search
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [query]);
+
+    useEffect(() => {
+        const scope = listMode === 'words' ? 'modal' : 'modal_sentences';
+        const res = onPerformSearch(searchTerm, scope);
+        setResults(res);
+    }, [searchTerm, onPerformSearch, listMode]);
+
+    if (!isOpen) return null;
+
+    const displayedResults = results.slice(0, limit);
+
+    return (
+        <Modal title={`Add ${listMode === 'words' ? 'Words' : 'Sentences'}`} onClose={onClose}>
+            <div className="h-[70vh] flex flex-col gap-4">
+                <div className="relative shrink-0">
+                    <Search size={18} className="absolute left-3 top-3 text-slate-400" />
+                    <input
+                        className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-lg py-2.5 pl-10 pr-4 text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-amber-500"
+                        placeholder="Search dictionary..."
+                        value={query}
+                        onChange={e => setQuery(e.target.value)}
+                        autoFocus
+                    />
+                </div>
+
+                <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 -mr-2 pr-2">
+                    {displayedResults.map(res => {
+                        const isSentenceResult = listMode === 'sentences';
+                        const data = isSentenceResult ? (res.item || res) : res;
+                        const itemId = isSentenceResult ? `s_${data.id}` : data.Index;
+
+                        const isInList = activeList?.items.includes(itemId);
+                        const source = data.Source || data.source;
+
+                        return (
+                            <div
+                                key={itemId}
+                                onClick={() => onToggleItem(itemId)}
+                                className="p-3 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer rounded-lg flex justify-between items-center group transition-colors"
+                            >
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-0.5">
+                                        <div className="font-serif font-bold text-slate-900 dark:text-slate-100 group-hover:text-amber-700 transition-colors leading-tight">
+                                            {isSentenceResult ? (data.syllabary || '') : (data.Syllabary || data.syllabary)}
+                                        </div>
+                                        {source && (
+                                            <SourceBadge
+                                                source={source}
+                                                name={notebooks?.[source]?.name}
+                                                customColor={getPackageColor(source)}
+                                            />
+                                        )}
+                                    </div>
+                                    <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                        {isSentenceResult ? (data.translit || '') : (data.Entry || data.translit)}
+                                    </div>
+                                    <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
+                                        {isSentenceResult ? (data.english || '') : (data.Definition || data.definition)}
+                                    </div>
+                                </div>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isInList ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
+                                    {isInList ? <Check size={18} /> : <Plus size={18} />}
+                                </div>
+                            </div>
+                        );
+                    })}
+                    {results.length > limit && (
+                        <div className="pt-2 pb-2">
+                            <button 
+                                onClick={() => setLimit(prev => prev + 50)}
+                                className="w-full py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold rounded-lg text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                            >
+                                Show More ({results.length - limit} remaining)
+                            </button>
+                        </div>
+                    )}
+                    {query && results.length === 0 && (
+                        <div className="text-center py-12 text-slate-400 text-sm flex flex-col items-center">
+                            <Search size={32} className="mb-3 opacity-20" />
+                            <p>No matches found</p>
+                        </div>
+                    )}
+                </div>
+
+                <div className="pt-2">
+                    <button onClick={onClose} className="w-full py-3 bg-slate-900 dark:bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-800 dark:hover:bg-slate-700 transition-colors">
+                        Done
+                    </button>
+                </div>
+            </div>
+        </Modal>
+    );
+};
+
 const ListsTab: React.FC<ListsTabProps> = ({
     customLists,
     setCustomLists,
@@ -116,11 +242,14 @@ const ListsTab: React.FC<ListsTabProps> = ({
     userAudioMeta,
     onEntryClick,
     onPerformSearch,
+    sentences = [],
+    userSentences = [],
 }) => {
     const { getPackageColor, packages } = usePackageManager();
 
     // Component State
     const [view, setView] = useState<'all' | 'detail'>('all');
+    const [listMode, setListMode] = useState<'words' | 'sentences'>('words'); // New State
     const [activeListId, setActiveListId] = useState<string | null>(null);
     const [isReordering, setIsReordering] = useState(false);
     const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -132,23 +261,6 @@ const ListsTab: React.FC<ListsTabProps> = ({
     const [renameTargetId, setRenameTargetId] = useState<string | null>(null);
     const [showAddWordsModal, setShowAddWordsModal] = useState(false);
 
-    // Search for adding words
-    const [addWordQuery, setAddWordQuery] = useState('');
-    const [addWordSearchTerm, setAddWordSearchTerm] = useState('');
-    const [addWordResults, setAddWordResults] = useState<any[]>([]);
-
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setAddWordSearchTerm(addWordQuery);
-        }, 300);
-        return () => clearTimeout(timer);
-    }, [addWordQuery]);
-
-    useEffect(() => {
-        const results = onPerformSearch(addWordSearchTerm, 'modal');
-        setAddWordResults(results);
-    }, [addWordSearchTerm, onPerformSearch]);
-
     // --- MIGRATION CHECK ---
     const getList = (id: string): ListData | null => {
         const raw = customLists[id];
@@ -157,6 +269,30 @@ const ListsTab: React.FC<ListsTabProps> = ({
             return { id, name: id, items: raw, type: 'user', color: 'amber' };
         }
         return raw as ListData;
+    };
+
+    const handleToggleItem = (itemId: string) => {
+        if (!activeListId) return;
+        const list = getList(activeListId);
+        if (!list) return;
+
+        const isCurrentlyIn = list.items.includes(itemId);
+        const nextItems = isCurrentlyIn
+            ? list.items.filter(i => i !== itemId)
+            : [...list.items, itemId];
+
+        // Optimistic update for UI responsiveness
+        if (activeListId === 'favorites') {
+             setFavorites(prev => isCurrentlyIn ? prev.filter(i => i !== itemId) : [...prev, itemId]);
+        } else {
+            setCustomLists(prev => ({
+                ...prev,
+                [activeListId]: {
+                    ...list,
+                    items: nextItems
+                }
+            }));
+        }
     };
 
     // --- DRAG AND DROP HANDLERS ---
@@ -387,20 +523,60 @@ const ListsTab: React.FC<ListsTabProps> = ({
 
     // --- DETAIL VIEW HELPERS ---
     const activeList = activeListId ? (activeListId === 'favorites' ? { id: 'favorites', name: 'Favorites', items: favorites, type: 'default', color: 'slate' } : getList(activeListId)) : null;
-    const listWords = activeList ? activeList.items.map(idx => allData.find(d => d.Index === idx)).filter(Boolean) : [];
+    
+    // Split items into words and sentences
+    const listItems = activeList ? activeList.items.map(id => {
+        // Check for Sentence Prefix
+        if (id.startsWith('s_')) {
+            const sId = id.substring(2);
+            const sentence = sentences.find(s => s.id === sId) || userSentences.find(s => s.id === sId);
+            if (sentence) return { type: 'sentence', data: sentence };
+            // If not found, it might be deleted, return null
+            return null;
+        }
 
-    const handleRemoveFromList = (wordIndex: string) => {
+        // Standard Word Check
+        const word = allData.find(d => d.Index === id);
+        if (word) return { type: 'word', data: word };
+
+        // Fallback: Check sentences (if legacy/user sentences stored without prefix)
+        // Although new ones use prefix, this is for safety or existing non-colliding IDs
+        const sentence = sentences.find(s => s.id === id) || userSentences.find(s => s.id === id);
+        if (sentence) return { type: 'sentence', data: sentence };
+        
+        return null;
+    }).filter(Boolean) as { type: 'word' | 'sentence', data: any }[] : [];
+
+    const displayedItems = listItems.filter(item => item?.type === (listMode === 'words' ? 'word' : 'sentence'));
+
+    const handleRemoveFromList = (item: any) => {
         if (!activeListId) return;
-        if (activeListId === 'favorites') {
-            setFavorites(prev => prev.filter(i => i !== wordIndex));
-        } else {
-            setCustomLists(prev => ({
-                ...prev,
-                [activeListId]: {
-                    ...prev[activeListId] as ListData,
-                    items: (prev[activeListId] as ListData).items.filter(i => i !== wordIndex)
-                }
-            }));
+        // Determine ID to remove (word Index or prefixed sentence ID)
+        // We need to match what's in the list.
+        // But here we might receive the raw data object or ID?
+        // The render passes `word.Index` or `sentence.id`.
+        // If it's a sentence, we need to try both `s_ID` and `ID`.
+        
+        const removeId = (id: string) => {
+             if (activeListId === 'favorites') {
+                setFavorites(prev => prev.filter(i => i !== id));
+            } else {
+                setCustomLists(prev => ({
+                    ...prev,
+                    [activeListId]: {
+                        ...prev[activeListId] as ListData,
+                        items: (prev[activeListId] as ListData).items.filter(i => i !== id)
+                    }
+                }));
+            }
+        };
+
+        // If we passed the ID directly
+        if (typeof item === 'string') {
+             // Try removing exact match first
+             removeId(item);
+             // Also try removing s_ prefix version if it's a sentence ID (not starting with s_)
+             if (!item.startsWith('s_')) removeId('s_' + item);
         }
     };
 
@@ -434,83 +610,15 @@ const ListsTab: React.FC<ListsTabProps> = ({
                     </Modal>
                 )}
 
-                {showAddWordsModal && (
-                    <Modal title="Add Words" onClose={() => setShowAddWordsModal(false)}>
-                        <div className="h-[70vh] flex flex-col gap-4">
-                            <div className="relative shrink-0">
-                                <Search size={18} className="absolute left-3 top-3 text-slate-400" />
-                                <input
-                                    className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-lg py-2.5 pl-10 pr-4 text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-amber-500"
-                                    placeholder="Search dictionary..."
-                                    value={addWordQuery}
-                                    onChange={e => setAddWordQuery(e.target.value)}
-                                    autoFocus
-                                />
-                            </div>
-
-                            <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 -mr-2 pr-2">
-                                {addWordResults.map(res => {
-                                    const isInList = activeList?.items.includes(res.Index);
-                                    const source = res.Source || res.source;
-                                    return (
-                                        <div
-                                            key={res.Index}
-                                            onClick={() => {
-                                                if (activeListId) {
-                                                    const list = getList(activeListId);
-                                                    if (!list) return;
-                                                    const isCurrentlyIn = list.items.includes(res.Index);
-                                                    const nextItems = isCurrentlyIn
-                                                        ? list.items.filter(i => i !== res.Index)
-                                                        : [...list.items, res.Index];
-
-                                                    setCustomLists(prev => ({
-                                                        ...prev,
-                                                        [activeListId]: {
-                                                            ...list,
-                                                            items: nextItems
-                                                        }
-                                                    }));
-                                                }
-                                            }}
-                                            className="p-3 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer rounded-lg flex justify-between items-center group transition-colors"
-                                        >
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-2 mb-0.5">
-                                                    <div className="font-serif font-bold text-slate-900 dark:text-slate-100 group-hover:text-amber-700 transition-colors leading-tight">{res.Syllabary || res.syllabary}</div>
-                                                    {source && (
-                                                        <SourceBadge
-                                                            source={source}
-                                                            name={notebooks?.[source]?.name}
-                                                            customColor={getPackageColor(source)}
-                                                        />
-                                                    )}
-                                                </div>
-                                                <div className="text-sm font-medium text-slate-700 dark:text-slate-300">{res.Entry || res.translit}</div>
-                                                <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">{res.Definition || res.definition}</div>
-                                            </div>
-                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isInList ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
-                                                {isInList ? <Check size={18} /> : <Plus size={18} />}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                                {addWordQuery && addWordResults.length === 0 && (
-                                    <div className="text-center py-12 text-slate-400 text-sm flex flex-col items-center">
-                                        <Search size={32} className="mb-3 opacity-20" />
-                                        <p>No matches found</p>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="pt-2">
-                                <button onClick={() => setShowAddWordsModal(false)} className="w-full py-3 bg-slate-900 dark:bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-800 dark:hover:bg-slate-700 transition-colors">
-                                    Done
-                                </button>
-                            </div>
-                        </div>
-                    </Modal>
-                )}
+                <AddWordsModal
+                    isOpen={showAddWordsModal}
+                    onClose={() => setShowAddWordsModal(false)}
+                    listMode={listMode}
+                    activeList={activeList}
+                    onToggleItem={handleToggleItem}
+                    onPerformSearch={onPerformSearch}
+                    notebooks={notebooks}
+                />
             </>
         );
     };
@@ -532,7 +640,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                 </button>
                             )}
                         </h2>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">{listWords.length} words</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{listItems.length} items</p>
                     </div>
                     {activeList.type === 'user' && (
                         <button onClick={() => setDeleteTargetId(activeList.id)} className="p-2 text-slate-400 hover:text-red-500 rounded-full">
@@ -541,73 +649,141 @@ const ListsTab: React.FC<ListsTabProps> = ({
                     )}
                 </div>
 
+                {/* Mode Toggle */}
+                <div className="px-4 pb-2 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+                     <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+                        <button onClick={() => setListMode('words')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${listMode === 'words' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'} `}>Words ({listItems.filter(i => i?.type === 'word').length})</button>
+                        <button onClick={() => setListMode('sentences')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${listMode === 'sentences' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'} `}>Sentences ({listItems.filter(i => i?.type === 'sentence').length})</button>
+                    </div>
+                </div>
+
                 {/* Table Content */}
                 <div className="flex-1 overflow-y-auto p-4">
-                    {listWords.length === 0 ? (
+                    {displayedItems.length === 0 ? (
                         <div className="text-center py-12 text-slate-400 flex flex-col items-center">
                             <ListIcon size={48} className="mb-4 opacity-20" />
-                            <p>This list is empty.</p>
-                            <button onClick={() => setShowAddWordsModal(true)} className="mt-4 text-amber-600 font-bold hover:underline">Add Words</button>
+                            <p>No {listMode} in this list.</p>
+                            {listMode === 'words' && <button onClick={() => setShowAddWordsModal(true)} className="mt-4 text-amber-600 font-bold hover:underline">Add Words</button>}
                         </div>
                     ) : (
                         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
                             <table className="w-full text-left border-collapse">
                                 <thead className="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-bold">
                                     <tr>
-                                        <th className="p-3 border-b border-slate-100 dark:border-slate-700">Word</th>
-                                        <th className="p-3 border-b border-slate-100 dark:border-slate-700">English</th>
+                                        <th className="p-3 border-b border-slate-100 dark:border-slate-700">
+                                            <span className="hidden md:inline">{listMode === 'words' ? 'Word' : 'Cherokee'}</span>
+                                        </th>
+                                        <th className="p-3 border-b border-slate-100 dark:border-slate-700 hidden md:table-cell">English</th>
                                         <th className="p-3 border-b border-slate-100 dark:border-slate-700"></th>
                                         <th className="p-3 border-b border-slate-100 dark:border-slate-700 w-10"></th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                    {listWords.map(word => {
-                                        const userAudio = (userAudioMeta?.[word.Index] || [])
-                                            .filter((audio: any) => {
-                                                if (!audio.packageId) {
-                                                    const userPkg = packages.find(p => p.id === 'user');
-                                                    return userPkg ? userPkg.status === 'active' : true;
-                                                }
-                                                const pkg = packages.find(p => p.id === audio.packageId);
-                                                return pkg && pkg.status === 'active';
-                                            });
-
-                                        return (
-                                            <tr key={word.Index} onClick={() => onEntryClick(word)} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors active:bg-amber-50 dark:active:bg-amber-900/20">
-                                                <td className="p-3 align-middle">
-                                                    <div className="font-noto-cherokee text-lg text-slate-800 dark:text-slate-100 leading-tight">{word?.Syllabary || ''}</div>
-                                                    <div className="font-noto-serif text-sm text-slate-500 dark:text-slate-400 font-medium">{word?.Entry || ''}</div>
-                                                </td>
-                                                <td className="p-3 align-middle">
-                                                    <div className="font-noto-serif text-slate-600 dark:text-slate-300 text-sm line-clamp-2">
-                                                        {word?.Definition || ''}
-                                                    </div>
-                                                </td>
-                                                <td className="p-3 align-middle">
-                                                    <div className="flex flex-wrap gap-1.5" onClick={e => e.stopPropagation()}>
-                                                        {(word.Entry_Audio || word.entry_audio) && (
-                                                            <MiniAudioButton audio={word.Entry_Audio || word.entry_audio} isOfficial={true} />
-                                                        )}
-                                                        {userAudio.map((audio: any) => {
-                                                            const isOfficialItem = audio.packageId === 'official-cherokee-data';
-                                                            return (
-                                                                <MiniAudioButton
-                                                                    key={audio.id}
-                                                                    audio={isOfficialItem ? audio.id : audio}
-                                                                    isOfficial={isOfficialItem}
-                                                                    color={isOfficialItem ? undefined : getPackageColor(audio.packageId || 'user')}
-                                                                />
-                                                            );
-                                                        })}
-                                                    </div>
-                                                </td>
-                                                <td className="p-3 text-right">
-                                                    <button onClick={(e) => { e.stopPropagation(); handleRemoveFromList(word!.Index); }} className="text-slate-300 hover:text-red-400 transition-colors">
-                                                        <X size={16} />
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        );
+                                    {displayedItems.map(({ type, data }) => {
+                                        if (type === 'word') {
+                                            const word = data;
+                                            const userAudio = (userAudioMeta?.[word.Index] || [])
+                                                .filter((audio: any) => {
+                                                    if (!audio.packageId) {
+                                                        const userPkg = packages.find(p => p.id === 'user');
+                                                        return userPkg ? userPkg.status === 'active' : true;
+                                                    }
+                                                    const pkg = packages.find(p => p.id === audio.packageId);
+                                                    return pkg && pkg.status === 'active';
+                                                });
+    
+                                            return (
+                                                <tr key={word.Index} onClick={() => onEntryClick(word)} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors active:bg-amber-50 dark:active:bg-amber-900/20">
+                                                    <td className="p-3 align-middle">
+                                                        <div className="font-noto-cherokee text-lg text-slate-800 dark:text-slate-100 leading-tight">{word?.Syllabary || ''}</div>
+                                                        <div className="font-noto-serif text-sm text-slate-500 dark:text-slate-400 font-medium">{word?.Entry || ''}</div>
+                                                        <div className="md:hidden mt-2 font-noto-serif text-slate-600 dark:text-slate-300 text-sm line-clamp-2">
+                                                            {word?.Definition || ''}
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-3 align-middle hidden md:table-cell">
+                                                        <div className="font-noto-serif text-slate-600 dark:text-slate-300 text-sm line-clamp-2">
+                                                            {word?.Definition || ''}
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-3 align-middle">
+                                                        <div className="flex flex-wrap gap-1.5" onClick={e => e.stopPropagation()}>
+                                                            {(word.Entry_Audio || word.entry_audio) && (
+                                                                <MiniAudioButton audio={word.Entry_Audio || word.entry_audio} isOfficial={true} />
+                                                            )}
+                                                            {userAudio.map((audio: any) => {
+                                                                const isOfficialItem = audio.packageId === 'official-cherokee-data';
+                                                                return (
+                                                                    <MiniAudioButton
+                                                                        key={audio.id}
+                                                                        audio={isOfficialItem ? audio.id : audio}
+                                                                        isOfficial={isOfficialItem}
+                                                                        color={isOfficialItem ? undefined : getPackageColor(audio.packageId || 'user')}
+                                                                    />
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-3 text-right">
+                                                        <button onClick={(e) => { e.stopPropagation(); handleRemoveFromList(word!.Index); }} className="text-slate-300 hover:text-red-400 transition-colors">
+                                                            <X size={16} />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        } else {
+                                            // Sentence Row
+                                            const sentence = data;
+                                            const userAudio = (userAudioMeta?.[sentence.id + '_sentence'] || [])
+                                                .filter((audio: any) => {
+                                                     if (!audio.packageId) {
+                                                        const userPkg = packages.find(p => p.id === 'user');
+                                                        return userPkg ? userPkg.status === 'active' : true;
+                                                    }
+                                                    const pkg = packages.find(p => p.id === audio.packageId);
+                                                    return pkg && pkg.status === 'active';
+                                                });
+                                            
+                                            return (
+                                                <tr key={sentence.id} onClick={() => onEntryClick(sentence)} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors active:bg-amber-50 dark:active:bg-amber-900/20">
+                                                     <td className="p-3 align-middle">
+                                                        <div className="font-noto-cherokee text-lg text-slate-800 dark:text-slate-100 leading-tight">{sentence.syllabary || ''}</div>
+                                                        <div className="font-noto-serif text-sm text-slate-500 dark:text-slate-400 font-medium">{sentence.translit || ''}</div>
+                                                        <div className="md:hidden mt-2 font-noto-serif text-slate-600 dark:text-slate-300 text-sm line-clamp-2">
+                                                            {sentence.english || ''}
+                                                        </div>
+                                                    </td>
+                                                     <td className="p-3 align-middle hidden md:table-cell">
+                                                        <div className="font-noto-serif text-slate-600 dark:text-slate-300 text-sm line-clamp-2">
+                                                            {sentence.english || ''}
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-3 align-middle">
+                                                         <div className="flex flex-wrap gap-1.5" onClick={e => e.stopPropagation()}>
+                                                             {sentence.audio && (
+                                                                <MiniAudioButton audio={sentence.audio} isOfficial={true} />
+                                                             )}
+                                                             {userAudio.map((audio: any) => {
+                                                                  const isOfficialItem = audio.packageId?.startsWith('official'); // Heuristic
+                                                                  return (
+                                                                    <MiniAudioButton
+                                                                        key={audio.id}
+                                                                        audio={isOfficialItem ? audio.id : audio}
+                                                                        isOfficial={isOfficialItem}
+                                                                        color={isOfficialItem ? undefined : getPackageColor(audio.packageId || 'user')}
+                                                                    />
+                                                                );
+                                                             })}
+                                                         </div>
+                                                    </td>
+                                                    <td className="p-3 text-right">
+                                                        <button onClick={(e) => { e.stopPropagation(); handleRemoveFromList(sentence.id); }} className="text-slate-300 hover:text-red-400 transition-colors">
+                                                            <X size={16} />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        }
                                     })}
                                 </tbody>
                             </table>
@@ -619,7 +795,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                 <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
                     <button onClick={() => setShowAddWordsModal(true)} className="w-full py-3 bg-amber-500 text-white font-bold rounded-xl shadow-lg hover:bg-amber-600 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
                         <Plus size={24} />
-                        Add Words
+                        Add {listMode === 'words' ? 'Words' : 'Sentences'}
                     </button>
                 </div>
                 {renderModals()}
@@ -649,7 +825,13 @@ const ListsTab: React.FC<ListsTabProps> = ({
                         </div>
                         <div>
                             <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">Favorites</h3>
-                            <p className="text-xs text-slate-400">{favorites.filter(id => allData.some(d => d.Index === id)).length} words</p>
+                            <p className="text-xs text-slate-400">{favorites.filter(id => {
+                                if (id.startsWith('s_')) {
+                                    const sId = id.substring(2);
+                                    return sentences.some(s => s.id === sId) || userSentences.some(s => s.id === sId);
+                                }
+                                return allData.some(d => d.Index === id) || sentences.some(s => s.id === id) || userSentences.some(s => s.id === id);
+                            }).length} items</p>
                         </div>
                     </div>
                     <ChevronRight size={20} className="text-slate-300" />
@@ -683,7 +865,13 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                 </div>
                                 <div>
                                     <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">{list.name}</h3>
-                                    <p className="text-xs text-slate-400">{list.items.filter(id => allData.some(d => d.Index === id)).length} words</p>
+                                    <p className="text-xs text-slate-400">{list.items.filter(id => {
+                                        if (id.startsWith('s_')) {
+                                            const sId = id.substring(2);
+                                            return sentences.some(s => s.id === sId) || userSentences.some(s => s.id === sId);
+                                        }
+                                        return allData.some(d => d.Index === id) || sentences.some(s => s.id === id) || userSentences.some(s => s.id === id);
+                                    }).length} items</p>
                                 </div>
                             </div>
                             <ChevronRight size={20} className="text-slate-300" />

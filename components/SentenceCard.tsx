@@ -4,7 +4,7 @@ import { usePackageManager } from './PackageManagerContext';
 import { GlossPopover } from './GlossPopover';
 import { LinkerModal } from './LinkerModal';
 import { AudioPlayer, SourceBadge } from './UI';
-import { Check, Plus, Mic, Pencil, MicPlus, Trash2, Pause } from './Icons';
+import { Check, Plus, Mic, Pencil, MicPlus, Trash2, Pause, ListIcon, Star, X, ListPlus } from './Icons';
 import { getAudioFromDB } from '../utils';
 
 import AudioRecorder from './AudioRecorder';
@@ -24,13 +24,20 @@ interface SentenceCardProps {
     onDeleteSentence?: (id: string) => void;
     onDeleteAudio?: (targetId: string, audioId: string) => void;
     onCreateWord?: () => void;
+    // List Props
+    favorites?: string[];
+    customLists?: Record<string, any>;
+    onToggleFavorite?: (id: string) => void;
+    onToggleList?: (listId: string, id: string) => void;
+    onOpenNewListModal?: (id: string) => void;
 }
 
-export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, isDimmed, notebooks, userNotes, onEditNote, onEditSentence, sourceMap, onSaveAudio, userAudioMeta, personalWords, onDeleteSentence, onDeleteAudio, onCreateWord }) => {
+export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, isDimmed, notebooks, userNotes, onEditNote, onEditSentence, sourceMap, onSaveAudio, userAudioMeta, personalWords, onDeleteSentence, onDeleteAudio, onCreateWord, favorites, customLists, onToggleFavorite, onToggleList, onOpenNewListModal }) => {
     const { glossMap, dictionaryMap, addUserGloss, removeUserGloss, removeUserSentence } = useCorpus();
     const { packages, getPackageColor } = usePackageManager(); // Add this line
     const [activePopover, setActivePopover] = useState<{ index: number, rect: { x: number, y: number } } | null>(null);
     const [showRecorder, setShowRecorder] = useState(false);
+    const [showListSheet, setShowListSheet] = useState(false);
     const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
     const audioRef = useRef(new Audio());
     const [showLinker, setShowLinker] = useState<{
@@ -235,6 +242,18 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
         files: userAudioMeta ? userAudioMeta[sentence.id + '_sentence'] : []
     });
 
+    // Derived List ID to avoid collision with Word IDs
+    const listId = `s_${sentence.id}`;
+
+    // LIST COUNT
+    const inFav = favorites?.includes(listId);
+    const inLists = customLists ? Object.keys(customLists).filter(k => {
+        const list = customLists[k];
+        if (Array.isArray(list)) return list.includes(listId);
+        return list?.items?.includes(listId);
+    }).length : 0;
+    const totalLists = (inFav ? 1 : 0) + inLists;
+
 
     return (
         <div className={`bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm mb-4 ${isDimmed ? 'opacity-50 grayscale' : ''}`}>
@@ -256,6 +275,13 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                     ) : null}
                 </div>
                 <div className="flex items-center gap-2">
+                    {/* List Add Button */}
+                    {(onToggleFavorite || onToggleList) && (
+                        <button onClick={(e) => { e.stopPropagation(); setShowListSheet(true); }} className={`p-1 rounded-full transition-colors flex items-center gap-1 ${totalLists > 0 ? 'text-amber-500 bg-amber-50 dark:bg-amber-900/20' : 'text-slate-300 hover:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
+                            {totalLists > 0 ? <ListIcon size={14} className="fill-amber-100" /> : <ListPlus size={14} />}
+                            {totalLists > 0 && <span className="text-[10px] font-bold">{totalLists}</span>}
+                        </button>
+                    )}
                     {sentence.audio && <div className="text-slate-400"><Mic size={14} /></div>}
                     <SourceBadge source={sentence.source} name={notebooks?.[sentence.source]?.name || sourceMap?.[sentence.source] || sentence.source} />
                 </div>
@@ -573,6 +599,49 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                     }}
                     onCancel={() => setShowRecorder(false)}
                 />
+            )}
+            {showListSheet && customLists && (
+                <div className="fixed inset-0 z-[100] flex flex-col justify-end" onClick={(e) => e.stopPropagation()}>
+                    <div className="absolute inset-0 bg-black/30 backdrop-blur-sm animate-fade-in" onClick={() => setShowListSheet(false)}></div>
+                    <div className="bg-white dark:bg-slate-900 w-full rounded-t-2xl p-4 shadow-2xl animate-slide-up-sheet relative z-10 max-h-[70vh] flex flex-col">
+                        <div className="flex justify-between items-center mb-4 shrink-0">
+                            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Add to List</h3>
+                            <button onClick={() => setShowListSheet(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full">
+                                <X size={20} className="dark:text-slate-200" />
+                            </button>
+                        </div>
+                        <div className="overflow-y-auto flex-1 space-y-2 mb-4">
+                            {onToggleFavorite && (
+                                <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 dark:border-slate-800 active:bg-slate-50 dark:active:bg-slate-800 cursor-pointer">
+                                    <input type="checkbox" checked={favorites?.includes(listId) || false} onChange={() => onToggleFavorite(listId)} className="w-5 h-5 accent-amber-500" />
+                                    <div className="flex items-center gap-2">
+                                        <Star size={18} className="text-amber-500 fill-amber-500" />
+                                        <span className="font-bold text-slate-700 dark:text-slate-200">Favorites</span>
+                                    </div>
+                                </label>
+                            )}
+                            {Object.keys(customLists).map(listKey => {
+                                const list = customLists[listKey];
+                                const isChecked = Array.isArray(list) ? list.includes(listId) : list.items.includes(listId);
+                                const name = Array.isArray(list) ? listKey : list.name;
+                                return (
+                                    <label key={listKey} className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 dark:border-slate-800 active:bg-slate-50 dark:active:bg-slate-800 cursor-pointer">
+                                        <input type="checkbox" checked={isChecked} onChange={() => onToggleList && onToggleList(listKey, listId)} className="w-5 h-5 accent-amber-500" />
+                                        <div className="flex items-center gap-2">
+                                            <ListIcon size={18} className="text-slate-500" />
+                                            <span className="font-medium text-slate-700 dark:text-slate-200">{name}</span>
+                                        </div>
+                                    </label>
+                                );
+                            })}
+                        </div>
+                        {onOpenNewListModal && (
+                            <button onClick={() => { setShowListSheet(false); onOpenNewListModal(listId); }} className="w-full py-3 bg-slate-900 dark:bg-slate-800 text-white font-bold rounded-xl flex items-center justify-center gap-2 shrink-0">
+                                <Plus size={20} /> Create New List
+                            </button>
+                        )}
+                    </div>
+                </div>
             )}
         </div>
     );

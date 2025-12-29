@@ -1324,7 +1324,13 @@ function App() {
                             const data = item.item || item;
 
                             return isSentence ? (
-                                <SentenceCard key={data.id} sentence={data} onClick={() => handleEntryClick(data)} notebooks={notebooks} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} personalWords={personalWords} onCreateWord={() => openWordModal(null)} />
+                                <SentenceCard key={data.id} sentence={data} onClick={() => handleEntryClick(data)} notebooks={notebooks} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} personalWords={personalWords} onCreateWord={() => openWordModal(null)}
+                                    favorites={favorites}
+                                    customLists={customLists}
+                                    onToggleFavorite={toggleFavorite}
+                                    onToggleList={toggleInList}
+                                    onOpenNewListModal={() => setShowNewListModal(true)}
+                                />
                             ) : (
                                 <EntryCard key={item.Index} entry={item} notebooks={notebooks} userNotes={userNotes} userAudioMeta={userAudioMeta} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} />
                             );
@@ -1334,7 +1340,13 @@ function App() {
 
                             {paginatedResults.inactive.length > 0 && <><div className="px-4 py-2 bg-slate-50 dark:bg-slate-900/50 text-xs font-bold text-slate-400 uppercase tracking-widest border-y border-slate-100 dark:border-slate-800 mt-4">Filtered</div>{paginatedResults.inactive.map(entry => {
                                 if (entry.item && (entry.type === 'text' || entry.type === 'deep')) {
-                                    return <SentenceCard key={entry.item.id} sentence={entry.item} onClick={() => handleEntryClick(entry.item)} isDimmed={true} notebooks={notebooks} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} personalWords={personalWords} onCreateWord={() => openWordModal(null)} />;
+                                    return <SentenceCard key={entry.item.id} sentence={entry.item} onClick={() => handleEntryClick(entry.item)} isDimmed={true} notebooks={notebooks} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} personalWords={personalWords} onCreateWord={() => openWordModal(null)}
+                                        favorites={favorites}
+                                        customLists={customLists}
+                                        onToggleFavorite={toggleFavorite}
+                                        onToggleList={toggleInList}
+                                        onOpenNewListModal={() => setShowNewListModal(true)}
+                                    />;
                                 }
                                 return <EntryCard key={entry.Index} entry={entry} notebooks={notebooks} userNotes={userNotes} userAudioMeta={userAudioMeta} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} isDimmed={true} />;
                             })}</>}
@@ -1390,19 +1402,22 @@ function App() {
                         onEntryClick={handleEntryClick}
                         onPerformSearch={(q, scope) => {
                             const isModal = scope === 'modal';
-                            const activeSettings = isModal ? {
+                            const isModalSentences = scope === 'modal_sentences';
+                            const activeSettings = (isModal || isModalSentences) ? {
                                 searchLangs: { syllabary: true, translit: true, english: true, tone: false },
-                                searchScopes: { main: true, otherForms: true, sentences: false, notes: false },
+                                searchScopes: { main: isModal, otherForms: isModal, sentences: isModalSentences, notes: false },
                                 enableRegex: false
                             } : settings;
-                            const activePos = isModal ? "All" : posFilter;
-                            const activeNotes = isModal ? {} : userNotes;
-                            const activePrioritized = isModal ? [] : prioritizedSources;
+                            const activePos = (isModal || isModalSentences) ? "All" : posFilter;
+                            const activeNotes = (isModal || isModalSentences) ? {} : userNotes;
+                            const activePrioritized = (isModal || isModalSentences) ? [] : prioritizedSources;
 
-                            return performSearch(q, allData, [...sentences, ...userSentences], entryToSentencesMap, activeSettings, notebooks, activeNotes, activePos, isModal ? 'dictionary' : (scope || 'dictionary'), activePrioritized);
+                            return performSearch(q, allData, [...sentences, ...userSentences], entryToSentencesMap, activeSettings, notebooks, activeNotes, activePos, isModalSentences ? 'sentences' : (isModal ? 'dictionary' : (scope || 'dictionary')), activePrioritized);
                         }}
                         settings={settings}
                         openWordModal={openWordModal}
+                        sentences={sentences}
+                        userSentences={userSentences}
                     />
                 )}
                 {activeTab === 'widgets' && <WidgetsTab />}
@@ -1432,7 +1447,13 @@ function App() {
                             {notebookMode === 'words' ? (
                                 sortedNotebookWords.length === 0 ? <div className="text-center py-12 text-slate-400">Empty notebook.<br />Tap + to add a word.</div> : sortedNotebookWords.map(entry => <EntryCard key={entry.Index} entry={entry} notebooks={notebooks} userNotes={userNotes} userAudioMeta={userAudioMeta} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} />)
                             ) : (
-                                (notebooks[activeNotebookId] ? userSentences : sentences).filter(s => s.source === activeNotebookId).length === 0 ? <div className="text-center py-12 text-slate-400">No sentences yet.<br />Tap + to add one.</div> : (notebooks[activeNotebookId] ? userSentences : sentences).filter(s => s.source === activeNotebookId).map(s => <SentenceCard key={s.id} sentence={s} notebooks={notebooks} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} personalWords={personalWords} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} onDeleteAudio={deleteAudio} />)
+                                (notebooks[activeNotebookId] ? userSentences : sentences).filter(s => s.source === activeNotebookId).length === 0 ? <div className="text-center py-12 text-slate-400">No sentences yet.<br />Tap + to add one.</div> : (notebooks[activeNotebookId] ? userSentences : sentences).filter(s => s.source === activeNotebookId).map(s => <SentenceCard key={s.id} sentence={s} notebooks={notebooks} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} personalWords={personalWords} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} onDeleteAudio={deleteAudio}
+                                    favorites={favorites}
+                                    customLists={customLists}
+                                    onToggleFavorite={toggleFavorite}
+                                    onToggleList={toggleInList}
+                                    onOpenNewListModal={() => setShowNewListModal(true)}
+                                />)
                             )}
                         </div>{notebooks[activeNotebookId] && <button onClick={() => openWordModal()} className="absolute bottom-6 right-6 bg-slate-900 dark:bg-slate-700 text-white p-4 rounded-full shadow-xl z-20 hover:scale-105 transition-transform"><Plus size={24} /></button>}</div>))
 
