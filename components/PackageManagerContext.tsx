@@ -16,6 +16,7 @@ export interface PackageMetadata {
         sentences: number;
         audio_files: number;
         glosses?: number;
+        lists?: number;
     };
     source_names?: Record<string, string>;
     source_meta?: Record<string, "prioritize" | "filter">;
@@ -37,6 +38,7 @@ export interface ImportedPackageData {
     dictionary: any[]; // Parsed CSV
     sentences: any[]; // Parsed CSV
     glosses: any[]; // Parsed CSV
+    lists?: any[]; // ListData[]
 }
 
 interface PackageManagerContextType {

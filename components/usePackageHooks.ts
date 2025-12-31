@@ -1,296 +1,341 @@
 import { useCorpus } from './CorpusContext';
 import { usePackageManager, Package, PackageMetadata, ImportedPackageData } from './PackageManagerContext';
+import { ListData } from './ListsTab';
 import JSZip from 'jszip';
 import Papa from 'papaparse';
 import { downloadFile, saveAudioToDB, getAudioFromDB } from '../utils';
 
+const generateId = () => {
+    try {
+        return crypto.randomUUID();
+    } catch {
+        return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    }
+};
+
 export const usePackageExport = () => {
     const { personalWords, userSentences, glosses, notebooks, userAudioMeta, sentences } = useCorpus();
 
-    const exportPackage = async (notebookIds: string[], metadata: Partial<PackageMetadata>, dependencyAudioIds: string[] = []) => {
-        const zip = new JSZip();
-
-        // 0. Generate Shorthands
-        const shorthandMap: Record<string, string> = {};
-        const usedShorthands = new Set<string>();
-
-        // 0.1 Package Shorthand (for glosses on official sentences)
-        let pkgBase = (metadata.name || 'Package').replace(/[^a-zA-Z0-9]/g, '').substring(0, 4).toUpperCase();
-        if (pkgBase.length === 0) pkgBase = 'PKG';
-        // Ensure package shorthand doesn't conflict with notebook shorthands later? 
-        // We'll treat it as a reserved base if needed, but for now just use it.
-        const packageShorthand = pkgBase;
-        usedShorthands.add(packageShorthand);
-
-        notebookIds.forEach(id => {
-            const nb = notebooks[id];
-            if (!nb) return;
-
-            let base = nb.name.replace(/[^a-zA-Z0-9]/g, '').substring(0, 4).toUpperCase();
-            if (base.length === 0) base = 'NB';
-
-            let shorthand = base;
-            let counter = 1;
-            while (usedShorthands.has(shorthand)) {
-                counter++;
-                shorthand = `${base}${counter}`;
-            }
-
-            usedShorthands.add(shorthand);
-            shorthandMap[id] = shorthand;
-        });
-
-        // 1. Filter Data
-        const wordsToExport = personalWords.filter(w => notebookIds.includes(w.notebookId));
-        const sentencesToExport = userSentences.filter(s => notebookIds.includes(s.source));
-        const sentenceIds = new Set(sentencesToExport.map(s => s.id));
-
-        // Include glosses on exported sentences AND glosses on official sentences (orphaned from this export's sentences but valid user data)
-        const officialSentenceIds = new Set(sentences.map(s => s.id));
-        const glossesToExport = glosses.filter(g => g.source === 'user' && (sentenceIds.has(g.sentence_id) || officialSentenceIds.has(g.sentence_id)));
-
-        // 2. Generate CSVs
-        // Dictionary CSV
-        // Header: Index,Source,Entry,Syllabary,Part_of_Speech,PoS,PoS_Family,Definition,Cross_Reference,Entry_Tone,Other_Forms,Notes
-        const dictHeader = ['Index', 'Source', 'Entry', 'Syllabary', 'Part_of_Speech', 'PoS', 'PoS_Family', 'Definition', 'Cross_Reference', 'Entry_Tone', 'Other_Forms', 'Notes'];
-        const dictRows = [dictHeader.join(',')];
-        wordsToExport.forEach(w => {
-            const src = shorthandMap[w.notebookId] || w.notebookId;
-            dictRows.push([
-                `"${w.id || ''}"`,
-                `"${src}"`,
-                `"${(w.translit || w.Entry || '').replace(/"/g, '""')}"`,
-                `"${(w.syllabary || w.Syllabary || '').replace(/"/g, '""')}"`,
-                `"${(w.PoS || '').replace(/"/g, '""')}"`,
-                `"${(w.PoS || '').replace(/"/g, '""')}"`,
-                `"${(w.PoS || '').replace(/"/g, '""')}"`,
-                `"${(w.definition || w.Definition || '').replace(/"/g, '""')}"`,
-                `""`, // Cross_Reference
-                `"${(w.Entry_Tone || '').replace(/"/g, '""')}"`,
-                `""`, // Other_Forms
-                `"${(w.Notes || '').replace(/"/g, '""')}"` // Notes
-            ].join(','));
-        });
-
-        // Sentences CSV
-        // Header: ID,Source,Syllabary,Transliteration,English,Story,Chapter,Line,Author,Speaker
-        const sentHeader = ['ID', 'Source', 'Syllabary', 'Transliteration', 'English', 'Story', 'Chapter', 'Line', 'Author', 'Speaker'];
-        const sentRows = [sentHeader.join(',')];
-        sentencesToExport.forEach(s => {
-            const src = shorthandMap[s.source] || s.source;
-            sentRows.push([
-                `"${s.id || ''}"`,
-                `"${src}"`,
-                `"${(s.syllabary || '').replace(/"/g, '""')}"`,
-                `"${(s.translit || '').replace(/"/g, '""')}"`,
-                `"${(s.english || '').replace(/"/g, '""')}"`,
-                `""`, // Story
-                `""`, // Chapter
-                `""`, // Line
-                `""`, // Author
-                `""`  // Speaker
-            ].join(','));
-        });
-
-        // Join Table CSV
-        // Header: ID,Source,Sentence_ID,Entry_ID,Word_Index,Segment_Cherokee,Segment_English,Notes
-        const joinHeader = ['ID', 'Source', 'Sentence_ID', 'Entry_ID', 'Word_Index', 'Segment_Cherokee', 'Segment_English', 'Notes'];
-        const joinRows = [joinHeader.join(',')];
-        glossesToExport.forEach(g => {
-            const glossId = crypto.randomUUID();
-            // Gloss source is usually 'user', but if it's linked to a sentence, maybe we should use the sentence source?
-            // But glosses are independent.
-            // If we export glosses, they are part of this package.
-            // We can use the package name or just 'user'?
-            // Actually, glosses don't strictly have a source in the same way.
-            // But let's use the shorthand of the sentence's source if possible, or just 'user'.
-            // Wait, glossesToExport are filtered by sentenceIds.
-            // Let's find the sentence for this gloss.
-            const sentence = sentencesToExport.find(s => s.id === g.sentence_id);
-            const src = sentence ? (shorthandMap[sentence.source] || sentence.source) : packageShorthand;
-
-            joinRows.push([
-                `"${glossId}"`,
-                `"${src}"`,
-                `"${g.sentence_id}"`,
-                `"${g.entry_id}"`,
-                `"${g.word_index}"`,
-                `""`, // Segment_Cherokee
-                `""`, // Segment_English
-                `"${(g.notes || '').replace(/"/g, '""')}"`
-            ].join(','));
-        });
-
-        zip.file('dictionary.csv', dictRows.join('\n'));
-        zip.file('sentences.csv', sentRows.join('\n'));
-        zip.file('join_table.csv', joinRows.join('\n'));
-
-        // 3. Metadata
-        const meta: PackageMetadata = {
-            id: crypto.randomUUID(),
-            name: metadata.name || 'Untitled Package',
-            author: metadata.author || 'Unknown',
-            date_created: Date.now(),
-            description: metadata.description || '',
-            app_version: '1.0',
-            stats: {
-                words: wordsToExport.length,
-                sentences: sentencesToExport.length,
-                audio_files: 0,
-                glosses: glossesToExport.length
-            },
-            source_names: { [packageShorthand]: metadata.name || 'Untitled Package' }
-        };
-
-        notebookIds.forEach(id => {
-            if (notebooks[id]) {
-                if (!meta.source_names) meta.source_names = {};
-                // Use Shorthand as Key
-                const short = shorthandMap[id];
-                if (short) {
-                    meta.source_names[short] = notebooks[id].name;
-                }
-            }
-        });
-
-        zip.file('metadata.json', JSON.stringify(meta, null, 2));
-
-        // 4. README
+    const exportPackage = async (notebookIds: string[], metadata: Partial<PackageMetadata>, listsToExport: { list: ListData, includeDependencies: boolean }[] = [], dependencyAudioIds: string[] = [], dependencyEntryIds: string[] = []) => {
         try {
-            // Fetch DEFAULT_README.txt content if possible, or just use a string
-            // Since we created src/data/DEFAULT_README.txt, we can try to fetch it if served
-            // But for reliability, I'll just use a template string here as requested by "I will fill it in"
-            // Wait, user said "Please create a file... This file will be read and included".
-            // So I should try to read it.
-            const res = await fetch('/src/data/DEFAULT_README.txt');
-            if (res.ok) {
-                const text = await res.text();
-                zip.file('README.txt', text);
-            } else {
+            const zip = new JSZip();
+
+            // 0. Generate Shorthands
+            const shorthandMap: Record<string, string> = {};
+            const usedShorthands = new Set<string>();
+
+            // 0.1 Package Shorthand (for glosses on official sentences)
+            let pkgBase = (metadata.name || 'Package').replace(/[^a-zA-Z0-9]/g, '').substring(0, 4).toUpperCase();
+            if (pkgBase.length === 0) pkgBase = 'PKG';
+            
+            const packageShorthand = pkgBase;
+            usedShorthands.add(packageShorthand);
+
+            notebookIds.forEach(id => {
+                const nb = notebooks[id];
+                if (!nb) return;
+
+                let base = (nb.name || 'NB').replace(/[^a-zA-Z0-9]/g, '').substring(0, 4).toUpperCase();
+                if (base.length === 0) base = 'NB';
+
+                let shorthand = base;
+                let counter = 1;
+                while (usedShorthands.has(shorthand)) {
+                    counter++;
+                    shorthand = `${base}${counter}`;
+                }
+
+                usedShorthands.add(shorthand);
+                shorthandMap[id] = shorthand;
+            });
+
+            // 1. Filter Data (Notebooks)
+            let wordsToExport = personalWords.filter(w => notebookIds.includes(w.notebookId));
+            let sentencesToExport = userSentences.filter(s => notebookIds.includes(s.source));
+
+            // 1.2 Add Dependency Entries
+            if (dependencyEntryIds.length > 0) {
+                const depSet = new Set(dependencyEntryIds);
+                
+                // Find words
+                const depWords = personalWords.filter(w => depSet.has(w.id) && !notebookIds.includes(w.notebookId));
+                wordsToExport = [...wordsToExport, ...depWords];
+                
+                // Find sentences
+                const depSentences = userSentences.filter(s => depSet.has(s.id) && !notebookIds.includes(s.source));
+                sentencesToExport = [...sentencesToExport, ...depSentences];
+            }
+
+            // 1.1 Process Lists & Dependencies
+            const extraAudioIds = new Set<string>();
+            const extraGlossSentenceIds = new Set<string>(); 
+
+            const listsFolder = zip.folder('lists');
+            let exportedListCount = 0;
+
+            listsToExport.forEach(({ list, includeDependencies }) => {
+                // 1. Export JSON for USER lists (not built-in)
+                if (list.type === 'user' && list.items) {
+                    const wIds: string[] = [];
+                    const sIds: string[] = [];
+                    
+                    list.items.forEach(id => {
+                        if (id.startsWith('s_')) sIds.push(id.replace('s_', ''));
+                        else wIds.push(id);
+                    });
+
+                    const listJson = {
+                        name: list.name,
+                        words: wIds,
+                        sentences: sIds
+                    };
+                    
+                    listsFolder?.file(`${list.name.replace(/[^a-z0-9\-_]/gi, '_')}.json`, JSON.stringify(listJson, null, 2));
+                    exportedListCount++;
+                }
+
+                // 2. Collect Dependencies
+                if (includeDependencies && list.items) {
+                    list.items.forEach(id => {
+                        let targetId = id;
+                        let type: 'word' | 'sentence' = 'word';
+                        
+                        if (id.startsWith('s_')) {
+                            targetId = id.replace('s_', '');
+                            type = 'sentence';
+                        }
+
+                        // Audio Check
+                        const audioKey = type === 'sentence' ? `${targetId}_sentence` : targetId;
+                        const audioList = userAudioMeta[audioKey];
+                        if (audioList) {
+                            audioList.forEach(a => {
+                                if (!a.isOfficial) extraAudioIds.add(a.id);
+                            });
+                        }
+
+                        // Gloss Check (only for sentences)
+                        if (type === 'sentence') {
+                            extraGlossSentenceIds.add(targetId);
+                        }
+                    });
+                }
+            });
+
+            const sentenceIds = new Set(sentencesToExport.map(s => s.id));
+
+            // Include glosses
+            const glossesToExport = glosses.filter(g => {
+                if (g.source !== 'user') return false;
+                if (sentenceIds.has(g.sentence_id)) return true;
+                if (extraGlossSentenceIds.has(g.sentence_id)) return true;
+                return false;
+            });
+
+            // 2. Generate CSVs
+            const dictHeader = ['Index', 'Source', 'Entry', 'Syllabary', 'Part_of_Speech', 'PoS', 'PoS_Family', 'Definition', 'Cross_Reference', 'Entry_Tone', 'Other_Forms', 'Notes'];
+            const dictRows = [dictHeader.join(',')];
+            wordsToExport.forEach(w => {
+                let src = shorthandMap[w.notebookId];
+                if (!src) src = packageShorthand;
+                
+                dictRows.push([
+                    `"${w.id || ''}"`,
+                    `"${src}"`,
+                    `"${(w.translit || w.Entry || '').replace(/"/g, '""')}"`,
+                    `"${(w.syllabary || w.Syllabary || '').replace(/"/g, '""')}"`,
+                    `"${(w.PoS || '').replace(/"/g, '""')}"`,
+                    `"${(w.PoS || '').replace(/"/g, '""')}"`,
+                    `"${(w.PoS || '').replace(/"/g, '""')}"`,
+                    `"${(w.definition || w.Definition || '').replace(/"/g, '""')}"`,
+                    `""`, // Cross_Reference
+                    `"${(w.Entry_Tone || '').replace(/"/g, '""')}"`,
+                    `""`, // Other_Forms
+                    `"${(w.Notes || '').replace(/"/g, '""')}"` // Notes
+                ].join(','));
+            });
+
+            // Sentences CSV
+            const sentHeader = ['ID', 'Source', 'Syllabary', 'Transliteration', 'English', 'Story', 'Chapter', 'Line', 'Author', 'Speaker'];
+            const sentRows = [sentHeader.join(',')];
+            sentencesToExport.forEach(s => {
+                let src = shorthandMap[s.source];
+                if (!src) src = packageShorthand;
+
+                sentRows.push([
+                    `"${s.id || ''}"`,
+                    `"${src}"`,
+                    `"${(s.syllabary || '').replace(/"/g, '""')}"`,
+                    `"${(s.translit || '').replace(/"/g, '""')}"`,
+                    `"${(s.english || '').replace(/"/g, '""')}"`,
+                    `""`, // Story
+                    `""`, // Chapter
+                    `""`, // Line
+                    `""`, // Author
+                    `""`  // Speaker
+                ].join(','));
+            });
+
+            // Join Table CSV
+            const joinHeader = ['ID', 'Source', 'Sentence_ID', 'Entry_ID', 'Word_Index', 'Segment_Cherokee', 'Segment_English', 'Notes'];
+            const joinRows = [joinHeader.join(',')];
+            glossesToExport.forEach(g => {
+                const glossId = generateId();
+                const sentence = sentencesToExport.find(s => s.id === g.sentence_id);
+                const src = sentence ? (shorthandMap[sentence.source] || sentence.source) : packageShorthand;
+
+                joinRows.push([
+                    `"${glossId}"`,
+                    `"${src}"`,
+                    `"${g.sentence_id}"`,
+                    `"${g.entry_id}"`,
+                    `"${g.word_index}"`,
+                    `""`, // Segment_Cherokee
+                    `""`, // Segment_English
+                    `"${(g.notes || '').replace(/"/g, '""')}"`
+                ].join(','));
+            });
+
+            zip.file('dictionary.csv', dictRows.join('\n'));
+            zip.file('sentences.csv', sentRows.join('\n'));
+            zip.file('join_table.csv', joinRows.join('\n'));
+
+            // 3. Metadata
+            const meta: PackageMetadata = {
+                id: generateId(),
+                name: metadata.name || 'Untitled Package',
+                author: metadata.author || 'Unknown',
+                date_created: Date.now(),
+                description: metadata.description || '',
+                app_version: '1.0',
+                stats: {
+                    words: wordsToExport.length,
+                    sentences: sentencesToExport.length,
+                    audio_files: 0,
+                    glosses: glossesToExport.length,
+                    lists: exportedListCount
+                },
+                source_names: {}
+            };
+            
+            const hasOrphans = wordsToExport.some(w => !shorthandMap[w.notebookId]) || sentencesToExport.some(s => !shorthandMap[s.source]);
+            if (hasOrphans) {
+                if (!meta.source_names) meta.source_names = {};
+                meta.source_names[packageShorthand] = metadata.name || 'Untitled Package';
+            }
+
+            notebookIds.forEach(id => {
+                if (notebooks[id]) {
+                    if (!meta.source_names) meta.source_names = {};
+                    const short = shorthandMap[id];
+                    if (short) {
+                        meta.source_names[short] = notebooks[id].name;
+                    }
+                }
+            });
+
+            zip.file('metadata.json', JSON.stringify(meta, null, 2));
+
+            // 4. README
+            try {
+                const res = await fetch('/src/data/DEFAULT_README.txt');
+                if (res.ok) {
+                    const text = await res.text();
+                    zip.file('README.txt', text);
+                } else {
+                    zip.file('README.txt', "");
+                }
+            } catch (e) {
                 zip.file('README.txt', "");
             }
-        } catch (e) {
-            zip.file('README.txt', "");
-        }
 
-        // 5. Audio
-        const audioFolder = zip.folder('audio');
-        let audioCount = 0;
+            // 5. Audio
+            const audioFolder = zip.folder('audio');
+            let audioCount = 0;
 
-        // Collect all audio IDs
-        // 1. From Words (legacy field)
-        const legacyAudioIds = new Set<string>();
-        wordsToExport.forEach(w => { if (w.audio) legacyAudioIds.add(w.audio); });
-        sentencesToExport.forEach(s => { if (s.audio) legacyAudioIds.add(s.audio); });
+            const exportAudioItems: { id: string, speaker: string, targetId: string, type: 'W' | 'S' }[] = [];
 
-        // 2. From userAudioMeta (The new standard)
-        // We need to find all audio attached to the exported words/sentences
-        const exportAudioItems: { id: string, speaker: string, targetId: string, type: 'W' | 'S' }[] = [];
-
-        // Check Words
-        wordsToExport.forEach(w => {
-            const meta = userAudioMeta[w.id];
-            if (meta) {
-                meta.forEach(a => {
-                    if (!a.isOfficial) {
-                        exportAudioItems.push({ id: a.id, speaker: a.speaker, targetId: w.id, type: 'W' });
-                    }
-                });
-            }
-        });
-
-        // Check Sentences
-        sentencesToExport.forEach(s => {
-            const key = s.id + '_sentence';
-            const meta = userAudioMeta[key];
-            if (meta) {
-                meta.forEach(a => {
-                    if (!a.isOfficial) {
-                        exportAudioItems.push({ id: a.id, speaker: a.speaker, targetId: s.id, type: 'S' });
-                    }
-                });
-            }
-        });
-
-        // 3. Dependency Audio (Passed in)
-        // These are audio files attached to items NOT in the export list, but user chose to include them.
-        // We need to look them up in userAudioMeta to get speaker/target info.
-        // But wait, dependencyAudioIds are just IDs. We need to find where they belong.
-        // We can scan userAudioMeta for them.
-        if (dependencyAudioIds.length > 0) {
-            const depSet = new Set(dependencyAudioIds);
-            Object.entries(userAudioMeta).forEach(([key, audioList]) => {
-                audioList.forEach(a => {
-                    if (depSet.has(a.id) && !a.isOfficial) {
-                        // Determine Type/ID from key
-                        let type: 'W' | 'S' = 'W';
-                        let targetId = key;
-                        if (key.endsWith('_sentence')) {
-                            type = 'S';
-                            targetId = key.replace('_sentence', '');
+            const addAudioForTarget = (targetId: string, type: 'W' | 'S') => {
+                const key = type === 'W' ? targetId : `${targetId}_sentence`;
+                const meta = userAudioMeta[key];
+                if (meta && Array.isArray(meta)) {
+                    meta.forEach(a => {
+                        if (!a.isOfficial) {
+                            exportAudioItems.push({ id: a.id, speaker: a.speaker, targetId, type });
                         }
-                        exportAudioItems.push({ id: a.id, speaker: a.speaker, targetId, type });
+                    });
+                }
+            };
+
+            wordsToExport.forEach(w => addAudioForTarget(w.id, 'W'));
+            sentencesToExport.forEach(s => addAudioForTarget(s.id, 'S'));
+            
+            if (extraAudioIds.size > 0 || dependencyAudioIds.length > 0) {
+                const allDepIds = new Set([...Array.from(extraAudioIds), ...dependencyAudioIds]);
+                Object.entries(userAudioMeta).forEach(([key, audioList]) => {
+                    if (Array.isArray(audioList)) {
+                        audioList.forEach(a => {
+                            if (allDepIds.has(a.id) && !a.isOfficial) {
+                                let type: 'W' | 'S' = 'W';
+                                let targetId = key;
+                                if (key.endsWith('_sentence')) {
+                                    type = 'S';
+                                    targetId = key.replace('_sentence', '');
+                                }
+                                exportAudioItems.push({ id: a.id, speaker: a.speaker, targetId, type });
+                            }
+                        });
                     }
                 });
+            }
+
+            const audioByTarget: Record<string, typeof exportAudioItems> = {};
+            const processedAudioIds = new Set<string>();
+
+            exportAudioItems.forEach(item => {
+                if (processedAudioIds.has(item.id)) return;
+                processedAudioIds.add(item.id);
+
+                const k = `${item.type}-${item.targetId}`;
+                if (!audioByTarget[k]) audioByTarget[k] = [];
+                audioByTarget[k].push(item);
             });
-        }
 
-        // Process and Rename
-        // Group by Target to assign indices
-        const audioByTarget: Record<string, typeof exportAudioItems> = {};
-        exportAudioItems.forEach(item => {
-            const k = `${item.type}-${item.targetId}`;
-            if (!audioByTarget[k]) audioByTarget[k] = [];
-            audioByTarget[k].push(item);
-        });
+            for (const key in audioByTarget) {
+                const items = audioByTarget[key];
+                items.sort((a, b) => (a.id || '').localeCompare(b.id || ''));
 
-        for (const key in audioByTarget) {
-            const items = audioByTarget[key];
-            // Sort by something deterministic? ID or Date? 
-            // We don't have date easily here unless we look it up again, but ID contains timestamp usually.
-            // Let's sort by ID (which has timestamp).
-            items.sort((a, b) => a.id.localeCompare(b.id));
+                const speakerCounts: Record<string, number> = {};
 
-            // Assign indices per speaker?
-            // "Index is a simple count starting at 0, in case there are multiple audios with the same speaker for a single word."
-            const speakerCounts: Record<string, number> = {};
+                for (const item of items) {
+                    const speaker = item.speaker || 'User';
+                    const idx = speakerCounts[speaker] || 0;
+                    speakerCounts[speaker] = idx + 1;
 
-            for (const item of items) {
-                const speaker = item.speaker || 'User';
-                const idx = speakerCounts[speaker] || 0;
-                speakerCounts[speaker] = idx + 1;
+                    const safeSpeaker = speaker.replace(/[^a-zA-Z0-9 ]/g, '');
+                    const newFilename = `${safeSpeaker}_${item.type}-${item.targetId}_${idx}.mp3`;
 
-                // New Filename: [speaker_name]_[W/S-][id]_[index].mp3
-                // Sanitize speaker name
-                const safeSpeaker = speaker.replace(/[^a-zA-Z0-9 ]/g, '');
-                const newFilename = `${safeSpeaker}_${item.type}-${item.targetId}_${idx}.mp3`;
-
-                try {
-                    const blob = await getAudioFromDB(item.id);
-                    if (blob) {
-                        audioFolder?.file(newFilename, blob as Blob);
-                        audioCount++;
+                    try {
+                        const blob = await getAudioFromDB(item.id);
+                        if (blob) {
+                            audioFolder?.file(newFilename, blob as Blob);
+                            audioCount++;
+                        }
+                    } catch (e) {
+                        console.warn(`Failed to export audio ${item.id}`, e);
                     }
-                } catch (e) {
-                    console.warn(`Failed to export audio ${item.id}`, e);
                 }
             }
+
+            meta.stats.audio_files = audioCount;
+            zip.file('metadata.json', JSON.stringify(meta, null, 2));
+
+            const content = await zip.generateAsync({ type: 'blob' });
+            downloadFile(content, `${(meta.name || 'export').replace(/[^a-z0-9]/gi, '_')}.zip`, 'application/zip');
+        } catch (e) {
+            console.error("Export Failed Critical", e);
+            throw e;
         }
-
-        // Also export legacy audio (direct links) if they exist and aren't covered?
-        // Legacy audio in `w.audio` is usually just an ID.
-        // If it matches the new format, we might have double exported?
-        // Let's assume `userAudioMeta` is the source of truth for user audio.
-        // `w.audio` might be official audio (which we don't export usually, unless it's user recorded and put there?)
-        // If `w.audio` is in `userAudioMeta`, it's covered.
-        // If not, it might be an orphan or official. We skip official.
-
-        meta.stats.audio_files = audioCount;
-        // Update metadata with audio count
-        zip.file('metadata.json', JSON.stringify(meta, null, 2));
-
-        const content = await zip.generateAsync({ type: 'blob' });
-        downloadFile(content, `${meta.name.replace(/[^a-z0-9]/gi, '_')}.zip`, 'application/zip');
     };
 
     return { exportPackage };
@@ -326,6 +371,37 @@ export const usePackageImport = () => {
         const rawSentences = parse(sentText);
         const rawGlosses = parse(joinText);
 
+        // 2.1 Lists
+        const listsFolder = zip.folder('lists');
+        const lists: ListData[] = [];
+        if (listsFolder) {
+            const filePromises: Promise<any>[] = [];
+            listsFolder.forEach((path, file) => {
+                if (!file.dir && path.endsWith('.json')) {
+                    filePromises.push(file.async('string').then(text => {
+                         try {
+                             const json = JSON.parse(text);
+                             return json;
+                         } catch { return null; }
+                    }));
+                }
+            });
+            
+            const loadedLists = await Promise.all(filePromises);
+            loadedLists.filter(Boolean).forEach(l => {
+                const items = [...(l.words || []), ...(l.sentences || []).map((id: string) => `s_${id}`)];
+                
+                lists.push({
+                    id: generateId(),
+                    name: l.name,
+                    items: items,
+                    type: 'imported',
+                    packageId: meta.id,
+                    color: color
+                });
+            });
+        }
+
         // Normalize Data
         const dictionary = rawDictionary.map((d: any) => ({
             ...d,
@@ -335,7 +411,6 @@ export const usePackageImport = () => {
             definition: d.Definition,
             source: d.Source === 'user' ? meta.id : d.Source,
             audio: d.Audio,
-            // Keep original fields for legacy compatibility if needed
             Index: d.Index,
             Entry: d.Entry,
             Syllabary: d.Syllabary,
@@ -353,7 +428,6 @@ export const usePackageImport = () => {
             english: d.English,
             source: d.Source === 'user' ? meta.id : d.Source,
             audio: d.Audio,
-            // Keep originals
             ID: d.ID,
             Syllabary: d.Syllabary,
             Transliteration: d.Transliteration,
@@ -367,7 +441,6 @@ export const usePackageImport = () => {
             entry_id: d.Entry_ID,
             notes: d.Notes,
             source: d.Source === 'user' ? meta.id : d.Source,
-            // Keep originals
             Sentence_ID: d.Sentence_ID,
             Word_Index: d.Word_Index,
             Entry_ID: d.Entry_ID,
@@ -386,63 +459,49 @@ export const usePackageImport = () => {
             for (const { path, file } of files) {
                 if (!file.dir) {
                     const blob = await file.async('blob');
-                    // Filename format: [speaker]_[type]-[id]_[index].mp3
                     const filename = path.split('/').pop() || path;
                     const id = filename.replace(/\.mp3$/i, '');
 
                     await saveAudioToDB(id, blob);
 
-                    // Parse metadata from filename
-                    // Regex: ^(.+)_([WS])-(.+)_(\d+)$
-                    // But speaker might contain underscores?
-                    // The export logic: `${safeSpeaker}_${item.type}-${item.targetId}_${idx}.mp3`
-                    // safeSpeaker removes non-alphanumeric, so no underscores.
-                    // So we can split by underscore safely?
-                    // Wait, `safeSpeaker` might be empty? No, usually 'User'.
-                    // Let's try regex.
                     const match = id.match(/^([^_]+)_([WS])-(.+)_\d+$/);
                     if (match) {
                         const speaker = match[1];
                         const type = match[2];
                         const targetId = match[3];
-
-                        // Reconstruct target key
-                        // If type is W, key is targetId
-                        // If type is S, key is targetId + '_sentence'
                         const metaKey = type === 'W' ? targetId : `${targetId}_sentence`;
 
                         if (!newAudioMeta[metaKey]) newAudioMeta[metaKey] = [];
                         newAudioMeta[metaKey].push({
                             id: id,
                             speaker: speaker,
-                            date: Date.now(), // We don't have original date, use now
-                            packageId: meta.id // Store package ID for coloring
+                            date: Date.now(), 
+                            packageId: meta.id 
                         });
                     }
                 }
             }
         }
 
-        // Import Audio Meta
         if (Object.keys(newAudioMeta).length > 0) {
             importAudioMeta(newAudioMeta);
         }
 
-        // Update stats with actual counts
         if (!meta.stats) {
             meta.stats = {
                 words: dictionary.length,
                 sentences: sentences.length,
                 audio_files: Object.keys(newAudioMeta).length,
-                glosses: glosses.length
+                glosses: glosses.length,
+                lists: lists.length
             };
         } else {
             meta.stats.words = dictionary.length;
             meta.stats.sentences = sentences.length;
             meta.stats.glosses = glosses.length;
+            meta.stats.lists = lists.length;
         }
 
-        // 4. Install
         const pkg: Package = {
             id: meta.id,
             name: meta.name,
@@ -455,7 +514,8 @@ export const usePackageImport = () => {
         const data: ImportedPackageData = {
             dictionary,
             sentences,
-            glosses
+            glosses,
+            lists
         };
 
         installPackage(pkg, data);

@@ -248,7 +248,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
     userSentences = [],
     userNotes // Destructure userNotes from props
 }) => {
-    const { getPackageColor, packages } = usePackageManager();
+    const { getPackageColor, packages, importedData } = usePackageManager();
     const { userAudioMeta, personalWords, glosses } = useCorpus();
 
     // Use props if available, otherwise fallback to hook (though hook is more direct source of truth for dynamic lists)
@@ -265,6 +265,21 @@ const ListsTab: React.FC<ListsTabProps> = ({
             return JSON.parse(localStorage.getItem('cherokee_app_hidden_builtin_lists') || '[]');
         } catch { return []; }
     });
+
+    // --- IMPORTED LISTS ---
+    const importedLists = useMemo(() => {
+        const lists: ListData[] = [];
+        packages.forEach(pkg => {
+            if (pkg.status === 'active' && importedData[pkg.id]?.lists) {
+                // Ensure color is from package if not set (though import logic sets it)
+                // Also update color if package color changed
+                importedData[pkg.id].lists!.forEach((l: any) => {
+                    lists.push({ ...l, color: pkg.color });
+                });
+            }
+        });
+        return lists;
+    }, [packages, importedData]);
 
     useEffect(() => {
         localStorage.setItem('cherokee_app_hidden_builtin_lists', JSON.stringify(hiddenBuiltInLists));
@@ -373,6 +388,24 @@ const ListsTab: React.FC<ListsTabProps> = ({
     };
 
 
+    // Sync Imported Lists to Order
+    useEffect(() => {
+        if (importedLists.length > 0) {
+            setCustomListOrder(prev => {
+                const newOrder = [...prev];
+                let changed = false;
+                importedLists.forEach(l => {
+                    if (!newOrder.includes(l.id)) {
+                        newOrder.push(l.id);
+                        changed = true;
+                    }
+                });
+                return changed ? newOrder : prev;
+            });
+        }
+    }, [importedLists]);
+
+
     // --- MIGRATION CHECK ---
     const getList = (id: string): ListData | null => {
         if (id === 'favorites') {
@@ -381,6 +414,9 @@ const ListsTab: React.FC<ListsTabProps> = ({
 
         const builtIn = builtInLists.find(l => l.id === id);
         if (builtIn) return builtIn;
+
+        const imported = importedLists.find(l => l.id === id);
+        if (imported) return imported;
 
         const raw = customLists[id];
         if (!raw) return null;
@@ -993,11 +1029,25 @@ const ListsTab: React.FC<ListsTabProps> = ({
         const isUser = list.type === 'user';
         const isFavorite = list.type === 'default';
         const isBuiltIn = list.type.startsWith('builtin');
+        const isImported = list.type === 'imported';
         
         let colorClass = 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400';
+        let style = {};
+
         if (isUser) colorClass = 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-500';
+        if (isImported && list.color) {
+            if (list.color.startsWith('#')) {
+                style = { backgroundColor: list.color, color: 'white' };
+                colorClass = ''; // Override class
+            } else {
+                 // Fallback or named color
+                 // Note: Tailwind dynamic classes might not work if not safe-listed.
+                 // But app seems to use some dynamic logic or safe list.
+                 // Package colors are hex usually now.
+            }
+        }
         
-        let icon = isUser ? <ListIcon size={24} /> : <Folder size={24} />;
+        let icon = (isUser || isImported) ? <ListIcon size={24} /> : <Folder size={24} />;
         if (isFavorite) icon = <Star size={24} className="fill-slate-400 dark:fill-slate-500" />;
         if (isBuiltIn && list.icon) icon = list.icon;
 
@@ -1007,7 +1057,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                 data-list-id={list.id}
                 onContextMenu={(e) => e.preventDefault()}
                 onClick={() => { if (!isReordering && !draggingId && !isDragTriggered.current) { setActiveListId(list.id); setView('detail'); } }}
-                onPointerDown={e => { if (!isHidden) handlePointerDown(e, list.id); }}
+                onPointerDown={e => { if (!isHidden) handlePointerDown(e, list.id); }} // Re-enabled for imported
                 onPointerMove={handlePointerMoveRow}
                 onPointerUp={handlePointerUpRow}
                 onPointerCancel={handlePointerUpRow}
@@ -1019,14 +1069,14 @@ const ListsTab: React.FC<ListsTabProps> = ({
                 `}
             >
                 <div className="flex items-center gap-4 pointer-events-none">
-                    {!isHidden && (
+                    {!isHidden && !isImported && (
                         <div 
                             className="text-slate-300 dark:text-slate-700 shrink-0"
                         >
                             <GripVertical size={20} />
                         </div>
                     )}
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${colorClass}`}>
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${colorClass}`} style={style}>
                         {icon}
                     </div>
                     <div>

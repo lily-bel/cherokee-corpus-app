@@ -3,10 +3,15 @@ import { useCorpus } from './CorpusContext';
 import { usePackageManager, Package } from './PackageManagerContext';
 import { usePackageImport } from './usePackageHooks';
 import PackageExportModal from './PackageExportModal';
+import { ListData } from './ListsTab';
 import { Upload, Download, Trash2, ToggleLeft, ToggleRight, Box, Mic, StickyNote, ListIcon } from './Icons';
 import { Toast, SourceBadge } from './UI';
 
-const PackageManagerTab: React.FC = () => {
+interface PackageManagerTabProps {
+    customLists: Record<string, ListData | string[]>;
+}
+
+const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists }) => {
     const { packages, togglePackage, removePackage } = usePackageManager();
     const { removePackageAudio, userAudioMeta, glosses } = useCorpus();
     const { importPackage } = usePackageImport();
@@ -103,6 +108,8 @@ const PackageManagerTab: React.FC = () => {
                         
                         const userGlossCount = glosses ? glosses.filter(g => g.source === 'user').length : 0;
                         const userAudioCount = Object.values(userAudioMeta || {}).reduce((acc, list) => acc + list.filter(a => !a.packageId || a.packageId === 'user').length, 0);
+                        const userListCount = Object.keys(customLists).length;
+
                         const pkgWithStats = {
                             ...p,
                             metadata: {
@@ -110,7 +117,8 @@ const PackageManagerTab: React.FC = () => {
                                 stats: {
                                     ...p.metadata.stats,
                                     audio_files: userAudioCount,
-                                    glosses: userGlossCount
+                                    glosses: userGlossCount,
+                                    lists: userListCount
                                 }
                             }
                         };
@@ -143,7 +151,7 @@ const PackageManagerTab: React.FC = () => {
                 </div>
             </div>
 
-            {showExportModal && <PackageExportModal onClose={() => setShowExportModal(false)} />}
+            {showExportModal && <PackageExportModal onClose={() => setShowExportModal(false)} customLists={customLists} />}
             {colorPicker.show && colorPicker.pkgId && (
                 <ColorPickerModal pkgId={colorPicker.pkgId} onClose={() => setColorPicker({ show: false, pkgId: null })} />
             )}
@@ -264,6 +272,7 @@ const PackageItem = ({ pkg, onColorClick, showToast, togglePackage, removePackag
     const wordCount = isUser ? personalWords.length : (pkg.metadata?.stats?.words || 0);
     const sentCount = isUser ? userSentences.length : (pkg.metadata?.stats?.sentences || 0);
     const glossCount = isUser ? allGlosses.filter(g => g.source === 'user').length : (pkg.metadata?.stats?.glosses || 0);
+    const listCount = pkg.metadata?.stats?.lists || 0;
 
     return (
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 flex flex-col gap-3 shadow-sm">
@@ -304,6 +313,7 @@ const PackageItem = ({ pkg, onColorClick, showToast, togglePackage, removePackag
                     <span>{sentCount} sentences</span>
                     {pkg.metadata?.stats?.audio_files !== undefined && <span>{pkg.metadata.stats.audio_files} audio</span>}
                     <span>{glossCount} glosses</span>
+                    <span>{listCount} lists</span>
                 </div>
 
                 {!isOfficial && !isUser && (

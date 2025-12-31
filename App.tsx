@@ -1460,7 +1460,7 @@ function App() {
                     />
                 )}
                 {activeTab === 'widgets' && <WidgetsTab />}
-                {activeTab === 'packages' && <PackageManagerTab />}
+                {activeTab === 'packages' && <PackageManagerTab customLists={customLists} />}
                 {
                     activeTab === 'personal' && (!activeNotebookId ? (<div className="flex flex-col h-full"><div className="px-4 py-4 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0"><h2 className="font-noto-serif text-2xl font-bold text-slate-800 dark:text-slate-100">Notebooks</h2><button onClick={() => setShowNewNotebookModal(true)} className="bg-slate-900 dark:bg-slate-700 text-white p-2 rounded-full shadow-md"><Plus size={20} /></button></div><div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-4 content-start">{notebookList.map((nb: any) => {
                         const isImported = nb.type === 'imported';
