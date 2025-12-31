@@ -7,7 +7,7 @@ import AudioRecorder from './AudioRecorder';
 import { useCorpus } from './CorpusContext';
 import { SentenceCard } from './SentenceCard';
 
-const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, onSaveAudio, onDeleteAudio, favorites, customLists, customListOrder, onClose, onEdit, onToggleFavorite, onToggleList, onDelete, onSearchTerm, onOpenNewListModal, onMove, personalWords, onEditSentence, onDeleteSentence, onCreateWord }) => {
+const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms, onSaveAudio, onDeleteAudio, favorites, customLists, customListOrder, onClose, onEdit, onToggleFavorite, onToggleList, onDelete, onSearchTerm, onOpenNewListModal, onMove, personalWords, onEditSentence, onDeleteSentence, onCreateWord, onManageForms }) => {
     const [showListSheet, setShowListSheet] = useState(false);
     const [showRecorder, setShowRecorder] = useState(false);
     const [recorderTarget, setRecorderTarget] = useState<'entry' | 'sentence'>('entry');
@@ -85,9 +85,33 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, onSaveAudio, 
     const linkedSentenceIds = entryToSentencesMap.get(e.Index) || [];
     const linkedSentences = linkedSentenceIds.map(id => sentenceMap.get(id)).filter(Boolean);
 
-    const renderConjugation = (label, translit, tone, syllabary) => {
+    const renderConjugation = (label, translit, tone, syllabary, notes, borderColor: string | null = null) => {
         if (!syllabary && !translit) return null;
-        return (<div className="mb-3">{label && <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">{label}</div>}<div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-lg border border-slate-100 dark:border-slate-800"><div className="font-noto-cherokee text-xl text-slate-800 dark:text-slate-200 mb-1">{syllabary}</div><div className="flex flex-col">{translit && <span className="font-noto-serif text-md text-amber-700 dark:text-amber-400 font-medium">{translit}</span>}{tone && <span className="font-sans text-sm text-slate-500 dark:text-slate-400 italic">{tone}</span>}</div></div></div>);
+        
+        let borderStyle = {};
+        let borderClass = 'border-slate-100 dark:border-slate-800'; // Default
+        
+        if (borderColor) {
+            if (borderColor.startsWith('#')) {
+                borderStyle = { borderLeftColor: borderColor, borderLeftWidth: '4px' };
+            } else {
+                borderClass = `border-l-4 border-l-${borderColor}-500`;
+            }
+        }
+
+        return (
+            <div className="mb-3">
+                {label && <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">{label}</div>}
+                <div className={`bg-slate-50 dark:bg-slate-900 p-3 rounded-lg border ${borderClass}`} style={borderStyle}>
+                    <div className="font-noto-cherokee text-xl text-slate-800 dark:text-slate-200 mb-1">{syllabary}</div>
+                    <div className="flex flex-col">
+                        {translit && <span className="font-noto-serif text-md text-amber-700 dark:text-amber-400 font-medium">{translit}</span>}
+                        {tone && <span className="font-sans text-sm text-slate-500 dark:text-slate-400 italic">{tone}</span>}
+                        {notes && <span className="mt-1 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-1">{notes}</span>}
+                    </div>
+                </div>
+            </div>
+        );
     };
 
     // HANDLE SENTENCE VIEW (If entry is a sentence object)
@@ -242,24 +266,152 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, onSaveAudio, 
                         </div>
 
                         {/* OTHER FORMS SECTION */}
-                        {e.Other_Forms && (
+                        {(e.Other_Forms || (userWordForms && userWordForms[e.Index])) && (
                             <div className="mb-8">
                                 <h3 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">Other Word Forms</h3>
                                 <div className="grid grid-cols-1 gap-2">
-                                    {e.Other_Forms.split('|').map((form, i) => {
+                                    {/* Official Forms */}
+                                    {e.Other_Forms && e.Other_Forms.split('|').map((form, i) => {
                                         const parts = form.split(':');
                                         if (parts.length < 2) return null;
                                         const label = parts[0];
                                         const values = parts[1].split('^');
-                                        // values[0] = Translit, values[1] = Syllabary, values[2] = Tone
+                                        // values[0] = Translit, values[1] = Syllabary, values[2] = Tone, values[3] = Notes
+                                        
+                                        // Form Audio Logic
+                                        // ID: Speaker_W-EntryID.FormIndex_Timestamp (or just count)
+                                        // We need to find audio files that match the pattern for this form index (i+1 since 1-based usually, or 0-based?)
+                                        // User said: "Lily_W-10.2_1.m4a would correspond to the 2nd other form"
+                                        // So if i is 0, FormIndex is 1? Or 2? "2nd other form" usually means index 2 (1-based) or index 1 (0-based)?
+                                        // "10.2" implies 2nd form. If it's 1-based, 10.1 is 1st.
+                                        const formIndex = i + 1;
+                                        
+                                        // Find audio for this form
+                                        // We look in userAudioMeta[e.Index] and check if the ID contains `.formIndex_`
+                                        // Actually `userAudioMeta` stores list of objects {id, speaker, ...}
+                                        // The ID string itself contains the info.
+                                        const formAudios = userAudioMeta && userAudioMeta[e.Index] 
+                                            ? userAudioMeta[e.Index].filter(a => {
+                                                // ID format: Speaker_W-EntryID.FormIndex_Timestamp
+                                                // Check for `-${e.Index}.${formIndex}_`
+                                                // Note: e.Index might be "10". Regex: `[-_]10\.${formIndex}_`
+                                                return a.id.includes(`-${e.Index}.${formIndex}_`);
+                                            })
+                                            : [];
+
                                         return (
-                                            <div key={i}>
-                                                {renderConjugation(label, values[0], values[2], values[1])}
+                                            <div key={`official_${i}`} className="relative group">
+                                                <div className="flex items-start justify-between">
+                                                    <div className="flex-1">
+                                                        {renderConjugation(label, values[0], values[2], values[1], values[3], pkg?.type === 'official' ? 'slate' : (pkg?.color || 'slate'))}
+                                                    </div>
+                                                    
+                                                    {/* Audio Controls for Form */}
+                                                    <div className="flex flex-col gap-1 mt-6 ml-2">
+                                                         {formAudios.map(audio => (
+                                                            <div key={audio.id} className="flex items-center gap-1 bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100 px-2 py-1 rounded-full text-xs">
+                                                                <button onClick={() => handlePlayUserAudio(audio)}>
+                                                                    {playingAudioId === audio.id ? <Pause size={12} /> : <Mic size={12} />}
+                                                                </button>
+                                                                <button onClick={() => handleLongPressAudio(audio.id)} className="hover:text-red-500">
+                                                                    <Trash2 size={12} />
+                                                                </button>
+                                                            </div>
+                                                         ))}
+                                                         <button 
+                                                            onClick={() => { 
+                                                                // Hacky way to pass form index to recorder
+                                                                // We'll use a special state or just pass it to onSave logic via a wrapper
+                                                                // But EntryDetail's AudioRecorder prop onSave takes (blob, speaker).
+                                                                // We need to modify AudioRecorder or the onSave handler here.
+                                                                // Let's use a ref or state to store "currentRecordingFormIndex"
+                                                                setRecorderTarget(`form_${formIndex}` as any); 
+                                                                setShowRecorder(true); 
+                                                            }} 
+                                                            className="p-2 text-slate-300 hover:text-amber-600 rounded-full"
+                                                         >
+                                                            <MicPlus size={16} />
+                                                         </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+
+                                    {/* Custom Forms */}
+                                    {userWordForms && userWordForms[e.Index] && userWordForms[e.Index].split('|').map((form, i) => {
+                                        const parts = form.split(':');
+                                        if (parts.length < 2) return null;
+                                        const label = parts[0];
+                                        const values = parts[1].split('^');
+                                        
+                                        // Custom forms continue index after official forms
+                                        const officialCount = e.Other_Forms ? e.Other_Forms.split('|').length : 0;
+                                        const formIndex = officialCount + i + 1;
+                                        
+                                        const formAudios = userAudioMeta && userAudioMeta[e.Index] 
+                                            ? userAudioMeta[e.Index].filter(a => a.id.includes(`-${e.Index}.${formIndex}_`))
+                                            : [];
+
+                                        return (
+                                            <div key={`custom_${i}`} className="relative group">
+                                                 <div className="flex items-start justify-between">
+                                                    <div className="flex-1">
+                                                        {renderConjugation(label, values[0], values[2], values[1], values[3], 'amber')}
+                                                    </div>
+                                                    <div className="flex flex-col gap-1 mt-6 ml-2">
+                                                         {formAudios.map(audio => (
+                                                            <div key={audio.id} className="flex items-center gap-1 bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100 px-2 py-1 rounded-full text-xs">
+                                                                <button onClick={() => handlePlayUserAudio(audio)}>
+                                                                    {playingAudioId === audio.id ? <Pause size={12} /> : <Mic size={12} />}
+                                                                </button>
+                                                                <button onClick={() => handleLongPressAudio(audio.id)} className="hover:text-red-500">
+                                                                    <Trash2 size={12} />
+                                                                </button>
+                                                            </div>
+                                                         ))}
+                                                         <button 
+                                                            onClick={() => { 
+                                                                setRecorderTarget(`form_${formIndex}` as any); 
+                                                                setShowRecorder(true); 
+                                                            }} 
+                                                            className="p-2 text-slate-300 hover:text-amber-600 rounded-full"
+                                                         >
+                                                            <MicPlus size={16} />
+                                                         </button>
+                                                    </div>
+                                                </div>
                                             </div>
                                         );
                                     })}
                                 </div>
+                                {/* Add Form Button */}
+                                <div className="mt-4">
+                                    <button 
+                                        onClick={() => onManageForms(e)}
+                                        className="text-xs font-bold text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400 flex items-center gap-1 uppercase tracking-wide"
+                                    >
+                                        <Plus size={14} /> Add Other Form
+                                    </button>
+                                </div>
                             </div>
+                        )}
+                        {/* If no forms exist, still show the Add button in a dedicated section or just allow it via the edit logic?
+                            User said "small button similar to the notes button under the word forms".
+                            If no word forms exist, the section is hidden.
+                            We should show the section if forms exist OR if we want to allow adding.
+                            Let's change the condition to always show if it's a word (not sentence) so user can add.
+                        */}
+                        {!e.Other_Forms && (!userWordForms || !userWordForms[e.Index]) && !e.english && (
+                             <div className="mb-8">
+                                <h3 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Other Word Forms</h3>
+                                <button 
+                                    onClick={() => onManageForms(e)}
+                                    className="text-xs font-bold text-slate-400 hover:text-amber-600 flex items-center gap-1 uppercase tracking-wide italic"
+                                >
+                                    <Plus size={14} /> Add a form...
+                                </button>
+                             </div>
                         )}
 
                         {(e.Sentence_Syllabary || e.Sentence_English) && (<div className="mb-8 bg-amber-50/50 dark:bg-amber-900/20 p-4 rounded-xl border border-amber-100 dark:border-amber-900/30"><h3 className="text-sm font-bold text-amber-800/60 dark:text-amber-200/60 uppercase tracking-widest mb-3 flex items-center gap-2">Example Sentence</h3>{e.Sentence_Syllabary && <p className="font-noto-cherokee text-lg text-slate-800 dark:text-slate-200 mb-2">{renderStyledText(e.Sentence_Syllabary)}</p>}{e.Sentence_Transliteration && <p className="font-noto-serif text-md text-slate-600 dark:text-slate-400 italic mb-2">{renderStyledText(e.Sentence_Transliteration)}</p>}{e.Sentence_English && <p className="font-noto-serif text-md text-slate-800 dark:text-slate-200 font-medium">{renderStyledText(e.Sentence_English)}</p>}<div className="mt-4 flex items-center gap-3 flex-wrap"><AudioPlayer src={e.Sentence_Audio} label="Play Sentence" icon={Mic} customColor={pkg?.type !== 'official' ? pkg?.color : undefined} /></div></div>)}
@@ -318,12 +470,17 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, onSaveAudio, 
             {
                 showRecorder && (
                     <AudioRecorder
-                        title={recorderTarget === 'entry' ? e.Entry : (e.Sentence_English || "Example Sentence")}
-                        syllabary={recorderTarget === 'entry' ? e.Syllabary : e.Sentence_Syllabary}
-                        transliteration={recorderTarget === 'entry' ? null : e.Sentence_Transliteration}
+                        title={recorderTarget === 'entry' ? e.Entry : (recorderTarget === 'sentence' ? (e.Sentence_English || "Example Sentence") : `Form Audio`)}
+                        syllabary={recorderTarget === 'entry' ? e.Syllabary : (recorderTarget === 'sentence' ? e.Sentence_Syllabary : null)}
+                        transliteration={recorderTarget === 'entry' ? null : (recorderTarget === 'sentence' ? e.Sentence_Transliteration : null)}
                         onSave={(blob, speaker) => {
-                            const targetIndex = recorderTarget === 'entry' ? e.Index : e.Index + '_sentence';
-                            onSaveAudio(targetIndex, blob, speaker);
+                            if (typeof recorderTarget === 'string' && recorderTarget.startsWith('form_')) {
+                                const formIndex = parseInt(recorderTarget.split('_')[1]);
+                                onSaveAudio(e.Index, blob, speaker, formIndex);
+                            } else {
+                                const targetIndex = recorderTarget === 'entry' ? e.Index : e.Index + '_sentence';
+                                onSaveAudio(targetIndex, blob, speaker);
+                            }
                             setShowRecorder(false);
                         }}
                         onCancel={() => setShowRecorder(false)}

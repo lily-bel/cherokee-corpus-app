@@ -7,12 +7,14 @@ import EntryDetail from './components/EntryDetail';
 
 import PackageManagerTab from './components/PackageManagerTab';
 import { useCorpus } from './components/CorpusContext';
-import { formatToneInput, downloadFile, exportNotebookToCSV, importNotebookFromCSV, performSearch } from './utils';
+import { downloadFile, exportNotebookToCSV, importNotebookFromCSV, performSearch } from './utils';
 import { SentenceCard } from './components/SentenceCard';
 import WidgetsTab from './components/WidgetsTab';
 
 import { usePackageManager } from './components/PackageManagerContext';
 import ListsTab, { ListData } from './components/ListsTab';
+import { WordModal } from './components/WordModal';
+import { AdditionalFormsModal } from './components/AdditionalFormsModal';
 
 const DEFAULT_SETTINGS = {
     darkMode: false,
@@ -24,7 +26,7 @@ const DEFAULT_SETTINGS = {
 
 function App() {
     const { packages } = usePackageManager();
-    const { dictionary, sentences, userSentences, glosses, loading, entryToSentencesMap, addUserSentence, removeUserSentence, removeUserSentences, removeUserGloss, notebooks, personalWords, setNotebooks, setPersonalWords, userAudioMeta, saveAudio, deleteAudio, sentenceMap } = useCorpus();
+    const { dictionary, sentences, userSentences, glosses, loading, entryToSentencesMap, addUserSentence, removeUserSentence, removeUserSentences, removeUserGloss, notebooks, personalWords, setNotebooks, setPersonalWords, userAudioMeta, saveAudio, deleteAudio, sentenceMap, userWordForms, setUserWordForms } = useCorpus();
 
     // Legacy state replacements
     const csvData = dictionary; // Map dictionary to csvData for compatibility
@@ -84,6 +86,10 @@ function App() {
 
     const [showMoveModal, setShowMoveModal] = useState(false);
     const [wordToMove, setWordToMove] = useState<string | null>(null);
+
+    const [showAdditionalFormsModal, setShowAdditionalFormsModal] = useState(false);
+    const [additionalFormsTargetId, setAdditionalFormsTargetId] = useState<string | null>(null);
+    const [currentAdditionalForms, setCurrentAdditionalForms] = useState('');
 
     console.log("⚡ APP RENDER. Current Selected Entry:", selectedEntry);
 
@@ -918,8 +924,8 @@ function App() {
         }
         setShowWordModal(true);
     };
-    const saveWord = () => {
-        if ((!wordForm.Entry && !wordForm.Syllabary) || !wordForm.Definition) { showToast("Missing fields"); return; }
+    const saveWord = (data: any) => {
+        if ((!data.Entry && !data.Syllabary) || !data.Definition) { showToast("Missing fields"); return; }
 
         if (isSentenceMode) {
             // Auto-create "My Notebook" if no notebooks exist
@@ -930,23 +936,13 @@ function App() {
                 const newNotebook = { id: newNotebookId, name: "My Notebook", date: Date.now() };
                 setNotebooks({ [newNotebookId]: newNotebook });
                 targetSource = newNotebookId;
-                // Note: We don't set activeNotebookId here to avoid switching view context unexpectedly,
-                // but the sentence will be in the new notebook.
-            } else if (!activeNotebookId && Object.keys(notebooks).length > 0) {
-                // If notebooks exist but none active, default to first one or 'user'? 
-                // User request: "Creating a new sentence when you have no notebooks will not create the 'My Notebook' notebook."
-                // This implies if they HAVE notebooks, they might expect it to go to one?
-                // Or maybe just 'user' is fine if they are in search view.
-                // But if they have NO notebooks, we create one.
-                // If they have notebooks, let's stick to 'user' (Personal Sentences) unless they are IN a notebook.
-                // Actually, `activeNotebookId` covers being IN a notebook.
             }
 
             const newSentence = {
                 id: editingId || 'us_' + Date.now(),
-                syllabary: wordForm.Syllabary,
-                translit: wordForm.Entry,
-                english: wordForm.Definition,
+                syllabary: data.Syllabary,
+                translit: data.Entry,
+                english: data.Definition,
                 source: targetSource,
                 audio: ''
             };
@@ -970,17 +966,22 @@ function App() {
                 target = d;
             }
         }
+        
+        // Ensure data.notebookId is used if set (from modal dropdown)
+        if (data.notebookId) target = data.notebookId;
+
         const nw = {
-            ...wordForm,
+            ...data,
             Index: editingId || Date.now().toString(),
             notebookId: target!,
             DateCreated: editingId ? (personalWords.find(w => w.Index === editingId)?.DateCreated || Date.now()) : Date.now(),
             // Standard Fields
             id: editingId || Date.now().toString(),
-            syllabary: wordForm.Syllabary,
-            translit: wordForm.Entry,
-            definition: wordForm.Definition,
-            source: 'user'
+            syllabary: data.Syllabary,
+            translit: data.Entry,
+            definition: data.Definition,
+            source: 'user',
+            Other_Forms: data.Other_Forms // Ensure Other_Forms is saved
         };
         if (editingId) {
             setPersonalWords(p => p.map(w => w.Index === editingId ? nw : w));
@@ -1073,6 +1074,42 @@ function App() {
         showToast("Word moved", "success");
     };
 
+    const handleManageForms = (entry: any) => {
+        setAdditionalFormsTargetId(entry.Index);
+        // If it's a personal word, we load its Other_Forms.
+        // If it's an official word, we load from userWordForms.
+        const personalEntry = personalWords.find(w => w.Index === entry.Index);
+        
+        if (personalEntry) {
+            setCurrentAdditionalForms(personalEntry.Other_Forms || '');
+        } else {
+            setCurrentAdditionalForms(userWordForms[entry.Index] || '');
+        }
+        setShowAdditionalFormsModal(true);
+    };
+
+    const saveAdditionalForms = (formsString: string) => {
+        if (!additionalFormsTargetId) return;
+        
+        const personalEntry = personalWords.find(w => w.Index === additionalFormsTargetId);
+        
+        if (personalEntry) {
+            // Update personal word
+            setPersonalWords(prev => prev.map(w => w.Index === additionalFormsTargetId ? { ...w, Other_Forms: formsString } : w));
+            if (selectedEntry?.Index === additionalFormsTargetId) {
+                setSelectedEntry(prev => ({ ...prev, Other_Forms: formsString }));
+            }
+        } else {
+            // Update userWordForms for official word
+            setUserWordForms(prev => ({ ...prev, [additionalFormsTargetId]: formsString }));
+            // We don't update selectedEntry.Other_Forms because EntryDetail merges them.
+            // But we might need to force a re-render or ensure EntryDetail picks up the change via context.
+            // EntryDetail uses `userWordForms` from props, so it should be fine.
+        }
+        setShowAdditionalFormsModal(false);
+        showToast("Forms saved", "success");
+    };
+
     // Audio Logic Moved to CorpusContext
 
     const notebookList = useMemo(() => {
@@ -1138,6 +1175,19 @@ function App() {
         });
         return Array.from(prioritized);
     }, [packages]);
+
+    const usedFormLabels = useMemo(() => {
+        const labels = new Set<string>();
+        allData.forEach((entry: any) => {
+            if (entry.Other_Forms) {
+                entry.Other_Forms.split('|').forEach(form => {
+                    const parts = form.split(':');
+                    if (parts[0]) labels.add(parts[0].trim());
+                });
+            }
+        });
+        return Array.from(labels).sort();
+    }, [allData]);
 
     // --- SEARCH ALGORITHM ---
     const searchResults = useMemo(() => {
@@ -1371,7 +1421,7 @@ function App() {
                                     onOpenNewListModal={() => setShowNewListModal(true)}
                                 />
                             ) : (
-                                <EntryCard key={item.Index} entry={item} notebooks={notebooks} userNotes={userNotes} userAudioMeta={userAudioMeta} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} />
+                                <EntryCard key={item.Index} entry={item} notebooks={notebooks} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} />
                             );
                         })}
 
@@ -1387,7 +1437,7 @@ function App() {
                                         onOpenNewListModal={() => setShowNewListModal(true)}
                                     />;
                                 }
-                                return <EntryCard key={entry.Index} entry={entry} notebooks={notebooks} userNotes={userNotes} userAudioMeta={userAudioMeta} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} isDimmed={true} />;
+                                return <EntryCard key={entry.Index} entry={entry} notebooks={notebooks} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} isDimmed={true} />;
                             })}</>}
                             {paginatedResults.hasMore && (
                                 <div className="p-4">
@@ -1484,7 +1534,7 @@ function App() {
                     </div>
                         <div className="flex-1 overflow-y-auto p-4" key={activeNotebookId + '-' + notebookMode}>
                             {notebookMode === 'words' ? (
-                                sortedNotebookWords.length === 0 ? <div className="text-center py-12 text-slate-400">Empty notebook.<br />Tap + to add a word.</div> : sortedNotebookWords.map(entry => <EntryCard key={entry.Index} entry={entry} notebooks={notebooks} userNotes={userNotes} userAudioMeta={userAudioMeta} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} />)
+                                sortedNotebookWords.length === 0 ? <div className="text-center py-12 text-slate-400">Empty notebook.<br />Tap + to add a word.</div> : sortedNotebookWords.map(entry => <EntryCard key={entry.Index} entry={entry} notebooks={notebooks} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} />)
                             ) : (
                                 (notebooks[activeNotebookId] ? userSentences : sentences).filter(s => s.source === activeNotebookId).length === 0 ? <div className="text-center py-12 text-slate-400">No sentences yet.<br />Tap + to add one.</div> : (notebooks[activeNotebookId] ? userSentences : sentences).filter(s => s.source === activeNotebookId).map(s => <SentenceCard key={s.id} sentence={s} notebooks={notebooks} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} personalWords={personalWords} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} onDeleteAudio={deleteAudio}
                                     favorites={favorites}
@@ -1529,6 +1579,7 @@ function App() {
                         notebooks={notebooks}
                         userNotes={userNotes}
                         userAudioMeta={userAudioMeta}
+                        userWordForms={userWordForms}
                         onSaveAudio={saveAudio}
                         onDeleteAudio={deleteAudio}
                         favorites={favorites}
@@ -1546,6 +1597,7 @@ function App() {
                         onEditSentence={handleEditSentence}
                         onDeleteSentence={handleDeleteSentence}
                         onCreateWord={() => openWordModal(null)}
+                        onManageForms={handleManageForms}
                     />
                 )
             }
@@ -1618,24 +1670,32 @@ function App() {
                 )
             }
             {
-                showWordModal && (<Modal title={editingId ? "Edit Word" : (isSentenceMode ? "New Sentence" : "New Word")} onClose={() => setShowWordModal(false)}>
-                    {!editingId && (
-                        <div className="hidden"></div> // Toggle removed
-                    )}
-                    <div className="space-y-3">
-                        <div><label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">Syllabary (Cherokee)</label><input type="text" value={wordForm.Syllabary} onChange={e => setWordForm({ ...wordForm, Syllabary: e.target.value })} className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 font-noto-cherokee text-lg outline-none focus:border-amber-500 dark:text-white" /></div>
-                        <div><label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">Transliteration (Cherokee)</label><input type="text" value={wordForm.Entry} onChange={e => setWordForm({ ...wordForm, Entry: e.target.value })} className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 font-noto-serif outline-none focus:border-amber-500 dark:text-white" /></div>
-                        <div><label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">{isSentenceMode ? "English Translation" : "Definition"}</label><input type="text" value={wordForm.Definition} onChange={e => setWordForm({ ...wordForm, Definition: e.target.value })} className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 font-noto-serif outline-none focus:border-amber-500 dark:text-white" /></div>
-                        {!isSentenceMode && (
-                            <div className="flex gap-2"><div className="flex-1"><label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">PoS (Optional)</label><input type="text" value={wordForm.PoS} onChange={e => setWordForm({ ...wordForm, PoS: e.target.value })} placeholder="n, v, adj..." className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 outline-none focus:border-amber-500 dark:text-white" /></div><div className="flex-1"><label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">Tone (Optional)</label><input type="text" value={wordForm.Entry_Tone} onChange={e => setWordForm({ ...wordForm, Entry_Tone: formatToneInput(e.target.value) })} placeholder="Type 1-4 for tones" className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 outline-none focus:border-amber-500 font-sans dark:text-white" /></div></div>
-                        )}
-                        {!isSentenceMode && (
-                            <div><label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">Notes</label><textarea value={wordForm.Notes} onChange={e => setWordForm({ ...wordForm, Notes: e.target.value })} rows={3} className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 outline-none focus:border-amber-500 resize-none dark:text-white" placeholder="Add conjugations, examples, or extra info here..."></textarea></div>
-                        )}
-                        <div><label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">Notebook</label><select value={wordForm.notebookId} onChange={e => setWordForm({ ...wordForm, notebookId: e.target.value })} className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 outline-none focus:border-amber-500 dark:text-white dark:bg-slate-800"><option value="" disabled>Select a notebook...</option>{Object.values(notebooks).map((nb: any) => <option key={nb.id} value={nb.id}>{nb.name}</option>)}</select></div>
-                    </div><button onClick={saveWord} className="w-full mt-6 bg-amber-600 text-white font-bold py-3 rounded-lg">Save {isSentenceMode ? "Sentence" : "Word"}</button></Modal>)
+                showWordModal && (
+                    <WordModal
+                        isOpen={showWordModal}
+                        onClose={() => setShowWordModal(false)}
+                        onSave={saveWord}
+                        initialData={wordForm}
+                        isSentenceMode={isSentenceMode}
+                        editingId={editingId}
+                        notebooks={notebooks}
+                        usedFormLabels={usedFormLabels}
+                    />
+                )
             }
             {showNotesModal && (<Modal title="Edit Notes" onClose={() => setShowNotesModal(false)}><p className="text-sm text-slate-500 dark:text-slate-400 mb-2">Add personal notes to this dictionary entry. These are saved only on this device.</p><textarea value={currentNote} onChange={e => setCurrentNote(e.target.value)} rows={6} autoFocus className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 outline-none focus:border-amber-500 resize-none font-sans dark:text-white" placeholder="Write your notes here..."></textarea><button onClick={saveNote} className="w-full mt-4 bg-amber-600 text-white font-bold py-3 rounded-lg">Save Note</button></Modal>)}
+
+            {
+                showAdditionalFormsModal && (
+                    <AdditionalFormsModal
+                        isOpen={showAdditionalFormsModal}
+                        onClose={() => setShowAdditionalFormsModal(false)}
+                        onSave={saveAdditionalForms}
+                        initialForms={currentAdditionalForms}
+                        usedFormLabels={usedFormLabels}
+                    />
+                )
+            }
 
             {/* MOVE NOTEBOOK MODAL */}
             {

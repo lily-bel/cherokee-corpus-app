@@ -1,12 +1,34 @@
-import { Mic, StickyNote, ListIcon, Audio } from './Icons';
+import { Mic, StickyNote, ListIcon, Audio, SquaresPlus } from './Icons';
 import { SourceBadge } from './UI';
 
 import { usePackageManager } from './PackageManagerContext';
 
-const EntryCard = ({ entry, notebooks, userNotes, userAudioMeta, favorites, customLists, onClick, isDimmed = false, showPos = false }: any) => {
+const EntryCard = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms, favorites, customLists, onClick, isDimmed = false, showPos = false }: any) => {
   const { getPackageColor, packages } = usePackageManager();
   const isPersonal = !!notebooks[entry.Source];
   const hasUserNote = isPersonal ? (entry.Notes && entry.Notes.trim().length > 0) : (userNotes[entry.Index] !== undefined && userNotes[entry.Index].trim().length > 0);
+
+  // Extra Forms Indicator logic
+  const hasUserForms = !!(userWordForms && userWordForms[entry.Index]);
+  const entryPkg = packages.find(p => p.id === entry.Source || (p.metadata.source_names && p.metadata.source_names[entry.Source]));
+  const isImported = entryPkg?.type === 'imported';
+  const hasOtherForms = !!entry.Other_Forms;
+
+  let formsIconColor = "";
+  let formsIconStyle = {};
+  
+  if (hasUserForms || (isPersonal && hasOtherForms)) {
+    formsIconColor = "text-amber-500 fill-amber-100";
+  } else if (isImported && hasOtherForms) {
+    const pColor = entryPkg?.color;
+    if (pColor && pColor.startsWith('#')) {
+      formsIconStyle = { color: pColor };
+    } else if (pColor && pColor !== 'slate') {
+      formsIconColor = `text-${pColor}-500 fill-${pColor}-100`;
+    } else {
+      formsIconColor = "text-slate-400";
+    }
+  }
 
   // Audio Indicators
   const hasCnAudio = !!entry.Entry_Audio;
@@ -58,6 +80,7 @@ const EntryCard = ({ entry, notebooks, userNotes, userAudioMeta, favorites, cust
           <div className="flex items-center gap-1">
             {hasCnAudio && <Audio size={14} className="text-slate-400" />}
             {hasUserAudio && <Mic size={14} className={audioIconClass} style={audioIconStyle} />}
+            {(formsIconColor || formsIconStyle.hasOwnProperty('color')) && <SquaresPlus size={14} className={formsIconColor} style={formsIconStyle} />}
             {hasUserNote && <StickyNote size={16} className="text-amber-500 fill-amber-100" />}
             <SourceBadge source={entry.Source} name={notebooks[entry.Source]?.name} customColor={pkgColor} />
           </div>

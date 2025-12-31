@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Modal } from './UI';
 import { useCorpus } from './CorpusContext';
 import { usePackageExport } from './usePackageHooks';
-import { Download, Check, ListIcon, Mic, StickyNote, Box } from './Icons'; // Check imports
+import { Download, Check, ListIcon, Mic, Box } from './Icons'; // Check imports
 import { ListData } from './ListsTab';
 
 interface PackageExportModalProps {

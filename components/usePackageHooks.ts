@@ -14,7 +14,7 @@ const generateId = () => {
 };
 
 export const usePackageExport = () => {
-    const { personalWords, userSentences, glosses, notebooks, userAudioMeta, sentences } = useCorpus();
+    const { personalWords, userSentences, glosses, notebooks, userAudioMeta } = useCorpus();
 
     const exportPackage = async (notebookIds: string[], metadata: Partial<PackageMetadata>, listsToExport: { list: ListData, includeDependencies: boolean }[] = [], dependencyAudioIds: string[] = [], dependencyEntryIds: string[] = []) => {
         try {

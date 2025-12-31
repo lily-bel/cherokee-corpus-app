@@ -66,6 +66,7 @@ export interface PersonalWord {
     PoS?: string;
     Notes?: string;
     DateCreated?: number;
+    Other_Forms?: string;
 }
 
 interface CorpusContextType {
@@ -97,11 +98,15 @@ interface CorpusContextType {
 
     // Audio
     userAudioMeta: Record<string, any[]>;
-    saveAudio: (targetId: string, blob: Blob, speaker: string) => Promise<void>;
+    saveAudio: (targetId: string, blob: Blob, speaker: string, formIndex?: number) => Promise<void>; // Updated signature
     deleteAudio: (targetId: string, audioId: string) => Promise<void>;
     importAudioMeta: (newMeta: Record<string, any[]>) => void;
     removePackageAudio: (packageId: string) => Promise<void>;
     usedSpeakers: string[];
+
+    // Custom Forms
+    userWordForms: Record<string, string>;
+    setUserWordForms: React.Dispatch<React.SetStateAction<Record<string, string>>>;
 }
 
 const CorpusContext = createContext<CorpusContextType | undefined>(undefined);
@@ -120,6 +125,7 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const [userGlosses, setUserGlosses] = useState<Gloss[]>([]);
     const [userSentences, setUserSentences] = useState<Sentence[]>([]);
     const [userAudioMeta, setUserAudioMeta] = useState<Record<string, any[]>>({});
+    const [userWordForms, setUserWordForms] = useState<Record<string, string>>({}); // EntryID -> pipe-separated forms
 
     const [notebooks, setNotebooks] = useState<Record<string, Notebook>>({});
     const [personalWords, setPersonalWords] = useState<PersonalWord[]>([]);
@@ -158,6 +164,9 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             const savedAudioMeta = localStorage.getItem('cherokee_app_user_audio_meta');
             if (savedAudioMeta) setUserAudioMeta(JSON.parse(savedAudioMeta));
 
+            const savedWordForms = localStorage.getItem('cherokee_app_user_word_forms');
+            if (savedWordForms) setUserWordForms(JSON.parse(savedWordForms));
+
         } catch (e) {
             console.error("Failed to load user data", e);
         }
@@ -193,6 +202,12 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             localStorage.setItem('cherokee_app_user_audio_meta', JSON.stringify(userAudioMeta));
         } catch (e) { console.error("Failed to save audio meta", e); }
     }, [userAudioMeta]);
+
+    useEffect(() => {
+        try {
+            localStorage.setItem('cherokee_app_user_word_forms', JSON.stringify(userWordForms));
+        } catch (e) { console.error("Failed to save user word forms", e); }
+    }, [userWordForms]);
 
     // Load Audio Manifest - REMOVED per user request
     /*
@@ -363,7 +378,7 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
 
     // Audio Actions
-    const saveAudio = async (targetId: string, blob: Blob, speaker: string) => {
+    const saveAudio = async (targetId: string, blob: Blob, speaker: string, formIndex?: number) => {
         const { saveAudioToDB } = await import('../utils');
 
         let type = 'W';
@@ -375,12 +390,27 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
 
         const index = Date.now();
-        const audioId = `${speaker}_${type}-${id}_${index}`;
+        // Construct ID: Speaker_Type-ID[_FormIndex]_Timestamp
+        // If formIndex is present, it's Speaker_W-ID.FormIndex_Timestamp
+        let audioId = '';
+        if (formIndex !== undefined) {
+             // Use period separator for form index as requested: W-10.2
+             audioId = `${speaker}_${type}-${id}.${formIndex}_${index}`;
+        } else {
+             audioId = `${speaker}_${type}-${id}_${index}`;
+        }
 
         await saveAudioToDB(audioId, blob);
 
         setUserAudioMeta(prev => {
             const newMeta = { ...prev };
+            // For form audio, we still store it under the main entry ID in metadata map
+            // The audioId itself distinguishes it.
+            // Or should we store it under a specific key?
+            // "The word form audio is saved the same way except in the audio filename..."
+            // So for metadata retrieval, we fetch metadata for '10' (entry index).
+            // Then we filter based on ID structure when rendering.
+            
             if (!newMeta[targetId]) newMeta[targetId] = [];
             newMeta[targetId].push({ id: audioId, speaker, date: Date.now() });
             return newMeta;
@@ -484,7 +514,9 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                     });
                 });
                 return Array.from(s).sort();
-            }, [userAudioMeta])
+            }, [userAudioMeta]),
+            userWordForms,
+            setUserWordForms
         }}>
             {children}
         </CorpusContext.Provider>
