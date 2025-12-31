@@ -24,7 +24,7 @@ const DEFAULT_SETTINGS = {
 
 function App() {
     const { packages } = usePackageManager();
-    const { dictionary, sentences, userSentences, glosses, loading, entryToSentencesMap, addUserSentence, removeUserSentence, removeUserSentences, removeUserGloss, notebooks, personalWords, setNotebooks, setPersonalWords, userAudioMeta, saveAudio, deleteAudio } = useCorpus();
+    const { dictionary, sentences, userSentences, glosses, loading, entryToSentencesMap, addUserSentence, removeUserSentence, removeUserSentences, removeUserGloss, notebooks, personalWords, setNotebooks, setPersonalWords, userAudioMeta, saveAudio, deleteAudio, sentenceMap } = useCorpus();
 
     // Legacy state replacements
     const csvData = dictionary; // Map dictionary to csvData for compatibility
@@ -127,8 +127,10 @@ function App() {
 
                 const savedFavs = localStorage.getItem('cherokee_app_favorites'); if (savedFavs) setFavorites(JSON.parse(savedFavs));
                 const savedLists = localStorage.getItem('cherokee_app_custom_lists');
+                let parsedLists: Record<string, any> = {};
+                
                 if (savedLists) {
-                    let parsedLists = JSON.parse(savedLists);
+                    parsedLists = JSON.parse(savedLists);
 
                     // MIGRATION: Convert Array<string> to ListData
                     // We can just set it as is, and the type safety allows string[], 
@@ -151,15 +153,22 @@ function App() {
 
                     setCustomLists(parsedLists);
 
-                    const savedOrder = localStorage.getItem('cherokee_app_list_order');
-                    setCustomListOrder(savedOrder ? JSON.parse(savedOrder) : Object.keys(parsedLists));
-
                     if (migrated) {
                         try {
                             localStorage.setItem('cherokee_app_custom_lists', JSON.stringify(parsedLists));
                         } catch (e) { }
                     }
                 }
+
+                const savedOrder = localStorage.getItem('cherokee_app_list_order');
+                // Ensure default built-in lists are present in order
+                let order = savedOrder ? JSON.parse(savedOrder) : Object.keys(parsedLists);
+                const required = ['favorites', 'builtin_audio', 'builtin_notes', 'builtin_glosses', 'builtin_entries'];
+                required.forEach(key => {
+                    if (!order.includes(key)) order.push(key);
+                });
+                
+                setCustomListOrder(order);
 
             } catch (e) {
                 console.warn("LocalStorage access failed:", e);
@@ -168,6 +177,35 @@ function App() {
 
         initLoad();
     }, []);
+
+    // Migration for Sentence Notes
+    useEffect(() => {
+        if (!loading && sentenceMap.size > 0 && Object.keys(userNotes).length > 0) {
+            let migrated = false;
+            const newNotes = { ...userNotes };
+
+            Object.keys(newNotes).forEach(key => {
+                // If key is a sentence ID (and not already prefixed)
+                if (!key.startsWith('s_') && sentenceMap.has(key)) {
+                    // Check if it's already migrated (don't overwrite if s_key exists?)
+                    // But if it exists as plain key, it's ambiguous.
+                    // Assuming legacy notes were saved with plain ID.
+                    // We migrate to s_ID.
+                    const newKey = `s_${key}`;
+                    if (!newNotes[newKey]) {
+                        newNotes[newKey] = newNotes[key];
+                        delete newNotes[key];
+                        migrated = true;
+                    }
+                }
+            });
+
+            if (migrated) {
+                setUserNotes(newNotes);
+                console.log("Migrated sentence notes to prefixed keys.");
+            }
+        }
+    }, [loading, sentenceMap]);
 
     // Initialize Filters when Data Loads to fix "first click" bug and set defaults
     useEffect(() => {
@@ -229,7 +267,8 @@ function App() {
     useEffect(() => {
         const keys = Object.keys(customLists);
         const missing = keys.filter(k => !customListOrder.includes(k)); if (missing.length) setCustomListOrder(prev => [...prev, ...missing]);
-        const valid = customListOrder.filter(k => keys.includes(k)); if (valid.length !== customListOrder.length) setCustomListOrder(valid);
+        const valid = customListOrder.filter(k => keys.includes(k) || k === 'favorites' || k.startsWith('builtin_')); 
+        if (valid.length !== customListOrder.length) setCustomListOrder(valid);
     }, [customLists]);
 
     const allData = useMemo(() => {
@@ -987,7 +1026,7 @@ function App() {
     };
 
     const handleEditSentenceNote = (id: string, note: string) => {
-        setNoteTargetId(id);
+        setNoteTargetId('s_' + id);
         setCurrentNote(note);
         setShowNotesModal(true);
     };
@@ -1555,6 +1594,10 @@ function App() {
                             {/* RESTORE DEFAULTS */}
                             <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 text-center">
                                 <button onClick={handleRestoreDefaults} className="text-xs font-bold text-red-400 uppercase tracking-wide hover:text-red-600">Restore Default Settings</button>
+                            </div>
+
+                            <div className="mt-8 text-center opacity-30">
+                                <span className="text-[10px] font-mono tracking-widest text-slate-500 dark:text-slate-400 uppercase">Version 1.0.2</span>
                             </div>
                         </div>
                     </Modal>

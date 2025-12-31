@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Star, ListIcon, Trash2, Pencil, ChevronRight, GripVertical, Folder, ArrowLeft, Plus, X, Search, Check, Volume2, Pause } from './Icons';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { Star, ListIcon, Trash2, Pencil, ChevronRight, GripVertical, Folder, ArrowLeft, Plus, X, Search, Check, Volume2, Pause, Eye, EyeOff, Mic, StickyNote, ListPlus } from './Icons';
 import { Modal, SourceBadge } from './UI';
 import { usePackageManager } from './PackageManagerContext';
+import { useCorpus } from './CorpusContext';
 import { getAudioFromDB } from '../utils';
 
 export interface ListData {
@@ -9,8 +10,9 @@ export interface ListData {
     name: string;
     items: string[]; // Array of Entry Index/IDs
     color?: string; // 'amber' | 'slate' | hex
-    type: 'user' | 'imported' | 'default';
+    type: 'user' | 'imported' | 'default' | 'builtin_audio' | 'builtin_notes' | 'builtin_glosses' | 'builtin_entries';
     packageId?: string;
+    icon?: any;
 }
 
 interface ListsTabProps {
@@ -238,21 +240,36 @@ const ListsTab: React.FC<ListsTabProps> = ({
     favorites,
     setFavorites,
     allData,
-    notebooks,
-    userAudioMeta,
+    notebooks: propNotebooks,
+    userAudioMeta: propUserAudioMeta,
     onEntryClick,
     onPerformSearch,
     sentences = [],
     userSentences = [],
+    userNotes // Destructure userNotes from props
 }) => {
     const { getPackageColor, packages } = usePackageManager();
+    const { userAudioMeta, personalWords, glosses } = useCorpus();
+
+    // Use props if available, otherwise fallback to hook (though hook is more direct source of truth for dynamic lists)
+    const effectiveUserAudioMeta = propUserAudioMeta || userAudioMeta;
 
     // Component State
     const [view, setView] = useState<'all' | 'detail'>('all');
-    const [listMode, setListMode] = useState<'words' | 'sentences'>('words'); // New State
+    const [listMode, setListMode] = useState<'words' | 'sentences'>('words'); 
     const [activeListId, setActiveListId] = useState<string | null>(null);
     const [isReordering, setIsReordering] = useState(false);
     const [draggingId, setDraggingId] = useState<string | null>(null);
+    const [hiddenBuiltInLists, setHiddenBuiltInLists] = useState<string[]>(() => {
+        try {
+            return JSON.parse(localStorage.getItem('cherokee_app_hidden_builtin_lists') || '[]');
+        } catch { return []; }
+    });
+
+    useEffect(() => {
+        localStorage.setItem('cherokee_app_hidden_builtin_lists', JSON.stringify(hiddenBuiltInLists));
+    }, [hiddenBuiltInLists]);
+
 
     // Modal States
     const [showNewListModal, setShowNewListModal] = useState(false);
@@ -261,8 +278,110 @@ const ListsTab: React.FC<ListsTabProps> = ({
     const [renameTargetId, setRenameTargetId] = useState<string | null>(null);
     const [showAddWordsModal, setShowAddWordsModal] = useState(false);
 
+
+    // --- GENERATE BUILT-IN LISTS ---
+    const builtInLists = useMemo(() => {
+        const audioItems: string[] = [];
+        const noteItems: string[] = [];
+        const glossItems: string[] = [];
+        const entryItems: string[] = [];
+
+        // 1. Audio
+        Object.entries(effectiveUserAudioMeta).forEach(([key, audioList]: [string, any]) => {
+            const hasUserAudio = audioList.some((a: any) => !a.packageId || a.packageId === 'user');
+            if (hasUserAudio) {
+                // key is either "Index" or "ID_sentence"
+                let listId = key;
+                if (key.endsWith('_sentence')) {
+                    const baseId = key.replace('_sentence', '');
+                    listId = `s_${baseId}`;
+                }
+                
+                if (!audioItems.includes(listId)) audioItems.push(listId);
+            }
+        });
+
+        // 2. Custom Entries (Personal Words + User Sentences)
+        personalWords.forEach(w => {
+            if (w.Index && !entryItems.includes(w.Index)) entryItems.push(w.Index);
+        });
+        userSentences.forEach(s => {
+            const listId = `s_${s.id}`;
+            if (!entryItems.includes(listId)) entryItems.push(listId);
+        });
+
+        // 3. User Glosses -> Custom Glosses
+        glosses.forEach(g => {
+            if (g.source === 'user') {
+                if (g.sentence_id) {
+                    const listId = `s_${g.sentence_id}`;
+                    if (!glossItems.includes(listId)) {
+                        glossItems.push(listId);
+                    }
+                }
+            }
+        });
+
+        // 4. User Notes -> Custom Notes
+        if (userNotes) {
+            Object.keys(userNotes).forEach(key => {
+                 if (!noteItems.includes(key)) noteItems.push(key);
+            });
+        }
+
+        return [
+            {
+                id: 'builtin_audio',
+                name: 'Custom Audio',
+                items: audioItems,
+                type: 'builtin_audio',
+                color: 'slate',
+                icon: <Mic size={24} />
+            },
+            {
+                id: 'builtin_notes',
+                name: 'Custom Notes',
+                items: noteItems,
+                type: 'builtin_notes',
+                color: 'slate',
+                icon: <StickyNote size={24} />
+            },
+            {
+                id: 'builtin_glosses',
+                name: 'Custom Glosses',
+                items: glossItems,
+                type: 'builtin_glosses',
+                color: 'slate',
+                icon: <ListPlus size={24} />
+            },
+            {
+                id: 'builtin_entries',
+                name: 'Custom Entries',
+                items: entryItems,
+                type: 'builtin_entries',
+                color: 'slate',
+                icon: <Pencil size={24} />
+            }
+        ] as ListData[];
+    }, [effectiveUserAudioMeta, personalWords, userSentences, glosses, userNotes]);
+
+    const toggleBuiltInVisibility = (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setHiddenBuiltInLists(prev => 
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+    };
+
+
     // --- MIGRATION CHECK ---
     const getList = (id: string): ListData | null => {
+        if (id === 'favorites') {
+            return { id: 'favorites', name: 'Favorites', items: favorites, type: 'default', color: 'slate', icon: <Star size={24} className="fill-slate-400 dark:fill-slate-500" /> };
+        }
+
+        const builtIn = builtInLists.find(l => l.id === id);
+        if (builtIn) return builtIn;
+
         const raw = customLists[id];
         if (!raw) return null;
         if (Array.isArray(raw)) {
@@ -270,11 +389,116 @@ const ListsTab: React.FC<ListsTabProps> = ({
         }
         return raw as ListData;
     };
+    
+    // --- DETAIL VIEW HELPERS ---
+    const activeList = activeListId ? getList(activeListId) : null;
+    
+    // Split items into words and sentences
+    const listItems = activeList ? activeList.items.map(id => {
+        // Check for Sentence Prefix
+        if (id.startsWith('s_')) {
+            const sId = id.substring(2);
+            const sentence = sentences.find(s => s.id === sId) || userSentences.find(s => s.id === sId);
+            if (sentence) return { type: 'sentence', data: sentence };
+            // If not found, it might be deleted, return null
+            return null;
+        }
+
+        // Standard Word Check
+        const word = allData.find(d => d.Index === id);
+        if (word) return { type: 'word', data: word };
+
+        // Fallback: Check sentences (if legacy/user sentences stored without prefix)
+        // Although new ones use prefix, this is for safety or existing non-colliding IDs
+        const sentence = sentences.find(s => s.id === id) || userSentences.find(s => s.id === id);
+        if (sentence) return { type: 'sentence', data: sentence };
+        
+        return null;
+    }).filter(Boolean) as { type: 'word' | 'sentence', data: any }[] : [];
+
+    const displayedItems = listItems.filter(item => item?.type === (listMode === 'words' ? 'word' : 'sentence'));
+
+    const handleRemoveFromList = (item: any) => {
+        if (!activeListId) return;
+        
+        // Disable removing from built-in lists
+        const list = getList(activeListId);
+        if (list?.type.startsWith('builtin') || list?.type === 'default') return;
+
+        // Determine ID to remove (word Index or prefixed sentence ID)
+        const removeId = (id: string) => {
+             if (activeListId === 'favorites') {
+                setFavorites(prev => prev.filter(i => i !== id));
+            } else {
+                setCustomLists(prev => ({
+                    ...prev,
+                    [activeListId]: {
+                        ...prev[activeListId] as ListData,
+                        items: (prev[activeListId] as ListData).items.filter(i => i !== id)
+                    }
+                }));
+            }
+        };
+
+        // If we passed the ID directly
+        if (typeof item === 'string') {
+             // Try removing exact match first
+             removeId(item);
+             // Also try removing s_ prefix version if it's a sentence ID (not starting with s_)
+             if (!item.startsWith('s_')) removeId('s_' + item);
+        }
+    };
+
+    const closeNewListModal = () => {
+        setShowNewListModal(false);
+        setRenameTargetId(null);
+        setNewListName('');
+    };
+
+    const handleRenameList = (id: string, newName: string) => {
+        setCustomLists(prev => ({
+            ...prev,
+            [id]: { ...prev[id] as ListData, name: newName }
+        }));
+        closeNewListModal();
+    };
+
+    const handleCreateList = () => {
+        if (!newListName.trim()) return;
+        const id = 'list_' + Date.now();
+        const newList: ListData = {
+            id,
+            name: newListName,
+            items: [],
+            type: 'user',
+            color: 'gold'
+        };
+        setCustomLists(prev => ({ ...prev, [id]: newList }));
+        setCustomListOrder(prev => [id, ...prev]);
+        closeNewListModal();
+    };
+
+    const handleDeleteList = (id: string) => {
+        setCustomLists(prev => {
+            const next = { ...prev };
+            delete next[id];
+            return next;
+        });
+        setCustomListOrder(prev => prev.filter(k => k !== id));
+        setDeleteTargetId(null);
+        if (activeListId === id) {
+            setActiveListId(null);
+            setView('all');
+        }
+    };
 
     const handleToggleItem = (itemId: string) => {
         if (!activeListId) return;
         const list = getList(activeListId);
         if (!list) return;
+
+        // Built-in lists are read-only for manual addition
+        if (list.type.startsWith('builtin') || list.type === 'default') return;
 
         const isCurrentlyIn = list.items.includes(itemId);
         const nextItems = isCurrentlyIn
@@ -296,6 +520,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
     };
 
     // --- DRAG AND DROP HANDLERS ---
+    const pendingDragRef = useRef<{ id: string, startY: number, startX: number, target: HTMLElement, pointerId: number } | null>(null);
     const dragItemRef = useRef<HTMLDivElement | null>(null);
     const dragContainerRef = useRef<HTMLDivElement | null>(null);
     const longPressTimer = useRef<any>(null);
@@ -374,29 +599,70 @@ const ListsTab: React.FC<ListsTabProps> = ({
 
     const handlePointerDown = (e: React.PointerEvent, id: string) => {
         if (view !== 'all') return;
-        const target = e.currentTarget as HTMLDivElement;
-
+        
+        // Ignore clicks on buttons/interactive elements
         if ((e.target as HTMLElement).tagName.toLowerCase() === 'button' || (e.target as HTMLElement).closest('button')) return;
 
-        dragItemRef.current = target;
-        initialTouchPos.current = { x: e.clientX, y: e.clientY };
+        // Reset any existing states
+        if (longPressTimer.current) clearTimeout(longPressTimer.current);
 
-        const startY = e.clientY;
+        const row = (e.target as HTMLElement).closest('[data-list-id]') as HTMLDivElement;
+        if (!row) return;
+
+        // Store initial data
+        initialTouchPos.current = { x: e.clientX, y: e.clientY };
+        pendingDragRef.current = {
+            id,
+            startX: e.clientX,
+            startY: e.clientY,
+            target: e.currentTarget as HTMLElement, // The row itself (since we moved the listener)
+            pointerId: e.pointerId
+        };
+        
+        // Start Timer
         longPressTimer.current = setTimeout(() => {
-            lastPointerEvent.current = { clientX: e.clientX, clientY: e.clientY };
-            startDrag(id, target, startY);
-            if (navigator.vibrate) navigator.vibrate(50);
-        }, 300);
+            if (pendingDragRef.current) {
+                const { id, startY, target, pointerId } = pendingDragRef.current;
+                
+                // Start Drag
+                dragItemRef.current = row;
+                lastPointerEvent.current = { clientX: pendingDragRef.current.startX, clientY: startY };
+                
+                startDrag(id, row, startY);
+                if (navigator.vibrate) navigator.vibrate(50);
+
+                // Capture Pointer
+                try {
+                    target.setPointerCapture(pointerId);
+                } catch (err) {
+                    console.warn("Failed to capture pointer", err);
+                }
+            }
+        }, 300); // 300ms hold
     };
 
-    const checkMoveTolerance = (e: React.PointerEvent) => {
-        if (longPressTimer.current && !draggingId && initialTouchPos.current) {
-            const dist = Math.hypot(e.clientX - initialTouchPos.current.x, e.clientY - initialTouchPos.current.y);
-            if (dist > 10) {
-                clearTimeout(longPressTimer.current);
-                longPressTimer.current = null;
-            }
+    const handlePointerMoveRow = (e: React.PointerEvent) => {
+        // If we are WAITING for long press, we need to check movement.
+        if (longPressTimer.current && pendingDragRef.current && !draggingId) {
+             const moveThreshold = 10;
+             const dx = Math.abs(e.clientX - pendingDragRef.current.startX);
+             const dy = Math.abs(e.clientY - pendingDragRef.current.startY);
+             
+             if (dx > moveThreshold || dy > moveThreshold) {
+                 // Moved too much, cancel hold
+                 clearTimeout(longPressTimer.current);
+                 longPressTimer.current = null;
+                 pendingDragRef.current = null;
+             }
         }
+    };
+
+    const handlePointerUpRow = () => {
+        if (longPressTimer.current) {
+             clearTimeout(longPressTimer.current);
+             longPressTimer.current = null;
+        }
+        pendingDragRef.current = null;
     };
 
     const performDragUpdate = () => {
@@ -477,109 +743,6 @@ const ListsTab: React.FC<ListsTabProps> = ({
         performDragUpdate();
     };
 
-    // --- LIST MANAGEMENT ---
-    const handleCreateList = () => {
-        if (!newListName.trim()) return;
-        const id = 'list_' + Date.now();
-        const newList: ListData = {
-            id,
-            name: newListName,
-            items: [],
-            type: 'user',
-            color: 'gold'
-        };
-        setCustomLists(prev => ({ ...prev, [id]: newList }));
-        setCustomListOrder(prev => [id, ...prev]);
-        closeNewListModal();
-    };
-
-    const handleDeleteList = (id: string) => {
-        setCustomLists(prev => {
-            const next = { ...prev };
-            delete next[id];
-            return next;
-        });
-        setCustomListOrder(prev => prev.filter(k => k !== id));
-        setDeleteTargetId(null);
-        if (activeListId === id) {
-            setActiveListId(null);
-            setView('all');
-        }
-    };
-
-    const handleRenameList = (id: string, newName: string) => {
-        setCustomLists(prev => ({
-            ...prev,
-            [id]: { ...prev[id] as ListData, name: newName }
-        }));
-        closeNewListModal();
-    };
-
-    const closeNewListModal = () => {
-        setShowNewListModal(false);
-        setRenameTargetId(null);
-        setNewListName('');
-    };
-
-    // --- DETAIL VIEW HELPERS ---
-    const activeList = activeListId ? (activeListId === 'favorites' ? { id: 'favorites', name: 'Favorites', items: favorites, type: 'default', color: 'slate' } : getList(activeListId)) : null;
-    
-    // Split items into words and sentences
-    const listItems = activeList ? activeList.items.map(id => {
-        // Check for Sentence Prefix
-        if (id.startsWith('s_')) {
-            const sId = id.substring(2);
-            const sentence = sentences.find(s => s.id === sId) || userSentences.find(s => s.id === sId);
-            if (sentence) return { type: 'sentence', data: sentence };
-            // If not found, it might be deleted, return null
-            return null;
-        }
-
-        // Standard Word Check
-        const word = allData.find(d => d.Index === id);
-        if (word) return { type: 'word', data: word };
-
-        // Fallback: Check sentences (if legacy/user sentences stored without prefix)
-        // Although new ones use prefix, this is for safety or existing non-colliding IDs
-        const sentence = sentences.find(s => s.id === id) || userSentences.find(s => s.id === id);
-        if (sentence) return { type: 'sentence', data: sentence };
-        
-        return null;
-    }).filter(Boolean) as { type: 'word' | 'sentence', data: any }[] : [];
-
-    const displayedItems = listItems.filter(item => item?.type === (listMode === 'words' ? 'word' : 'sentence'));
-
-    const handleRemoveFromList = (item: any) => {
-        if (!activeListId) return;
-        // Determine ID to remove (word Index or prefixed sentence ID)
-        // We need to match what's in the list.
-        // But here we might receive the raw data object or ID?
-        // The render passes `word.Index` or `sentence.id`.
-        // If it's a sentence, we need to try both `s_ID` and `ID`.
-        
-        const removeId = (id: string) => {
-             if (activeListId === 'favorites') {
-                setFavorites(prev => prev.filter(i => i !== id));
-            } else {
-                setCustomLists(prev => ({
-                    ...prev,
-                    [activeListId]: {
-                        ...prev[activeListId] as ListData,
-                        items: (prev[activeListId] as ListData).items.filter(i => i !== id)
-                    }
-                }));
-            }
-        };
-
-        // If we passed the ID directly
-        if (typeof item === 'string') {
-             // Try removing exact match first
-             removeId(item);
-             // Also try removing s_ prefix version if it's a sentence ID (not starting with s_)
-             if (!item.startsWith('s_')) removeId('s_' + item);
-        }
-    };
-
     // --- RENDER HELPERS ---
     const renderModals = () => {
         return (
@@ -617,13 +780,14 @@ const ListsTab: React.FC<ListsTabProps> = ({
                     activeList={activeList}
                     onToggleItem={handleToggleItem}
                     onPerformSearch={onPerformSearch}
-                    notebooks={notebooks}
+                    notebooks={propNotebooks}
                 />
             </>
         );
     };
 
     if (view === 'detail' && activeList) {
+        const isBuiltIn = activeList.type.startsWith('builtin') || activeList.type === 'default';
         return (
             <div className="flex flex-col h-full bg-[#F9F9F7] dark:bg-slate-950">
                 {/* Header */}
@@ -663,7 +827,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                         <div className="text-center py-12 text-slate-400 flex flex-col items-center">
                             <ListIcon size={48} className="mb-4 opacity-20" />
                             <p>No {listMode} in this list.</p>
-                            {listMode === 'words' && <button onClick={() => setShowAddWordsModal(true)} className="mt-4 text-amber-600 font-bold hover:underline">Add Words</button>}
+                            {!isBuiltIn && listMode === 'words' && <button onClick={() => setShowAddWordsModal(true)} className="mt-4 text-amber-600 font-bold hover:underline">Add Words</button>}
                         </div>
                     ) : (
                         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
@@ -682,7 +846,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                     {displayedItems.map(({ type, data }) => {
                                         if (type === 'word') {
                                             const word = data;
-                                            const userAudio = (userAudioMeta?.[word.Index] || [])
+                                            const userAudio = (effectiveUserAudioMeta?.[word.Index] || [])
                                                 .filter((audio: any) => {
                                                     if (!audio.packageId) {
                                                         const userPkg = packages.find(p => p.id === 'user');
@@ -725,16 +889,18 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                                         </div>
                                                     </td>
                                                     <td className="p-3 text-right">
-                                                        <button onClick={(e) => { e.stopPropagation(); handleRemoveFromList(word!.Index); }} className="text-slate-300 hover:text-red-400 transition-colors">
-                                                            <X size={16} />
-                                                        </button>
+                                                        {!isBuiltIn && (
+                                                            <button onClick={(e) => { e.stopPropagation(); handleRemoveFromList(word!.Index); }} className="text-slate-300 hover:text-red-400 transition-colors">
+                                                                <X size={16} />
+                                                            </button>
+                                                        )}
                                                     </td>
                                                 </tr>
                                             );
                                         } else {
                                             // Sentence Row
                                             const sentence = data;
-                                            const userAudio = (userAudioMeta?.[sentence.id + '_sentence'] || [])
+                                            const userAudio = (effectiveUserAudioMeta?.[sentence.id + '_sentence'] || [])
                                                 .filter((audio: any) => {
                                                      if (!audio.packageId) {
                                                         const userPkg = packages.find(p => p.id === 'user');
@@ -777,9 +943,11 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                                          </div>
                                                     </td>
                                                     <td className="p-3 text-right">
-                                                        <button onClick={(e) => { e.stopPropagation(); handleRemoveFromList(sentence.id); }} className="text-slate-300 hover:text-red-400 transition-colors">
-                                                            <X size={16} />
-                                                        </button>
+                                                        {!isBuiltIn && (
+                                                            <button onClick={(e) => { e.stopPropagation(); handleRemoveFromList(sentence.id); }} className="text-slate-300 hover:text-red-400 transition-colors">
+                                                                <X size={16} />
+                                                            </button>
+                                                        )}
                                                     </td>
                                                 </tr>
                                             );
@@ -792,16 +960,88 @@ const ListsTab: React.FC<ListsTabProps> = ({
                 </div>
 
                 {/* Add Button */}
-                <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-                    <button onClick={() => setShowAddWordsModal(true)} className="w-full py-3 bg-amber-500 text-white font-bold rounded-xl shadow-lg hover:bg-amber-600 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
-                        <Plus size={24} />
-                        Add {listMode === 'words' ? 'Words' : 'Sentences'}
-                    </button>
-                </div>
+                {!isBuiltIn && (
+                    <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                        <button onClick={() => setShowAddWordsModal(true)} className="w-full py-3 bg-amber-500 text-white font-bold rounded-xl shadow-lg hover:bg-amber-600 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                            <Plus size={24} />
+                            Add {listMode === 'words' ? 'Words' : 'Sentences'}
+                        </button>
+                    </div>
+                )}
                 {renderModals()}
             </div>
         );
     }
+
+    const renderListRow = (list: ListData, isHidden: boolean) => {
+        if (!list) return null;
+        
+        const isUser = list.type === 'user';
+        const isFavorite = list.type === 'default';
+        const isBuiltIn = list.type.startsWith('builtin');
+        
+        let colorClass = 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400';
+        if (isUser) colorClass = 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-500';
+        
+        let icon = isUser ? <ListIcon size={24} /> : <Folder size={24} />;
+        if (isFavorite) icon = <Star size={24} className="fill-slate-400 dark:fill-slate-500" />;
+        if (isBuiltIn && list.icon) icon = list.icon;
+
+        return (
+            <div
+                key={list.id}
+                data-list-id={list.id}
+                onContextMenu={(e) => e.preventDefault()}
+                onClick={() => { if (!isReordering && !draggingId && !isDragTriggered.current) { setActiveListId(list.id); setView('detail'); } }}
+                onPointerDown={e => { if (!isHidden) handlePointerDown(e, list.id); }}
+                onPointerMove={handlePointerMoveRow}
+                onPointerUp={handlePointerUpRow}
+                onPointerCancel={handlePointerUpRow}
+                style={{ touchAction: 'pan-y' }}
+                className={`
+                    relative bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between cursor-pointer active:scale-[0.98] select-none
+                    ${draggingId === list.id ? 'opacity-90 border-amber-500 scale-105 z-50 transition-none shadow-xl' : 'transition-all'}
+                    ${isHidden ? 'opacity-60 grayscale' : ''}
+                `}
+            >
+                <div className="flex items-center gap-4 pointer-events-none">
+                    {!isHidden && (
+                        <div 
+                            className="text-slate-300 dark:text-slate-700 shrink-0"
+                        >
+                            <GripVertical size={20} />
+                        </div>
+                    )}
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${colorClass}`}>
+                        {icon}
+                    </div>
+                    <div>
+                        <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">{list.name}</h3>
+                        <p className="text-xs text-slate-400">{list.items.filter(id => {
+                            // Logic copied from previous implementation to robustly count valid items
+                            if (id.startsWith('s_')) {
+                                const sId = id.substring(2);
+                                return sentences.some(s => s.id === sId) || userSentences.some(s => s.id === sId);
+                            }
+                            return allData.some(d => d.Index === id) || sentences.some(s => s.id === id) || userSentences.some(s => s.id === id);
+                        }).length} items</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2">
+                    {isBuiltIn && (
+                        <button 
+                            onClick={(e) => toggleBuiltInVisibility(list.id, e)} 
+                            className="p-2 text-slate-300 hover:text-slate-500 dark:hover:text-slate-200"
+                            title={isHidden ? "Unhide" : "Hide"}
+                        >
+                            {isHidden ? <EyeOff size={20} /> : <Eye size={20} />}
+                        </button>
+                    )}
+                    <ChevronRight size={20} className="text-slate-300" />
+                </div>
+            </div>
+        );
+    };
 
     return (
         <div className="flex flex-col h-full">
@@ -814,70 +1054,23 @@ const ListsTab: React.FC<ListsTabProps> = ({
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 content-start grid gap-3" ref={dragContainerRef} style={{ touchAction: 'none' }}>
-                <div
-                    onClick={() => { if (!isDragTriggered.current) { setActiveListId('favorites'); setView('detail'); } }}
-                    className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform"
-                >
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500">
-                            <Star size={24} className="fill-slate-400 dark:fill-slate-500" />
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">Favorites</h3>
-                            <p className="text-xs text-slate-400">{favorites.filter(id => {
-                                if (id.startsWith('s_')) {
-                                    const sId = id.substring(2);
-                                    return sentences.some(s => s.id === sId) || userSentences.some(s => s.id === sId);
-                                }
-                                return allData.some(d => d.Index === id) || sentences.some(s => s.id === id) || userSentences.some(s => s.id === id);
-                            }).length} items</p>
-                        </div>
-                    </div>
-                    <ChevronRight size={20} className="text-slate-300" />
-                </div>
-
-                {customListOrder.map((id) => {
+            <div className="flex-1 overflow-y-auto p-4 content-start grid gap-3" ref={dragContainerRef}>
+                {customListOrder.map(id => {
+                    if (hiddenBuiltInLists.includes(id)) return null;
                     const list = getList(id);
                     if (!list) return null;
-                    const isUser = list.type === 'user';
-                    const colorClass = isUser ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-500' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400';
-                    const icon = isUser ? <ListIcon size={24} /> : <Folder size={24} />;
-
-                    return (
-                        <div
-                            key={id}
-                            data-list-id={id}
-                            onPointerDown={e => handlePointerDown(e, id)}
-                            onPointerMove={checkMoveTolerance}
-                            onClick={() => { if (!isReordering && !draggingId && !isDragTriggered.current) { setActiveListId(id); setView('detail'); } }}
-                            className={`
-                                relative bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between cursor-pointer active:scale-[0.98] select-none touch-none
-                                ${draggingId === id ? 'opacity-90 border-amber-500 scale-105 z-50 transition-none shadow-xl' : 'transition-all'}
-                            `}
-                        >
-                            <div className="flex items-center gap-4 pointer-events-none">
-                                <div className="text-slate-300 dark:text-slate-700">
-                                    <GripVertical size={20} />
-                                </div>
-                                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${colorClass}`}>
-                                    {icon}
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">{list.name}</h3>
-                                    <p className="text-xs text-slate-400">{list.items.filter(id => {
-                                        if (id.startsWith('s_')) {
-                                            const sId = id.substring(2);
-                                            return sentences.some(s => s.id === sId) || userSentences.some(s => s.id === sId);
-                                        }
-                                        return allData.some(d => d.Index === id) || sentences.some(s => s.id === id) || userSentences.some(s => s.id === id);
-                                    }).length} items</p>
-                                </div>
-                            </div>
-                            <ChevronRight size={20} className="text-slate-300" />
-                        </div>
-                    );
+                    return renderListRow(list, false);
                 })}
+
+                {/* Hidden Built-in Lists */}
+                {builtInLists.filter(l => hiddenBuiltInLists.includes(l.id)).length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                         <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 px-2">Hidden Lists</h4>
+                         <div className="grid gap-3">
+                            {builtInLists.filter(l => hiddenBuiltInLists.includes(l.id)).map(l => renderListRow(l, true))}
+                         </div>
+                    </div>
+                )}
             </div>
             {renderModals()}
         </div>

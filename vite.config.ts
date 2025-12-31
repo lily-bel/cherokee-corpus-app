@@ -5,6 +5,10 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: true, // This exposes the app to your local network (for mobile testing)
+    watch: {
+      usePolling: true,
+      interval: 100,
+    },
+    host: true,
   }
 })

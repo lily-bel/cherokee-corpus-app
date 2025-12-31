@@ -455,12 +455,12 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
             {onEditNote && (
                 <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800" onClick={e => e.stopPropagation()}>
                     <div
-                        onClick={() => onEditNote(sentence.id, userNotes?.[sentence.id] || '')}
+                        onClick={() => onEditNote(sentence.id, userNotes?.[`s_${sentence.id}`] || '')}
                         className="text-xs text-slate-500 dark:text-slate-400 hover:text-amber-600 cursor-pointer flex items-center gap-1 group"
                     >
                         <Pencil size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-                        {userNotes?.[sentence.id] ? (
-                            <span className="italic">{userNotes[sentence.id]}</span>
+                        {userNotes?.[`s_${sentence.id}`] ? (
+                            <span className="italic">{userNotes[`s_${sentence.id}`]}</span>
                         ) : (
                             <span className="opacity-50">Add note...</span>
                         )}

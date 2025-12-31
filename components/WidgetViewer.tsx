@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft } from './Icons';
 
 interface WidgetViewerProps {
@@ -9,7 +9,7 @@ interface WidgetViewerProps {
 
 const WidgetViewer: React.FC<WidgetViewerProps> = ({ widget, onClose }) => {
     const [content, setContent] = useState<string>('');
-    const iframeRef = useRef<HTMLIFrameElement>(null);
+    // const iframeRef = useRef<HTMLIFrameElement>(null);
 
     useEffect(() => {
         const load = async () => {

@@ -4,12 +4,12 @@ import { usePackageManager, Package } from './PackageManagerContext';
 import { usePackageImport } from './usePackageHooks';
 import PackageExportModal from './PackageExportModal';
 import { Upload, Download, Trash2, ToggleLeft, ToggleRight, Box, Mic, StickyNote, ListIcon } from './Icons';
-import { Toast, AudioPlayer, SourceBadge } from './UI';
+import { Toast, SourceBadge } from './UI';
 
 const PackageManagerTab: React.FC = () => {
-    const { packages, togglePackage, removePackage, updatePackageColor } = usePackageManager();
+    const { packages, togglePackage, removePackage } = usePackageManager();
+    const { removePackageAudio, userAudioMeta, glosses } = useCorpus();
     const { importPackage } = usePackageImport();
-    const { personalWords, userSentences, removePackageAudio, userAudioMeta } = useCorpus();
 
     const [showExportModal, setShowExportModal] = useState(false);
     const [importing, setImporting] = useState(false);
@@ -100,8 +100,8 @@ const PackageManagerTab: React.FC = () => {
                         // Calculate actual user audio count and gloss count
                         // userGlosses is not directly available, so filter all glosses (which include user glosses)
                         // Actually 'glosses' from useCorpus is 'allGlosses'
-                        const { glosses: allGlosses } = useCorpus();
-                        const userGlossCount = allGlosses ? allGlosses.filter(g => g.source === 'user').length : 0;
+                        
+                        const userGlossCount = glosses ? glosses.filter(g => g.source === 'user').length : 0;
                         const userAudioCount = Object.values(userAudioMeta || {}).reduce((acc, list) => acc + list.filter(a => !a.packageId || a.packageId === 'user').length, 0);
                         const pkgWithStats = {
                             ...p,
