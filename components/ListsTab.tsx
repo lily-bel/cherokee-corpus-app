@@ -532,6 +532,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
     const dragOffset = useRef<number>(0);
     const isDragTriggered = useRef<boolean>(false);
     const scrollInterval = useRef<any>(null);
+    const isDraggingRef = useRef(false);
 
     useEffect(() => {
         const handlePointerUpWindow = () => {
@@ -542,6 +543,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                 clearTimeout(longPressTimer.current);
                 longPressTimer.current = null;
             }
+            pendingDragRef.current = null;
         };
         const handlePointerMoveWindow = (e: PointerEvent) => {
             if (draggingId && dragItemRef.current) {
@@ -549,15 +551,24 @@ const ListsTab: React.FC<ListsTabProps> = ({
                 handleDragMove(e);
             }
         };
+        
+        // Prevent native scrolling when dragging is active
+        const handleTouchMoveWindow = (e: TouchEvent) => {
+            if (isDraggingRef.current) {
+                if (e.cancelable) e.preventDefault();
+            }
+        };
 
         window.addEventListener('pointerup', handlePointerUpWindow);
         window.addEventListener('pointercancel', handlePointerUpWindow);
         window.addEventListener('pointermove', handlePointerMoveWindow, { passive: false });
+        window.addEventListener('touchmove', handleTouchMoveWindow, { passive: false });
 
         return () => {
             window.removeEventListener('pointerup', handlePointerUpWindow);
             window.removeEventListener('pointercancel', handlePointerUpWindow);
             window.removeEventListener('pointermove', handlePointerMoveWindow);
+            window.removeEventListener('touchmove', handleTouchMoveWindow);
         };
     }, [draggingId, customListOrder]);
 
@@ -565,6 +576,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
         setIsReordering(true);
         setDraggingId(id);
         isDragTriggered.current = true;
+        isDraggingRef.current = true;
 
         const container = dragContainerRef.current;
         if (container) {
@@ -581,6 +593,8 @@ const ListsTab: React.FC<ListsTabProps> = ({
     const stopDrag = () => {
         setDraggingId(null);
         setIsReordering(false);
+        isDraggingRef.current = false;
+        
         if (dragItemRef.current) {
             dragItemRef.current.style.transform = '';
             dragItemRef.current.style.zIndex = '';
