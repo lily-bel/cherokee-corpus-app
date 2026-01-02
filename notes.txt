@@ -1,19 +1,42 @@
+TODO:
+draggable icon for lists
+fix audio on word forms
 import / export notes
-audio on word forms
-change index to ID in dictionary sheet
+Other dynamic / default lists (CED Verbs / non-verbs)
 
-Lists:
-importing / exporting lists
-
+More:
 "editable" packages - make sure they're editable in all circumstances
+Rename notebooks to custom dictionaries
+Add rest of official audio + other sources back (+ other data in note)
+part of speech stuff
+Tone regex / tone conversion, tone options: tone dot under letter, syllabary tone?
+folders for lists (expandable)
+dialect info for sources
+remove notebook export, fix backup
 
-package exporter lets you choose which notebooks to export, and lists (and audio/glosses/notes from words in that list)
-lists need to export / import and have color attached to them etc
+BUGS:
+complex issue with importing packages that you made and still have the words from... needs to merge somehow
 
-add other forms to the create word modal (you can add as many as you want, form name is a dropdown of all that have been used, or you can type your own)
-
+DATA:
+change index to ID in dictionary sheet
+rename word forms from cn app
 keep spaces in official audio speaker names
 check for offset syllabary / translit word numbers in app data
 also add punctuation back sometimes (?, !)
 
-some sort of complex issue with importing packages that you made and still have the words from... needs to merge somehow
+MVP:
+All importing / exporting
+Full immersion text reader functionality + tie to sentences
+Settings menu revamp (search settings separate (button in search bar)
+UI Overhaul
+Intro tutorial
+API?
+
+Post-MVP:
+Widgets
+Finish mass editor
+Cherokee Narratives, other stories, etc (+ an import package screen w/ packages listed)
+Online saving / backup
+"Study" mode
+
+
