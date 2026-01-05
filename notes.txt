@@ -1,6 +1,5 @@
 TODO:
 fix audio on word forms
-import / export notes
 Other dynamic / default lists (CED Verbs / non-verbs)
 
 show error when importing zip that's not formatted correctly
