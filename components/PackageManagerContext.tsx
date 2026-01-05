@@ -39,6 +39,8 @@ export interface ImportedPackageData {
     sentences: any[]; // Parsed CSV
     glosses: any[]; // Parsed CSV
     lists?: any[]; // ListData[]
+    notes?: any[]; // [{ text, target_id, type }]
+    word_forms?: any[]; // [{ word_index, order, form_name, syllabary, translit, tone, notes }]
 }
 
 interface PackageManagerContextType {

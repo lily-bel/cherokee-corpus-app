@@ -15,6 +15,7 @@ import { usePackageManager } from './components/PackageManagerContext';
 import ListsTab, { ListData } from './components/ListsTab';
 import { WordModal } from './components/WordModal';
 import { AdditionalFormsModal } from './components/AdditionalFormsModal';
+import { RainbowGradient } from './components/Icons';
 
 const DEFAULT_SETTINGS = {
     darkMode: false,
@@ -25,8 +26,8 @@ const DEFAULT_SETTINGS = {
 };
 
 function App() {
-    const { packages } = usePackageManager();
-    const { dictionary, sentences, userSentences, glosses, loading, entryToSentencesMap, addUserSentence, removeUserSentence, removeUserSentences, removeUserGloss, notebooks, personalWords, setNotebooks, setPersonalWords, userAudioMeta, saveAudio, deleteAudio, sentenceMap, userWordForms, setUserWordForms } = useCorpus();
+    const { packages, importedData } = usePackageManager();
+    const { dictionary, sentences, userSentences, glosses, loading, entryToSentencesMap, addUserSentence, removeUserSentence, removeUserSentences, removeUserGloss, notebooks, personalWords, setNotebooks, setPersonalWords, userAudioMeta, saveAudio, deleteAudio, sentenceMap, userWordForms, setUserWordForms, userNotes, setUserNotes } = useCorpus();
 
     // Legacy state replacements
     const csvData = dictionary; // Map dictionary to csvData for compatibility
@@ -58,7 +59,6 @@ function App() {
     const [favorites, setFavorites] = useState<string[]>([]);
     const [customLists, setCustomLists] = useState<Record<string, ListData | string[]>>({});
     const [customListOrder, setCustomListOrder] = useState<string[]>([]);
-    const [userNotes, setUserNotes] = useState<Record<string, string>>({});
     const [searchHistory, setSearchHistory] = useState<string[]>([]);
 
     const [settings, setSettings] = useState(DEFAULT_SETTINGS);
@@ -115,12 +115,10 @@ function App() {
     useEffect(() => {
         const initLoad = async () => {
             try {
-                const savedNotes = localStorage.getItem('cherokee_app_user_notes');
                 const savedSettings = localStorage.getItem('cherokee_app_settings');
                 const savedHistory = localStorage.getItem('cherokee_app_history');
 
                 if (savedHistory) setSearchHistory(JSON.parse(savedHistory));
-                if (savedNotes) setUserNotes(JSON.parse(savedNotes));
                 if (savedSettings) {
                     const parsed = JSON.parse(savedSettings);
                     setSettings(prev => ({
@@ -264,8 +262,6 @@ function App() {
     }, [sentences, userSentences]);
 
 
-    useEffect(() => { try { localStorage.setItem('cherokee_app_user_notes', JSON.stringify(userNotes)); } catch (e) { } }, [userNotes]);
-
     useEffect(() => { try { localStorage.setItem('cherokee_app_settings', JSON.stringify(settings)); } catch (e) { } }, [settings]);
     useEffect(() => { try { localStorage.setItem('cherokee_app_history', JSON.stringify(searchHistory)); } catch (e) { } }, [searchHistory]);
     useEffect(() => { try { localStorage.setItem('cherokee_app_favorites', JSON.stringify(favorites)); } catch (e) { } }, [favorites]);
@@ -273,9 +269,16 @@ function App() {
     useEffect(() => {
         const keys = Object.keys(customLists);
         const missing = keys.filter(k => !customListOrder.includes(k)); if (missing.length) setCustomListOrder(prev => [...prev, ...missing]);
-        const valid = customListOrder.filter(k => keys.includes(k) || k === 'favorites' || k.startsWith('builtin_')); 
+        
+        const importedListIds = packages.flatMap(p => importedData[p.id]?.lists?.map(l => l.id) || []);
+        const valid = customListOrder.filter(k => 
+            keys.includes(k) || 
+            k === 'favorites' || 
+            k.startsWith('builtin_') || 
+            importedListIds.includes(k)
+        ); 
         if (valid.length !== customListOrder.length) setCustomListOrder(valid);
-    }, [customLists]);
+    }, [customLists, packages, importedData]);
 
     const allData = useMemo(() => {
         const isUserLibraryActive = packages.find(p => p.id === 'user')?.status === 'active';
@@ -1010,7 +1013,11 @@ function App() {
         if (isPersonal) {
             openWordModal(entry);
         } else {
-            setNoteTargetId(entry.Index || entry.id); setCurrentNote(content || ''); setShowNotesModal(true);
+            const targetId = entry.Index || (entry.id ? 's_' + entry.id : null);
+            if (!targetId) return;
+            setNoteTargetId(targetId); 
+            setCurrentNote(content || ''); 
+            setShowNotesModal(true);
         }
     };
     const saveNote = () => {
@@ -1035,7 +1042,7 @@ function App() {
     const handleEditSentence = (id: string) => {
         const s = userSentences.find(x => x.id === id);
         if (s) {
-            setWordForm({ Entry: s.translit, Syllabary: s.syllabary, Definition: s.english, PoS: '', Entry_Tone: '', Notes: userNotes[s.id] || '', notebookId: s.source });
+            setWordForm({ Entry: s.translit, Syllabary: s.syllabary, Definition: s.english, PoS: '', Entry_Tone: '', Notes: userNotes['s_' + s.id] || '', notebookId: s.source });
             setEditingId(s.id);
             setIsSentenceMode(true);
             setShowWordModal(true);
@@ -1256,6 +1263,7 @@ function App() {
 
     return (
         <div className="h-screen w-full bg-[#F9F9F7] dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans flex flex-col overflow-hidden relative">
+            <RainbowGradient />
             <header className="bg-white dark:bg-slate-900 px-4 py-3 shadow-sm z-10 flex items-center justify-between shrink-0 h-[60px]"><h1 className="font-noto-serif text-xl text-slate-800 dark:text-slate-100">ᏣᎳᎩ-English Dictionary</h1><button onClick={() => setShowSettingsModal(true)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300"><Menu size={24} strokeWidth={1.5} /></button></header>
             <main className="flex-1 overflow-hidden relative flex flex-col">
                 {activeTab === 'search' && (

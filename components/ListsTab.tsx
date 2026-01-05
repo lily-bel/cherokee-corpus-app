@@ -1069,7 +1069,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                 `}
             >
                 <div className="flex items-center gap-4 pointer-events-none">
-                    {!isHidden && !isImported && (
+                    {!isHidden && (
                         <div 
                             className="text-slate-300 dark:text-slate-700 shrink-0"
                         >

@@ -1,10 +1,37 @@
 
 
 
-const IconBase = ({ path, size = 24, className = "", ...props }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+const IconBase = ({ path, size = 24, className = "", stroke = "currentColor", fill = "none", ...props }: any) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill={fill} 
+    stroke={stroke} 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className} 
+    {...props}
+  >
     {path}
   </svg>
+);
+
+export const RainbowGradient = () => (
+  <div style={{ width: 0, height: 0, overflow: 'hidden', position: 'absolute', pointerEvents: 'none' }} aria-hidden="true">
+    <svg width="0" height="0">
+      <defs>
+        <linearGradient id="rainbow-gradient" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#ef4444" />
+          <stop offset="25%" stopColor="#f59e0b" />
+          <stop offset="50%" stopColor="#10b981" />
+          <stop offset="75%" stopColor="#3b82f6" />
+          <stop offset="100%" stopColor="#8b5cf6" />
+        </linearGradient>
+      </defs>
+    </svg>
+  </div>
 );
 
 export const Search = (p) => <IconBase {...p} path={<><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></>} />;

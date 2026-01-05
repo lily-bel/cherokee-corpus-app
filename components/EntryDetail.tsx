@@ -136,13 +136,41 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms
     }
 
     // Determine audio color based on package
-    const { getPackageColor, packages } = usePackageManager(); // Need to import this hook
+    const { getPackageColor, packages, importedData } = usePackageManager(); // Need to import this hook
 
 
     // Check editable status
     const pkg = packages.find(p => p.status === 'active' && (p.id === e.Source || (p.metadata.source_names && p.metadata.source_names[e.Source])));
     const isEditablePackage = pkg?.metadata.editable === 'Yes';
     const canEdit = isPersonal || isEditablePackage;
+
+    const importedNotes = React.useMemo(() => {
+        const list: any[] = [];
+        packages.forEach(p => {
+            if (p.status === 'active' && importedData[p.id]?.notes) {
+                // Find note for this word (type 'W')
+                const note = importedData[p.id].notes!.find((n: any) => n.target_id === e.Index && n.type === 'W');
+                if (note) {
+                    list.push({ ...note, color: p.color, pkgName: p.name });
+                }
+            }
+        });
+        return list;
+    }, [packages, importedData, e.Index]);
+
+    const importedForms = React.useMemo(() => {
+        const list: any[] = [];
+        packages.forEach(p => {
+            if (p.status === 'active' && importedData[p.id]?.word_forms) {
+                const forms = importedData[p.id].word_forms!.filter((f: any) => f.word_index === e.Index);
+                if (forms.length > 0) {
+                     // Sort by order if needed, but let's assume export preserved order or just push
+                     forms.forEach(f => list.push({ ...f, color: p.color, pkgName: p.name }));
+                }
+            }
+        });
+        return list.sort((a, b) => (a.order || 0) - (b.order || 0));
+    }, [packages, importedData, e.Index]);
 
 
 
@@ -338,6 +366,19 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms
                                         );
                                     })}
 
+                                    {/* Imported Forms */}
+                                    {importedForms.map((form, i) => {
+                                        return (
+                                            <div key={`imported_${i}`} className="relative group">
+                                                 <div className="flex items-start justify-between">
+                                                    <div className="flex-1">
+                                                        {renderConjugation(form.form_name, form.translit, form.tone, form.syllabary, form.notes, form.color)}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+
                                     {/* Custom Forms */}
                                     {userWordForms && userWordForms[e.Index] && userWordForms[e.Index].split('|').map((form, i) => {
                                         const parts = form.split(':');
@@ -436,7 +477,22 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms
                             </div>
                         )}
 
-                        <div className="mb-8"><h3 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Notes</h3><div onClick={() => onEdit(e, noteContent, true)} className="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-300 whitespace-pre-wrap font-sans text-sm cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-amber-200 transition-colors relative group">{noteContent || <span className="text-slate-400 italic">Add a note...</span>}<div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white dark:bg-slate-800 p-1 rounded-full shadow-sm"><Pencil size={14} className="text-amber-600" /></div></div></div>
+                        <div className="mb-8">
+                            <h3 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Notes</h3>
+                            
+                            {/* Imported Notes */}
+                            {importedNotes.map((note, i) => (
+                                <div key={i} className={`mb-3 bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-300 whitespace-pre-wrap font-sans text-sm border-l-4`} style={{ borderLeftColor: note.color }}>
+                                    {note.text}
+                                </div>
+                            ))}
+
+                            {/* User Note */}
+                            <div onClick={() => onEdit(e, noteContent, true)} className="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-300 whitespace-pre-wrap font-sans text-sm cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-amber-200 transition-colors relative group border-l-4 border-l-amber-500">
+                                {noteContent || <span className="text-slate-400 italic">Add a note...</span>}
+                                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white dark:bg-slate-800 p-1 rounded-full shadow-sm"><Pencil size={14} className="text-amber-600" /></div>
+                            </div>
+                        </div>
                         {e.Cross_Reference && (<div className="mb-8"><h3 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">See Also</h3><div className="flex flex-wrap gap-2">{e.Cross_Reference.split(',').map((ref, i) => <button key={i} onClick={() => onSearchTerm(ref.trim())} className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full text-slate-600 dark:text-slate-300 text-sm shadow-sm hover:border-amber-500 hover:text-amber-600 transition-colors">{ref.trim()}</button>)}</div></div>)}
 
 

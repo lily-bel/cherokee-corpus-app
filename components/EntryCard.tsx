@@ -1,46 +1,112 @@
-import { Mic, StickyNote, ListIcon, Audio, SquaresPlus } from './Icons';
+import React, { useMemo } from 'react';
+import { StickyNote, ListIcon, Mic, SquaresPlus } from './Icons';
 import { SourceBadge } from './UI';
 
 import { usePackageManager } from './PackageManagerContext';
 
+const getHexColor = (col: string) => {
+  const COLORS: Record<string, string> = {
+    slate: '#94a3b8',
+    amber: '#f59e0b',
+    red: '#ef4444',
+    blue: '#3b82f6',
+    green: '#10b981',
+    purple: '#8b5cf6',
+    pink: '#ec4899',
+    orange: '#f97316',
+    indigo: '#6366f1',
+    teal: '#14b8a6',
+    rose: '#f43f5e'
+  };
+  if (!col) return COLORS.slate;
+  if (col.startsWith('#')) return col;
+  return COLORS[col] || COLORS.slate;
+};
+
+const MultiSourceIcon = ({ Icon, colors, size = 14 }: { Icon: any, colors: string[], size?: number }) => {
+  // colors are already hex strings from useMemo logic below
+  const uniqueColors = Array.from(new Set(colors));
+  if (uniqueColors.length === 0) return null;
+  const isMulti = uniqueColors.length > 1;
+
+  // Use identical attribute structure for both cases to ensure same rendering
+  const stroke = isMulti ? "url(#rainbow-gradient)" : uniqueColors[0];
+
+  return (
+    <div className="flex flex-col items-center gap-0.5 shrink-0" title={isMulti ? `${uniqueColors.length} sources` : undefined}>
+      <Icon 
+        size={size} 
+        stroke={stroke} 
+        fill="none" 
+      />
+      {isMulti && (
+        <div className="grid grid-cols-3 gap-0.5 w-full max-w-[14px]">
+          {uniqueColors.slice(0, 9).map((c, i) => (
+            <div key={i} className="w-[3px] h-[3px] rounded-[0.5px] shrink-0" style={{ backgroundColor: c }} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const EntryCard = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms, favorites, customLists, onClick, isDimmed = false, showPos = false }: any) => {
-  const { getPackageColor, packages } = usePackageManager();
-  const isPersonal = !!notebooks[entry.Source];
-  const hasUserNote = isPersonal ? (entry.Notes && entry.Notes.trim().length > 0) : (userNotes[entry.Index] !== undefined && userNotes[entry.Index].trim().length > 0);
+  const { getPackageColor, packages, importedData } = usePackageManager();
 
-  // Extra Forms Indicator logic
-  const hasUserForms = !!(userWordForms && userWordForms[entry.Index]);
-  const entryPkg = packages.find(p => p.id === entry.Source || (p.metadata.source_names && p.metadata.source_names[entry.Source]));
-  const isImported = entryPkg?.type === 'imported';
-  const hasOtherForms = !!entry.Other_Forms;
-
-  let formsIconColor = "";
-  let formsIconStyle = {};
-  
-  if (hasUserForms || (isPersonal && hasOtherForms)) {
-    formsIconColor = "text-amber-500 fill-amber-100";
-  } else if (isImported && hasOtherForms) {
-    const pColor = entryPkg?.color;
-    if (pColor && pColor.startsWith('#')) {
-      formsIconStyle = { color: pColor };
-    } else if (pColor && pColor !== 'slate') {
-      formsIconColor = `text-${pColor}-500 fill-${pColor}-100`;
-    } else {
-      formsIconColor = "text-slate-400";
+  // --- Audio Colors ---
+  const audioColors = useMemo(() => {
+    const cols = new Set<string>();
+    
+    // 1. Standard Official Audio
+    if (entry.Entry_Audio) {
+      cols.add(getHexColor('slate'));
     }
-  }
 
-  // Audio Indicators
-  const hasCnAudio = !!entry.Entry_Audio;
-  const activeUserAudio = userAudioMeta && userAudioMeta[entry.Index] ? userAudioMeta[entry.Index].filter((a: any) => {
-    if (!a.packageId) {
-      const userPkg = packages.find(p => p.id === 'user');
-      return userPkg ? userPkg.status === 'active' : true;
+    // 2. Extra Audio (User recorded or from Packages)
+    if (userAudioMeta && userAudioMeta[entry.Index]) {
+      userAudioMeta[entry.Index].forEach((a: any) => {
+        const pkgId = a.packageId || 'user';
+        const pkg = packages.find(p => p.id === pkgId);
+        
+        // Count it if it's user-recorded or from an active package
+        if (!a.packageId || (pkg && pkg.status === 'active')) {
+          const rawCol = getPackageColor(pkgId) || (pkgId === 'user' ? 'amber' : 'slate');
+          cols.add(getHexColor(rawCol));
+        }
+      });
     }
-    const pkg = packages.find(p => p.id === a.packageId);
-    return pkg && pkg.status === 'active';
-  }) : [];
-  const hasUserAudio = activeUserAudio.length > 0;
+    return Array.from(cols);
+  }, [entry, userAudioMeta, packages, getPackageColor]);
+
+  // --- Note Colors ---
+  const noteColors = useMemo(() => {
+    const cols = new Set<string>();
+    const isPersonal = !!notebooks[entry.Source];
+    const userNoteText = isPersonal ? entry.Notes : userNotes[entry.Index];
+    if (userNoteText && userNoteText.trim().length > 0) cols.add(getHexColor('amber'));
+
+    packages.forEach(p => {
+      if (p.status === 'active' && importedData[p.id]?.notes) {
+        const hasNote = importedData[p.id].notes!.some((n: any) => n.target_id === entry.Index && n.type === 'W');
+        if (hasNote) cols.add(getHexColor(p.color));
+      }
+    });
+    return Array.from(cols);
+  }, [entry, userNotes, packages, importedData, notebooks]);
+
+  // --- Form Colors ---
+  const formColors = useMemo(() => {
+    const cols = new Set<string>();
+    if (userWordForms && userWordForms[entry.Index]) cols.add(getHexColor('amber')); // User custom forms
+
+    packages.forEach(p => {
+      if (p.status === 'active' && importedData[p.id]?.word_forms) {
+        const hasForms = importedData[p.id].word_forms!.some((f: any) => f.word_index === entry.Index);
+        if (hasForms) cols.add(getHexColor(p.color));
+      }
+    });
+    return Array.from(cols);
+  }, [entry, userWordForms, packages, importedData]);
 
   // LIST COUNT
   const inFav = favorites.includes(entry.Index);
@@ -53,35 +119,15 @@ const EntryCard = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms, 
 
   const pkgColor = getPackageColor(entry.Source);
 
-  // Determine audio icon color
-  let audioIconStyle = {};
-  let audioIconClass = "text-amber-500 fill-amber-100"; // Default user audio
-
-  if (hasUserAudio) {
-    const audios = activeUserAudio;
-    // Find first audio with a package ID (prioritize imported over user-recorded)
-    const importedAudio = audios.find((a: any) => a.packageId);
-    if (importedAudio) {
-      const aColor = getPackageColor(importedAudio.packageId);
-      if (aColor && aColor.startsWith('#')) {
-        audioIconStyle = { color: aColor };
-        audioIconClass = ""; // Clear default class
-      } else if (aColor && aColor !== 'slate') {
-        audioIconClass = `text-${aColor}-500 fill-${aColor}-100`;
-      }
-    }
-  }
-
   return (
     <div key={entry.Index} onClick={() => onClick(entry)} className={`bg-white dark:bg-slate-900 p-4 border-b border-slate-100 dark:border-slate-800 active:bg-slate-50 dark:active:bg-slate-800 transition-colors cursor-pointer ${isDimmed ? 'opacity-50 grayscale' : ''} `}>
       <div className="flex justify-between items-start mb-1">
         <div className="flex-1 min-w-0 pr-2">{entry.Syllabary && <span className="font-noto-cherokee text-xl font-bold text-slate-800 dark:text-slate-100 mr-2">{entry.Syllabary}</span>}<span className="font-noto-serif text-lg text-amber-700 dark:text-amber-400 font-medium break-words">{entry.Entry}</span></div>
         <div className="shrink-0 flex flex-col items-end gap-1">
-          <div className="flex items-center gap-1">
-            {hasCnAudio && <Audio size={14} className="text-slate-400" />}
-            {hasUserAudio && <Mic size={14} className={audioIconClass} style={audioIconStyle} />}
-            {(formsIconColor || formsIconStyle.hasOwnProperty('color')) && <SquaresPlus size={14} className={formsIconColor} style={formsIconStyle} />}
-            {hasUserNote && <StickyNote size={16} className="text-amber-500 fill-amber-100" />}
+          <div className="flex items-center gap-2">
+            <MultiSourceIcon Icon={StickyNote} colors={noteColors} size={16} />
+            <MultiSourceIcon Icon={SquaresPlus} colors={formColors} size={14} />
+            <MultiSourceIcon Icon={Mic} colors={audioColors} size={14} />
             <SourceBadge source={entry.Source} name={notebooks[entry.Source]?.name} customColor={pkgColor} />
           </div>
           {totalLists > 0 && <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-0.5"><ListIcon size={10} /> {totalLists}</span>}

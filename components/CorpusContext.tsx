@@ -107,6 +107,10 @@ interface CorpusContextType {
     // Custom Forms
     userWordForms: Record<string, string>;
     setUserWordForms: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+
+    // User Notes
+    userNotes: Record<string, string>;
+    setUserNotes: React.Dispatch<React.SetStateAction<Record<string, string>>>;
 }
 
 const CorpusContext = createContext<CorpusContextType | undefined>(undefined);
@@ -126,6 +130,7 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const [userSentences, setUserSentences] = useState<Sentence[]>([]);
     const [userAudioMeta, setUserAudioMeta] = useState<Record<string, any[]>>({});
     const [userWordForms, setUserWordForms] = useState<Record<string, string>>({}); // EntryID -> pipe-separated forms
+    const [userNotes, setUserNotes] = useState<Record<string, string>>({});
 
     const [notebooks, setNotebooks] = useState<Record<string, Notebook>>({});
     const [personalWords, setPersonalWords] = useState<PersonalWord[]>([]);
@@ -166,6 +171,9 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
             const savedWordForms = localStorage.getItem('cherokee_app_user_word_forms');
             if (savedWordForms) setUserWordForms(JSON.parse(savedWordForms));
+
+            const savedNotes = localStorage.getItem('cherokee_app_user_notes');
+            if (savedNotes) setUserNotes(JSON.parse(savedNotes));
 
         } catch (e) {
             console.error("Failed to load user data", e);
@@ -208,6 +216,12 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             localStorage.setItem('cherokee_app_user_word_forms', JSON.stringify(userWordForms));
         } catch (e) { console.error("Failed to save user word forms", e); }
     }, [userWordForms]);
+
+    useEffect(() => {
+        try {
+            localStorage.setItem('cherokee_app_user_notes', JSON.stringify(userNotes));
+        } catch (e) { console.error("Failed to save user notes", e); }
+    }, [userNotes]);
 
     // Load Audio Manifest - REMOVED per user request
     /*
@@ -516,7 +530,9 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 return Array.from(s).sort();
             }, [userAudioMeta]),
             userWordForms,
-            setUserWordForms
+            setUserWordForms,
+            userNotes,
+            setUserNotes
         }}>
             {children}
         </CorpusContext.Provider>

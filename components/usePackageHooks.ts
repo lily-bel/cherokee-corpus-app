@@ -14,9 +14,16 @@ const generateId = () => {
 };
 
 export const usePackageExport = () => {
-    const { personalWords, userSentences, glosses, notebooks, userAudioMeta } = useCorpus();
+    const { personalWords, userSentences, glosses, notebooks, userAudioMeta, userNotes, userWordForms } = useCorpus();
 
-    const exportPackage = async (notebookIds: string[], metadata: Partial<PackageMetadata>, listsToExport: { list: ListData, includeDependencies: boolean }[] = [], dependencyAudioIds: string[] = [], dependencyEntryIds: string[] = []) => {
+    const exportPackage = async (
+        notebookIds: string[],
+        metadata: Partial<PackageMetadata>,
+        listsToExport: { list: ListData, includeDependencies: boolean }[] = [],
+        dependencyAudioIds: string[] = [],
+        dependencyEntryIds: string[] = [],
+        exportAllNotesAndForms: boolean = false
+    ) => {
         try {
             const zip = new JSZip();
 
@@ -66,6 +73,11 @@ export const usePackageExport = () => {
                 sentencesToExport = [...sentencesToExport, ...depSentences];
             }
 
+            // 1.3 Collect Target IDs for Custom Data (Notes/Forms/Audio)
+            const relevantTargetIds = new Set<string>();
+            wordsToExport.forEach(w => relevantTargetIds.add(w.id));
+            sentencesToExport.forEach(s => relevantTargetIds.add(s.id));
+
             // 1.1 Process Lists & Dependencies
             const extraAudioIds = new Set<string>();
             const extraGlossSentenceIds = new Set<string>(); 
@@ -95,7 +107,7 @@ export const usePackageExport = () => {
                 }
 
                 // 2. Collect Dependencies
-                if (includeDependencies && list.items) {
+                if (list.items) {
                     list.items.forEach(id => {
                         let targetId = id;
                         let type: 'word' | 'sentence' = 'word';
@@ -105,18 +117,22 @@ export const usePackageExport = () => {
                             type = 'sentence';
                         }
 
-                        // Audio Check
-                        const audioKey = type === 'sentence' ? `${targetId}_sentence` : targetId;
-                        const audioList = userAudioMeta[audioKey];
-                        if (audioList) {
-                            audioList.forEach(a => {
-                                if (!a.isOfficial) extraAudioIds.add(a.id);
-                            });
-                        }
+                        if (includeDependencies) {
+                            relevantTargetIds.add(targetId);
 
-                        // Gloss Check (only for sentences)
-                        if (type === 'sentence') {
-                            extraGlossSentenceIds.add(targetId);
+                            // Audio Check
+                            const audioKey = type === 'sentence' ? `${targetId}_sentence` : targetId;
+                            const audioList = userAudioMeta[audioKey];
+                            if (audioList) {
+                                audioList.forEach(a => {
+                                    if (!a.isOfficial) extraAudioIds.add(a.id);
+                                });
+                            }
+
+                            // Gloss Check (only for sentences)
+                            if (type === 'sentence') {
+                                extraGlossSentenceIds.add(targetId);
+                            }
                         }
                     });
                 }
@@ -199,6 +215,57 @@ export const usePackageExport = () => {
             zip.file('dictionary.csv', dictRows.join('\n'));
             zip.file('sentences.csv', sentRows.join('\n'));
             zip.file('join_table.csv', joinRows.join('\n'));
+
+            // --- EXPORT CUSTOM NOTES & WORD FORMS ---
+            const notesExport: any[] = [];
+            const formsExport: any[] = [];
+
+            // Notes
+            Object.entries(userNotes).forEach(([key, note]) => {
+                let id = key;
+                let type = 'W';
+                if (key.startsWith('s_')) {
+                    id = key.substring(2);
+                    type = 'S';
+                }
+
+                if (exportAllNotesAndForms || relevantTargetIds.has(id) || relevantTargetIds.has(key)) {
+                    notesExport.push({
+                        text: note,
+                        target_id: id,
+                        type: type
+                    });
+                }
+            });
+
+            // Word Forms
+            Object.entries(userWordForms).forEach(([key, val]) => {
+                if (exportAllNotesAndForms || relevantTargetIds.has(key)) {
+                    const parts = (val as string).split('|');
+                    parts.forEach((raw, idx) => {
+                        const [label, content] = raw.split(':');
+                        if (label && content) {
+                            const values = content.split('^');
+                            formsExport.push({
+                                word_index: key,
+                                order: idx,
+                                form_name: label,
+                                translit: values[0] || '',
+                                syllabary: values[1] || '',
+                                tone: values[2] || '',
+                                notes: values[3] || ''
+                            });
+                        }
+                    });
+                }
+            });
+
+            if (notesExport.length > 0 || formsExport.length > 0) {
+                zip.file('entry_data.json', JSON.stringify({
+                    notes: notesExport,
+                    word_forms: formsExport
+                }, null, 2));
+            }
 
             // 3. Metadata
             const meta: PackageMetadata = {
@@ -371,6 +438,21 @@ export const usePackageImport = () => {
         const rawSentences = parse(sentText);
         const rawGlosses = parse(joinText);
 
+        // --- IMPORT CUSTOM NOTES & WORD FORMS ---
+        const entryDataFile = zip.file('entry_data.json');
+        let importedNotes: any[] = [];
+        let importedForms: any[] = [];
+        
+        if (entryDataFile) {
+            try {
+                const json = JSON.parse(await entryDataFile.async('string'));
+                importedNotes = json.notes || [];
+                importedForms = json.word_forms || [];
+            } catch (e) {
+                console.warn("Failed to parse entry_data.json", e);
+            }
+        }
+
         // 2.1 Lists
         const listsFolder = zip.folder('lists');
         const lists: ListData[] = [];
@@ -515,7 +597,9 @@ export const usePackageImport = () => {
             dictionary,
             sentences,
             glosses,
-            lists
+            lists,
+            notes: importedNotes,
+            word_forms: importedForms
         };
 
         installPackage(pkg, data);

@@ -43,6 +43,7 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({ onClose, custom
     // Global Includes
     const [includeAllAudio, setIncludeAllAudio] = useState(false);
     const [includeAllGlosses, setIncludeAllGlosses] = useState(false);
+    const [includeAllNotesAndForms, setIncludeAllNotesAndForms] = useState(false);
     
     // Dependency State
     const [dependencyEntries, setDependencyEntries] = useState<{ id: string, name: string, type: 'word' | 'sentence' }[]>([]);
@@ -198,8 +199,8 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({ onClose, custom
             // Pass dependency entries if confirmed
             const depEntryIds = includeDependencies ? dependencyEntries.map(d => d.id) : [];
 
-            console.log("Calling exportPackage with:", { selectedNotebooks, metadata, finalListsConfig, depAudioIds, depEntryIds });
-            await exportPackage(selectedNotebooks, metadata, finalListsConfig, depAudioIds, depEntryIds);
+            console.log("Calling exportPackage with:", { selectedNotebooks, metadata, finalListsConfig, depAudioIds, depEntryIds, includeAllNotesAndForms });
+            await exportPackage(selectedNotebooks, metadata, finalListsConfig, depAudioIds, depEntryIds, includeAllNotesAndForms);
             onClose();
         } catch (e) {
             console.error("Export failed detailed:", e);
@@ -336,6 +337,16 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({ onClose, custom
                                  </div>
                              </div>
                          </label>
+                         <label className="flex items-center gap-3 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800">
+                             <input type="checkbox" checked={includeAllNotesAndForms} onChange={e => setIncludeAllNotesAndForms(e.target.checked)} className="accent-amber-600 w-5 h-5 rounded" />
+                             <div className="flex items-center gap-3">
+                                 <div className="p-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400"><Box size={18} /></div>
+                                 <div>
+                                     <div className="font-bold text-sm text-slate-700 dark:text-slate-200">Include All Notes & Forms</div>
+                                     <div className="text-xs text-slate-400">Export every custom note and word form</div>
+                                 </div>
+                             </div>
+                         </label>
                      </div>
                 </div>
             </div>
@@ -367,7 +378,7 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({ onClose, custom
 
             <button
                 onClick={handleExport}
-                disabled={isExporting || !metadata.name || (selectedNotebooks.length === 0 && !Object.values(selectedLists).some(l => l.selected) && !includeAllAudio && !includeAllGlosses)}
+                disabled={isExporting || !metadata.name || (selectedNotebooks.length === 0 && !Object.values(selectedLists).some(l => l.selected) && !includeAllAudio && !includeAllGlosses && !includeAllNotesAndForms)}
                 className="w-full bg-amber-600 text-white font-bold py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
                 {isExporting ? 'Exporting...' : <><Download size={20} /> Export Package</>}

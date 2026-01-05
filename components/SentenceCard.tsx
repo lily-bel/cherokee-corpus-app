@@ -34,7 +34,7 @@ interface SentenceCardProps {
 
 export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, isDimmed, notebooks, userNotes, onEditNote, onEditSentence, sourceMap, onSaveAudio, userAudioMeta, personalWords, onDeleteSentence, onDeleteAudio, onCreateWord, favorites, customLists, onToggleFavorite, onToggleList, onOpenNewListModal }) => {
     const { glossMap, dictionaryMap, addUserGloss, removeUserGloss, removeUserSentence } = useCorpus();
-    const { packages, getPackageColor } = usePackageManager(); // Add this line
+    const { packages, getPackageColor, importedData } = usePackageManager(); // Add this line
     const [activePopover, setActivePopover] = useState<{ index: number, rect: { x: number, y: number } } | null>(null);
     const [showRecorder, setShowRecorder] = useState(false);
     const [showListSheet, setShowListSheet] = useState(false);
@@ -245,6 +245,21 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
     // Derived List ID to avoid collision with Word IDs
     const listId = `s_${sentence.id}`;
 
+    // Imported Notes for Sentence
+    const importedNotes = useMemo(() => {
+        const list: any[] = [];
+        if (!importedData) return list;
+        packages.forEach(p => {
+            if (p.status === 'active' && importedData[p.id]?.notes) {
+                const note = importedData[p.id].notes!.find((n: any) => n.target_id === sentence.id && n.type === 'S');
+                if (note) {
+                    list.push({ ...note, color: p.color, pkgName: p.name });
+                }
+            }
+        });
+        return list;
+    }, [packages, importedData, sentence.id]);
+
     // LIST COUNT
     const inFav = favorites?.includes(listId);
     const inLists = customLists ? Object.keys(customLists).filter(k => {
@@ -452,19 +467,33 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
             )}
 
             {/* Notes */}
-            {onEditNote && (
+            {(onEditNote || importedNotes.length > 0) && (
                 <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800" onClick={e => e.stopPropagation()}>
-                    <div
-                        onClick={() => onEditNote(sentence.id, userNotes?.[`s_${sentence.id}`] || '')}
-                        className="text-xs text-slate-500 dark:text-slate-400 hover:text-amber-600 cursor-pointer flex items-center gap-1 group"
-                    >
-                        <Pencil size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-                        {userNotes?.[`s_${sentence.id}`] ? (
-                            <span className="italic">{userNotes[`s_${sentence.id}`]}</span>
-                        ) : (
-                            <span className="opacity-50">Add note...</span>
-                        )}
-                    </div>
+                    {/* Imported Notes */}
+                    {importedNotes.map((note, i) => (
+                        <div key={i} className="mb-2 text-xs text-slate-600 dark:text-slate-300 border-l-2 pl-2" style={{ borderLeftColor: note.color }}>
+                            {note.text}
+                        </div>
+                    ))}
+                    
+                    {onEditNote && (
+                        <div
+                            onClick={() => onEditNote(sentence.id, userNotes?.[`s_${sentence.id}`] || '')}
+                            className={`text-xs text-slate-600 dark:text-slate-300 hover:text-amber-600 cursor-pointer flex items-center gap-1 group relative ${userNotes?.[`s_${sentence.id}`] ? 'border-l-2 pl-2 border-l-amber-500' : ''}`}
+                        >
+                            {userNotes?.[`s_${sentence.id}`] ? (
+                                <>
+                                    <span>{userNotes[`s_${sentence.id}`]}</span>
+                                    <Pencil size={10} className="absolute -right-1 top-0 opacity-0 group-hover:opacity-100 transition-opacity text-amber-600" />
+                                </>
+                            ) : (
+                                <>
+                                    <Pencil size={12} className="opacity-30 group-hover:opacity-100 transition-opacity" />
+                                    <span className="opacity-50">Add note...</span>
+                                </>
+                            )}
+                        </div>
+                    )}
                 </div>
             )}
 
