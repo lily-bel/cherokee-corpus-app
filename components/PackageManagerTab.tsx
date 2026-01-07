@@ -4,15 +4,16 @@ import { usePackageManager, Package } from './PackageManagerContext';
 import { usePackageImport } from './usePackageHooks';
 import PackageExportModal from './PackageExportModal';
 import { ListData } from './ListsTab';
-import { Upload, Download, Trash2, ToggleLeft, ToggleRight, Box, Mic, StickyNote, ListIcon } from './Icons';
+import { Upload, Download, Trash2, ToggleLeft, ToggleRight, Box, Mic, StickyNote, ListIcon, SquaresPlus, Book, ListPlus } from './Icons';
 import { Toast, SourceBadge } from './UI';
+import { PackageDetailView } from './PackageDetailView';
 
 interface PackageManagerTabProps {
     customLists: Record<string, ListData | string[]>;
 }
 
 const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists }) => {
-    const { packages, togglePackage, removePackage } = usePackageManager();
+    const { packages, togglePackage, removePackage, importedData } = usePackageManager();
     const { removePackageAudio, userAudioMeta, glosses } = useCorpus();
     const { importPackage } = usePackageImport();
 
@@ -22,6 +23,7 @@ const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists }) =>
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [colorPicker, setColorPicker] = useState<{ show: boolean, pkgId: string | null }>({ show: false, pkgId: null });
+    const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
 
     const showToast = (message: string, type = 'success') => {
         setToast({ show: true, message, type });
@@ -47,6 +49,16 @@ const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists }) =>
             if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
+
+    if (selectedPackageId) {
+        return (
+            <PackageDetailView
+                packageId={selectedPackageId}
+                onBack={() => setSelectedPackageId(null)}
+                customLists={customLists}
+            />
+        );
+    }
 
     return (
         <div className="flex flex-col h-full bg-[#F9F9F7] dark:bg-slate-950">
@@ -82,8 +94,9 @@ const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists }) =>
                 <div className="space-y-3">
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Official Sources</h3>
                     {packages.filter(p => p.type === 'official').map(p => {
-                        // Calculate audio count from meta
+                        // Audio count is dynamic (user-recorded for official entries)
                         const audioCount = Object.values(userAudioMeta || {}).reduce((acc, list) => acc + list.filter(a => a.packageId === p.id).length, 0);
+
                         const pkgWithStats = {
                             ...p,
                             metadata: {
@@ -94,7 +107,15 @@ const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists }) =>
                                 }
                             }
                         };
-                        return <PackageItem key={p.id} pkg={pkgWithStats} onColorClick={(id) => setColorPicker({ show: true, pkgId: id })} showToast={showToast} togglePackage={togglePackage} removePackage={removePackage} />;
+                        return <PackageItem
+                            key={p.id}
+                            pkg={pkgWithStats as any}
+                            onColorClick={(id) => setColorPicker({ show: true, pkgId: id })}
+                            showToast={showToast}
+                            togglePackage={togglePackage}
+                            removePackage={removePackage}
+                            onClick={() => setSelectedPackageId(p.id)}
+                        />;
                     })}
                 </div>
 
@@ -103,9 +124,6 @@ const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists }) =>
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">My Library</h3>
                     {packages.filter(p => p.type === 'user').map(p => {
                         // Calculate actual user audio count and gloss count
-                        // userGlosses is not directly available, so filter all glosses (which include user glosses)
-                        // Actually 'glosses' from useCorpus is 'allGlosses'
-                        
                         const userGlossCount = glosses ? glosses.filter(g => g.source === 'user').length : 0;
                         const userAudioCount = Object.values(userAudioMeta || {}).reduce((acc, list) => acc + list.filter(a => !a.packageId || a.packageId === 'user').length, 0);
                         const userListCount = Object.keys(customLists).length;
@@ -122,7 +140,15 @@ const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists }) =>
                                 }
                             }
                         };
-                        return <PackageItem key={p.id} pkg={pkgWithStats} onColorClick={(id) => setColorPicker({ show: true, pkgId: id })} showToast={showToast} togglePackage={togglePackage} removePackage={removePackage} />;
+                        return <PackageItem
+                            key={p.id}
+                            pkg={pkgWithStats}
+                            onColorClick={(id) => setColorPicker({ show: true, pkgId: id })}
+                            showToast={showToast}
+                            togglePackage={togglePackage}
+                            removePackage={removePackage}
+                            onClick={() => setSelectedPackageId(p.id)}
+                        />;
                     })}
                 </div>
 
@@ -146,6 +172,7 @@ const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists }) =>
                                 removePackageAudio(id);
                                 removePackage(id);
                             }}
+                            onClick={() => setSelectedPackageId(p.id)}
                         />
                     ))}
                 </div>
@@ -193,7 +220,7 @@ const ColorPickerModal = ({ pkgId, onClose }: { pkgId: string, onClose: () => vo
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={onClose}>
-            <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-sm shadow-2xl p-6 animate-scale-in border dark:border-slate-800" onClick={e => e.stopPropagation()}>
+            <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-sm shadow-2xl p-6 animate-scale-in border dark:border-slate-800" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Package Color</h3>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
@@ -203,9 +230,7 @@ const ColorPickerModal = ({ pkgId, onClose }: { pkgId: string, onClose: () => vo
 
                 <div className="flex items-center gap-3 mb-6 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
                     <div className="w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-sm transition-colors duration-300" style={{ backgroundColor: pkg.color }}>
-                        <div className="w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-sm transition-colors duration-300" style={{ backgroundColor: pkg.color }}>
-                            {(pkg.name.split(' ').length > 1 ? (pkg.name.split(' ')[0][0] + pkg.name.split(' ')[1][0]).toUpperCase() : pkg.name.substring(0, 2).toUpperCase())}
-                        </div>
+                        {(pkg.name.split(' ').length > 1 ? (pkg.name.split(' ')[0][0] + pkg.name.split(' ')[1][0]).toUpperCase() : pkg.name.substring(0, 2).toUpperCase())}
                     </div>
                     <div>
                         <div className="font-bold text-slate-800 dark:text-slate-100">{pkg.name}</div>
@@ -217,13 +242,8 @@ const ColorPickerModal = ({ pkgId, onClose }: { pkgId: string, onClose: () => vo
                 <div className="mb-6 space-y-3">
                     <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">UI Previews</h4>
                     <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800 flex flex-wrap gap-4 items-center justify-center">
-                        {/* Source Badge Preview */}
                         <SourceBadge source="DICT" name="DICT" customColor={pkg.color} />
-
-                        {/* Audio Button Preview */}
                         <PreviewAudioButton color={pkg.color} />
-
-                        {/* Icons Preview */}
                         <div className="flex gap-2 text-slate-400">
                             <Mic size={20} style={{ color: pkg.color }} />
                             <StickyNote size={20} style={{ color: pkg.color }} />
@@ -263,8 +283,25 @@ const ColorPickerModal = ({ pkgId, onClose }: { pkgId: string, onClose: () => vo
     );
 };
 
-const PackageItem = ({ pkg, onColorClick, showToast, togglePackage, removePackage }: { pkg: Package, onColorClick: (id: string) => void, showToast: (message: string, type?: string) => void, togglePackage: (id: string) => void, removePackage: (id: string) => void }) => {
-    const { personalWords, userSentences, glosses: allGlosses } = useCorpus();
+const PackageItem = ({
+    pkg,
+    onColorClick,
+    showToast,
+    togglePackage,
+    removePackage,
+    onClick
+}: {
+    pkg: Package,
+    onColorClick: (id: string) => void,
+    showToast: (message: string, type?: string) => void,
+    togglePackage: (id: string) => void,
+    removePackage: (id: string) => void,
+    onClick: () => void
+}) => {
+    const {
+        personalWords, userSentences, glosses: allGlosses,
+        notebooks, userNotes, userWordForms
+    } = useCorpus();
     const isOfficial = pkg.type === 'official';
     const isUser = pkg.type === 'user';
     const isLocked = pkg.metadata?.locked === 'yes' || isOfficial || isUser;
@@ -274,24 +311,29 @@ const PackageItem = ({ pkg, onColorClick, showToast, togglePackage, removePackag
     const glossCount = isUser ? allGlosses.filter(g => g.source === 'user').length : (pkg.metadata?.stats?.glosses || 0);
     const listCount = pkg.metadata?.stats?.lists || 0;
 
+    const notebookCount = isUser ? Object.keys(notebooks).length : (pkg.metadata?.stats?.notebooks || 0);
+    const noteCount = isUser ? Object.keys(userNotes).length : (pkg.metadata?.stats?.notes || 0);
+    const wordFormCount = isUser ? Object.keys(userWordForms).length : (pkg.metadata?.stats?.word_forms || 0);
+
     return (
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 flex flex-col gap-3 shadow-sm">
+        <div
+            onClick={onClick}
+            className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer group"
+        >
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-sm transition-colors duration-300" style={{ backgroundColor: pkg.color }}>
-                        <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-sm transition-colors duration-300" style={{ backgroundColor: pkg.color }}>
-                            {(pkg.name.split(' ').length > 1 ? (pkg.name.split(' ')[0][0] + pkg.name.split(' ')[1][0]).toUpperCase() : pkg.name.substring(0, 2).toUpperCase())}
-                        </div>
+                        {(pkg.name.split(' ').length > 1 ? (pkg.name.split(' ')[0][0] + pkg.name.split(' ')[1][0]).toUpperCase() : pkg.name.substring(0, 2).toUpperCase())}
                     </div>
                     <div>
-                        <h3 className="font-bold text-slate-800 dark:text-slate-100">{pkg.name}</h3>
+                        <h3 className="font-bold text-slate-800 dark:text-slate-100 group-hover:text-amber-600 dark:group-hover:text-amber-500 transition-colors">{pkg.name}</h3>
                         <p className="text-xs text-slate-400">{pkg.metadata?.description || (isOfficial ? "Official Cherokee Data" : "Your personal data")}</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
                     {!isLocked && (
                         <button
-                            onClick={() => onColorClick(pkg.id)}
+                            onClick={(e) => { e.stopPropagation(); onColorClick(pkg.id); }}
                             className="p-2 text-slate-300 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-full transition-colors"
                             title="Change Color"
                         >
@@ -299,7 +341,7 @@ const PackageItem = ({ pkg, onColorClick, showToast, togglePackage, removePackag
                         </button>
                     )}
                     <button
-                        onClick={() => togglePackage(pkg.id)}
+                        onClick={(e) => { e.stopPropagation(); togglePackage(pkg.id); }}
                         className={`transition-colors ${pkg.status === 'active' ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}
                     >
                         {pkg.status === 'active' ? <ToggleRight size={32} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={32} />}
@@ -308,17 +350,31 @@ const PackageItem = ({ pkg, onColorClick, showToast, togglePackage, removePackag
             </div>
 
             <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
-                <div className="flex gap-4 text-xs text-slate-500 dark:text-slate-400 font-mono">
-                    <span>{wordCount} words</span>
-                    <span>{sentCount} sentences</span>
-                    {pkg.metadata?.stats?.audio_files !== undefined && <span>{pkg.metadata.stats.audio_files} audio</span>}
-                    <span>{glossCount} glosses</span>
-                    <span>{listCount} lists</span>
+                <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-500 dark:text-slate-400 font-mono">
+                    <span className="flex items-center gap-1">Words: {wordCount}</span>
+                    <span className="flex items-center gap-1">Sentences: {sentCount}</span>
+                    <span className="flex items-center gap-1"><Book size={14} className="opacity-70" /> Notebooks: {notebookCount}</span>
+                    {(pkg.metadata?.stats?.audio_files !== undefined && pkg.metadata.stats.audio_files > 0) && (
+                        <span className="flex items-center gap-1"><Mic size={14} className="opacity-70" /> Audio: {pkg.metadata.stats.audio_files}</span>
+                    )}
+                    {(glossCount > 0) && (
+                        <span className="flex items-center gap-1"><ListPlus size={14} className="opacity-70" /> Glosses: {glossCount}</span>
+                    )}
+                    {(listCount > 0) && (
+                        <span className="flex items-center gap-1"><ListIcon size={14} className="opacity-70" /> Lists: {listCount}</span>
+                    )}
+                    {(noteCount > 0) && (
+                        <span className="flex items-center gap-1"><StickyNote size={14} className="opacity-70" /> Notes: {noteCount}</span>
+                    )}
+                    {(wordFormCount > 0) && (
+                        <span className="flex items-center gap-1"><SquaresPlus size={14} className="opacity-70" /> Word Forms: {wordFormCount}</span>
+                    )}
                 </div>
 
                 {!isOfficial && !isUser && (
                     <button
-                        onClick={() => {
+                        onClick={(e) => {
+                            e.stopPropagation();
                             if (window.confirm(`Delete package "${pkg.name}"?`)) {
                                 removePackage(pkg.id);
                                 showToast("Package removed");

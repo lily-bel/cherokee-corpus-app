@@ -34,7 +34,7 @@ export const usePackageExport = () => {
             // 0.1 Package Shorthand (for glosses on official sentences)
             let pkgBase = (metadata.name || 'Package').replace(/[^a-zA-Z0-9]/g, '').substring(0, 4).toUpperCase();
             if (pkgBase.length === 0) pkgBase = 'PKG';
-            
+
             const packageShorthand = pkgBase;
             usedShorthands.add(packageShorthand);
 
@@ -63,11 +63,11 @@ export const usePackageExport = () => {
             // 1.2 Add Dependency Entries
             if (dependencyEntryIds.length > 0) {
                 const depSet = new Set(dependencyEntryIds);
-                
+
                 // Find words
                 const depWords = personalWords.filter(w => depSet.has(w.id) && !notebookIds.includes(w.notebookId));
                 wordsToExport = [...wordsToExport, ...depWords];
-                
+
                 // Find sentences
                 const depSentences = userSentences.filter(s => depSet.has(s.id) && !notebookIds.includes(s.source));
                 sentencesToExport = [...sentencesToExport, ...depSentences];
@@ -80,7 +80,7 @@ export const usePackageExport = () => {
 
             // 1.1 Process Lists & Dependencies
             const extraAudioIds = new Set<string>();
-            const extraGlossSentenceIds = new Set<string>(); 
+            const extraGlossSentenceIds = new Set<string>();
 
             const listsFolder = zip.folder('lists');
             let exportedListCount = 0;
@@ -90,7 +90,7 @@ export const usePackageExport = () => {
                 if (list.type === 'user' && list.items) {
                     const wIds: string[] = [];
                     const sIds: string[] = [];
-                    
+
                     list.items.forEach(id => {
                         if (id.startsWith('s_')) sIds.push(id.replace('s_', ''));
                         else wIds.push(id);
@@ -101,7 +101,7 @@ export const usePackageExport = () => {
                         words: wIds,
                         sentences: sIds
                     };
-                    
+
                     listsFolder?.file(`${list.name.replace(/[^a-z0-9\-_]/gi, '_')}.json`, JSON.stringify(listJson, null, 2));
                     exportedListCount++;
                 }
@@ -111,7 +111,7 @@ export const usePackageExport = () => {
                     list.items.forEach(id => {
                         let targetId = id;
                         let type: 'word' | 'sentence' = 'word';
-                        
+
                         if (id.startsWith('s_')) {
                             targetId = id.replace('s_', '');
                             type = 'sentence';
@@ -154,7 +154,7 @@ export const usePackageExport = () => {
             wordsToExport.forEach(w => {
                 let src = shorthandMap[w.notebookId];
                 if (!src) src = packageShorthand;
-                
+
                 dictRows.push([
                     `"${w.id || ''}"`,
                     `"${src}"`,
@@ -284,7 +284,7 @@ export const usePackageExport = () => {
                 },
                 source_names: {}
             };
-            
+
             const hasOrphans = wordsToExport.some(w => !shorthandMap[w.notebookId]) || sentencesToExport.some(s => !shorthandMap[s.source]);
             if (hasOrphans) {
                 if (!meta.source_names) meta.source_names = {};
@@ -336,7 +336,7 @@ export const usePackageExport = () => {
 
             wordsToExport.forEach(w => addAudioForTarget(w.id, 'W'));
             sentencesToExport.forEach(s => addAudioForTarget(s.id, 'S'));
-            
+
             if (extraAudioIds.size > 0 || dependencyAudioIds.length > 0) {
                 const allDepIds = new Set([...Array.from(extraAudioIds), ...dependencyAudioIds]);
                 Object.entries(userAudioMeta).forEach(([key, audioList]) => {
@@ -442,7 +442,7 @@ export const usePackageImport = () => {
         const entryDataFile = zip.file('entry_data.json');
         let importedNotes: any[] = [];
         let importedForms: any[] = [];
-        
+
         if (entryDataFile) {
             try {
                 const json = JSON.parse(await entryDataFile.async('string'));
@@ -461,18 +461,18 @@ export const usePackageImport = () => {
             listsFolder.forEach((path, file) => {
                 if (!file.dir && path.endsWith('.json')) {
                     filePromises.push(file.async('string').then(text => {
-                         try {
-                             const json = JSON.parse(text);
-                             return json;
-                         } catch { return null; }
+                        try {
+                            const json = JSON.parse(text);
+                            return json;
+                        } catch { return null; }
                     }));
                 }
             });
-            
+
             const loadedLists = await Promise.all(filePromises);
             loadedLists.filter(Boolean).forEach(l => {
                 const items = [...(l.words || []), ...(l.sentences || []).map((id: string) => `s_${id}`)];
-                
+
                 lists.push({
                     id: generateId(),
                     name: l.name,
@@ -557,8 +557,8 @@ export const usePackageImport = () => {
                         newAudioMeta[metaKey].push({
                             id: id,
                             speaker: speaker,
-                            date: Date.now(), 
-                            packageId: meta.id 
+                            date: Date.now(),
+                            packageId: meta.id
                         });
                     }
                 }
@@ -575,13 +575,17 @@ export const usePackageImport = () => {
                 sentences: sentences.length,
                 audio_files: Object.keys(newAudioMeta).length,
                 glosses: glosses.length,
-                lists: lists.length
+                lists: lists.length,
+                word_forms: importedForms.length,
+                notes: importedNotes.length
             };
         } else {
             meta.stats.words = dictionary.length;
             meta.stats.sentences = sentences.length;
             meta.stats.glosses = glosses.length;
             meta.stats.lists = lists.length;
+            meta.stats.word_forms = importedForms.length;
+            meta.stats.notes = importedNotes.length;
         }
 
         const pkg: Package = {

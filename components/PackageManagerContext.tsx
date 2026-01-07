@@ -15,8 +15,11 @@ export interface PackageMetadata {
         words: number;
         sentences: number;
         audio_files: number;
-        glosses?: number;
-        lists?: number;
+        glosses: number;
+        lists: number;
+        notebooks?: number;
+        notes?: number;
+        word_forms?: number;
     };
     source_names?: Record<string, string>;
     source_meta?: Record<string, "prioritize" | "filter">;
@@ -105,6 +108,20 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                 metadata.stats.words = dictionary.length;
                 metadata.stats.sentences = sentences.length;
                 metadata.stats.glosses = glosses.length;
+
+                // Count Word Forms from Other_Forms column
+                let wordFormCount = 0;
+                dictionary.forEach((d: any) => {
+                    if (d.Other_Forms) {
+                        const forms = d.Other_Forms.split('|');
+                        forms.forEach((f: string) => {
+                            if (f.includes(':')) wordFormCount++;
+                        });
+                    }
+                });
+                metadata.stats.word_forms = wordFormCount;
+                metadata.stats.lists = metadata.stats.lists || 0;
+                metadata.stats.notes = metadata.stats.notes || 0;
                 // Normalize Dictionary Data (Map legacy fields if needed)
                 const normalizedDictionary = dictionary.map((d: any) => ({
                     ...d,
@@ -171,7 +188,7 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                             date_created: Date.now(),
                             description: 'My personal collection.',
                             app_version: '1.0',
-                            stats: { words: 0, sentences: 0, audio_files: 0 }
+                            stats: { words: 0, sentences: 0, audio_files: 0, glosses: 0, lists: 0 }
                         }
                     };
 
