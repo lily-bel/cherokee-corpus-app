@@ -43,6 +43,8 @@ function App() {
     const [searchScope, setSearchScope] = useState<'dictionary' | 'sentences'>('dictionary');
     const [selectedEntry, setSelectedEntry] = useState<any | null>(null);
     const [activeNotebookId, setActiveNotebookId] = useState<string | null>(null);
+    const [activeListId, setActiveListId] = useState<string | null>(null);
+    const [listsView, setListsView] = useState<'all' | 'detail'>('all');
 
     // Search & Input States
     const [inputValue, setInputValue] = useState('');
@@ -132,7 +134,7 @@ function App() {
                 const savedFavs = localStorage.getItem('cherokee_app_favorites'); if (savedFavs) setFavorites(JSON.parse(savedFavs));
                 const savedLists = localStorage.getItem('cherokee_app_custom_lists');
                 let parsedLists: Record<string, any> = {};
-                
+
                 if (savedLists) {
                     parsedLists = JSON.parse(savedLists);
 
@@ -171,7 +173,7 @@ function App() {
                 required.forEach(key => {
                     if (!order.includes(key)) order.push(key);
                 });
-                
+
                 setCustomListOrder(order);
 
             } catch (e) {
@@ -269,14 +271,14 @@ function App() {
     useEffect(() => {
         const keys = Object.keys(customLists);
         const missing = keys.filter(k => !customListOrder.includes(k)); if (missing.length) setCustomListOrder(prev => [...prev, ...missing]);
-        
+
         const importedListIds = packages.flatMap(p => importedData[p.id]?.lists?.map(l => l.id) || []);
-        const valid = customListOrder.filter(k => 
-            keys.includes(k) || 
-            k === 'favorites' || 
-            k.startsWith('builtin_') || 
+        const valid = customListOrder.filter(k =>
+            keys.includes(k) ||
+            k === 'favorites' ||
+            k.startsWith('builtin_') ||
             importedListIds.includes(k)
-        ); 
+        );
         if (valid.length !== customListOrder.length) setCustomListOrder(valid);
     }, [customLists, packages, importedData]);
 
@@ -969,7 +971,7 @@ function App() {
                 target = d;
             }
         }
-        
+
         // Ensure data.notebookId is used if set (from modal dropdown)
         if (data.notebookId) target = data.notebookId;
 
@@ -1015,8 +1017,8 @@ function App() {
         } else {
             const targetId = entry.Index || (entry.id ? 's_' + entry.id : null);
             if (!targetId) return;
-            setNoteTargetId(targetId); 
-            setCurrentNote(content || ''); 
+            setNoteTargetId(targetId);
+            setCurrentNote(content || '');
             setShowNotesModal(true);
         }
     };
@@ -1086,7 +1088,7 @@ function App() {
         // If it's a personal word, we load its Other_Forms.
         // If it's an official word, we load from userWordForms.
         const personalEntry = personalWords.find(w => w.Index === entry.Index);
-        
+
         if (personalEntry) {
             setCurrentAdditionalForms(personalEntry.Other_Forms || '');
         } else {
@@ -1097,9 +1099,9 @@ function App() {
 
     const saveAdditionalForms = (formsString: string) => {
         if (!additionalFormsTargetId) return;
-        
+
         const personalEntry = personalWords.find(w => w.Index === additionalFormsTargetId);
-        
+
         if (personalEntry) {
             // Update personal word
             setPersonalWords(prev => prev.map(w => w.Index === additionalFormsTargetId ? { ...w, Other_Forms: formsString } : w));
@@ -1515,10 +1517,28 @@ function App() {
                         openWordModal={openWordModal}
                         sentences={sentences}
                         userSentences={userSentences}
+                        activeListId={activeListId}
+                        setActiveListId={setActiveListId}
+                        view={listsView}
+                        setView={setListsView}
                     />
                 )}
                 {activeTab === 'widgets' && <WidgetsTab />}
-                {activeTab === 'packages' && <PackageManagerTab customLists={customLists} />}
+                {activeTab === 'packages' && <PackageManagerTab
+                    customLists={customLists}
+                    onNavigate={(type, payload) => {
+                        if (type === 'notebook') {
+                            setActiveTab('personal');
+                            setActiveNotebookId(payload);
+                        } else if (type === 'list') {
+                            setActiveTab('lists');
+                            setActiveListId(payload);
+                            setListsView('detail');
+                        } else if (type === 'word' || type === 'sentence') {
+                            handleEntryClick(payload);
+                        }
+                    }}
+                />}
                 {
                     activeTab === 'personal' && (!activeNotebookId ? (<div className="flex flex-col h-full"><div className="px-4 py-4 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0"><h2 className="font-noto-serif text-2xl font-bold text-slate-800 dark:text-slate-100">Notebooks</h2><button onClick={() => setShowNewNotebookModal(true)} className="bg-slate-900 dark:bg-slate-700 text-white p-2 rounded-full shadow-md"><Plus size={20} /></button></div><div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-4 content-start">{notebookList.map((nb: any) => {
                         const isImported = nb.type === 'imported';
@@ -1561,11 +1581,11 @@ function App() {
                     <Search size={24} strokeWidth={2} />
                     <span className="text-[10px] font-bold tracking-wide">Search</span>
                 </button>
-                <button onClick={() => { setActiveTab('lists'); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'lists' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
+                <button onClick={() => { if (activeTab === 'lists') setListsView('all'); setActiveTab('lists'); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'lists' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
                     <ListIcon size={24} strokeWidth={2} />
                     <span className="text-[10px] font-bold tracking-wide">Lists</span>
                 </button>
-                <button onClick={() => { setActiveTab('personal'); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'personal' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
+                <button onClick={() => { if (activeTab === 'personal') setActiveNotebookId(null); setActiveTab('personal'); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'personal' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
                     <Book size={24} strokeWidth={2} />
                     <span className="text-[10px] font-bold tracking-wide">Notebooks</span>
                 </button>

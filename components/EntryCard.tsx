@@ -34,10 +34,10 @@ const MultiSourceIcon = ({ Icon, colors, size = 14 }: { Icon: any, colors: strin
 
   return (
     <div className="flex flex-col items-center gap-0.5 shrink-0" title={isMulti ? `${uniqueColors.length} sources` : undefined}>
-      <Icon 
-        size={size} 
-        stroke={stroke} 
-        fill="none" 
+      <Icon
+        size={size}
+        stroke={stroke}
+        fill="none"
       />
       {isMulti && (
         <div className="grid grid-cols-3 gap-0.5 w-full max-w-[14px]">
@@ -56,7 +56,7 @@ const EntryCard = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms, 
   // --- Audio Colors ---
   const audioColors = useMemo(() => {
     const cols = new Set<string>();
-    
+
     // 1. Standard Official Audio
     if (entry.Entry_Audio) {
       cols.add(getHexColor('slate'));
@@ -67,7 +67,7 @@ const EntryCard = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms, 
       userAudioMeta[entry.Index].forEach((a: any) => {
         const pkgId = a.packageId || 'user';
         const pkg = packages.find(p => p.id === pkgId);
-        
+
         // Count it if it's user-recorded or from an active package
         if (!a.packageId || (pkg && pkg.status === 'active')) {
           const rawCol = getPackageColor(pkgId) || (pkgId === 'user' ? 'amber' : 'slate');
@@ -117,7 +117,6 @@ const EntryCard = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms, 
   }).length;
   const totalLists = (inFav ? 1 : 0) + inLists;
 
-  const pkgColor = getPackageColor(entry.Source);
 
   return (
     <div key={entry.Index} onClick={() => onClick(entry)} className={`bg-white dark:bg-slate-900 p-4 border-b border-slate-100 dark:border-slate-800 active:bg-slate-50 dark:active:bg-slate-800 transition-colors cursor-pointer ${isDimmed ? 'opacity-50 grayscale' : ''} `}>
@@ -128,7 +127,7 @@ const EntryCard = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms, 
             <MultiSourceIcon Icon={StickyNote} colors={noteColors} size={16} />
             <MultiSourceIcon Icon={SquaresPlus} colors={formColors} size={14} />
             <MultiSourceIcon Icon={Mic} colors={audioColors} size={14} />
-            <SourceBadge source={entry.Source} name={notebooks[entry.Source]?.name} customColor={pkgColor} />
+            <SourceBadge source={entry.source || entry.Source} name={notebooks[entry.source || entry.Source]?.name} customColor={getPackageColor(entry.source || entry.Source)} />
           </div>
           {totalLists > 0 && <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-0.5"><ListIcon size={10} /> {totalLists}</span>}
         </div>
@@ -143,3 +142,4 @@ const EntryCard = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms, 
 };
 
 export default EntryCard;
+

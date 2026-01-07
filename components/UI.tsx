@@ -75,7 +75,7 @@ export const SourceBadge = ({ source, name, customColor }: { source: string, nam
     colorClass = "";
   }
 
-  if (source && (source === 'pd' || source.startsWith('nb_'))) {
+  if (source && (source === 'pd' || source.startsWith('nb_') || source === 'user')) {
     let initials = "NB";
     if (name) { initials = name.substring(0, 4).trim().toUpperCase(); }
 

@@ -32,6 +32,10 @@ interface ListsTabProps {
     openWordModal: (word?: any) => void;
     sentences?: any[];
     userSentences?: any[];
+    activeListId?: string | null;
+    setActiveListId?: (id: string | null) => void;
+    view?: 'all' | 'detail';
+    setView?: (view: 'all' | 'detail') => void;
 }
 
 const MiniAudioButton = ({ audio, isOfficial = false, color }: { audio: any, isOfficial?: boolean, color?: string }) => {
@@ -206,7 +210,7 @@ const AddWordsModal = ({
                     })}
                     {results.length > limit && (
                         <div className="pt-2 pb-2">
-                            <button 
+                            <button
                                 onClick={() => setLimit(prev => prev + 50)}
                                 className="w-full py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold rounded-lg text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                             >
@@ -246,7 +250,11 @@ const ListsTab: React.FC<ListsTabProps> = ({
     onPerformSearch,
     sentences = [],
     userSentences = [],
-    userNotes // Destructure userNotes from props
+    userNotes, // Destructure userNotes from props
+    activeListId: propActiveListId,
+    setActiveListId: propSetActiveListId,
+    view: propView,
+    setView: propSetView
 }) => {
     const { getPackageColor, packages, importedData } = usePackageManager();
     const { userAudioMeta, personalWords, glosses } = useCorpus();
@@ -255,9 +263,16 @@ const ListsTab: React.FC<ListsTabProps> = ({
     const effectiveUserAudioMeta = propUserAudioMeta || userAudioMeta;
 
     // Component State
-    const [view, setView] = useState<'all' | 'detail'>('all');
-    const [listMode, setListMode] = useState<'words' | 'sentences'>('words'); 
-    const [activeListId, setActiveListId] = useState<string | null>(null);
+    const [localView, setLocalView] = useState<'all' | 'detail'>('all');
+    const view = propView !== undefined ? propView : localView;
+    const setView = propSetView || setLocalView;
+
+    const [listMode, setListMode] = useState<'words' | 'sentences'>('words');
+
+    const [localActiveListId, setLocalActiveListId] = useState<string | null>(null);
+    const activeListId = propActiveListId !== undefined ? propActiveListId : localActiveListId;
+    const setActiveListId = propSetActiveListId || setLocalActiveListId;
+
     const [isReordering, setIsReordering] = useState(false);
     const [draggingId, setDraggingId] = useState<string | null>(null);
     const [hiddenBuiltInLists, setHiddenBuiltInLists] = useState<string[]>(() => {
@@ -311,7 +326,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                     const baseId = key.replace('_sentence', '');
                     listId = `s_${baseId}`;
                 }
-                
+
                 if (!audioItems.includes(listId)) audioItems.push(listId);
             }
         });
@@ -340,7 +355,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
         // 4. User Notes -> Custom Notes
         if (userNotes) {
             Object.keys(userNotes).forEach(key => {
-                 if (!noteItems.includes(key)) noteItems.push(key);
+                if (!noteItems.includes(key)) noteItems.push(key);
             });
         }
 
@@ -382,7 +397,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
 
     const toggleBuiltInVisibility = (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        setHiddenBuiltInLists(prev => 
+        setHiddenBuiltInLists(prev =>
             prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
         );
     };
@@ -425,10 +440,10 @@ const ListsTab: React.FC<ListsTabProps> = ({
         }
         return raw as ListData;
     };
-    
+
     // --- DETAIL VIEW HELPERS ---
     const activeList = activeListId ? getList(activeListId) : null;
-    
+
     // Split items into words and sentences
     const listItems = activeList ? activeList.items.map(id => {
         // Check for Sentence Prefix
@@ -448,7 +463,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
         // Although new ones use prefix, this is for safety or existing non-colliding IDs
         const sentence = sentences.find(s => s.id === id) || userSentences.find(s => s.id === id);
         if (sentence) return { type: 'sentence', data: sentence };
-        
+
         return null;
     }).filter(Boolean) as { type: 'word' | 'sentence', data: any }[] : [];
 
@@ -456,14 +471,14 @@ const ListsTab: React.FC<ListsTabProps> = ({
 
     const handleRemoveFromList = (item: any) => {
         if (!activeListId) return;
-        
+
         // Disable removing from built-in lists
         const list = getList(activeListId);
         if (list?.type.startsWith('builtin') || list?.type === 'default') return;
 
         // Determine ID to remove (word Index or prefixed sentence ID)
         const removeId = (id: string) => {
-             if (activeListId === 'favorites') {
+            if (activeListId === 'favorites') {
                 setFavorites(prev => prev.filter(i => i !== id));
             } else {
                 setCustomLists(prev => ({
@@ -478,10 +493,10 @@ const ListsTab: React.FC<ListsTabProps> = ({
 
         // If we passed the ID directly
         if (typeof item === 'string') {
-             // Try removing exact match first
-             removeId(item);
-             // Also try removing s_ prefix version if it's a sentence ID (not starting with s_)
-             if (!item.startsWith('s_')) removeId('s_' + item);
+            // Try removing exact match first
+            removeId(item);
+            // Also try removing s_ prefix version if it's a sentence ID (not starting with s_)
+            if (!item.startsWith('s_')) removeId('s_' + item);
         }
     };
 
@@ -543,7 +558,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
 
         // Optimistic update for UI responsiveness
         if (activeListId === 'favorites') {
-             setFavorites(prev => isCurrentlyIn ? prev.filter(i => i !== itemId) : [...prev, itemId]);
+            setFavorites(prev => isCurrentlyIn ? prev.filter(i => i !== itemId) : [...prev, itemId]);
         } else {
             setCustomLists(prev => ({
                 ...prev,
@@ -587,7 +602,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                 handleDragMove(e);
             }
         };
-        
+
         // Prevent native scrolling when dragging is active
         const handleTouchMoveWindow = (e: TouchEvent) => {
             if (isDraggingRef.current) {
@@ -630,7 +645,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
         setDraggingId(null);
         setIsReordering(false);
         isDraggingRef.current = false;
-        
+
         if (dragItemRef.current) {
             dragItemRef.current.style.transform = '';
             dragItemRef.current.style.zIndex = '';
@@ -649,7 +664,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
 
     const handlePointerDown = (e: React.PointerEvent, id: string) => {
         if (view !== 'all') return;
-        
+
         // Ignore clicks on buttons/interactive elements
         if ((e.target as HTMLElement).tagName.toLowerCase() === 'button' || (e.target as HTMLElement).closest('button')) return;
 
@@ -668,16 +683,16 @@ const ListsTab: React.FC<ListsTabProps> = ({
             target: e.currentTarget as HTMLElement, // The row itself (since we moved the listener)
             pointerId: e.pointerId
         };
-        
+
         // Start Timer
         longPressTimer.current = setTimeout(() => {
             if (pendingDragRef.current) {
                 const { id, startY, target, pointerId } = pendingDragRef.current;
-                
+
                 // Start Drag
                 dragItemRef.current = row;
                 lastPointerEvent.current = { clientX: pendingDragRef.current.startX, clientY: startY };
-                
+
                 startDrag(id, row, startY);
                 if (navigator.vibrate) navigator.vibrate(50);
 
@@ -694,23 +709,23 @@ const ListsTab: React.FC<ListsTabProps> = ({
     const handlePointerMoveRow = (e: React.PointerEvent) => {
         // If we are WAITING for long press, we need to check movement.
         if (longPressTimer.current && pendingDragRef.current && !draggingId) {
-             const moveThreshold = 10;
-             const dx = Math.abs(e.clientX - pendingDragRef.current.startX);
-             const dy = Math.abs(e.clientY - pendingDragRef.current.startY);
-             
-             if (dx > moveThreshold || dy > moveThreshold) {
-                 // Moved too much, cancel hold
-                 clearTimeout(longPressTimer.current);
-                 longPressTimer.current = null;
-                 pendingDragRef.current = null;
-             }
+            const moveThreshold = 10;
+            const dx = Math.abs(e.clientX - pendingDragRef.current.startX);
+            const dy = Math.abs(e.clientY - pendingDragRef.current.startY);
+
+            if (dx > moveThreshold || dy > moveThreshold) {
+                // Moved too much, cancel hold
+                clearTimeout(longPressTimer.current);
+                longPressTimer.current = null;
+                pendingDragRef.current = null;
+            }
         }
     };
 
     const handlePointerUpRow = () => {
         if (longPressTimer.current) {
-             clearTimeout(longPressTimer.current);
-             longPressTimer.current = null;
+            clearTimeout(longPressTimer.current);
+            longPressTimer.current = null;
         }
         pendingDragRef.current = null;
     };
@@ -865,7 +880,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
 
                 {/* Mode Toggle */}
                 <div className="px-4 pb-2 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
-                     <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+                    <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
                         <button onClick={() => setListMode('words')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${listMode === 'words' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'} `}>Words ({listItems.filter(i => i?.type === 'word').length})</button>
                         <button onClick={() => setListMode('sentences')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${listMode === 'sentences' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'} `}>Sentences ({listItems.filter(i => i?.type === 'sentence').length})</button>
                     </div>
@@ -905,7 +920,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                                     const pkg = packages.find(p => p.id === audio.packageId);
                                                     return pkg && pkg.status === 'active';
                                                 });
-    
+
                                             return (
                                                 <tr key={word.Index} onClick={() => onEntryClick(word)} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors active:bg-amber-50 dark:active:bg-amber-900/20">
                                                     <td className="p-3 align-middle">
@@ -952,36 +967,36 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                             const sentence = data;
                                             const userAudio = (effectiveUserAudioMeta?.[sentence.id + '_sentence'] || [])
                                                 .filter((audio: any) => {
-                                                     if (!audio.packageId) {
+                                                    if (!audio.packageId) {
                                                         const userPkg = packages.find(p => p.id === 'user');
                                                         return userPkg ? userPkg.status === 'active' : true;
                                                     }
                                                     const pkg = packages.find(p => p.id === audio.packageId);
                                                     return pkg && pkg.status === 'active';
                                                 });
-                                            
+
                                             return (
                                                 <tr key={sentence.id} onClick={() => onEntryClick(sentence)} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors active:bg-amber-50 dark:active:bg-amber-900/20">
-                                                     <td className="p-3 align-middle">
+                                                    <td className="p-3 align-middle">
                                                         <div className="font-noto-cherokee text-lg text-slate-800 dark:text-slate-100 leading-tight">{sentence.syllabary || ''}</div>
                                                         <div className="font-noto-serif text-sm text-slate-500 dark:text-slate-400 font-medium">{sentence.translit || ''}</div>
                                                         <div className="md:hidden mt-2 font-noto-serif text-slate-600 dark:text-slate-300 text-sm line-clamp-2">
                                                             {sentence.english || ''}
                                                         </div>
                                                     </td>
-                                                     <td className="p-3 align-middle hidden md:table-cell">
+                                                    <td className="p-3 align-middle hidden md:table-cell">
                                                         <div className="font-noto-serif text-slate-600 dark:text-slate-300 text-sm line-clamp-2">
                                                             {sentence.english || ''}
                                                         </div>
                                                     </td>
                                                     <td className="p-3 align-middle">
-                                                         <div className="flex flex-wrap gap-1.5" onClick={e => e.stopPropagation()}>
-                                                             {sentence.audio && (
+                                                        <div className="flex flex-wrap gap-1.5" onClick={e => e.stopPropagation()}>
+                                                            {sentence.audio && (
                                                                 <MiniAudioButton audio={sentence.audio} isOfficial={true} />
-                                                             )}
-                                                             {userAudio.map((audio: any) => {
-                                                                  const isOfficialItem = audio.packageId?.startsWith('official'); // Heuristic
-                                                                  return (
+                                                            )}
+                                                            {userAudio.map((audio: any) => {
+                                                                const isOfficialItem = audio.packageId?.startsWith('official'); // Heuristic
+                                                                return (
                                                                     <MiniAudioButton
                                                                         key={audio.id}
                                                                         audio={isOfficialItem ? audio.id : audio}
@@ -989,8 +1004,8 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                                                         color={isOfficialItem ? undefined : getPackageColor(audio.packageId || 'user')}
                                                                     />
                                                                 );
-                                                             })}
-                                                         </div>
+                                                            })}
+                                                        </div>
                                                     </td>
                                                     <td className="p-3 text-right">
                                                         {!isBuiltIn && (
@@ -1025,12 +1040,12 @@ const ListsTab: React.FC<ListsTabProps> = ({
 
     const renderListRow = (list: ListData, isHidden: boolean) => {
         if (!list) return null;
-        
+
         const isUser = list.type === 'user';
         const isFavorite = list.type === 'default';
         const isBuiltIn = list.type.startsWith('builtin');
         const isImported = list.type === 'imported';
-        
+
         let colorClass = 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400';
         let style = {};
 
@@ -1040,13 +1055,13 @@ const ListsTab: React.FC<ListsTabProps> = ({
                 style = { backgroundColor: list.color, color: 'white' };
                 colorClass = ''; // Override class
             } else {
-                 // Fallback or named color
-                 // Note: Tailwind dynamic classes might not work if not safe-listed.
-                 // But app seems to use some dynamic logic or safe list.
-                 // Package colors are hex usually now.
+                // Fallback or named color
+                // Note: Tailwind dynamic classes might not work if not safe-listed.
+                // But app seems to use some dynamic logic or safe list.
+                // Package colors are hex usually now.
             }
         }
-        
+
         let icon = (isUser || isImported) ? <ListIcon size={24} /> : <Folder size={24} />;
         if (isFavorite) icon = <Star size={24} className="fill-slate-400 dark:fill-slate-500" />;
         if (isBuiltIn && list.icon) icon = list.icon;
@@ -1070,7 +1085,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
             >
                 <div className="flex items-center gap-4 pointer-events-none">
                     {!isHidden && (
-                        <div 
+                        <div
                             className="text-slate-300 dark:text-slate-700 shrink-0"
                         >
                             <GripVertical size={20} />
@@ -1093,8 +1108,8 @@ const ListsTab: React.FC<ListsTabProps> = ({
                 </div>
                 <div className="flex items-center gap-2">
                     {isBuiltIn && (
-                        <button 
-                            onClick={(e) => toggleBuiltInVisibility(list.id, e)} 
+                        <button
+                            onClick={(e) => toggleBuiltInVisibility(list.id, e)}
                             className="p-2 text-slate-300 hover:text-slate-500 dark:hover:text-slate-200"
                             title={isHidden ? "Unhide" : "Hide"}
                         >
@@ -1129,10 +1144,10 @@ const ListsTab: React.FC<ListsTabProps> = ({
                 {/* Hidden Built-in Lists */}
                 {builtInLists.filter(l => hiddenBuiltInLists.includes(l.id)).length > 0 && (
                     <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-                         <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 px-2">Hidden Lists</h4>
-                         <div className="grid gap-3">
+                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 px-2">Hidden Lists</h4>
+                        <div className="grid gap-3">
                             {builtInLists.filter(l => hiddenBuiltInLists.includes(l.id)).map(l => renderListRow(l, true))}
-                         </div>
+                        </div>
                     </div>
                 )}
             </div>
