@@ -14,7 +14,7 @@ const generateId = () => {
 };
 
 export const usePackageExport = () => {
-    const { personalWords, userSentences, glosses, notebooks, userAudioMeta, userNotes, userWordForms } = useCorpus();
+    const { dictionary, personalWords, userSentences, glosses, notebooks, userAudioMeta, userNotes, userWordForms } = useCorpus();
 
     const exportPackage = async (
         notebookIds: string[],
@@ -75,8 +75,13 @@ export const usePackageExport = () => {
 
             // 1.3 Collect Target IDs for Custom Data (Notes/Forms/Audio)
             const relevantTargetIds = new Set<string>();
-            wordsToExport.forEach(w => relevantTargetIds.add(w.id));
-            sentencesToExport.forEach(s => relevantTargetIds.add(s.id));
+            wordsToExport.forEach(w => {
+                if (w.id) relevantTargetIds.add(w.id);
+                if (w.Index) relevantTargetIds.add(w.Index);
+            });
+            sentencesToExport.forEach(s => {
+                if (s.id) relevantTargetIds.add(s.id);
+            });
 
             // 1.1 Process Lists & Dependencies
             const extraAudioIds = new Set<string>();
@@ -166,7 +171,7 @@ export const usePackageExport = () => {
                     `"${(w.definition || w.Definition || '').replace(/"/g, '""')}"`,
                     `""`, // Cross_Reference
                     `"${(w.Entry_Tone || '').replace(/"/g, '""')}"`,
-                    `""`, // Other_Forms
+                    `"${(w.Other_Forms || '').replace(/"/g, '""')}"`, // Other_Forms
                     `"${(w.Notes || '').replace(/"/g, '""')}"` // Notes
                 ].join(','));
             });
@@ -246,9 +251,14 @@ export const usePackageExport = () => {
                         const [label, content] = raw.split(':');
                         if (label && content) {
                             const values = content.split('^');
+                            const officialEntry = dictionary.find(d => (d.id || d.Index) === key) || personalWords.find(w => (w.id || w.Index) === key);
+                            const officialCount = officialEntry?.Other_Forms ? officialEntry.Other_Forms.split('|').length : 0;
+                            const computedIndex = officialCount + idx + 1;
+
                             formsExport.push({
                                 word_index: key,
                                 order: idx,
+                                computed_index: computedIndex,
                                 form_name: label,
                                 translit: values[0] || '',
                                 syllabary: values[1] || '',
@@ -379,8 +389,18 @@ export const usePackageExport = () => {
                     const idx = speakerCounts[speaker] || 0;
                     speakerCounts[speaker] = idx + 1;
 
-                    const safeSpeaker = speaker.replace(/[^a-zA-Z0-9 ]/g, '');
-                    const newFilename = `${safeSpeaker}_${item.type}-${item.targetId}_${idx}.mp3`;
+                    const safeSpeaker = speaker.replace(/[^a-zA-Z0-9 ]/g, '').trim(); // Trim to avoid leading/trailing spaces in filename
+
+                    // Extract the full ID section from the original ID to preserve sub-IDs (e.g. 10.2)
+                    // Original ID format: Speaker_Type-ID_Timestamp
+                    // We want to capture the 'ID' part which might be '10' or '10.2'
+                    let idPart = item.targetId;
+                    const idMatch = item.id.match(/_[WS]-([0-9a-zA-Z\.\-]+)_\d+/);
+                    if (idMatch) {
+                        idPart = idMatch[1];
+                    }
+
+                    const newFilename = `${safeSpeaker}_${item.type}-${idPart}_${idx}.mp3`;
 
                     try {
                         const blob = await getAudioFromDB(item.id);
@@ -550,8 +570,16 @@ export const usePackageImport = () => {
                     if (match) {
                         const speaker = match[1];
                         const type = match[2];
-                        const targetId = match[3];
-                        const metaKey = type === 'W' ? targetId : `${targetId}_sentence`;
+                        const fullTargetId = match[3]; // e.g. "10" or "10.2"
+
+                        // For the dictionary key (metaKey), we need the base ID (e.g. "10")
+                        // so that EntryDetail can find it under userAudioMeta[e.Index]
+                        let baseId = fullTargetId;
+                        if (baseId.includes('.')) {
+                            baseId = baseId.split('.')[0];
+                        }
+
+                        const metaKey = type === 'W' ? baseId : `${baseId}_sentence`;
 
                         if (!newAudioMeta[metaKey]) newAudioMeta[metaKey] = [];
                         newAudioMeta[metaKey].push({

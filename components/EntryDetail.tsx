@@ -85,12 +85,12 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms
     const linkedSentenceIds = entryToSentencesMap.get(e.Index) || [];
     const linkedSentences = linkedSentenceIds.map(id => sentenceMap.get(id)).filter(Boolean);
 
-    const renderConjugation = (label, translit, tone, syllabary, notes, borderColor: string | null = null) => {
+    const renderConjugation = (label, translit, tone, syllabary, notes, borderColor: string | null = null, audioList: any[] = [], onAddAudio: (() => void) | null = null) => {
         if (!syllabary && !translit) return null;
-        
+
         let borderStyle = {};
         let borderClass = 'border-slate-100 dark:border-slate-800'; // Default
-        
+
         if (borderColor) {
             if (borderColor.startsWith('#')) {
                 borderStyle = { borderLeftColor: borderColor, borderLeftWidth: '4px' };
@@ -102,12 +102,58 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms
         return (
             <div className="mb-3">
                 {label && <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">{label}</div>}
-                <div className={`bg-slate-50 dark:bg-slate-900 p-3 rounded-lg border ${borderClass}`} style={borderStyle}>
+                <div className={`bg-slate-50 dark:bg-slate-900 p-3 rounded-lg border ${borderClass} relative`} style={borderStyle}>
                     <div className="font-noto-cherokee text-xl text-slate-800 dark:text-slate-200 mb-1">{syllabary}</div>
-                    <div className="flex flex-col">
+                    <div className="flex flex-col mb-4">
                         {translit && <span className="font-noto-serif text-md text-amber-700 dark:text-amber-400 font-medium">{translit}</span>}
                         {tone && <span className="font-sans text-sm text-slate-500 dark:text-slate-400 italic">{tone}</span>}
                         {notes && <span className="mt-1 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-1">{notes}</span>}
+                    </div>
+
+                    {/* Audio Controls (Bottom Right) */}
+                    <div className="absolute bottom-2 right-2 flex items-center gap-2">
+                        {audioList.map(audio => {
+                            const audioPkg = packages.find(p => p.id === audio.packageId);
+                            const pkgColor = getPackageColor(audio.packageId || 'user');
+                            const isOfficial = audioPkg ? audioPkg.type === 'official' : false;
+                            const isCustomColor = pkgColor && pkgColor.startsWith('#');
+
+                            let className = "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold transition-all shadow-sm ";
+                            let style = {};
+
+                            if (isOfficial) {
+                                className += playingAudioId === audio.id ? 'bg-slate-300 text-slate-800' : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300';
+                            } else if (isCustomColor) {
+                                if (playingAudioId === audio.id) {
+                                    style = { backgroundColor: pkgColor + '20', color: pkgColor, borderColor: pkgColor, borderWidth: '1px' };
+                                } else {
+                                    style = { backgroundColor: pkgColor, color: 'white' };
+                                }
+                            } else if (pkgColor && pkgColor !== 'slate') {
+                                className += playingAudioId === audio.id ? `bg-${pkgColor}-100 dark:bg-${pkgColor}-900 text-${pkgColor}-800 dark:text-${pkgColor}-100` : `bg-${pkgColor}-500 text-white`;
+                            } else {
+                                className += playingAudioId === audio.id ? 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100' : 'bg-amber-500 text-white';
+                            }
+
+                            return (
+                                <div key={audio.id} className={className} style={style}>
+                                    <button onClick={() => handlePlayUserAudio(audio)} className="flex items-center gap-1.5 focus:outline-none">
+                                        {playingAudioId === audio.id ? <Pause size={10} className="fill-current" /> : <Mic size={10} />}
+                                        <span className="whitespace-nowrap">{audio.speaker || 'User'}</span>
+                                    </button>
+                                    {!isOfficial && (
+                                        <button onClick={(ev) => { ev.stopPropagation(); handleLongPressAudio(audio.id); }} className="ml-1 pl-1.5 border-l border-white/20 hover:text-red-200 dark:hover:text-red-400 transition-colors">
+                                            <Trash2 size={10} />
+                                        </button>
+                                    )}
+                                </div>
+                            );
+                        })}
+                        {onAddAudio && (
+                            <button onClick={onAddAudio} className="p-1.5 text-slate-400 hover:text-amber-600 rounded-full transition-colors">
+                                <MicPlus size={16} />
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
@@ -164,8 +210,8 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms
             if (p.status === 'active' && importedData[p.id]?.word_forms) {
                 const forms = importedData[p.id].word_forms!.filter((f: any) => f.word_index === e.Index);
                 if (forms.length > 0) {
-                     // Sort by order if needed, but let's assume export preserved order or just push
-                     forms.forEach(f => list.push({ ...f, color: p.color, pkgName: p.name }));
+                    // Sort by order if needed, but let's assume export preserved order or just push
+                    forms.forEach(f => list.push({ ...f, color: p.color, pkgName: p.name }));
                 }
             }
         });
@@ -199,6 +245,9 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms
                             {/* USER AUDIO LIST */}
                             {userAudioMeta && userAudioMeta[e.Index] && userAudioMeta[e.Index]
                                 .filter(audio => {
+                                    // Exclude form audio from main list (check for sub-ID pattern like -10.1_)
+                                    if (audio.id.includes(`-${e.Index}.`)) return false;
+
                                     if (!audio.packageId) {
                                         const userPkg = packages.find(p => p.id === 'user');
                                         return userPkg ? userPkg.status === 'active' : true;
@@ -305,7 +354,7 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms
                                         const label = parts[0];
                                         const values = parts[1].split('^');
                                         // values[0] = Translit, values[1] = Syllabary, values[2] = Tone, values[3] = Notes
-                                        
+
                                         // Form Audio Logic
                                         // ID: Speaker_W-EntryID.FormIndex_Timestamp (or just count)
                                         // We need to find audio files that match the pattern for this form index (i+1 since 1-based usually, or 0-based?)
@@ -313,12 +362,12 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms
                                         // So if i is 0, FormIndex is 1? Or 2? "2nd other form" usually means index 2 (1-based) or index 1 (0-based)?
                                         // "10.2" implies 2nd form. If it's 1-based, 10.1 is 1st.
                                         const formIndex = i + 1;
-                                        
+
                                         // Find audio for this form
                                         // We look in userAudioMeta[e.Index] and check if the ID contains `.formIndex_`
                                         // Actually `userAudioMeta` stores list of objects {id, speaker, ...}
                                         // The ID string itself contains the info.
-                                        const formAudios = userAudioMeta && userAudioMeta[e.Index] 
+                                        const formAudios = userAudioMeta && userAudioMeta[e.Index]
                                             ? userAudioMeta[e.Index].filter(a => {
                                                 // ID format: Speaker_W-EntryID.FormIndex_Timestamp
                                                 // Check for `-${e.Index}.${formIndex}_`
@@ -329,55 +378,28 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms
 
                                         return (
                                             <div key={`official_${i}`} className="relative group">
-                                                <div className="flex items-start justify-between">
-                                                    <div className="flex-1">
-                                                        {renderConjugation(label, values[0], values[2], values[1], values[3], pkg?.type === 'official' ? 'slate' : (pkg?.color || 'slate'))}
-                                                    </div>
-                                                    
-                                                    {/* Audio Controls for Form */}
-                                                    <div className="flex flex-col gap-1 mt-6 ml-2">
-                                                         {formAudios.map(audio => (
-                                                            <div key={audio.id} className="flex items-center gap-1 bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100 px-2 py-1 rounded-full text-xs">
-                                                                <button onClick={() => handlePlayUserAudio(audio)}>
-                                                                    {playingAudioId === audio.id ? <Pause size={12} /> : <Mic size={12} />}
-                                                                </button>
-                                                                <button onClick={() => handleLongPressAudio(audio.id)} className="hover:text-red-500">
-                                                                    <Trash2 size={12} />
-                                                                </button>
-                                                            </div>
-                                                         ))}
-                                                         <button 
-                                                            onClick={() => { 
-                                                                // Hacky way to pass form index to recorder
-                                                                // We'll use a special state or just pass it to onSave logic via a wrapper
-                                                                // But EntryDetail's AudioRecorder prop onSave takes (blob, speaker).
-                                                                // We need to modify AudioRecorder or the onSave handler here.
-                                                                // Let's use a ref or state to store "currentRecordingFormIndex"
-                                                                setRecorderTarget(`form_${formIndex}` as any); 
-                                                                setShowRecorder(true); 
-                                                            }} 
-                                                            className="p-2 text-slate-300 hover:text-amber-600 rounded-full"
-                                                         >
-                                                            <MicPlus size={16} />
-                                                         </button>
-                                                    </div>
-                                                </div>
+                                                {renderConjugation(
+                                                    label, values[0], values[2], values[1], values[3],
+                                                    pkg?.type === 'official' ? 'slate' : (pkg?.color || 'slate'),
+                                                    formAudios,
+                                                    () => { setRecorderTarget(`form_${formIndex}` as any); setShowRecorder(true); }
+                                                )}
                                             </div>
                                         );
                                     })}
 
                                     {/* Imported Forms */}
-                                    {importedForms.map((form, i) => {
-                                        return (
-                                            <div key={`imported_${i}`} className="relative group">
-                                                 <div className="flex items-start justify-between">
-                                                    <div className="flex-1">
-                                                        {renderConjugation(form.form_name, form.translit, form.tone, form.syllabary, form.notes, form.color)}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
+                                    {importedForms.map((form, i) => (
+                                        <div key={`imported_${i}`} className="relative group">
+                                            {renderConjugation(
+                                                form.form_name, form.translit, form.tone, form.syllabary, form.notes, form.color,
+                                                userAudioMeta && userAudioMeta[e.Index]
+                                                    ? userAudioMeta[e.Index].filter(a => a.id.includes(`-${e.Index}.${form.computed_index}_`))
+                                                    : [],
+                                                () => { setRecorderTarget(`form_${form.computed_index}` as any); setShowRecorder(true); }
+                                            )}
+                                        </div>
+                                    ))}
 
                                     {/* Custom Forms */}
                                     {userWordForms && userWordForms[e.Index] && userWordForms[e.Index].split('|').map((form, i) => {
@@ -385,50 +407,29 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms
                                         if (parts.length < 2) return null;
                                         const label = parts[0];
                                         const values = parts[1].split('^');
-                                        
+
                                         // Custom forms continue index after official forms
                                         const officialCount = e.Other_Forms ? e.Other_Forms.split('|').length : 0;
                                         const formIndex = officialCount + i + 1;
-                                        
-                                        const formAudios = userAudioMeta && userAudioMeta[e.Index] 
+
+                                        const formAudios = userAudioMeta && userAudioMeta[e.Index]
                                             ? userAudioMeta[e.Index].filter(a => a.id.includes(`-${e.Index}.${formIndex}_`))
                                             : [];
 
                                         return (
                                             <div key={`custom_${i}`} className="relative group">
-                                                 <div className="flex items-start justify-between">
-                                                    <div className="flex-1">
-                                                        {renderConjugation(label, values[0], values[2], values[1], values[3], 'amber')}
-                                                    </div>
-                                                    <div className="flex flex-col gap-1 mt-6 ml-2">
-                                                         {formAudios.map(audio => (
-                                                            <div key={audio.id} className="flex items-center gap-1 bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100 px-2 py-1 rounded-full text-xs">
-                                                                <button onClick={() => handlePlayUserAudio(audio)}>
-                                                                    {playingAudioId === audio.id ? <Pause size={12} /> : <Mic size={12} />}
-                                                                </button>
-                                                                <button onClick={() => handleLongPressAudio(audio.id)} className="hover:text-red-500">
-                                                                    <Trash2 size={12} />
-                                                                </button>
-                                                            </div>
-                                                         ))}
-                                                         <button 
-                                                            onClick={() => { 
-                                                                setRecorderTarget(`form_${formIndex}` as any); 
-                                                                setShowRecorder(true); 
-                                                            }} 
-                                                            className="p-2 text-slate-300 hover:text-amber-600 rounded-full"
-                                                         >
-                                                            <MicPlus size={16} />
-                                                         </button>
-                                                    </div>
-                                                </div>
+                                                {renderConjugation(
+                                                    label, values[0], values[2], values[1], values[3], 'amber',
+                                                    formAudios,
+                                                    () => { setRecorderTarget(`form_${formIndex}` as any); setShowRecorder(true); }
+                                                )}
                                             </div>
                                         );
                                     })}
                                 </div>
                                 {/* Add Form Button */}
                                 <div className="mt-4">
-                                    <button 
+                                    <button
                                         onClick={() => onManageForms(e)}
                                         className="text-xs font-bold text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400 flex items-center gap-1 uppercase tracking-wide"
                                     >
@@ -444,15 +445,15 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms
                             Let's change the condition to always show if it's a word (not sentence) so user can add.
                         */}
                         {!e.Other_Forms && (!userWordForms || !userWordForms[e.Index]) && !e.english && (
-                             <div className="mb-8">
+                            <div className="mb-8">
                                 <h3 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Other Word Forms</h3>
-                                <button 
+                                <button
                                     onClick={() => onManageForms(e)}
                                     className="text-xs font-bold text-slate-400 hover:text-amber-600 flex items-center gap-1 uppercase tracking-wide italic"
                                 >
                                     <Plus size={14} /> Add a form...
                                 </button>
-                             </div>
+                            </div>
                         )}
 
                         {(e.Sentence_Syllabary || e.Sentence_English) && (<div className="mb-8 bg-amber-50/50 dark:bg-amber-900/20 p-4 rounded-xl border border-amber-100 dark:border-amber-900/30"><h3 className="text-sm font-bold text-amber-800/60 dark:text-amber-200/60 uppercase tracking-widest mb-3 flex items-center gap-2">Example Sentence</h3>{e.Sentence_Syllabary && <p className="font-noto-cherokee text-lg text-slate-800 dark:text-slate-200 mb-2">{renderStyledText(e.Sentence_Syllabary)}</p>}{e.Sentence_Transliteration && <p className="font-noto-serif text-md text-slate-600 dark:text-slate-400 italic mb-2">{renderStyledText(e.Sentence_Transliteration)}</p>}{e.Sentence_English && <p className="font-noto-serif text-md text-slate-800 dark:text-slate-200 font-medium">{renderStyledText(e.Sentence_English)}</p>}<div className="mt-4 flex items-center gap-3 flex-wrap"><AudioPlayer src={e.Sentence_Audio} label="Play Sentence" icon={Mic} customColor={pkg?.type !== 'official' ? pkg?.color : undefined} /></div></div>)}
@@ -464,7 +465,7 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms
                                 <div ref={sentenceListRef} className="flex overflow-x-auto gap-4 pb-4 snap-x">
                                     {linkedSentences.map((s: any) => (
                                         <div key={s.id} className="min-w-[85vw] md:min-w-[400px] snap-center">
-                                            <SentenceCard sentence={s} userNotes={userNotes} onEditNote={(_, note) => onEdit(s, note, true)} onSaveAudio={onSaveAudio} userAudioMeta={userAudioMeta} onEditSentence={onEditSentence} onDeleteSentence={onDeleteSentence} onCreateWord={onCreateWord} personalWords={personalWords} notebooks={notebooks}
+                                            <SentenceCard sentence={s} userNotes={userNotes} onEditNote={(_, note) => onEdit(s, note, true)} onSaveAudio={onSaveAudio} userAudioMeta={userAudioMeta} onEditSentence={onEditSentence} onDeleteSentence={onDeleteSentence} onDeleteAudio={onDeleteAudio} onCreateWord={onCreateWord} personalWords={personalWords} notebooks={notebooks}
                                                 favorites={favorites}
                                                 customLists={customLists}
                                                 onToggleFavorite={onToggleFavorite}
@@ -479,7 +480,7 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms
 
                         <div className="mb-8">
                             <h3 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Notes</h3>
-                            
+
                             {/* Imported Notes */}
                             {importedNotes.map((note, i) => (
                                 <div key={i} className={`mb-3 bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-300 whitespace-pre-wrap font-sans text-sm border-l-4`} style={{ borderLeftColor: note.color }}>

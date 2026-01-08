@@ -14,7 +14,7 @@ interface PackageManagerTabProps {
 }
 
 const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists, onNavigate }) => {
-    const { packages, togglePackage, removePackage, importedData } = usePackageManager();
+    const { packages, togglePackage, removePackage } = usePackageManager();
     const { removePackageAudio, userAudioMeta, glosses } = useCorpus();
     const { importPackage } = usePackageImport();
 

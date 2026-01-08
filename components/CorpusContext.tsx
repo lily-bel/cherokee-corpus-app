@@ -20,6 +20,14 @@ export interface DictionaryEntry {
     Entry_Tone?: string;
     PoS?: string;
     Source_Long?: string;
+    Other_Forms?: string;
+    Entry_Audio?: string;
+    Sentence_Syllabary?: string;
+    Sentence_Transliteration?: string;
+    Sentence_English?: string;
+    Sentence_Audio?: string;
+    Definition_Long?: string;
+    Cross_Reference?: string;
 }
 
 export interface Sentence {
@@ -408,10 +416,10 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         // If formIndex is present, it's Speaker_W-ID.FormIndex_Timestamp
         let audioId = '';
         if (formIndex !== undefined) {
-             // Use period separator for form index as requested: W-10.2
-             audioId = `${speaker}_${type}-${id}.${formIndex}_${index}`;
+            // Use period separator for form index as requested: W-10.2
+            audioId = `${speaker}_${type}-${id}.${formIndex}_${index}`;
         } else {
-             audioId = `${speaker}_${type}-${id}_${index}`;
+            audioId = `${speaker}_${type}-${id}_${index}`;
         }
 
         await saveAudioToDB(audioId, blob);
@@ -424,7 +432,7 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             // "The word form audio is saved the same way except in the audio filename..."
             // So for metadata retrieval, we fetch metadata for '10' (entry index).
             // Then we filter based on ID structure when rendering.
-            
+
             if (!newMeta[targetId]) newMeta[targetId] = [];
             newMeta[targetId].push({ id: audioId, speaker, date: Date.now() });
             return newMeta;

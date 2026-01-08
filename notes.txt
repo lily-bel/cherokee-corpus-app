@@ -1,5 +1,7 @@
 TODO:
-fix audio on word forms
+word form audio recorder doesn't display word
+custom word forms / notes on custom words show no icon
+NB as source within a notebook
 Other dynamic / default lists (CED Verbs / non-verbs)
 
 show error when importing zip that's not formatted correctly

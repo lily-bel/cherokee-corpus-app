@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { StickyNote, ListIcon, Mic, SquaresPlus } from './Icons';
 import { SourceBadge } from './UI';
 
