@@ -5,7 +5,7 @@ import { GlossPopover } from './GlossPopover';
 import { LinkerModal } from './LinkerModal';
 import { AudioPlayer, SourceBadge } from './UI';
 import { Check, Plus, Mic, Pencil, MicPlus, Trash2, Pause, ListIcon, Star, X, ListPlus } from './Icons';
-import { getAudioFromDB } from '../utils';
+import { getAudioFromDB, renderStyledText } from '../utils';
 
 import AudioRecorder from './AudioRecorder';
 
@@ -388,7 +388,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
 
             {/* English Translation */}
             <div className="pt-4 border-t border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-300 italic">
-                {sentence.english}
+                {renderStyledText(sentence.english)}
             </div>
 
             {/* Official Audio */}

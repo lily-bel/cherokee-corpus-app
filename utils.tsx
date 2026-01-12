@@ -26,9 +26,21 @@ export const parseCSV = (csvText: string) => {
 
 export const renderStyledText = (text: string) => {
   if (!text) return null;
+  // If an even number of asterisks, parts.length is odd.
+  // If an odd number of asterisks, parts.length is even.
   const parts = text.split('*');
-  if (parts.length % 2 === 0) { return text.replace(/\*/g, ''); }
-  return parts.map((part, i) => i % 2 === 1 ? <span key={i} className="font-bold text-slate-900 dark:text-slate-200">{part}</span> : part);
+  
+  return parts.map((part, i) => {
+    // If it's an odd index, it's inside asterisks, BUT only if it's not the last part of an even-length array (mismatched)
+    if (i % 2 === 1) {
+        if (i === parts.length - 1) {
+            // Mismatched trailing asterisk, just return the text
+            return part;
+        }
+        return <span key={i} className="font-bold text-slate-900 dark:text-slate-200">{part}</span>;
+    }
+    return part;
+  });
 };
 
 export const formatToneInput = (value: string) => {

@@ -81,7 +81,9 @@ const EntryCard = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms, 
   // --- Note Colors ---
   const noteColors = useMemo(() => {
     const cols = new Set<string>();
-    const isPersonal = !!notebooks[entry.Source];
+    // For personal words, Source is the notebook ID. entry.source is often "user".
+    const source = entry.Source || entry.source;
+    const isPersonal = !!notebooks[source];
     const userNoteText = isPersonal ? entry.Notes : userNotes[entry.Index];
     if (userNoteText && userNoteText.trim().length > 0) cols.add(getHexColor('amber'));
 
@@ -97,7 +99,14 @@ const EntryCard = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms, 
   // --- Form Colors ---
   const formColors = useMemo(() => {
     const cols = new Set<string>();
+    const source = entry.Source || entry.source;
+    const isPersonal = !!notebooks[source];
+    
     if (userWordForms && userWordForms[entry.Index]) cols.add(getHexColor('amber')); // User custom forms
+    if (isPersonal && entry.Other_Forms) {
+        const sourceColor = getPackageColor(source) || 'amber';
+        cols.add(getHexColor(sourceColor));
+    }
 
     packages.forEach(p => {
       if (p.status === 'active' && importedData[p.id]?.word_forms) {
@@ -106,7 +115,7 @@ const EntryCard = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms, 
       }
     });
     return Array.from(cols);
-  }, [entry, userWordForms, packages, importedData]);
+  }, [entry, userWordForms, packages, importedData, notebooks, getPackageColor]);
 
   // LIST COUNT
   const inFav = favorites.includes(entry.Index);
@@ -127,7 +136,7 @@ const EntryCard = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms, 
             <MultiSourceIcon Icon={StickyNote} colors={noteColors} size={16} />
             <MultiSourceIcon Icon={SquaresPlus} colors={formColors} size={14} />
             <MultiSourceIcon Icon={Mic} colors={audioColors} size={14} />
-            <SourceBadge source={entry.source || entry.Source} name={notebooks[entry.source || entry.Source]?.name} customColor={getPackageColor(entry.source || entry.Source)} />
+            <SourceBadge source={entry.Source || entry.source} name={notebooks[entry.Source || entry.source]?.name} customColor={getPackageColor(entry.Source || entry.source)} />
           </div>
           {totalLists > 0 && <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-0.5"><ListIcon size={10} /> {totalLists}</span>}
         </div>

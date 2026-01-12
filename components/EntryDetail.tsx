@@ -10,7 +10,7 @@ import { SentenceCard } from './SentenceCard';
 const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms, onSaveAudio, onDeleteAudio, favorites, customLists, customListOrder, onClose, onEdit, onToggleFavorite, onToggleList, onDelete, onSearchTerm, onOpenNewListModal, onMove, personalWords, onEditSentence, onDeleteSentence, onCreateWord, onManageForms }) => {
     const [showListSheet, setShowListSheet] = useState(false);
     const [showRecorder, setShowRecorder] = useState(false);
-    const [recorderTarget, setRecorderTarget] = useState<'entry' | 'sentence'>('entry');
+    const [recorderTarget, setRecorderTarget] = useState<'entry' | 'sentence' | string>('entry');
     const [playingAudioId, setPlayingAudioId] = useState(null);
     const audioRef = React.useRef(new Audio());
     const containerRef = React.useRef<HTMLDivElement>(null);
@@ -102,16 +102,18 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms
         return (
             <div className="mb-3">
                 {label && <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">{label}</div>}
-                <div className={`bg-slate-50 dark:bg-slate-900 p-3 rounded-lg border ${borderClass} relative`} style={borderStyle}>
-                    <div className="font-noto-cherokee text-xl text-slate-800 dark:text-slate-200 mb-1">{syllabary}</div>
-                    <div className="flex flex-col mb-4">
-                        {translit && <span className="font-noto-serif text-md text-amber-700 dark:text-amber-400 font-medium">{translit}</span>}
-                        {tone && <span className="font-sans text-sm text-slate-500 dark:text-slate-400 italic">{tone}</span>}
-                        {notes && <span className="mt-1 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-1">{notes}</span>}
+                <div className={`bg-slate-50 dark:bg-slate-900 p-3 rounded-lg border ${borderClass} flex flex-col gap-2`} style={borderStyle}>
+                    <div className="flex-1">
+                        <div className="font-noto-cherokee text-xl text-slate-800 dark:text-slate-200 mb-1">{syllabary}</div>
+                        <div className="flex flex-col">
+                            {translit && <span className="font-noto-serif text-md text-amber-700 dark:text-amber-400 font-medium">{translit}</span>}
+                            {tone && <span className="font-sans text-sm text-slate-500 dark:text-slate-400 italic">{tone}</span>}
+                            {notes && <span className="mt-1 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-800 pt-1">{notes}</span>}
+                        </div>
                     </div>
 
-                    {/* Audio Controls (Bottom Right) */}
-                    <div className="absolute bottom-2 right-2 flex items-center gap-2">
+                    {/* Audio Controls */}
+                    <div className="flex flex-wrap items-center justify-end gap-2 mt-1">
                         {audioList.map(audio => {
                             const audioPkg = packages.find(p => p.id === audio.packageId);
                             const pkgColor = getPackageColor(audio.packageId || 'user');
@@ -219,6 +221,71 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms
     }, [packages, importedData, e.Index]);
 
 
+
+    const activeFormData = React.useMemo(() => {
+        if (!recorderTarget || recorderTarget === 'entry' || recorderTarget === 'sentence') return null;
+        
+        const parts = recorderTarget.split('_');
+        if (parts.length < 2) return null;
+        const targetIndex = parseInt(parts[1]);
+        if (isNaN(targetIndex)) return null;
+
+        // Check Official Forms
+        let officialCount = 0;
+        if (e.Other_Forms) {
+            const forms = e.Other_Forms.split('|');
+            officialCount = forms.length;
+            if (targetIndex >= 1 && targetIndex <= forms.length) {
+                const f = forms[targetIndex - 1];
+                const parts = f.split(':');
+                if (parts.length >= 2) {
+                    const values = parts[1].split('^');
+                    return {
+                        label: parts[0],
+                        translit: values[0],
+                        syllabary: values[1],
+                        tone: values[2],
+                        notes: values[3]
+                    };
+                }
+            }
+        }
+
+        // Check Imported Forms
+        const imported = importedForms.find(f => f.computed_index === targetIndex);
+        if (imported) {
+             return {
+                label: imported.form_name,
+                translit: imported.translit,
+                syllabary: imported.syllabary,
+                tone: imported.tone,
+                notes: imported.notes
+            };
+        }
+
+        // Check Custom Forms
+        if (userWordForms && userWordForms[e.Index]) {
+            const forms = userWordForms[e.Index].split('|');
+            const customArrayIndex = targetIndex - officialCount - 1;
+            
+            if (customArrayIndex >= 0 && customArrayIndex < forms.length) {
+                 const f = forms[customArrayIndex];
+                 const parts = f.split(':');
+                 if (parts.length >= 2) {
+                    const values = parts[1].split('^');
+                    return {
+                        label: parts[0],
+                        translit: values[0],
+                        syllabary: values[1],
+                        tone: values[2],
+                        notes: values[3]
+                    };
+                 }
+            }
+        }
+        
+        return null;
+    }, [recorderTarget, e, importedForms, userWordForms]);
 
     return (
         <div className="fixed inset-0 z-50 bg-[#F9F9F7] dark:bg-slate-950 flex flex-col animate-slide-up overflow-hidden">
@@ -380,7 +447,7 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms
                                             <div key={`official_${i}`} className="relative group">
                                                 {renderConjugation(
                                                     label, values[0], values[2], values[1], values[3],
-                                                    pkg?.type === 'official' ? 'slate' : (pkg?.color || 'slate'),
+                                                    pkg?.type === 'official' ? 'slate' : (pkg?.color || (isPersonal ? 'amber' : 'slate')),
                                                     formAudios,
                                                     () => { setRecorderTarget(`form_${formIndex}` as any); setShowRecorder(true); }
                                                 )}
@@ -527,8 +594,8 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms
             {
                 showRecorder && (
                     <AudioRecorder
-                        title={recorderTarget === 'entry' ? e.Entry : (recorderTarget === 'sentence' ? (e.Sentence_English || "Example Sentence") : `Form Audio`)}
-                        syllabary={recorderTarget === 'entry' ? e.Syllabary : (recorderTarget === 'sentence' ? e.Sentence_Syllabary : null)}
+                        title={recorderTarget === 'entry' ? e.Entry : (recorderTarget === 'sentence' ? (e.Sentence_English || "Example Sentence") : (activeFormData ? activeFormData.translit : `Form Audio`))}
+                        syllabary={recorderTarget === 'entry' ? e.Syllabary : (recorderTarget === 'sentence' ? e.Sentence_Syllabary : (activeFormData ? activeFormData.syllabary : null))}
                         transliteration={recorderTarget === 'entry' ? null : (recorderTarget === 'sentence' ? e.Sentence_Transliteration : null)}
                         onSave={(blob, speaker) => {
                             if (typeof recorderTarget === 'string' && recorderTarget.startsWith('form_')) {
