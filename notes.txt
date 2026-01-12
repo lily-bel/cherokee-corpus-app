@@ -1,14 +1,12 @@
 TODO (immersion reader):
 - add read in context button to all sentence cards (such as in the entry view)
-- study/read toggle and syllabary/transliteration toggle should be separate buttons
-- random dot appears in syllabary view between every sentence
-- the bible stories are all in separate "books". They should really all be the same book. (The SOURCE column is the book, the story is the story)
-- - the name of the book can come from the metadata.json file (of the package, or the built-in one in public/data for built-in sources)
+- the name of the book can come from the metadata.json file (of the package, or the built-in one in public/data for built-in sources)
 - All sentences of a story load at once, which can get laggy if the story is very long
-- when you click a word to gloss, it should open the popup that shows its glosses, even if there are none yet. This is so the user has the option to add to the investigation queue.
-- the look of the investigation queue button is very different from the rest of the app, please remove the gradient, make it match other similar buttons.
+- please remove the gradient from the investigation queue button - make it a little more pastel also
 - creating a story - need options to add chapters to existing story, also need a place to input the english + transliteration as well as the syllabary. You need to be able to separate all 3 by sentence at once.
 - splitting the sentences doesn't seem to work right now.
+
+- personal stories go into notebooks, but they should be visible by default? I suppose we need one more column for Book name in the csvs
 
 
 

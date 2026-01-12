@@ -49,18 +49,15 @@ export const useReader = () => {
     return context;
 };
 
-// Helper: Create a stable book ID from story name or source
-const createBookId = (story: string | undefined, source: string): string => {
-    if (story && story.trim()) {
-        return `book_${story.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`;
-    }
-    return `source_${source.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`;
+// Helper: Create a stable book ID from source (not story)
+const createBookId = (source: string): string => {
+    return `book_${source.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`;
 };
 
-// Helper: Create a stable chapter ID
-const createChapterId = (bookId: string, chapter: string | undefined): string => {
-    if (chapter && chapter.trim()) {
-        return `${bookId}_ch_${chapter.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`;
+// Helper: Create a stable chapter ID from story name
+const createChapterId = (bookId: string, story: string | undefined): string => {
+    if (story && story.trim()) {
+        return `${bookId}_ch_${story.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`;
     }
     return `${bookId}_main`;
 };
@@ -106,12 +103,13 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }>();
 
         allSentences.forEach(sentence => {
-            const bookId = createBookId(sentence.story, sentence.source);
+            // Group by SOURCE (not story) - source becomes the book
+            const bookId = createBookId(sentence.source);
 
             if (!bookMap.has(bookId)) {
                 bookMap.set(bookId, {
                     sentences: [],
-                    title: sentence.story || sentence.source,
+                    title: sentence.source,  // Will be replaced by metadata lookup if available
                     author: sentence.author,
                     source: sentence.source
                 });
@@ -136,10 +134,10 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
             sentencesByBook.set(bookId, sortedSentences);
 
-            // Group into chapters
+            // Group into chapters using STORY field (not chapter field)
             const chapterMap = new Map<string, Sentence[]>();
             sortedSentences.forEach(sentence => {
-                const chapterId = createChapterId(bookId, sentence.chapter);
+                const chapterId = createChapterId(bookId, sentence.story);
                 if (!chapterMap.has(chapterId)) {
                     chapterMap.set(chapterId, []);
                 }
@@ -158,7 +156,7 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
                 chapters.push({
                     id: chapterId,
-                    name: sorted[0].chapter || 'Main',
+                    name: sorted[0].story || 'Main',  // Story becomes chapter name
                     bookId: bookId,
                     sentenceIds: sorted.map(s => s.id)
                 });

@@ -6,7 +6,8 @@ import { GlossPopover } from './GlossPopover';
 import { LinkerModal } from './LinkerModal';
 import { ArrowLeft, BookOpen, Eye, EyeOff, Type } from './Icons';
 
-type DisplayMode = 'study' | 'clean' | 'translit';
+type StudyMode = 'study' | 'read';  // study = show glosses/translation, read = clean reading
+type ScriptMode = 'both' | 'syllabary' | 'translit';  // which script to show
 
 interface ReaderViewProps {
     bookId: string;
@@ -29,7 +30,8 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
     const { books, getSentencesForChapter, addToInvestigationQueue } = useReader();
     const { getPackageColor } = usePackageManager();
 
-    const [mode, setMode] = useState<DisplayMode>('study');
+    const [studyMode, setStudyMode] = useState<StudyMode>('study');
+    const [scriptMode, setScriptMode] = useState<ScriptMode>('both');
     const [activePopover, setActivePopover] = useState<{
         sentenceId: string;
         wordIndex: number;
@@ -77,32 +79,17 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
     };
 
     const handleWordClick = (sentence: Sentence, wordIndex: number, event: React.MouseEvent) => {
-        if (mode !== 'study') return;
+        if (studyMode !== 'study') return;
 
         event.stopPropagation();
-        const glosses = glossMap.get(sentence.id) || [];
-        const wordGlosses = glosses.filter(g =>
-            g.word_index.split(',').map(Number).includes(wordIndex)
-        );
-
         const rect = (event.target as HTMLElement).getBoundingClientRect();
 
-        if (wordGlosses.length > 0) {
-            setActivePopover({
-                sentenceId: sentence.id,
-                wordIndex,
-                position: { x: rect.left, y: rect.bottom }
-            });
-        } else {
-            const tokens = tokenizeSentence(sentence);
-            const token = tokens[wordIndex];
-            setShowLinker({
-                sentenceId: sentence.id,
-                wordIndex,
-                initialQuery: (token.syl || token.tr || '').replace(/[.,!?;:"()]/g, '').trim(),
-                targetWord: { syllabary: token.syl, translit: token.tr }
-            });
-        }
+        // Always open the popover - this allows user to add to queue even if no glosses
+        setActivePopover({
+            sentenceId: sentence.id,
+            wordIndex,
+            position: { x: rect.left, y: rect.bottom }
+        });
     };
 
     const handleAddToQueue = () => {
@@ -127,27 +114,31 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
         return '#cbd5e1';
     };
 
-    const toggleMode = () => {
-        setMode(prev => {
-            if (prev === 'study') return 'clean';
-            if (prev === 'clean') return 'translit';
-            return 'study';
+    const toggleStudyMode = () => {
+        setStudyMode(prev => prev === 'study' ? 'read' : 'study');
+    };
+
+    const toggleScriptMode = () => {
+        setScriptMode(prev => {
+            if (prev === 'both') return 'syllabary';
+            if (prev === 'syllabary') return 'translit';
+            return 'both';
         });
     };
 
-    const getModeIcon = () => {
-        if (mode === 'study') return Eye;
-        if (mode === 'clean') return EyeOff;
-        return Type;
+    const getScriptIcon = () => {
+        if (scriptMode === 'both') return Type;
+        if (scriptMode === 'syllabary') return Eye;  // Cherokee focus
+        return EyeOff;  // Translit focus
     };
 
-    const getModeLabel = () => {
-        if (mode === 'study') return 'Study';
-        if (mode === 'clean') return 'Clean';
-        return 'Translit';
+    const getScriptLabel = () => {
+        if (scriptMode === 'both') return 'Both';
+        if (scriptMode === 'syllabary') return 'ᏣᎳᎩ';
+        return 'abc';
     };
 
-    const ModeIcon = getModeIcon();
+    const ScriptIcon = getScriptIcon();
 
     return (
         <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950">
@@ -171,19 +162,29 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                         </div>
                     </div>
 
-                    {/* Mode Toggle */}
-                    <button
-                        onClick={toggleMode}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm transition-colors ${mode === 'study'
-                            ? 'bg-amber-500 text-white'
-                            : mode === 'clean'
-                                ? 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
-                                : 'bg-sky-500 text-white'
-                            }`}
-                    >
-                        <ModeIcon size={16} />
-                        <span>{getModeLabel()}</span>
-                    </button>
+                    {/* Mode Toggles */}
+                    <div className="flex items-center gap-2">
+                        {/* Study/Read Toggle */}
+                        <button
+                            onClick={toggleStudyMode}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-sm transition-colors ${studyMode === 'study'
+                                ? 'bg-amber-500 text-white'
+                                : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                                }`}
+                        >
+                            {studyMode === 'study' ? <Eye size={14} /> : <EyeOff size={14} />}
+                            <span>{studyMode === 'study' ? 'Study' : 'Read'}</span>
+                        </button>
+
+                        {/* Script Toggle */}
+                        <button
+                            onClick={toggleScriptMode}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-sm bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
+                        >
+                            <ScriptIcon size={14} />
+                            <span>{getScriptLabel()}</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -193,7 +194,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                 className="flex-1 overflow-y-auto p-6"
             >
                 <div className="max-w-2xl mx-auto">
-                    {sentences.map((sentence, sentenceIdx) => {
+                    {sentences.map((sentence, _sentenceIdx) => {
                         const tokens = tokenizeSentence(sentence);
                         const isFlashing = flashingSentenceId === sentence.id;
 
@@ -207,43 +208,49 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                                     }`}
                             >
                                 {/* Sentence Content */}
-                                <div className={`flex flex-wrap gap-x-1 gap-y-1 leading-relaxed ${mode === 'study' ? 'gap-x-2' : 'gap-x-1'
-                                    }`}>
+                                <div className={`flex flex-wrap gap-x-1 gap-y-1 leading-relaxed ${studyMode === 'study' && scriptMode === 'both' ? 'gap-x-2' : 'gap-x-1'}`}>
                                     {tokens.map((token, tokenIdx) => {
                                         const glossColor = getGlossColor(sentence.id, tokenIdx);
-                                        const isClickable = mode === 'study';
+                                        const isClickable = studyMode === 'study';
 
-                                        // Clean mode: only syllabary
-                                        if (mode === 'clean') {
+                                        // Syllabary only mode
+                                        if (scriptMode === 'syllabary') {
                                             return (
                                                 <span
                                                     key={tokenIdx}
-                                                    className="font-serif text-2xl text-slate-900 dark:text-slate-100"
+                                                    className={`font-serif text-2xl text-slate-900 dark:text-slate-100 ${isClickable ? 'cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded px-0.5' : ''}`}
+                                                    onClick={isClickable ? (e) => handleWordClick(sentence, tokenIdx, e) : undefined}
                                                 >
                                                     {token.syl}
+                                                    {glossColor && studyMode === 'study' && (
+                                                        <span className="block h-0.5 rounded-full -mt-1" style={{ backgroundColor: glossColor }} />
+                                                    )}
                                                 </span>
                                             );
                                         }
 
-                                        // Translit mode: only transliteration
-                                        if (mode === 'translit') {
+                                        // Translit only mode
+                                        if (scriptMode === 'translit') {
                                             return (
                                                 <span
                                                     key={tokenIdx}
-                                                    className="text-xl text-slate-700 dark:text-slate-300"
+                                                    className={`text-xl text-slate-700 dark:text-slate-300 ${isClickable ? 'cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded px-0.5' : ''}`}
+                                                    onClick={isClickable ? (e) => handleWordClick(sentence, tokenIdx, e) : undefined}
                                                 >
                                                     {token.tr}
+                                                    {glossColor && studyMode === 'study' && (
+                                                        <span className="block h-0.5 rounded-full" style={{ backgroundColor: glossColor }} />
+                                                    )}
                                                 </span>
                                             );
                                         }
 
-                                        // Study mode: syllabary + translit with underlines
+                                        // Both scripts (interlinear) mode
                                         return (
                                             <span
                                                 key={tokenIdx}
-                                                className={`inline-flex flex-col items-center relative ${isClickable ? 'cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded px-0.5 -mx-0.5' : ''
-                                                    }`}
-                                                onClick={(e) => handleWordClick(sentence, tokenIdx, e)}
+                                                className={`inline-flex flex-col items-center relative ${isClickable ? 'cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded px-0.5 -mx-0.5' : ''}`}
+                                                onClick={isClickable ? (e) => handleWordClick(sentence, tokenIdx, e) : undefined}
                                             >
                                                 <span className="font-serif text-xl text-slate-900 dark:text-slate-100">
                                                     {token.syl}
@@ -251,7 +258,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                                                 <span className="text-sm text-slate-500 dark:text-slate-400">
                                                     {token.tr}
                                                 </span>
-                                                {glossColor && (
+                                                {glossColor && studyMode === 'study' && (
                                                     <div
                                                         className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
                                                         style={{ backgroundColor: glossColor }}
@@ -263,15 +270,10 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                                 </div>
 
                                 {/* English translation (shown in study mode) */}
-                                {mode === 'study' && sentence.english && (
+                                {studyMode === 'study' && sentence.english && (
                                     <p className="mt-3 text-slate-500 dark:text-slate-400 italic text-sm border-t border-slate-100 dark:border-slate-800 pt-2">
                                         {sentence.english}
                                     </p>
-                                )}
-
-                                {/* Sentence separator for non-last items */}
-                                {sentenceIdx < sentences.length - 1 && mode === 'clean' && (
-                                    <span className="inline-block ml-1 text-2xl text-slate-400">·</span>
                                 )}
                             </div>
                         );
