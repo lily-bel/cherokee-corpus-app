@@ -16,6 +16,9 @@ import ListsTab, { ListData } from './components/ListsTab';
 import { WordModal } from './components/WordModal';
 import { AdditionalFormsModal } from './components/AdditionalFormsModal';
 import { RainbowGradient } from './components/Icons';
+import { ReaderTab } from './components/ReaderTab';
+import { ReaderView } from './components/ReaderView';
+import { TextImporter } from './components/TextImporter';
 
 const DEFAULT_SETTINGS = {
     darkMode: false,
@@ -45,6 +48,12 @@ function App() {
     const [activeNotebookId, setActiveNotebookId] = useState<string | null>(null);
     const [activeListId, setActiveListId] = useState<string | null>(null);
     const [listsView, setListsView] = useState<'all' | 'detail'>('all');
+
+    // Reader state
+    const [readerView, setReaderView] = useState<'list' | 'reading' | 'importing'>('list');
+    const [activeBookId, setActiveBookId] = useState<string | null>(null);
+    const [activeChapterId, setActiveChapterId] = useState<string | null>(null);
+    const [scrollToSentenceId, setScrollToSentenceId] = useState<string | undefined>(undefined);
 
     // Search & Input States
     const [inputValue, setInputValue] = useState('');
@@ -1524,6 +1533,42 @@ function App() {
                     />
                 )}
                 {activeTab === 'widgets' && <WidgetsTab />}
+                {activeTab === 'reader' && (
+                    readerView === 'importing' ? (
+                        <TextImporter
+                            onBack={() => setReaderView('list')}
+                            onComplete={(_storyId) => {
+                                setReaderView('list');
+                            }}
+                            notebooks={notebooks}
+                        />
+                    ) : readerView === 'reading' && activeBookId && activeChapterId ? (
+                        <ReaderView
+                            bookId={activeBookId}
+                            chapterId={activeChapterId}
+                            scrollToSentenceId={scrollToSentenceId}
+                            onBack={() => {
+                                setReaderView('list');
+                                setActiveBookId(null);
+                                setActiveChapterId(null);
+                                setScrollToSentenceId(undefined);
+                            }}
+                            notebooks={notebooks}
+                            onCreateWord={openWordModal}
+                        />
+                    ) : (
+                        <ReaderTab
+                            notebooks={notebooks}
+                            onNavigateToReader={(bookId, chapterId, sentenceId) => {
+                                setActiveBookId(bookId);
+                                setActiveChapterId(chapterId);
+                                setScrollToSentenceId(sentenceId);
+                                setReaderView('reading');
+                            }}
+                            onOpenImporter={() => setReaderView('importing')}
+                        />
+                    )
+                )}
                 {activeTab === 'packages' && <PackageManagerTab
                     customLists={customLists}
                     onNavigate={(type, payload) => {
@@ -1584,6 +1629,10 @@ function App() {
                 <button onClick={() => { if (activeTab === 'lists') setListsView('all'); setActiveTab('lists'); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'lists' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
                     <ListIcon size={24} strokeWidth={2} />
                     <span className="text-[10px] font-bold tracking-wide">Lists</span>
+                </button>
+                <button onClick={() => { if (activeTab === 'reader') setReaderView('list'); setActiveTab('reader'); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'reader' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
+                    <BookOpen size={24} strokeWidth={2} />
+                    <span className="text-[10px] font-bold tracking-wide">Reader</span>
                 </button>
                 <button onClick={() => { if (activeTab === 'personal') setActiveNotebookId(null); setActiveTab('personal'); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'personal' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
                     <Book size={24} strokeWidth={2} />

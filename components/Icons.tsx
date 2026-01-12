@@ -2,16 +2,16 @@
 
 
 const IconBase = ({ path, size = 24, className = "", stroke = "currentColor", fill = "none", ...props }: any) => (
-  <svg 
-    width={size} 
-    height={size} 
-    viewBox="0 0 24 24" 
-    fill={fill} 
-    stroke={stroke} 
-    strokeWidth="2" 
-    strokeLinecap="round" 
-    strokeLinejoin="round" 
-    className={className} 
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill={fill}
+    stroke={stroke}
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
     {...props}
   >
     {path}
@@ -84,3 +84,8 @@ export const Layout = (p) => <IconBase {...p} path={<><rect x="3" y="3" width="1
 export const SquaresPlus = (p) => <IconBase {...p} path={<><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /><line x1="14" y1="17.5" x2="21" y2="17.5" /><line x1="17.5" y1="14" x2="17.5" y2="21" /></>} />;
 export const Eye = (p) => <IconBase {...p} path={<><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></>} />;
 export const EyeOff = (p) => <IconBase {...p} path={<><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></>} />;
+export const Type = (p) => <IconBase {...p} path={<><polyline points="4 7 4 4 20 4 20 7" /><line x1="9" y1="20" x2="15" y2="20" /><line x1="12" y1="4" x2="12" y2="20" /></>} />;
+export const ArrowRight = (p) => <IconBase {...p} path={<><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></>} />;
+export const Scissors = (p) => <IconBase {...p} path={<><circle cx="6" cy="6" r="3" /><circle cx="6" cy="18" r="3" /><line x1="20" y1="4" x2="8.12" y2="15.88" /><line x1="14.47" y1="14.48" x2="20" y2="20" /><line x1="8.12" y1="8.12" x2="12" y2="12" /></>} />;
+export const Merge = (p) => <IconBase {...p} path={<><path d="M8 18L12 22L16 18" /><path d="M12 22V12" /><path d="M16 12C16 10.6739 15.4732 9.40215 14.5355 8.46447C13.5979 7.52678 12.3261 7 11 7H8" /><path d="M16 7C16 8.32608 15.4732 9.59785 14.5355 10.5355C13.5979 11.4732 12.3261 12 11 12H8" /></>} />;
+

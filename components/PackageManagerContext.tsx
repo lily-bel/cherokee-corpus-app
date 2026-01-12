@@ -149,6 +149,13 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                     english: d.English,
                     source: d.Source,
                     audio: d.Audio,
+                    // Reader fields
+                    story: d.Story || undefined,
+                    chapter: d.Chapter || undefined,
+                    line: d.Line ? parseInt(d.Line, 10) : undefined,
+                    author: d.Author || undefined,
+                    speaker: d.Speaker || undefined,
+                    tone: d.Tone || undefined,
                 }));
 
                 const normalizedGlosses = glosses.map((d: any) => ({

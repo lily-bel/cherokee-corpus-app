@@ -189,11 +189,11 @@ export const usePackageExport = () => {
                     `"${(s.syllabary || '').replace(/"/g, '""')}"`,
                     `"${(s.translit || '').replace(/"/g, '""')}"`,
                     `"${(s.english || '').replace(/"/g, '""')}"`,
-                    `""`, // Story
-                    `""`, // Chapter
-                    `""`, // Line
-                    `""`, // Author
-                    `""`  // Speaker
+                    `"${((s as any).story || '').replace(/"/g, '""')}"`,
+                    `"${((s as any).chapter || '').replace(/"/g, '""')}"`,
+                    `"${(s as any).line || ''}"`,
+                    `"${((s as any).author || '').replace(/"/g, '""')}"`,
+                    `"${((s as any).speaker || '').replace(/"/g, '""')}"`
                 ].join(','));
             });
 
@@ -530,6 +530,14 @@ export const usePackageImport = () => {
             english: d.English,
             source: d.Source === 'user' ? meta.id : d.Source,
             audio: d.Audio,
+            // Reader fields
+            story: d.Story || undefined,
+            chapter: d.Chapter || undefined,
+            line: d.Line ? parseInt(d.Line, 10) : undefined,
+            author: d.Author || undefined,
+            speaker: d.Speaker || undefined,
+            tone: d.Tone || undefined,
+            // Legacy fields
             ID: d.ID,
             Syllabary: d.Syllabary,
             Transliteration: d.Transliteration,

@@ -4,7 +4,7 @@ import { usePackageManager } from './PackageManagerContext';
 import { GlossPopover } from './GlossPopover';
 import { LinkerModal } from './LinkerModal';
 import { AudioPlayer, SourceBadge } from './UI';
-import { Check, Plus, Mic, Pencil, MicPlus, Trash2, Pause, ListIcon, Star, X, ListPlus } from './Icons';
+import { Check, Plus, Mic, Pencil, MicPlus, Trash2, Pause, ListIcon, Star, X, ListPlus, BookOpen } from './Icons';
 import { getAudioFromDB, renderStyledText } from '../utils';
 
 import AudioRecorder from './AudioRecorder';
@@ -30,9 +30,11 @@ interface SentenceCardProps {
     onToggleFavorite?: (id: string) => void;
     onToggleList?: (listId: string, id: string) => void;
     onOpenNewListModal?: (id: string) => void;
+    // Reader Props
+    onReadInContext?: (sentenceId: string) => void;
 }
 
-export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, isDimmed, notebooks, userNotes, onEditNote, onEditSentence, sourceMap, onSaveAudio, userAudioMeta, personalWords, onDeleteSentence, onDeleteAudio, onCreateWord, favorites, customLists, onToggleFavorite, onToggleList, onOpenNewListModal }) => {
+export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, isDimmed, notebooks, userNotes, onEditNote, onEditSentence, sourceMap, onSaveAudio, userAudioMeta, personalWords, onDeleteSentence, onDeleteAudio, onCreateWord, favorites, customLists, onToggleFavorite, onToggleList, onOpenNewListModal, onReadInContext }) => {
     const { glossMap, dictionaryMap, addUserGloss, removeUserGloss, removeUserSentence } = useCorpus();
     const { packages, getPackageColor, importedData } = usePackageManager(); // Add this line
     const [activePopover, setActivePopover] = useState<{ index: number, rect: { x: number, y: number } } | null>(null);
@@ -290,6 +292,17 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                     ) : null}
                 </div>
                 <div className="flex items-center gap-2">
+                    {/* Read in Context Button */}
+                    {onReadInContext && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onReadInContext(sentence.id); }}
+                            className="text-xs font-medium text-sky-600 dark:text-sky-400 hover:underline flex items-center gap-1"
+                            title="Read in context"
+                        >
+                            <BookOpen size={12} />
+                            Read
+                        </button>
+                    )}
                     {/* List Add Button */}
                     {(onToggleFavorite || onToggleList) && (
                         <button onClick={(e) => { e.stopPropagation(); setShowListSheet(true); }} className={`p-1 rounded-full transition-colors flex items-center gap-1 ${totalLists > 0 ? 'text-amber-500 bg-amber-50 dark:bg-amber-900/20' : 'text-slate-300 hover:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
@@ -475,7 +488,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                             {note.text}
                         </div>
                     ))}
-                    
+
                     {onEditNote && (
                         <div
                             onClick={() => onEditNote(sentence.id, userNotes?.[`s_${sentence.id}`] || '')}

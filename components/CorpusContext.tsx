@@ -37,6 +37,13 @@ export interface Sentence {
     english: string;
     audio?: string;
     source: string;
+    // Reader fields
+    story?: string;      // Book/story title for grouping
+    chapter?: string;    // Chapter name within story
+    line?: number;       // Line number for ordering within chapter
+    author?: string;     // Author attribution
+    speaker?: string;    // Speaker name for audio
+    tone?: string;       // Tonal transcription
 }
 
 export interface Gloss {

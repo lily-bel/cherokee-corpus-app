@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Gloss, DictionaryEntry } from './CorpusContext';
 import { SourceBadge } from './UI';
-import { ChevronRight, Trash2, Pencil, Plus } from './Icons';
+import { ChevronRight, Trash2, Pencil, Plus, Search } from './Icons';
 
 interface GlossPopoverProps {
     glosses: Gloss[];
@@ -13,6 +13,7 @@ interface GlossPopoverProps {
     onEdit?: (gloss: Gloss) => void;
     onDelete?: (gloss: Gloss) => void;
     onAdd?: () => void;
+    onAddToQueue?: () => void;  // Add to Investigation Queue
     personalWords?: any[];
     notebooks?: any;
     sourceMap?: Record<string, string>;
@@ -20,7 +21,7 @@ interface GlossPopoverProps {
 
 import { usePackageManager } from './PackageManagerContext';
 
-export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord, dictionaryMap, position, onClose, onEntryClick, onEdit, onDelete, onAdd, personalWords, notebooks, sourceMap }) => {
+export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord, dictionaryMap, position, onClose, onEntryClick, onEdit, onDelete, onAdd, onAddToQueue, personalWords, notebooks, sourceMap }) => {
     const { getPackageColor } = usePackageManager();
     const popoverRef = useRef<HTMLDivElement>(null);
     const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
@@ -165,14 +166,24 @@ export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord,
                 })}
             </div>
             {/* Add New Button */}
-            {onAdd && (
-                <div className="p-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/30">
-                    <button
-                        onClick={onAdd}
-                        className="w-full py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-amber-600 hover:border-amber-200 dark:hover:border-amber-900 transition-colors flex items-center justify-center gap-2"
-                    >
-                        <Plus size={16} /> Add New Gloss
-                    </button>
+            {(onAdd || onAddToQueue) && (
+                <div className="p-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/30 flex flex-col gap-2">
+                    {onAdd && (
+                        <button
+                            onClick={onAdd}
+                            className="w-full py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-amber-600 hover:border-amber-200 dark:hover:border-amber-900 transition-colors flex items-center justify-center gap-2"
+                        >
+                            <Plus size={16} /> Add New Gloss
+                        </button>
+                    )}
+                    {onAddToQueue && (
+                        <button
+                            onClick={onAddToQueue}
+                            className="w-full py-2 bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800 rounded-lg text-sm font-bold text-sky-600 dark:text-sky-400 hover:bg-sky-100 dark:hover:bg-sky-900/30 transition-colors flex items-center justify-center gap-2"
+                        >
+                            <Search size={16} /> Add to Investigation Queue
+                        </button>
+                    )}
                 </div>
             )}
         </div>
