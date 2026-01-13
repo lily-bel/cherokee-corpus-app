@@ -14,7 +14,7 @@ interface ReaderViewProps {
     chapterId: string;
     scrollToSentenceId?: string;
     onBack: () => void;
-    notebooks?: Record<string, any>;
+    customDictionaries?: Record<string, any>;
     onCreateWord?: () => void;
 }
 
@@ -23,7 +23,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
     chapterId,
     scrollToSentenceId,
     onBack,
-    notebooks,
+    customDictionaries,
     onCreateWord
 }) => {
     const { glossMap, dictionaryMap, addUserGloss, removeUserGloss, personalWords } = useCorpus();
@@ -50,7 +50,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
     const sentenceRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
     const book = books.find(b => b.id === bookId);
-    const sentences = useMemo(() => getSentencesForChapter(bookId, chapterId), [bookId, chapterId, getSentencesForChapter]);
+    const sentences = useMemo(() => getSentencesForChapter(chapterId), [chapterId, getSentencesForChapter]);
 
     // Scroll to sentence on mount
     useEffect(() => {
@@ -110,7 +110,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
         const gloss = wordGlosses[0];
         const color = getPackageColor(gloss.source);
         if (color?.startsWith('#')) return color;
-        if (gloss.source === 'user' || notebooks?.[gloss.source]) return '#fbbf24';
+        if (gloss.source === 'user' || customDictionaries?.[gloss.source]) return '#fbbf24';
         return '#cbd5e1';
     };
 
@@ -346,7 +346,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                             setActivePopover(null);
                         }}
                         personalWords={personalWords}
-                        notebooks={notebooks}
+                        customDictionaries={customDictionaries}
                     />
                 );
             })()}
@@ -358,7 +358,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                     targetWord={showLinker.targetWord}
                     dictionary={Array.from(dictionaryMap.values())}
                     personalWords={personalWords}
-                    notebooks={notebooks}
+                    customDictionaries={customDictionaries}
                     onClose={() => setShowLinker(null)}
                     onSelect={(entry, notes, breakdownCherokee, breakdownEnglish) => {
                         addUserGloss({

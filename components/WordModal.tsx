@@ -3,24 +3,26 @@ import { Modal } from './UI';
 import { formatToneInput } from '../utils';
 import { WordFormsEditor } from './WordFormsEditor';
 
+interface WordFormData {
+    Entry: string;
+    Syllabary: string;
+    Definition: string;
+    PoS: string;
+    Entry_Tone: string;
+    Notes: string;
+    customDictionaryId: string;
+    Other_Forms?: string;
+}
+
 interface WordModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (data: any) => void;
-    initialData: {
-        Entry: string;
-        Syllabary: string;
-        Definition: string;
-        PoS: string;
-        Entry_Tone: string;
-        Notes: string;
-        notebookId: string;
-        Other_Forms?: string;
-    };
-    isSentenceMode: boolean;
-    editingId: string | null;
-    notebooks: Record<string, any>;
-    usedFormLabels: string[];
+    onSave: (data: WordFormData) => void;
+    initialData?: WordFormData;
+    isSentenceMode?: boolean;
+    editingId?: string | null;
+    customDictionaries: Record<string, any>;
+    usedFormLabels?: string[];
 }
 
 export const WordModal: React.FC<WordModalProps> = ({
@@ -28,10 +30,10 @@ export const WordModal: React.FC<WordModalProps> = ({
     onClose,
     onSave,
     initialData,
-    isSentenceMode,
+    isSentenceMode = false,
     editingId,
-    notebooks,
-    usedFormLabels
+    customDictionaries,
+    usedFormLabels = []
 }) => {
     const [formData, setFormData] = useState(initialData);
     const [otherForms, setOtherForms] = useState<any[]>([]);
@@ -152,19 +154,19 @@ export const WordModal: React.FC<WordModalProps> = ({
                     </>
                 )}
 
-                <div>
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">Notebook</label>
-                    <select
-                        value={formData.notebookId}
-                        onChange={e => setFormData({ ...formData, notebookId: e.target.value })}
-                        className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 outline-none focus:border-amber-500 dark:text-white dark:bg-slate-800"
-                    >
-                        <option value="" disabled>Select a notebook...</option>
-                        {Object.values(notebooks).map((nb: any) => (
-                            <option key={nb.id} value={nb.id}>{nb.name}</option>
-                        ))}
-                    </select>
-                </div>
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">Custom Dictionary</label>
+                                <select
+                                    value={formData.customDictionaryId}
+                                    onChange={e => setFormData({ ...formData, customDictionaryId: e.target.value })}
+                                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-3 outline-none focus:ring-2 focus:ring-amber-500 dark:text-white"
+                                >
+                                    <option value="" disabled>Select a dictionary...</option>
+                                    {Object.values(customDictionaries).map((nb: any) => (
+                                        <option key={nb.id} value={nb.id}>{nb.name}</option>
+                                    ))}
+                                </select>
+                            </div>
             </div>
             <button onClick={handleSave} className="w-full mt-6 bg-amber-600 text-white font-bold py-3 rounded-lg">
                 Save {isSentenceMode ? "Sentence" : "Word"}

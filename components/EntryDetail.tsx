@@ -7,7 +7,7 @@ import AudioRecorder from './AudioRecorder';
 import { useCorpus } from './CorpusContext';
 import { SentenceCard } from './SentenceCard';
 
-const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms, onSaveAudio, onDeleteAudio, favorites, customLists, customListOrder, onClose, onEdit, onToggleFavorite, onToggleList, onDelete, onSearchTerm, onOpenNewListModal, onMove, personalWords, onEditSentence, onDeleteSentence, onCreateWord, onManageForms }) => {
+const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, userWordForms, onSaveAudio, onDeleteAudio, favorites, customLists, customListOrder, onClose, onEdit, onToggleFavorite, onToggleList, onDelete, onSearchTerm, onOpenNewListModal, onMove, personalWords, onEditSentence, onDeleteSentence, onCreateWord, onManageForms }) => {
     const [showListSheet, setShowListSheet] = useState(false);
     const [showRecorder, setShowRecorder] = useState(false);
     const [recorderTarget, setRecorderTarget] = useState<'entry' | 'sentence' | string>('entry');
@@ -76,7 +76,7 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms
     if (!entry) return null;
     const e = entry;
     const isFav = favorites.includes(e.Index);
-    const isPersonal = !!notebooks[e.Source];
+    const isPersonal = !!customDictionaries[e.Source];
 
     // CHANGE: Ignore CSV notes (e.Notes) for non-personal words. Only use userNotes.
     const noteContent = isPersonal ? e.Notes : (userNotes[e.Index] || '');
@@ -294,7 +294,7 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms
                 <div className="flex gap-2">{canEdit && <button onClick={() => onEdit(e)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-400"><Pencil size={20} /></button>}<button onClick={() => setShowListSheet(true)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-400"><ListPlus size={24} /></button><button onClick={() => onToggleFavorite(e.Index)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full"><Star size={24} className={isFav ? "fill-amber-400 text-amber-400" : "text-slate-400 dark:text-slate-500"} /></button></div>
             </div>
             <div ref={containerRef} className="flex-1 overflow-y-auto p-5 pb-24">
-                <div className="mb-2"><div className="flex items-start justify-between mb-2"><h1 className="font-noto-cherokee text-4xl font-bold text-slate-900 dark:text-slate-100">{e.Syllabary}</h1><SourceBadge source={e.Source} name={notebooks[e.Source]?.name} /></div><h2 className="font-noto-serif text-2xl text-amber-800 dark:text-amber-400 font-medium mb-1">{e.Entry}</h2>{e.Entry_Tone && <div className="font-sans text-lg text-slate-500 dark:text-slate-400 italic">{e.Entry_Tone}</div>}</div>
+                <div className="mb-2"><div className="flex items-start justify-between mb-2"><h1 className="font-noto-cherokee text-4xl font-bold text-slate-900 dark:text-slate-100">{e.Syllabary}</h1><SourceBadge source={e.Source} name={customDictionaries[e.Source]?.name} /></div><h2 className="font-noto-serif text-2xl text-amber-800 dark:text-amber-400 font-medium mb-1">{e.Entry}</h2>{e.Entry_Tone && <div className="font-sans text-lg text-slate-500 dark:text-slate-400 italic">{e.Entry_Tone}</div>}</div>
 
                 {/* CONTENT */}
                 <div className="flex-1 overflow-y-auto pr-2">
@@ -532,7 +532,7 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms
                                 <div ref={sentenceListRef} className="flex overflow-x-auto gap-4 pb-4 snap-x">
                                     {linkedSentences.map((s: any) => (
                                         <div key={s.id} className="min-w-[85vw] md:min-w-[400px] snap-center">
-                                            <SentenceCard sentence={s} userNotes={userNotes} onEditNote={(_, note) => onEdit(s, note, true)} onSaveAudio={onSaveAudio} userAudioMeta={userAudioMeta} onEditSentence={onEditSentence} onDeleteSentence={onDeleteSentence} onDeleteAudio={onDeleteAudio} onCreateWord={onCreateWord} personalWords={personalWords} notebooks={notebooks}
+                                            <SentenceCard sentence={s} userNotes={userNotes} onEditNote={(_, note) => onEdit(s, note, true)} onSaveAudio={onSaveAudio} userAudioMeta={userAudioMeta} onEditSentence={onEditSentence} onDeleteSentence={onDeleteSentence} onDeleteAudio={onDeleteAudio} onCreateWord={onCreateWord} personalWords={personalWords} customDictionaries={customDictionaries}
                                                 favorites={favorites}
                                                 customLists={customLists}
                                                 onToggleFavorite={onToggleFavorite}
@@ -569,7 +569,7 @@ const EntryDetail = ({ entry, notebooks, userNotes, userAudioMeta, userWordForms
                 {isPersonal && (
                     <div className="mt-12 space-y-3">
                         <button onClick={() => onMove(e.Index)} className="w-full py-3 text-sky-700 dark:text-sky-400 font-bold bg-sky-50 dark:bg-sky-900/20 rounded-xl border border-sky-100 dark:border-sky-900/50 flex items-center justify-center gap-2">
-                            <Folder size={20} /> Move to Notebook
+                            <Folder size={20} /> Move to Custom Dictionary
                         </button>
                         <button onClick={() => onDelete(e.Index)} className="w-full py-3 text-red-600 dark:text-red-400 font-bold bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-100 dark:border-red-900/50">Delete Word</button>
                     </div>

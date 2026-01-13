@@ -6,14 +6,14 @@ import { ArrowLeft, Trash2, Search as SearchIcon, Clock, ChevronRight } from './
 
 interface InvestigationQueueProps {
     onBack: () => void;
-    onNavigateToReader?: (sentenceId: string) => void;
-    notebooks?: Record<string, any>;
+    onNavigateToReader: (sentenceId: string) => void;
+    customDictionaries?: Record<string, any>;
 }
 
 export const InvestigationQueue: React.FC<InvestigationQueueProps> = ({
     onBack,
     onNavigateToReader,
-    notebooks
+    customDictionaries
 }) => {
     const { sentenceMap, glossMap, dictionaryMap, addUserGloss, personalWords } = useCorpus();
     const { investigationQueue, removeFromInvestigationQueue } = useReader();
@@ -237,7 +237,7 @@ export const InvestigationQueue: React.FC<InvestigationQueueProps> = ({
                     targetWord={showLinker.targetWord}
                     dictionary={Array.from(dictionaryMap.values())}
                     personalWords={personalWords}
-                    notebooks={notebooks}
+                    customDictionaries={customDictionaries}
                     onSelect={handleGlossCreated}
                     onClose={() => setShowLinker(null)}
                 />

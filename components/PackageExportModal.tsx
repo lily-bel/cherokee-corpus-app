@@ -11,7 +11,7 @@ interface PackageExportModalProps {
 }
 
 const PackageExportModal: React.FC<PackageExportModalProps> = ({ onClose, customLists }) => {
-    const { notebooks, userAudioMeta, personalWords, userSentences, glosses } = useCorpus(); // Added glosses
+    const { customDictionaries, userAudioMeta, personalWords, userSentences, glosses } = useCorpus(); // Added glosses
     const { exportPackage } = usePackageExport();
     // userNotes needed for built-in lists? The hook uses them but they are in App.tsx... 
     // Wait, ListsTab uses userNotes passed from App.tsx. 
@@ -31,7 +31,7 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({ onClose, custom
     // Actually, `userNotes` are just strings in a record. 
     // I'll stick to what I have in CorpusContext.
 
-    const [selectedNotebooks, setSelectedNotebooks] = useState<string[]>([]);
+    const [selectedDictionaries, setSelectedDictionaries] = useState<string[]>([]);
     const [selectedLists, setSelectedLists] = useState<Record<string, { selected: boolean, includeDependencies: boolean }>>({});
     const [metadata, setMetadata] = useState({
         name: '',
@@ -63,7 +63,7 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({ onClose, custom
     // Calculate Dependencies
     React.useEffect(() => {
         const deps: typeof dependencyEntries = [];
-        const selectedNbSet = new Set(selectedNotebooks);
+        const selectedNbSet = new Set(selectedDictionaries);
         const processedIds = new Set<string>();
 
         // 1. Check Lists
@@ -88,7 +88,7 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({ onClose, custom
                     } else {
                         const w = personalWords.find(x => x.id === targetId);
                         if (w) {
-                            source = w.notebookId;
+                            source = w.customDictionaryId;
                             name = w.Entry || w.Syllabary || 'Word';
                         }
                     }
@@ -123,7 +123,7 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({ onClose, custom
                          if (s) { source = s.source; name = s.translit || 'Sentence'; }
                      } else {
                          const w = personalWords.find(x => x.id === targetId);
-                         if (w) { source = w.notebookId; name = w.Entry || 'Word'; }
+                         if (w) { source = w.customDictionaryId; name = w.Entry || 'Word'; }
                      }
 
                      if (source && !selectedNbSet.has(source)) {
@@ -152,11 +152,11 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({ onClose, custom
 
         setDependencyEntries(deps);
 
-    }, [selectedNotebooks, selectedLists, includeAllAudio, includeAllGlosses, displayableLists, userSentences, personalWords, userAudioMeta, glosses]);
+    }, [selectedDictionaries, selectedLists, includeAllAudio, includeAllGlosses, displayableLists, userSentences, personalWords, userAudioMeta, glosses]);
 
 
-    const toggleNotebook = (id: string) => {
-        setSelectedNotebooks(prev =>
+    const toggleDictionary = (id: string) => {
+        setSelectedDictionaries(prev =>
             prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
         );
     };
@@ -174,7 +174,7 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({ onClose, custom
     // toggleListDeps removed as per request to move to Global Includes
 
     const handleExport = async () => {
-        if (!metadata.name || (selectedNotebooks.length === 0 && !Object.values(selectedLists).some(l => l.selected) && !includeAllAudio && !includeAllGlosses)) return;
+        if (!metadata.name || (selectedDictionaries.length === 0 && !Object.values(selectedLists).some(l => l.selected) && !includeAllAudio && !includeAllGlosses)) return;
 
         setIsExporting(true);
         console.log("Starting export...");
@@ -199,8 +199,8 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({ onClose, custom
             // Pass dependency entries if confirmed
             const depEntryIds = includeDependencies ? dependencyEntries.map(d => d.id) : [];
 
-            console.log("Calling exportPackage with:", { selectedNotebooks, metadata, finalListsConfig, depAudioIds, depEntryIds, includeAllNotesAndForms });
-            await exportPackage(selectedNotebooks, metadata, finalListsConfig, depAudioIds, depEntryIds, includeAllNotesAndForms);
+            console.log("Calling exportPackage with:", { selectedDictionaries, metadata, finalListsConfig, depAudioIds, depEntryIds, includeAllNotesAndForms });
+            await exportPackage(selectedDictionaries, metadata, finalListsConfig, depAudioIds, depEntryIds, includeAllNotesAndForms);
             onClose();
         } catch (e) {
             console.error("Export failed detailed:", e);
@@ -238,25 +238,26 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({ onClose, custom
                     />
                 </div>
 
-                {/* Notebooks */}
-                <div className="space-y-3">
-                    <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Select Notebooks</h3>
-                    <div className="max-h-48 overflow-y-auto space-y-2 border border-slate-100 dark:border-slate-800 rounded-lg p-2">
-                        {Object.values(notebooks).length === 0 && <p className="text-slate-400 text-sm italic p-2">No notebooks available.</p>}
-                        {Object.values(notebooks).map((nb: any) => (
-                            <div
-                                key={nb.id}
-                                onClick={() => toggleNotebook(nb.id)}
-                                className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${selectedNotebooks.includes(nb.id) ? 'bg-amber-50 dark:bg-amber-900/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-                            >
-                                <div className={`w-5 h-5 rounded border flex items-center justify-center ${selectedNotebooks.includes(nb.id) ? 'bg-amber-600 border-amber-600' : 'border-slate-300 dark:border-slate-600'}`}>
-                                    {selectedNotebooks.includes(nb.id) && <Check size={14} className="text-white" />}
-                                </div>
-                                <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{nb.name}</span>
+                        {/* Custom Dictionaries */}
+                        <div className="space-y-2">
+                            <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Select Custom Dictionaries</h3>
+                            <div className="max-h-48 overflow-y-auto border border-slate-100 dark:border-slate-800 rounded-xl">
+                                {Object.values(customDictionaries).length === 0 && <p className="text-slate-400 text-sm italic p-2">No custom dictionaries available.</p>}
+                                {Object.values(customDictionaries).map((nb: any) => (
+                                    <div
+                                        key={nb.id}
+                                        onClick={() => toggleDictionary(nb.id)}
+                                        className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${selectedDictionaries.includes(nb.id) ? 'bg-amber-50 dark:bg-amber-900/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                                    >
+                                        <div className={`w-5 h-5 rounded border flex items-center justify-center ${selectedDictionaries.includes(nb.id) ? 'bg-amber-600 border-amber-600' : 'border-slate-300 dark:border-slate-600'}`}>
+                                            {selectedDictionaries.includes(nb.id) && <Check size={14} className="text-white" />}
+                                        </div>
+                                        <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{nb.name}</span>
+                                    </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
-                </div>
+                        </div>
+
 
                 {/* Lists */}
                 <div className="space-y-3">
@@ -360,7 +361,7 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({ onClose, custom
                         <div className="flex-1">
                             <h4 className="text-sm font-bold text-amber-800 dark:text-amber-200 mb-1">Dependency Entries Found</h4>
                             <p className="text-xs text-amber-700 dark:text-amber-300 mb-3">
-                                Found {dependencyEntries.length} entries (words/sentences) referenced by your selected lists/audio/glosses that are NOT in the selected notebooks.
+                                Found {dependencyEntries.length} entries (words/sentences) referenced by your selected lists/audio/glosses that are NOT in the selected custom dictionaries.
                             </p>
                             <label className="flex items-center gap-2 cursor-pointer">
                                 <input
@@ -378,7 +379,7 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({ onClose, custom
 
             <button
                 onClick={handleExport}
-                disabled={isExporting || !metadata.name || (selectedNotebooks.length === 0 && !Object.values(selectedLists).some(l => l.selected) && !includeAllAudio && !includeAllGlosses && !includeAllNotesAndForms)}
+                disabled={isExporting || !metadata.name || (selectedDictionaries.length === 0 && !Object.values(selectedLists).some(l => l.selected) && !includeAllAudio && !includeAllGlosses && !includeAllNotesAndForms)}
                 className="w-full bg-amber-600 text-white font-bold py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
                 {isExporting ? 'Exporting...' : <><Download size={20} /> Export Package</>}

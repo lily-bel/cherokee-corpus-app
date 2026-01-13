@@ -7,7 +7,7 @@ import EntryDetail from './components/EntryDetail';
 
 import PackageManagerTab from './components/PackageManagerTab';
 import { useCorpus } from './components/CorpusContext';
-import { downloadFile, exportNotebookToCSV, importNotebookFromCSV, performSearch } from './utils';
+import { downloadFile, exportDictionaryToCSV, importDictionaryFromCSV, performSearch } from './utils';
 import { SentenceCard } from './components/SentenceCard';
 import WidgetsTab from './components/WidgetsTab';
 
@@ -30,13 +30,13 @@ const DEFAULT_SETTINGS = {
 
 function App() {
     const { packages, importedData } = usePackageManager();
-    const { dictionary, sentences, userSentences, glosses, loading, entryToSentencesMap, addUserSentence, removeUserSentence, removeUserSentences, removeUserGloss, notebooks, personalWords, setNotebooks, setPersonalWords, userAudioMeta, saveAudio, deleteAudio, sentenceMap, userWordForms, setUserWordForms, userNotes, setUserNotes } = useCorpus();
+    const { dictionary, sentences, userSentences, glosses, loading, entryToSentencesMap, addUserSentence, removeUserSentence, removeUserSentences, removeUserGloss, customDictionaries, personalWords, setCustomDictionaries, setPersonalWords, userAudioMeta, saveAudio, deleteAudio, sentenceMap, userWordForms, setUserWordForms, userNotes, setUserNotes } = useCorpus();
 
     // Legacy state replacements
     const csvData = dictionary; // Map dictionary to csvData for compatibility
 
 
-    const [notebookMode, setNotebookMode] = useState<'words' | 'sentences'>('words');
+    const [dictionaryMode, setDictionaryMode] = useState<'words' | 'sentences'>('words');
 
     // const [loadingMessage, setLoadingMessage] = useState<string>('Loading...');
     // const [showManualUpload, setShowManualUpload] = useState(false);
@@ -45,7 +45,7 @@ function App() {
     const [activeTab, setActiveTab] = useState<string>('search');
     const [searchScope, setSearchScope] = useState<'dictionary' | 'sentences'>('dictionary');
     const [selectedEntry, setSelectedEntry] = useState<any | null>(null);
-    const [activeNotebookId, setActiveNotebookId] = useState<string | null>(null);
+    const [activeDictionaryId, setActiveDictionaryId] = useState<string | null>(null);
     const [activeListId, setActiveListId] = useState<string | null>(null);
     const [listsView, setListsView] = useState<'all' | 'detail'>('all');
 
@@ -54,6 +54,7 @@ function App() {
     const [activeBookId, setActiveBookId] = useState<string | null>(null);
     const [activeChapterId, setActiveChapterId] = useState<string | null>(null);
     const [scrollToSentenceId, setScrollToSentenceId] = useState<string | undefined>(undefined);
+    const [importerDictionaryId, setImporterDictionaryId] = useState<string | undefined>(undefined);
 
     // Search & Input States
     const [inputValue, setInputValue] = useState('');
@@ -79,7 +80,7 @@ function App() {
     const [newListName, setNewListName] = useState('');
     const [toast, setToast] = useState({ show: false, message: '', type: 'error' });
     const [showWordModal, setShowWordModal] = useState(false);
-    const [wordForm, setWordForm] = useState({ Entry: '', Syllabary: '', Definition: '', PoS: '', Entry_Tone: '', Notes: '', notebookId: '' });
+    const [wordForm, setWordForm] = useState({ Entry: '', Syllabary: '', Definition: '', PoS: '', Entry_Tone: '', Notes: '', customDictionaryId: '' });
     const [isSentenceMode, setIsSentenceMode] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [pdSort] = useState('date');
@@ -87,9 +88,9 @@ function App() {
     const [currentNote, setCurrentNote] = useState('');
     const [noteTargetId, setNoteTargetId] = useState<string | null>(null);
     const [wordToDelete, setWordToDelete] = useState<string | null>(null);
-    const [showNewNotebookModal, setShowNewNotebookModal] = useState(false);
-    const [newNotebookName, setNewNotebookName] = useState('');
-    const [notebookToDelete, setNotebookToDelete] = useState<string | null>(null);
+    const [showNewDictionaryModal, setShowNewDictionaryModal] = useState(false);
+    const [newDictionaryName, setNewDictionaryName] = useState('');
+    const [dictionaryToDelete, setDictionaryToDelete] = useState<string | null>(null);
     const [showBackupConfirm, setShowBackupConfirm] = useState(false);
     const restoreInputRef = useRef<any>(null);
 
@@ -293,11 +294,11 @@ function App() {
 
     const allData = useMemo(() => {
         const isUserLibraryActive = packages.find(p => p.id === 'user')?.status === 'active';
-        const notebookEntries = isUserLibraryActive
-            ? personalWords.map(w => ({ ...w, id: w.Index, Source: w.notebookId, Source_Long: notebooks[w.notebookId || '']?.name || 'Personal Dictionary' }))
+        const dictionaryEntries = isUserLibraryActive
+            ? personalWords.map(w => ({ ...w, id: w.Index, Source: w.customDictionaryId, Source_Long: customDictionaries[w.customDictionaryId || '']?.name || 'Custom Dictionary' }))
             : [];
-        return [...notebookEntries, ...csvData];
-    }, [csvData, personalWords, notebooks, packages]);
+        return [...dictionaryEntries, ...csvData];
+    }, [csvData, personalWords, customDictionaries, packages]);
 
     const updateUrl = (entry) => {
         try {
@@ -405,7 +406,7 @@ function App() {
                 let packageDate = 0;
 
                 if (code.startsWith('nb_') || code === 'pd') {
-                    name = notebooks[code]?.name || d.Source_Long || 'Imported Notebook';
+                    name = customDictionaries[code]?.name || d.Source_Long || 'Imported Dictionary';
                     badge = (name || '??').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
                     packageDate = Date.now(); // User data always on top
                 } else {
@@ -423,7 +424,7 @@ function App() {
 
         // Custom Sort
         sources.sort((a, b) => {
-            // 1. Notebooks/Personal Data First
+            // 1. Custom Dictionaries/Personal Data First
             const isNbA = a.code.startsWith('nb_') || a.code === 'pd';
             const isNbB = b.code.startsWith('nb_') || b.code === 'pd';
             if (isNbA && !isNbB) return -1;
@@ -463,7 +464,7 @@ function App() {
         }
 
         return sources;
-    }, [allData, notebooks, sourceStats, packages]);
+    }, [allData, customDictionaries, sourceStats, packages]);
 
     // SENTENCE SOURCES
     const availableSentenceSources = useMemo(() => {
@@ -475,12 +476,12 @@ function App() {
         });
 
         const sortedSources = Object.entries(counts).map(([code, count]) => {
-            // Try to find name in notebooks
-            let name = notebooks[code]?.name;
+            // Try to find name in customDictionaries
+            let name = customDictionaries[code]?.name;
             let badge = '';
 
             if (name) {
-                // It's a user notebook
+                // It's a user custom dictionary
                 badge = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
             } else {
                 // Try to find in packages - Check by source_names shorthand
@@ -509,9 +510,9 @@ function App() {
 
             return { code, name, count, badge };
         }).sort((a, b) => {
-            // User sentences/notebooks first
-            const isUserA = a.code === 'user' || !!notebooks[a.code];
-            const isUserB = b.code === 'user' || !!notebooks[b.code];
+            // User sentences/customDictionaries first
+            const isUserA = a.code === 'user' || !!customDictionaries[a.code];
+            const isUserB = b.code === 'user' || !!customDictionaries[b.code];
             if (isUserA && !isUserB) return -1;
             if (!isUserA && isUserB) return 1;
             if (isUserA && isUserB) return a.name.localeCompare(b.name); // Sort user sources by name
@@ -548,7 +549,7 @@ function App() {
         });
 
         sortedSources.forEach(s => {
-            if (s.code === 'user' || notebooks[s.code]) {
+            if (s.code === 'user' || customDictionaries[s.code]) {
                 mainSources.push(s);
                 return;
             }
@@ -587,7 +588,7 @@ function App() {
         }
 
         return { mainSources, otherSources };
-    }, [sentences, userSentences, notebooks, packages]);
+    }, [sentences, userSentences, customDictionaries, packages]);
 
 
     const sourceMap = useMemo(() => {
@@ -675,7 +676,7 @@ function App() {
 
     const isEntrySearchable = (entry, config) => {
         const { searchLangs, searchScopes } = config;
-        const isPersonal = !!notebooks[entry.Source];
+        const isPersonal = !!customDictionaries[entry.Source];
 
         let hasTargetData = false;
         if (searchScopes.main) {
@@ -757,10 +758,10 @@ function App() {
     };
 
 
-    const createNotebook = () => { if (!newNotebookName.trim()) return; const id = 'nb_' + Date.now(); setNotebooks(p => ({ ...p, [id]: { id, name: newNotebookName, date: Date.now() } })); setNewNotebookName(''); setShowNewNotebookModal(false); showToast("Notebook created!", "success"); };
-    const deleteNotebook = (id) => {
-        const next = { ...notebooks }; delete next[id]; setNotebooks(next);
-        setPersonalWords(prev => prev.filter(w => w.notebookId !== id));
+    const createDictionary = () => { if (!newDictionaryName.trim()) return; const id = 'nb_' + Date.now(); setCustomDictionaries(p => ({ ...p, [id]: { id, name: newDictionaryName, date: Date.now(), type: 'notebook' } })); setNewDictionaryName(''); setShowNewDictionaryModal(false); showToast("Dictionary created!", "success"); };
+    const deleteDictionary = (id) => {
+        const next = { ...customDictionaries }; delete next[id]; setCustomDictionaries(next);
+        setPersonalWords(prev => prev.filter(w => w.customDictionaryId !== id));
 
         // Cascade Delete: Sentences and Glosses
         const sentencesToDelete = userSentences.filter(s => s.source === id);
@@ -777,8 +778,8 @@ function App() {
             removeUserSentences(sentenceIds);
         }
 
-        setActiveNotebookId(null);
-        setNotebookToDelete(null); showToast("Notebook deleted");
+        setActiveDictionaryId(null);
+        setDictionaryToDelete(null); showToast("Dictionary deleted");
     };
 
     const handleCreateList = () => {
@@ -805,8 +806,8 @@ function App() {
             if (renameData.initialEntryIndex) {
                 showToast(`Added to "${name}"`, 'success');
             }
-        } else if (renameData.type === 'notebook') {
-            // ... notebook logic
+        } else if (renameData.type === 'dictionary') {
+            // ... dictionary logic
         }
         setShowNewListModal(false);
         setRenameData({ type: null, target: null, value: '', initialEntryIndex: null });
@@ -816,13 +817,13 @@ function App() {
         const { type, target, value } = renameData;
         if (!value.trim() || !target) return;
 
-        if (type === 'notebook') {
-            setNotebooks(prev => ({
+        if (type === 'dictionary') {
+            setCustomDictionaries(prev => ({
                 ...prev,
                 [target]: { ...prev[target], name: value }
             }));
-            setShowNewNotebookModal(false);
-            showToast("Notebook renamed", "success");
+            setShowNewDictionaryModal(false);
+            showToast("Dictionary renamed", "success");
         } else if (type === 'list') {
             if (!target) { // This means it's a new list being created via rename modal
                 handleCreateList();
@@ -850,27 +851,27 @@ function App() {
     // Manual Upload Removed - Handled by CorpusContext
     // Manual Upload Removed - Handled by CorpusContext
 
-    const handleExportNotebook = () => {
-        if (!activeNotebookId) return;
-        exportNotebookToCSV(activeNotebookId, notebooks[activeNotebookId].name, personalWords);
+    const handleExportDictionary = () => {
+        if (!activeDictionaryId) return;
+        exportDictionaryToCSV(activeDictionaryId, customDictionaries[activeDictionaryId].name, personalWords);
         showToast("CSV Exported", "success");
     };
-    const handleImportNotebook = (e) => {
+    const handleImportDictionary = (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        importNotebookFromCSV(file, (importedWords) => {
+        importDictionaryFromCSV(file, (importedWords) => {
             const newId = 'nb_' + Date.now();
             const newName = file.name.replace('.csv', '');
-            setNotebooks(prev => ({ ...prev, [newId]: { id: newId, name: newName, date: Date.now() } }));
+            setCustomDictionaries(prev => ({ ...prev, [newId]: { id: newId, name: newName, date: Date.now() } }));
 
-            const wordsWithId = importedWords.map((w, i) => ({ ...w, Index: newId + '_' + i, notebookId: newId, DateCreated: Date.now() }));
+            const wordsWithId = importedWords.map((w, i) => ({ ...w, Index: newId + '_' + i, customDictionaryId: newId, DateCreated: Date.now() }));
             setPersonalWords(prev => [...prev, ...wordsWithId]);
             showToast(`Imported ${newName} `, "success");
         });
         e.target.value = null;
     };
     const handleBackup = () => {
-        const data = { favorites, customLists, customListOrder, notebooks, personalWords, userNotes, settings, searchHistory };
+        const data = { favorites, customLists, customListOrder, customDictionaries, personalWords, userNotes, settings, searchHistory };
         downloadFile(JSON.stringify(data), `cherokee_backup_${Date.now()}.json`, 'application/json');
         showToast("Backup saved", "success");
     };
@@ -885,7 +886,7 @@ function App() {
                 if (data.favorites) setFavorites(data.favorites);
                 if (data.customLists) setCustomLists(data.customLists);
                 if (data.customListOrder) setCustomListOrder(data.customListOrder);
-                if (data.notebooks) setNotebooks(data.notebooks);
+                if (data.customDictionaries || data.notebooks) setCustomDictionaries(data.customDictionaries || data.notebooks);
                 if (data.personalWords) setPersonalWords(data.personalWords);
                 if (data.userNotes) setUserNotes(data.userNotes);
                 // Audio meta is now managed by CorpusContext and IDB scanning, but if backup has it, maybe we should restore?
@@ -894,7 +895,7 @@ function App() {
                 // For now, let's skip restoring audio meta state directly as it auto-rebuilds.
                 if (data.settings) setSettings(data.settings);
                 if (data.searchHistory) setSearchHistory(data.searchHistory);
-                setActiveNotebookId(null);
+                setActiveDictionaryId(null);
                 showToast("Data Restored!", "success");
                 setShowBackupConfirm(false);
             } catch (err) { showToast("Invalid Backup File"); }
@@ -910,17 +911,17 @@ function App() {
     };
 
     const openWordModal = (w: any = null, forceMode?: 'word' | 'sentence') => {
-        // If opening for a new item (w is null), respect the current notebookMode OR forceMode
+        // If opening for a new item (w is null), respect the current dictionaryMode OR forceMode
         if (!w) {
-            // Priority: forceMode > notebookMode > default
-            const mode = forceMode || (activeTab === 'search' ? (searchScope === 'sentences' ? 'sentence' : 'word') : (notebookMode === 'sentences' ? 'sentence' : 'word'));
+            // Priority: forceMode > dictionaryMode > default
+            const mode = forceMode || (activeTab === 'search' ? (searchScope === 'sentences' ? 'sentence' : 'word') : (dictionaryMode === 'sentences' ? 'sentence' : 'word'));
             setIsSentenceMode(mode === 'sentence');
-            // Default notebook: activeNotebookId, or first available, or empty (to force selection if we want, but user said "force the user to choose", implying we can default but they must see it)
+            // Default dictionary: activeDictionaryId, or first available, or empty (to force selection if we want, but user said "force the user to choose", implying we can default but they must see it)
             // Actually, "give a 2nd modal that forces the user to choose" -> or just a dropdown in the same modal.
             // I'll put it in the same modal for better UX, but make it prominent.
-            const defaultNb = activeNotebookId || (Object.keys(notebooks).length > 0 ? Object.keys(notebooks)[0] : '');
+            const defaultNb = activeDictionaryId || (Object.keys(customDictionaries).length > 0 ? Object.keys(customDictionaries)[0] : '');
 
-            setWordForm({ Entry: '', Syllabary: '', Definition: '', PoS: '', Entry_Tone: '', Notes: '', notebookId: defaultNb });
+            setWordForm({ Entry: '', Syllabary: '', Definition: '', PoS: '', Entry_Tone: '', Notes: '', customDictionaryId: defaultNb });
             setEditingId(null);
         } else {
             // Editing existing item
@@ -932,7 +933,7 @@ function App() {
                 PoS: w.PoS || '',
                 Entry_Tone: w.Entry_Tone || '',
                 Notes: w.Notes || '',
-                notebookId: w.notebookId || w.source || '' // Handle both word and sentence source
+                customDictionaryId: w.customDictionaryId || w.source || '' // Handle both word and sentence source
             });
             setEditingId(w.Index || w.id);
         }
@@ -942,14 +943,14 @@ function App() {
         if ((!data.Entry && !data.Syllabary) || !data.Definition) { showToast("Missing fields"); return; }
 
         if (isSentenceMode) {
-            // Auto-create "My Notebook" if no notebooks exist
-            let targetSource = activeNotebookId || 'user';
+            // Auto-create "My Custom Dictionary" if no customDictionaries exist
+            let targetSource = activeDictionaryId || 'user';
 
-            if (!activeNotebookId && Object.keys(notebooks).length === 0) {
-                const newNotebookId = 'nb_' + Date.now();
-                const newNotebook = { id: newNotebookId, name: "My Notebook", date: Date.now() };
-                setNotebooks({ [newNotebookId]: newNotebook });
-                targetSource = newNotebookId;
+            if (!activeDictionaryId && Object.keys(customDictionaries).length === 0) {
+                const newDictionaryId = 'nb_' + Date.now();
+                const newDictionary = { id: newDictionaryId, name: "My Custom Dictionary", date: Date.now(), type: 'notebook' };
+                setCustomDictionaries({ [newDictionaryId]: newDictionary });
+                targetSource = newDictionaryId;
             }
 
             const newSentence = {
@@ -966,28 +967,28 @@ function App() {
             return;
         }
 
-        let target = activeNotebookId;
+        let target = activeDictionaryId;
         if (editingId) {
             const o = personalWords.find(w => w.Index === editingId);
-            if (o) target = o.notebookId;
+            if (o) target = o.customDictionaryId;
         }
         if (!target && !editingId) {
-            const k = Object.keys(notebooks);
+            const k = Object.keys(customDictionaries);
             if (k.length) target = k[0];
             else {
                 const d = 'nb_' + Date.now();
-                setNotebooks({ [d]: { id: d, name: "My Dictionary", date: Date.now() } });
+                setCustomDictionaries({ [d]: { id: d, name: "My Custom Dictionary", date: Date.now(), type: 'notebook' } });
                 target = d;
             }
         }
 
-        // Ensure data.notebookId is used if set (from modal dropdown)
-        if (data.notebookId) target = data.notebookId;
+        // Ensure data.customDictionaryId is used if set (from modal dropdown)
+        if (data.customDictionaryId) target = data.customDictionaryId;
 
         const nw = {
             ...data,
             Index: editingId || Date.now().toString(),
-            notebookId: target!,
+            customDictionaryId: target!,
             DateCreated: editingId ? (personalWords.find(w => w.Index === editingId)?.DateCreated || Date.now()) : Date.now(),
             // Standard Fields
             id: editingId || Date.now().toString(),
@@ -999,7 +1000,7 @@ function App() {
         };
         if (editingId) {
             setPersonalWords(p => p.map(w => w.Index === editingId ? nw : w));
-            if (selectedEntry?.Index === editingId) setSelectedEntry({ ...nw, Source: nw.notebookId, Source_Long: notebooks[nw.notebookId!].name });
+            if (selectedEntry?.Index === editingId) setSelectedEntry({ ...nw, Source: nw.customDictionaryId, Source_Long: customDictionaries[nw.customDictionaryId!].name });
         } else {
             setPersonalWords(p => [nw, ...p]);
         }
@@ -1053,7 +1054,7 @@ function App() {
     const handleEditSentence = (id: string) => {
         const s = userSentences.find(x => x.id === id);
         if (s) {
-            setWordForm({ Entry: s.translit, Syllabary: s.syllabary, Definition: s.english, PoS: '', Entry_Tone: '', Notes: userNotes['s_' + s.id] || '', notebookId: s.source });
+            setWordForm({ Entry: s.translit, Syllabary: s.syllabary, Definition: s.english, PoS: '', Entry_Tone: '', Notes: userNotes['s_' + s.id] || '', customDictionaryId: s.source });
             setEditingId(s.id);
             setIsSentenceMode(true);
             setShowWordModal(true);
@@ -1075,17 +1076,17 @@ function App() {
         setShowMoveModal(true);
     };
 
-    const handleMoveWord = (notebookId) => {
+    const handleMoveWord = (customDictionaryId) => {
         if (!wordToMove) return;
         setPersonalWords(prev => prev.map(w => {
             if (w.Index === wordToMove) {
-                return { ...w, notebookId: notebookId };
+                return { ...w, customDictionaryId: customDictionaryId };
             }
             return w;
         }));
         if (selectedEntry && selectedEntry.Index === wordToMove) {
-            const nb = notebooks[notebookId];
-            setSelectedEntry((prev: any) => ({ ...prev, notebookId: notebookId, Source: notebookId, Source_Long: nb?.name }));
+            const nb = customDictionaries[customDictionaryId];
+            setSelectedEntry((prev: any) => ({ ...prev, customDictionaryId: customDictionaryId, Source: customDictionaryId, Source_Long: nb?.name }));
         }
         setShowMoveModal(false);
         setWordToMove(null);
@@ -1130,16 +1131,18 @@ function App() {
 
     // Audio Logic Moved to CorpusContext
 
-    const notebookList = useMemo(() => {
-        const list: any[] = Object.values(notebooks).map((nb: any) => ({
-            id: nb.id,
-            name: nb.name,
-            date: nb.date,
-            type: 'user',
-            countWords: personalWords.filter(w => w.notebookId === nb.id).length,
-            countSentences: userSentences.filter(s => s.source === nb.id).length,
-            color: 'amber'
-        }));
+    const dictionaryList = useMemo(() => {
+        const list: any[] = Object.values(customDictionaries)
+            .filter((nb: any) => nb.type !== 'book') // Hide books from Custom Dictionaries tab
+            .map((nb: any) => ({
+                id: nb.id,
+                name: nb.name,
+                date: nb.date,
+                type: 'user',
+                countWords: personalWords.filter(w => w.customDictionaryId === nb.id).length,
+                countSentences: userSentences.filter(s => s.source === nb.id).length,
+                color: 'amber'
+            }));
 
         packages.forEach(p => {
             if (p.type === 'imported' && p.status === 'active') {
@@ -1165,22 +1168,22 @@ function App() {
             if (a.type !== 'user' && b.type === 'user') return 1;
             return (b.date || 0) - (a.date || 0);
         });
-    }, [notebooks, packages, personalWords, userSentences, allData, sentences]);
+    }, [customDictionaries, packages, personalWords, userSentences, allData, sentences]);
 
-    const sortedNotebookWords = useMemo(() => {
-        if (!activeNotebookId) return [];
+    const sortedDictionaryWords = useMemo(() => {
+        if (!activeDictionaryId) return [];
         let w: any[] = [];
-        if (notebooks[activeNotebookId]) {
-            w = personalWords.filter(x => x.notebookId === activeNotebookId).map(x => ({ ...x, Source: activeNotebookId, Source_Long: notebooks[activeNotebookId]?.name }));
+        if (customDictionaries[activeDictionaryId]) {
+            w = personalWords.filter(x => x.customDictionaryId === activeDictionaryId).map(x => ({ ...x, Source: activeDictionaryId, Source_Long: customDictionaries[activeDictionaryId]?.name }));
         } else {
-            w = allData.filter(x => x.Source === activeNotebookId);
+            w = allData.filter(x => x.Source === activeDictionaryId);
         }
 
         if (pdSort === 'date') return w.sort((a, b) => ((b.DateCreated || 0) - (a.DateCreated || 0)));
         if (pdSort === 'syllabary') return w.sort((a, b) => (a.Syllabary || '').localeCompare(b.Syllabary || ''));
         if (pdSort === 'translit') return w.sort((a, b) => (a.Entry || '').localeCompare(b.Entry || ''));
         return w.sort((a, b) => (a.Definition || '').localeCompare(b.Definition || ''));
-    }, [personalWords, activeNotebookId, pdSort, notebooks, allData]);
+    }, [personalWords, activeDictionaryId, pdSort, customDictionaries, allData]);
 
     const prioritizedSources = useMemo(() => {
         const prioritized = new Set<string>();
@@ -1212,8 +1215,8 @@ function App() {
         const isUserLibraryActive = packages.find(p => p.id === 'user')?.status === 'active';
         // Include user sentences in search if scope is sentences AND user library is active
         const combinedSentences = [...sentences, ...(isUserLibraryActive ? userSentences : [])];
-        return performSearch(query, allData, combinedSentences, entryToSentencesMap, settings, notebooks, userNotes, posFilter, searchScope, prioritizedSources);
-    }, [query, allData, notebooks, settings, userNotes, posFilter, searchScope, sentences, userSentences, entryToSentencesMap, prioritizedSources, packages]);
+        return performSearch(query, allData, combinedSentences, entryToSentencesMap, settings, customDictionaries, userNotes, posFilter, searchScope, prioritizedSources);
+    }, [query, allData, customDictionaries, settings, userNotes, posFilter, searchScope, sentences, userSentences, entryToSentencesMap, prioritizedSources, packages]);
 
     const filteredResults = useMemo(() => {
         if (!query && activeTab === 'search') return { active: [], inactive: [] };
@@ -1228,16 +1231,16 @@ function App() {
 
             const srcKey = searchScope === 'sentences' ? (item.item?.source) : (item.Source || item.source);
 
-            if (notebooks[srcKey]) return activeFilters[srcKey] !== false;
+            if (customDictionaries[srcKey]) return activeFilters[srcKey] !== false;
             return activeFilters[srcKey] !== false; // Case sensitivity? keys in filters are as-is from source
         });
         const inactive = searchResults.filter(item => {
             const srcKey = searchScope === 'sentences' ? (item.item?.source) : (item.Source || item.source);
-            if (notebooks[srcKey]) return activeFilters[srcKey] === false;
+            if (customDictionaries[srcKey]) return activeFilters[srcKey] === false;
             return activeFilters[srcKey] === false;
         });
         return { active, inactive };
-    }, [searchResults, filters, sentenceFilters, activeTab, query, notebooks, searchScope]);
+    }, [searchResults, filters, sentenceFilters, activeTab, query, customDictionaries, searchScope]);
 
     const paginatedResults = useMemo(() => {
         const activeSlice = filteredResults.active.slice(0, resultLimit);
@@ -1432,7 +1435,7 @@ function App() {
                             const data = item.item || item;
 
                             return isSentence ? (
-                                <SentenceCard key={data.id} sentence={data} onClick={() => handleEntryClick(data)} notebooks={notebooks} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} personalWords={personalWords} onCreateWord={() => openWordModal(null)}
+                                <SentenceCard key={data.id} sentence={data} onClick={() => handleEntryClick(data)} customDictionaries={customDictionaries} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} personalWords={personalWords} onCreateWord={() => openWordModal(null)}
                                     favorites={favorites}
                                     customLists={customLists}
                                     onToggleFavorite={toggleFavorite}
@@ -1440,7 +1443,7 @@ function App() {
                                     onOpenNewListModal={() => setShowNewListModal(true)}
                                 />
                             ) : (
-                                <EntryCard key={item.Index} entry={item} notebooks={notebooks} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} />
+                                <EntryCard key={item.Index} entry={item} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} />
                             );
                         })}
 
@@ -1448,7 +1451,7 @@ function App() {
 
                             {paginatedResults.inactive.length > 0 && <><div className="px-4 py-2 bg-slate-50 dark:bg-slate-900/50 text-xs font-bold text-slate-400 uppercase tracking-widest border-y border-slate-100 dark:border-slate-800 mt-4">Filtered</div>{paginatedResults.inactive.map(entry => {
                                 if (entry.item && (entry.type === 'text' || entry.type === 'deep')) {
-                                    return <SentenceCard key={entry.item.id} sentence={entry.item} onClick={() => handleEntryClick(entry.item)} isDimmed={true} notebooks={notebooks} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} personalWords={personalWords} onCreateWord={() => openWordModal(null)}
+                                    return <SentenceCard key={entry.item.id} sentence={entry.item} onClick={() => handleEntryClick(entry.item)} isDimmed={true} customDictionaries={customDictionaries} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} personalWords={personalWords} onCreateWord={() => openWordModal(null)}
                                         favorites={favorites}
                                         customLists={customLists}
                                         onToggleFavorite={toggleFavorite}
@@ -1456,7 +1459,7 @@ function App() {
                                         onOpenNewListModal={() => setShowNewListModal(true)}
                                     />;
                                 }
-                                return <EntryCard key={entry.Index} entry={entry} notebooks={notebooks} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} isDimmed={true} />;
+                                return <EntryCard key={entry.Index} entry={entry} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} isDimmed={true} />;
                             })}</>}
                             {paginatedResults.hasMore && (
                                 <div className="p-4">
@@ -1504,7 +1507,7 @@ function App() {
                         favorites={favorites}
                         setFavorites={setFavorites}
                         allData={allData}
-                        notebooks={notebooks}
+                        customDictionaries={customDictionaries}
                         userNotes={userNotes}
                         userAudioMeta={userAudioMeta}
                         onEntryClick={handleEntryClick}
@@ -1520,7 +1523,7 @@ function App() {
                             const activeNotes = (isModal || isModalSentences) ? {} : userNotes;
                             const activePrioritized = (isModal || isModalSentences) ? [] : prioritizedSources;
 
-                            return performSearch(q, allData, [...sentences, ...userSentences], entryToSentencesMap, activeSettings, notebooks, activeNotes, activePos, isModalSentences ? 'sentences' : (isModal ? 'dictionary' : (scope || 'dictionary')), activePrioritized);
+                            return performSearch(q, allData, [...sentences, ...userSentences], entryToSentencesMap, activeSettings, customDictionaries, activeNotes, activePos, isModalSentences ? 'sentences' : (isModal ? 'dictionary' : (scope || 'dictionary')), activePrioritized);
                         }}
                         settings={settings}
                         openWordModal={openWordModal}
@@ -1536,11 +1539,13 @@ function App() {
                 {activeTab === 'reader' && (
                     readerView === 'importing' ? (
                         <TextImporter
-                            onBack={() => setReaderView('list')}
+                            onBack={() => { setReaderView('list'); setImporterDictionaryId(undefined); }}
                             onComplete={(_storyId) => {
                                 setReaderView('list');
+                                setImporterDictionaryId(undefined);
                             }}
-                            notebooks={notebooks}
+                            customDictionaries={customDictionaries}
+                            preselectedDictionaryId={importerDictionaryId}
                         />
                     ) : readerView === 'reading' && activeBookId && activeChapterId ? (
                         <ReaderView
@@ -1553,28 +1558,31 @@ function App() {
                                 setActiveChapterId(null);
                                 setScrollToSentenceId(undefined);
                             }}
-                            notebooks={notebooks}
+                            customDictionaries={customDictionaries}
                             onCreateWord={openWordModal}
                         />
                     ) : (
                         <ReaderTab
-                            notebooks={notebooks}
+                            customDictionaries={customDictionaries}
                             onNavigateToReader={(bookId, chapterId, sentenceId) => {
                                 setActiveBookId(bookId);
                                 setActiveChapterId(chapterId);
                                 setScrollToSentenceId(sentenceId);
                                 setReaderView('reading');
                             }}
-                            onOpenImporter={() => setReaderView('importing')}
+                            onOpenImporter={(dictionaryId) => {
+                                setImporterDictionaryId(dictionaryId);
+                                setReaderView('importing');
+                            }}
                         />
                     )
                 )}
                 {activeTab === 'packages' && <PackageManagerTab
                     customLists={customLists}
                     onNavigate={(type, payload) => {
-                        if (type === 'notebook') {
+                        if (type === 'dictionary') {
                             setActiveTab('personal');
-                            setActiveNotebookId(payload);
+                            setActiveDictionaryId(payload);
                         } else if (type === 'list') {
                             setActiveTab('lists');
                             setActiveListId(payload);
@@ -1585,31 +1593,31 @@ function App() {
                     }}
                 />}
                 {
-                    activeTab === 'personal' && (!activeNotebookId ? (<div className="flex flex-col h-full"><div className="px-4 py-4 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0"><h2 className="font-noto-serif text-2xl font-bold text-slate-800 dark:text-slate-100">Notebooks</h2><button onClick={() => setShowNewNotebookModal(true)} className="bg-slate-900 dark:bg-slate-700 text-white p-2 rounded-full shadow-md"><Plus size={20} /></button></div><div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-4 content-start">{notebookList.map((nb: any) => {
+                    activeTab === 'personal' && (!activeDictionaryId ? (<div className="flex flex-col h-full"><div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0"><h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Custom Dictionaries</h1><button onClick={() => setShowNewDictionaryModal(true)} className="bg-slate-900 dark:bg-slate-700 text-white p-2 rounded-full shadow-md"><Plus size={20} /></button></div><div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-4 content-start">{dictionaryList.map((nb: any) => {
                         const isImported = nb.type === 'imported';
                         const colorClass = isImported ? `text-${nb.color === 'amber' ? 'amber' : (nb.color === 'slate' ? 'slate' : nb.color)}-600 dark:text-${nb.color === 'amber' ? 'amber' : (nb.color === 'slate' ? 'slate' : nb.color)}-400` : 'text-amber-500 hover:text-amber-600';
                         // Handle hex colors
                         const style = (isImported && nb.color.startsWith('#')) ? { color: nb.color } : {};
 
-                        return (<div key={nb.id} onClick={() => setActiveNotebookId(nb.id)} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 flex flex-col shadow-sm hover:shadow-md transition-shadow active:bg-slate-50 dark:active:bg-slate-800 cursor-pointer h-32 justify-between"><Folder size={32} className={isImported && nb.color.startsWith('#') ? "" : (isImported ? colorClass : "text-amber-500")} style={style} /><div><h3 className="font-bold text-slate-800 dark:text-slate-200 line-clamp-1">{nb.name}</h3><p className="text-xs text-slate-400">{nb.countWords} words, {nb.countSentences} sentences</p></div></div>);
-                    })}{notebookList.length === 0 && (<div className="col-span-2 text-center py-12 text-slate-400 flex flex-col items-center"><BookOpen size={48} className="mb-4 opacity-20" /><p>No notebooks yet.</p><button onClick={() => setShowNewNotebookModal(true)} className="mt-4 text-sky-600 dark:text-sky-400 font-bold">Create one</button></div>)}</div><div className="p-4 border-t border-slate-200 dark:border-slate-800"><label className="w-full flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold py-3 rounded-xl cursor-pointer transition-colors"><Download size={20} /><span>Import CSV</span><input type="file" className="hidden" accept=".csv" onChange={handleImportNotebook} /></label></div></div>) : (<div className="flex flex-col h-full"><div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col gap-3 shrink-0">
+                        return (<div key={nb.id} onClick={() => setActiveDictionaryId(nb.id)} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 flex flex-col shadow-sm hover:shadow-md transition-shadow active:bg-slate-50 dark:active:bg-slate-800 cursor-pointer h-32 justify-between"><Folder size={32} className={isImported && nb.color.startsWith('#') ? "" : (isImported ? colorClass : "text-amber-500")} style={style} /><div><h3 className="font-bold text-slate-800 dark:text-slate-200 line-clamp-1">{nb.name}</h3><p className="text-xs text-slate-400">{nb.countWords} words, {nb.countSentences} sentences</p></div></div>);
+                    })}{dictionaryList.length === 0 && (<div className="col-span-2 text-center py-12 text-slate-400 flex flex-col items-center"><BookOpen size={48} className="mb-4 opacity-20" /><p>No custom dictionaries yet.</p><button onClick={() => setShowNewDictionaryModal(true)} className="mt-4 text-sky-600 dark:text-sky-400 font-bold">Create one</button></div>)}</div><div className="p-4 border-t border-slate-200 dark:border-slate-800"><label className="w-full flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold py-3 rounded-xl cursor-pointer transition-colors"><Download size={20} /><span>Import CSV</span><input type="file" className="hidden" accept=".csv" onChange={handleImportDictionary} /></label></div></div>) : (<div className="flex flex-col h-full"><div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col gap-3 shrink-0">
                         <div className="flex items-center gap-3">
-                            <button onClick={() => setActiveNotebookId(null)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full -ml-2"><ArrowLeft size={20} className="text-slate-500 dark:text-slate-400" /></button>
-                            <div className="flex-1 flex items-center gap-2"><h2 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100">{notebooks[activeNotebookId]?.name || notebookList.find(n => n.id === activeNotebookId)?.name || 'Notebook'}</h2>
-                                {notebooks[activeNotebookId] && <button onClick={() => { setRenameData({ type: 'notebook', target: activeNotebookId, value: notebooks[activeNotebookId].name }); setShowNewNotebookModal(true); }} className="p-1 text-slate-400 hover:text-sky-600 rounded-full"><Pencil size={14} /></button>}
+                            <button onClick={() => setActiveDictionaryId(null)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full -ml-2"><ArrowLeft size={20} className="text-slate-500 dark:text-slate-400" /></button>
+                            <div className="flex-1 flex items-center gap-2"><h2 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100">{customDictionaries[activeDictionaryId]?.name || dictionaryList.find(n => n.id === activeDictionaryId)?.name || 'Custom Dictionary'}</h2>
+                                {customDictionaries[activeDictionaryId] && <button onClick={() => { setRenameData({ type: 'dictionary', target: activeDictionaryId, value: customDictionaries[activeDictionaryId].name }); setShowNewDictionaryModal(true); }} className="p-1 text-slate-400 hover:text-sky-600 rounded-full"><Pencil size={14} /></button>}
                             </div>
-                            <div className="flex gap-2 ml-auto"><button onClick={handleExportNotebook} className="p-1.5 text-slate-400 hover:text-amber-600 rounded"><Share size={20} /></button><button onClick={() => setNotebookToDelete(activeNotebookId)} className="p-1.5 text-slate-400 hover:text-red-500 rounded"><Trash2 size={20} /></button></div>
+                            <div className="flex gap-2 ml-auto"><button onClick={handleExportDictionary} className="p-1.5 text-slate-400 hover:text-amber-600 rounded"><Share size={20} /></button><button onClick={() => setDictionaryToDelete(activeDictionaryId)} className="p-1.5 text-slate-400 hover:text-red-500 rounded"><Trash2 size={20} /></button></div>
                         </div>
                         <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
-                            <button onClick={() => setNotebookMode('words')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${notebookMode === 'words' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'} `}>Words</button>
-                            <button onClick={() => setNotebookMode('sentences')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${notebookMode === 'sentences' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'} `}>Sentences</button>
+                            <button onClick={() => setDictionaryMode('words')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${dictionaryMode === 'words' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'} `}>Words</button>
+                            <button onClick={() => setDictionaryMode('sentences')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${dictionaryMode === 'sentences' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'} `}>Sentences</button>
                         </div>
                     </div>
-                        <div className="flex-1 overflow-y-auto p-4" key={activeNotebookId + '-' + notebookMode}>
-                            {notebookMode === 'words' ? (
-                                sortedNotebookWords.length === 0 ? <div className="text-center py-12 text-slate-400">Empty notebook.<br />Tap + to add a word.</div> : sortedNotebookWords.map(entry => <EntryCard key={entry.Index} entry={entry} notebooks={notebooks} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} />)
+                        <div className="flex-1 overflow-y-auto p-4" key={activeDictionaryId + '-' + dictionaryMode}>
+                            {dictionaryMode === 'words' ? (
+                                sortedDictionaryWords.length === 0 ? <div className="text-center py-12 text-slate-400">Empty dictionary.<br />Tap + to add a word.</div> : sortedDictionaryWords.map(entry => <EntryCard key={entry.Index} entry={entry} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} />)
                             ) : (
-                                (notebooks[activeNotebookId] ? userSentences : sentences).filter(s => s.source === activeNotebookId).length === 0 ? <div className="text-center py-12 text-slate-400">No sentences yet.<br />Tap + to add one.</div> : (notebooks[activeNotebookId] ? userSentences : sentences).filter(s => s.source === activeNotebookId).map(s => <SentenceCard key={s.id} sentence={s} notebooks={notebooks} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} personalWords={personalWords} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} onDeleteAudio={deleteAudio}
+                                (customDictionaries[activeDictionaryId] ? userSentences : sentences).filter(s => s.source === activeDictionaryId).length === 0 ? <div className="text-center py-12 text-slate-400">No sentences yet.<br />Tap + to add one.</div> : (customDictionaries[activeDictionaryId] ? userSentences : sentences).filter(s => s.source === activeDictionaryId).map(s => <SentenceCard key={s.id} sentence={s} customDictionaries={customDictionaries} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} personalWords={personalWords} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} onDeleteAudio={deleteAudio}
                                     favorites={favorites}
                                     customLists={customLists}
                                     onToggleFavorite={toggleFavorite}
@@ -1617,7 +1625,7 @@ function App() {
                                     onOpenNewListModal={() => setShowNewListModal(true)}
                                 />)
                             )}
-                        </div>{notebooks[activeNotebookId] && <button onClick={() => openWordModal()} className="absolute bottom-6 right-6 bg-slate-900 dark:bg-slate-700 text-white p-4 rounded-full shadow-xl z-20 hover:scale-105 transition-transform"><Plus size={24} /></button>}</div>))
+                        </div>{customDictionaries[activeDictionaryId] && <button onClick={() => openWordModal()} className="absolute bottom-6 right-6 bg-slate-900 dark:bg-slate-700 text-white p-4 rounded-full shadow-xl z-20 hover:scale-105 transition-transform"><Plus size={24} /></button>}</div>))
 
                 }
             </main >
@@ -1634,9 +1642,9 @@ function App() {
                     <BookOpen size={24} strokeWidth={2} />
                     <span className="text-[10px] font-bold tracking-wide">Reader</span>
                 </button>
-                <button onClick={() => { if (activeTab === 'personal') setActiveNotebookId(null); setActiveTab('personal'); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'personal' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
+                <button onClick={() => { if (activeTab === 'personal') setActiveDictionaryId(null); setActiveTab('personal'); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'personal' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
                     <Book size={24} strokeWidth={2} />
-                    <span className="text-[10px] font-bold tracking-wide">Notebooks</span>
+                    <span className="text-[10px] font-bold tracking-wide">Dictionaries</span>
                 </button>
                 <button onClick={() => { setActiveTab('packages'); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'packages' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
                     <Box size={24} strokeWidth={2} />
@@ -1653,7 +1661,7 @@ function App() {
                 selectedEntry && (
                     <EntryDetail
                         entry={selectedEntry}
-                        notebooks={notebooks}
+                        customDictionaries={customDictionaries}
                         userNotes={userNotes}
                         userAudioMeta={userAudioMeta}
                         userWordForms={userWordForms}
@@ -1732,16 +1740,16 @@ function App() {
                     </Modal>
                 )
             }
-            {/* REUSED MODAL FOR NEW LIST / NEW NOTEBOOK / RENAME */}
+            {/* REUSED MODAL FOR NEW LIST / NEW DICTIONARY / RENAME */}
             {showNewListModal && (<Modal title={renameData.type === 'list' ? "Rename List" : "New List"} onClose={() => { setShowNewListModal(false); setRenameData({ type: null, target: null, value: '' }); }}><input type="text" autoFocus placeholder={renameData.type === 'list' ? "Rename list..." : "Enter list name..."} value={renameData.value || newListName} onChange={(e) => renameData.type === 'list' ? setRenameData({ ...renameData, value: e.target.value }) : setNewListName(e.target.value)} className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-4 py-3 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 dark:focus:ring-amber-900 transition-all dark:text-white" /><button onClick={renameData.type === 'list' ? handleRename : createNewList} disabled={!(renameData.type === 'list' ? renameData.value : newListName).trim()} className="w-full mt-4 bg-amber-600 text-white font-bold py-3 rounded-lg">Save</button></Modal>)}
-            {showNewNotebookModal && (<Modal title={renameData.type === 'notebook' ? "Rename Notebook" : "New Notebook"} onClose={() => { setShowNewNotebookModal(false); setRenameData({ type: null, target: null, value: '' }); }}><input type="text" autoFocus placeholder={renameData.type === 'notebook' ? "Rename notebook..." : "Enter notebook name..."} value={renameData.value || newNotebookName} onChange={(e) => renameData.type === 'notebook' ? setRenameData({ ...renameData, value: e.target.value }) : setNewNotebookName(e.target.value)} className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-4 py-3 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 dark:focus:ring-amber-900 transition-all dark:text-white" /><button onClick={renameData.type === 'notebook' ? handleRename : createNotebook} disabled={!(renameData.type === 'notebook' ? renameData.value : newNotebookName).trim()} className="w-full mt-4 bg-sky-700 text-white font-bold py-3 rounded-lg">{renameData.type === 'notebook' ? "Rename" : "Create"}</button></Modal>)}
+            {showNewDictionaryModal && (<Modal title={renameData.type === 'dictionary' ? "Rename Custom Dictionary" : "New Custom Dictionary"} onClose={() => { setShowNewDictionaryModal(false); setRenameData({ type: null, target: null, value: '' }); }}><input type="text" autoFocus placeholder={renameData.type === 'dictionary' ? "Rename dictionary..." : "Enter dictionary name..."} value={renameData.value || newDictionaryName} onChange={(e) => renameData.type === 'dictionary' ? setRenameData({ ...renameData, value: e.target.value }) : setNewDictionaryName(e.target.value)} className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-4 py-3 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 dark:focus:ring-amber-900 transition-all dark:text-white" /><button onClick={renameData.type === 'dictionary' ? handleRename : createDictionary} disabled={!(renameData.type === 'dictionary' ? renameData.value : newDictionaryName).trim()} className="w-full mt-4 bg-sky-700 text-white font-bold py-3 rounded-lg">{renameData.type === 'dictionary' ? "Rename" : "Create"}</button></Modal>)}
 
             {wordToDelete && (<Modal title="Delete Word?" onClose={() => setWordToDelete(null)}><p className="text-slate-600 dark:text-slate-300 mb-6">Are you sure you want to delete this word? This will remove it from all your lists.</p><button onClick={confirmDeleteWord} className="w-full bg-red-600 text-white font-bold py-3 rounded-lg">Delete</button></Modal>)}
-            {notebookToDelete && (<Modal title="Delete Notebook?" onClose={() => setNotebookToDelete(null)}><p className="text-slate-600 dark:text-slate-300 mb-6">Are you sure you want to delete this notebook? All words inside it will be lost.</p><button onClick={() => deleteNotebook(notebookToDelete)} className="w-full bg-red-600 text-white font-bold py-3 rounded-lg">Delete</button></Modal>)}
+            {dictionaryToDelete && (<Modal title="Delete Custom Dictionary?" onClose={() => setDictionaryToDelete(null)}><p className="text-slate-600 dark:text-slate-300 mb-6">Are you sure you want to delete this dictionary? All words inside it will be lost.</p><button onClick={() => deleteDictionary(dictionaryToDelete)} className="w-full bg-red-600 text-white font-bold py-3 rounded-lg">Delete</button></Modal>)}
             {
                 showBackupConfirm && (
                     <Modal title="Restore Backup?" onClose={() => setShowBackupConfirm(false)}>
-                        <p className="text-slate-600 dark:text-slate-300 mb-6">This will <strong>overwrite</strong> all your current notebooks, lists, and settings. This action cannot be undone.</p>
+                        <p className="text-slate-600 dark:text-slate-300 mb-6">This will <strong>overwrite</strong> all your current custom dictionaries, lists, and settings. This action cannot be undone.</p>
                         <button onClick={() => handleRestore(restoreInputRef.current)} className="w-full bg-red-600 text-white font-bold py-3 rounded-lg">Yes, Overwrite Everything</button>
                     </Modal>
                 )
@@ -1755,7 +1763,7 @@ function App() {
                         initialData={wordForm}
                         isSentenceMode={isSentenceMode}
                         editingId={editingId}
-                        notebooks={notebooks}
+                        customDictionaries={customDictionaries}
                         usedFormLabels={usedFormLabels}
                     />
                 )
@@ -1774,16 +1782,16 @@ function App() {
                 )
             }
 
-            {/* MOVE NOTEBOOK MODAL */}
+            {/* MOVE DICTIONARY MODAL */}
             {
                 showMoveModal && (
-                    <Modal title="Move to Notebook" onClose={() => setShowMoveModal(false)}>
+                    <Modal title="Move to Custom Dictionary" onClose={() => setShowMoveModal(false)}>
                         <div className="space-y-2 max-h-[60vh] overflow-y-auto">
-                            {Object.values(notebooks).length === 0 && <p className="text-slate-400 italic">No notebooks available.</p>}
-                            {Object.entries(notebooks).map(([id, notebook]) => (
+                            {Object.values(customDictionaries).length === 0 && <p className="text-slate-400 italic">No custom dictionaries available.</p>}
+                            {Object.entries(customDictionaries).map(([id, dictionary]) => (
                                 <button key={id} onClick={() => handleMoveWord(id)} className="w-full text-left p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3">
                                     <Folder size={20} className="text-sky-600 dark:text-sky-400" />
-                                    <span className="font-bold text-slate-700 dark:text-slate-200">{notebook.name || 'Unknown Notebook'}</span>
+                                    <span className="font-bold text-slate-700 dark:text-slate-200">{dictionary.name || 'Unknown Dictionary'}</span>
                                 </button>
                             ))}
                         </div>

@@ -14,10 +14,10 @@ const generateId = () => {
 };
 
 export const usePackageExport = () => {
-    const { dictionary, personalWords, userSentences, glosses, notebooks, userAudioMeta, userNotes, userWordForms } = useCorpus();
+    const { dictionary, personalWords, userSentences, glosses, customDictionaries, userAudioMeta, userNotes, userWordForms } = useCorpus();
 
     const exportPackage = async (
-        notebookIds: string[],
+        customDictionaryIds: string[],
         metadata: Partial<PackageMetadata>,
         listsToExport: { list: ListData, includeDependencies: boolean }[] = [],
         dependencyAudioIds: string[] = [],
@@ -38,8 +38,8 @@ export const usePackageExport = () => {
             const packageShorthand = pkgBase;
             usedShorthands.add(packageShorthand);
 
-            notebookIds.forEach(id => {
-                const nb = notebooks[id];
+            customDictionaryIds.forEach(id => {
+                const nb = customDictionaries[id];
                 if (!nb) return;
 
                 let base = (nb.name || 'NB').replace(/[^a-zA-Z0-9]/g, '').substring(0, 4).toUpperCase();
@@ -56,20 +56,19 @@ export const usePackageExport = () => {
                 shorthandMap[id] = shorthand;
             });
 
-            // 1. Filter Data (Notebooks)
-            let wordsToExport = personalWords.filter(w => notebookIds.includes(w.notebookId));
-            let sentencesToExport = userSentences.filter(s => notebookIds.includes(s.source));
-
-            // 1.2 Add Dependency Entries
+                    // 1. Filter Data (Dictionaries)
+                    let wordsToExport = personalWords.filter(w => customDictionaryIds.includes(w.customDictionaryId));
+                    let sentencesToExport = userSentences.filter(s => customDictionaryIds.includes(s.source));
+                        // 1.2 Add Dependency Entries
             if (dependencyEntryIds.length > 0) {
                 const depSet = new Set(dependencyEntryIds);
 
                 // Find words
-                const depWords = personalWords.filter(w => depSet.has(w.id) && !notebookIds.includes(w.notebookId));
+                const depWords = personalWords.filter(w => depSet.has(w.id) && !customDictionaryIds.includes(w.customDictionaryId));
                 wordsToExport = [...wordsToExport, ...depWords];
 
                 // Find sentences
-                const depSentences = userSentences.filter(s => depSet.has(s.id) && !notebookIds.includes(s.source));
+                const depSentences = userSentences.filter(s => depSet.has(s.id) && !customDictionaryIds.includes(s.source));
                 sentencesToExport = [...sentencesToExport, ...depSentences];
             }
 
@@ -157,7 +156,7 @@ export const usePackageExport = () => {
             const dictHeader = ['Index', 'Source', 'Entry', 'Syllabary', 'Part_of_Speech', 'PoS', 'PoS_Family', 'Definition', 'Cross_Reference', 'Entry_Tone', 'Other_Forms', 'Notes'];
             const dictRows = [dictHeader.join(',')];
             wordsToExport.forEach(w => {
-                let src = shorthandMap[w.notebookId];
+                let src = shorthandMap[w.customDictionaryId];
                 if (!src) src = packageShorthand;
 
                 dictRows.push([
@@ -295,21 +294,22 @@ export const usePackageExport = () => {
                 source_names: {}
             };
 
-            const hasOrphans = wordsToExport.some(w => !shorthandMap[w.notebookId]) || sentencesToExport.some(s => !shorthandMap[s.source]);
+            const hasOrphans = wordsToExport.some(w => !shorthandMap[w.customDictionaryId]) || sentencesToExport.some(s => !shorthandMap[s.source]);
             if (hasOrphans) {
                 if (!meta.source_names) meta.source_names = {};
                 meta.source_names[packageShorthand] = metadata.name || 'Untitled Package';
             }
 
-            notebookIds.forEach(id => {
-                if (notebooks[id]) {
-                    if (!meta.source_names) meta.source_names = {};
-                    const short = shorthandMap[id];
-                    if (short) {
-                        meta.source_names[short] = notebooks[id].name;
-                    }
+        // Populate source_names from actual dictionary names
+        customDictionaryIds.forEach(id => {
+            if (customDictionaries[id]) {
+                const short = shorthandMap[id];
+                if (short) {
+                    meta.source_names[short] = customDictionaries[id].name;
                 }
-            });
+            }
+        });
+
 
             zip.file('metadata.json', JSON.stringify(meta, null, 2));
 

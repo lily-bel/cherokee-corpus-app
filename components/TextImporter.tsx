@@ -7,44 +7,31 @@ type Step = 'paste' | 'split' | 'metadata' | 'done';
 interface TextImporterProps {
     onBack: () => void;
     onComplete: (storyId: string) => void;
-    notebooks: Record<string, Notebook>;
+    customDictionaries: Record<string, CustomDictionary>;
+    preselectedDictionaryId?: string;
 }
-
-interface ProposedSentence {
-    id: string;
-    text: string;
-    translit?: string;
-}
-
-// Generate a unique ID
-const generateId = () => {
-    try {
-        return crypto.randomUUID();
-    } catch {
-        return `s_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
-    }
-};
 
 export const TextImporter: React.FC<TextImporterProps> = ({
     onBack,
     onComplete,
-    notebooks
+    customDictionaries,
+    preselectedDictionaryId
 }) => {
-    const { addUserSentence, setNotebooks } = useCorpus();
+    const { addUserSentence, setCustomDictionaries } = useCorpus();
 
     const [step, setStep] = useState<Step>('paste');
     const [rawText, setRawText] = useState('');
     const [proposedSentences, setProposedSentences] = useState<ProposedSentence[]>([]);
     const [storyName, setStoryName] = useState('');
     const [chapterName, setChapterName] = useState('');
-    const [selectedNotebook, setSelectedNotebook] = useState<string | ''>('');
-    const [showNotebookDropdown, setShowNotebookDropdown] = useState(false);
-    const [newNotebookName, setNewNotebookName] = useState('');
+    const [selectedDictionary, setSelectedDictionary] = useState<string | ''>(preselectedDictionaryId || '');
+    const [showDictionaryDropdown, setShowDictionaryDropdown] = useState(false);
+    const [newDictionaryName, setNewDictionaryName] = useState('');
 
-    // Convert notebooks to array for dropdown
-    const notebookArray = useMemo(() => {
-        return Object.entries(notebooks).map(([id, nb]) => ({ id, name: nb.name }));
-    }, [notebooks]);
+    // Convert custom dictionaries to array for dropdown
+    const dictionaryArray = useMemo(() => {
+        return Object.entries(customDictionaries).map(([id, nb]) => ({ id, name: nb.name }));
+    }, [customDictionaries]);
 
     // Step 1: Smart split by punctuation and newlines
     const handleSmartSplit = () => {
@@ -98,30 +85,30 @@ export const TextImporter: React.FC<TextImporterProps> = ({
         setProposedSentences(newSentences);
     };
 
-    // Create notebook if needed and save sentences
+    // Create dictionary if needed and save sentences
     const handleSave = async () => {
         if (!storyName.trim()) return;
 
-        let notebookId = selectedNotebook;
+        let dictionaryId = selectedDictionary;
 
-        // Create new notebook if selected
-        if (selectedNotebook === '__new__' && newNotebookName.trim()) {
-            notebookId = `nb_${Date.now()}`;
-            setNotebooks(prev => ({
+        // Create new dictionary if selected
+        if (selectedDictionary === '__new__' && newDictionaryName.trim()) {
+            dictionaryId = `nb_${Date.now()}`;
+            setCustomDictionaries(prev => ({
                 ...prev,
-                [notebookId]: {
-                    id: notebookId,
-                    name: newNotebookName.trim(),
+                [dictionaryId]: {
+                    id: dictionaryId,
+                    name: newDictionaryName.trim(),
                     date: Date.now()
                 }
             }));
-        } else if (!notebookId) {
-            // Default: create notebook with story name
-            notebookId = `nb_${Date.now()}`;
-            setNotebooks(prev => ({
+        } else if (!dictionaryId) {
+            // Default: create dictionary with story name
+            dictionaryId = `nb_${Date.now()}`;
+            setCustomDictionaries(prev => ({
                 ...prev,
-                [notebookId]: {
-                    id: notebookId,
+                [dictionaryId]: {
+                    id: dictionaryId,
                     name: storyName.trim(),
                     date: Date.now()
                 }
@@ -135,7 +122,7 @@ export const TextImporter: React.FC<TextImporterProps> = ({
                 syllabary: ps.text,
                 translit: ps.translit || '',
                 english: '',
-                source: notebookId,
+                source: dictionaryId,
                 story: storyName.trim(),
                 chapter: chapterName.trim() || undefined,
                 line: idx + 1
@@ -322,60 +309,64 @@ export const TextImporter: React.FC<TextImporterProps> = ({
                                 />
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                                    Save to Notebook
-                                </label>
-                                <div className="relative">
-                                    <button
-                                        onClick={() => setShowNotebookDropdown(!showNotebookDropdown)}
-                                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-left text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500 flex items-center justify-between"
-                                    >
-                                        <span>
-                                            {selectedNotebook === '__new__'
-                                                ? 'Create New Notebook'
-                                                : selectedNotebook
-                                                    ? notebooks[selectedNotebook]?.name
-                                                    : 'Create New Notebook'
-                                            }
-                                        </span>
-                                        <ChevronDown size={16} className="text-slate-400" />
-                                    </button>
-                                    {showNotebookDropdown && (
-                                        <div className="absolute z-10 w-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg overflow-hidden">
+                            {!preselectedDictionaryId && (
+                                <>
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                                            Save to Custom Dictionary
+                                        </label>
+                                        <div className="relative">
                                             <button
-                                                onClick={() => { setSelectedNotebook('__new__'); setShowNotebookDropdown(false); }}
-                                                className="w-full px-4 py-3 text-left hover:bg-amber-50 dark:hover:bg-amber-900/20 text-amber-600 font-medium border-b border-slate-100 dark:border-slate-800"
+                                                onClick={() => setShowDictionaryDropdown(!showDictionaryDropdown)}
+                                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-left text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500 flex items-center justify-between"
                                             >
-                                                + Create New Notebook
+                                                <span>
+                                                    {selectedDictionary === '__new__'
+                                                        ? 'Create New Custom Dictionary'
+                                                        : selectedDictionary
+                                                            ? customDictionaries[selectedDictionary]?.name
+                                                            : 'Create New Custom Dictionary'
+                                                    }
+                                                </span>
+                                                <ChevronDown size={16} className="text-slate-400" />
                                             </button>
-                                            {notebookArray.map(nb => (
-                                                <button
-                                                    key={nb.id}
-                                                    onClick={() => { setSelectedNotebook(nb.id); setShowNotebookDropdown(false); }}
-                                                    className="w-full px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
-                                                >
-                                                    {nb.name}
-                                                </button>
-                                            ))}
+                                            {showDictionaryDropdown && (
+                                                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg overflow-hidden">
+                                                    <button
+                                                        onClick={() => { setSelectedDictionary('__new__'); setShowDictionaryDropdown(false); }}
+                                                        className="w-full px-4 py-3 text-left hover:bg-amber-50 dark:hover:bg-amber-900/20 text-amber-600 font-medium border-b border-slate-100 dark:border-slate-800"
+                                                    >
+                                                        + Create New Custom Dictionary
+                                                    </button>
+                                                    {dictionaryArray.map(nb => (
+                                                        <button
+                                                            key={nb.id}
+                                                            onClick={() => { setSelectedDictionary(nb.id); setShowDictionaryDropdown(false); }}
+                                                            className="w-full px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
+                                                        >
+                                                            {nb.name}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {selectedDictionary === '__new__' && (
+                                        <div>
+                                            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                                                New Custom Dictionary Name
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={newDictionaryName}
+                                                onChange={e => setNewDictionaryName(e.target.value)}
+                                                placeholder="My Cherokee Dictionary"
+                                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                            />
                                         </div>
                                     )}
-                                </div>
-                            </div>
-
-                            {selectedNotebook === '__new__' && (
-                                <div>
-                                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                                        New Notebook Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={newNotebookName}
-                                        onChange={e => setNewNotebookName(e.target.value)}
-                                        placeholder="My Cherokee Studies"
-                                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                                    />
-                                </div>
+                                </>
                             )}
                         </div>
 

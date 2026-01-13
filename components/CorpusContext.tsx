@@ -57,15 +57,16 @@ export interface Gloss {
     id?: string; // Unique ID for deletion
 }
 
-export interface Notebook {
+export interface CustomDictionary {
     id: string;
     name: string;
     date: number; // Timestamp
+    type?: 'book' | 'notebook';
 }
 
 export interface PersonalWord {
     id: string;
-    notebookId: string;
+    customDictionaryId: string;
     syllabary: string;
     translit: string;
     definition: string;
@@ -99,9 +100,9 @@ interface CorpusContextType {
     sentenceMap: Map<string, Sentence>; // SentenceID -> Sentence
 
     // User Data
-    notebooks: Record<string, Notebook>;
+    customDictionaries: Record<string, CustomDictionary>;
     personalWords: PersonalWord[];
-    setNotebooks: React.Dispatch<React.SetStateAction<Record<string, Notebook>>>;
+    setCustomDictionaries: React.Dispatch<React.SetStateAction<Record<string, CustomDictionary>>>;
     setPersonalWords: React.Dispatch<React.SetStateAction<PersonalWord[]>>;
 
     // Actions
@@ -147,7 +148,7 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const [userWordForms, setUserWordForms] = useState<Record<string, string>>({}); // EntryID -> pipe-separated forms
     const [userNotes, setUserNotes] = useState<Record<string, string>>({});
 
-    const [notebooks, setNotebooks] = useState<Record<string, Notebook>>({});
+    const [customDictionaries, setCustomDictionaries] = useState<Record<string, CustomDictionary>>({});
     const [personalWords, setPersonalWords] = useState<PersonalWord[]>([]);
 
     const [loading, setLoading] = useState(true);
@@ -166,18 +167,18 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             const savedSentences = localStorage.getItem('cherokee_app_user_sentences');
             if (savedSentences) setUserSentences(JSON.parse(savedSentences));
 
-            // Load Notebooks and Personal Words
-            const savedNotebooks = localStorage.getItem('cherokee_app_notebooks');
+            // Load Custom Dictionaries and Personal Words
+            const savedDictionaries = localStorage.getItem('cherokee_app_notebooks');
             const savedWords = localStorage.getItem('cherokee_app_personal_words');
 
-            if (savedWords && !savedNotebooks) {
+            if (savedWords && !savedDictionaries) {
                 // Migration for legacy data
                 const words = JSON.parse(savedWords);
-                const defaultNotebookId = 'nb_' + Date.now();
-                setNotebooks({ [defaultNotebookId]: { id: defaultNotebookId, name: 'My Dictionary', date: Date.now() } });
-                setPersonalWords(words.map((w: any) => ({ ...w, notebookId: defaultNotebookId })));
+                const defaultDictionaryId = 'nb_' + Date.now();
+                setCustomDictionaries({ [defaultDictionaryId]: { id: defaultDictionaryId, name: 'My Custom Dictionary', date: Date.now(), type: 'notebook' } });
+                setPersonalWords(words.map((w: any) => ({ ...w, customDictionaryId: defaultDictionaryId })));
             } else {
-                if (savedNotebooks) setNotebooks(JSON.parse(savedNotebooks));
+                if (savedDictionaries) setCustomDictionaries(JSON.parse(savedDictionaries));
                 if (savedWords) setPersonalWords(JSON.parse(savedWords));
             }
 
@@ -210,9 +211,9 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     useEffect(() => {
         try {
-            localStorage.setItem('cherokee_app_notebooks', JSON.stringify(notebooks));
-        } catch (e) { console.error("Failed to save notebooks", e); }
-    }, [notebooks]);
+            localStorage.setItem('cherokee_app_notebooks', JSON.stringify(customDictionaries));
+        } catch (e) { console.error("Failed to save custom dictionaries", e); }
+    }, [customDictionaries]);
 
     useEffect(() => {
         try {
@@ -526,9 +527,9 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             addUserSentence,
             removeUserSentence,
             removeUserSentences,
-            notebooks,
+            customDictionaries,
             personalWords,
-            setNotebooks,
+            setCustomDictionaries,
             setPersonalWords,
             userAudioMeta,
             saveAudio,

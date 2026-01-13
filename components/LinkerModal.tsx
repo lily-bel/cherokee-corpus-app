@@ -14,10 +14,10 @@ interface LinkerModalProps {
     onDelete?: () => void;
     onClose: () => void;
     onCreateNew?: () => void;
-    notebooks?: Record<string, any>;
+    customDictionaries?: Record<string, any>;
 }
 
-export const LinkerModal: React.FC<LinkerModalProps> = ({ initialQuery, targetWord, initialData, dictionary, personalWords, onSelect, onDelete, onClose, onCreateNew, notebooks }) => {
+export const LinkerModal: React.FC<LinkerModalProps> = ({ initialQuery, targetWord, initialData, dictionary, personalWords, onSelect, onDelete, onClose, onCreateNew, customDictionaries }) => {
     const [step, setStep] = useState<'search' | 'form'>(initialData ? 'form' : 'search');
     const [query, setQuery] = useState(initialQuery);
     const [selectedEntry, setSelectedEntry] = useState<DictionaryEntry | null>(initialData?.entry || null);
@@ -36,10 +36,10 @@ export const LinkerModal: React.FC<LinkerModalProps> = ({ initialQuery, targetWo
             searchScopes: { main: true, verbs: true, plurals: true, sentences: false, notes: false },
             enableRegex: false
         };
-        const mappedPersonal = personalWords ? personalWords.map(w => ({ ...w, id: w.Index, Source: (w as any).notebookId })) : [];
+        const mappedPersonal = personalWords ? personalWords.map(w => ({ ...w, id: w.Index, Source: (w as any).customDictionaryId })) : [];
         const searchDict = [...dictionary, ...mappedPersonal];
-        return performSearch(query, searchDict, sentences, entryToSentencesMap, settings, notebooks || {}, {}, "All", 'dictionary').slice(0, 20);
-    }, [query, dictionary, personalWords, sentences, entryToSentencesMap, notebooks]);
+        return performSearch(query, searchDict, sentences, entryToSentencesMap, settings, customDictionaries || {}, {}, "All", 'dictionary').slice(0, 20);
+    }, [query, dictionary, personalWords, sentences, entryToSentencesMap, customDictionaries]);
 
     const handleEntrySelect = (entry: DictionaryEntry) => {
         setSelectedEntry(entry);
