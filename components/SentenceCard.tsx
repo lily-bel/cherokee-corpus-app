@@ -444,6 +444,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                             const pkgColor = getPackageColor(audio.packageId || 'user');
                             const isCustomColor = pkgColor && pkgColor.startsWith('#');
                             const isPlaying = playingAudioId === audio.id;
+                            const speakerName = isOfficial ? (audio.id.split('_')[0] || 'Official') : (audio.speaker || 'User');
                             let style = {};
                             let className = "flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors shadow-sm group ";
 
@@ -476,7 +477,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                                         className="flex items-center gap-2"
                                     >
                                         {isPlaying ? <Pause size={12} className="fill-current" /> : <Mic size={12} />}
-                                        <span>{isPlaying ? 'Playing...' : (audio.speaker || 'User')}</span>
+                                        <span>{isPlaying ? 'Playing...' : speakerName}</span>
                                     </button>
                                     {!isOfficial && onDeleteAudio && (
                                         <button onClick={(e) => { e.stopPropagation(); if (window.confirm("Delete audio?")) onDeleteAudio(sentence.id + '_sentence', audio.id); }} className="ml-1 pl-2 border-l border-white/20 hover:text-red-200 transition-colors flex items-center">

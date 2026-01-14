@@ -100,12 +100,15 @@ const MiniAudioButton = ({ audio, isOfficial = false, color }: { audio: any, isO
         bgClass = "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-amber-600";
     }
 
+    const audioId = typeof audio === 'string' ? audio : audio.id;
+    const speakerName = isOfficial ? (audioId.split('_')[0] || "Official Audio") : (audio.speaker || "User Recording");
+
     return (
         <button
             onClick={handlePlay}
             className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors shrink-0 ${bgClass}`}
             style={style}
-            title={isOfficial ? "Official Audio" : (audio.speaker || "User Recording")}
+            title={speakerName}
         >
             {isPlaying ? <Pause size={14} className="fill-current" /> : <Icon size={14} />}
         </button>

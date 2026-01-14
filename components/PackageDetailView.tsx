@@ -18,27 +18,30 @@ interface PackageDetailViewProps {
     onNavigate: (type: 'dictionary' | 'list' | 'word' | 'sentence', payload: any) => void;
 }
 
-const ContentSection = ({ label, items, type, onNavigate, pkg }: { label: string, items: any[], type: 'dictionary' | 'list' | 'word' | 'sentence', onNavigate: any, pkg: any }) => {
-    const [expanded, setExpanded] = useState(false);
-    if (!items || items.length === 0) return null;
-
+const getIconStyles = (pkg: any) => {
     let iconBg = "bg-slate-100 dark:bg-slate-800";
     let iconColor = "text-slate-500";
     let iconStyle = {};
 
-    if (type === 'dictionary') {
-        if (pkg.id === 'user') {
-            iconBg = "bg-amber-100 dark:bg-amber-900/30";
-            iconColor = "text-amber-600 dark:text-amber-500";
-        } else if (pkg.type === 'official') {
-            iconBg = "bg-slate-200 dark:bg-slate-700";
-            iconColor = "text-slate-500 dark:text-slate-400";
-        } else if (pkg.color) {
-            iconStyle = { backgroundColor: pkg.color, color: '#fff' };
-            iconBg = ""; // override
-            iconColor = ""; // override
-        }
+    if (pkg.id === 'user') {
+        iconBg = "bg-amber-100 dark:bg-amber-900/30";
+        iconColor = "text-amber-600 dark:text-amber-500";
+    } else if (pkg.type === 'official') {
+        iconBg = "bg-slate-200 dark:bg-slate-700";
+        iconColor = "text-slate-500 dark:text-slate-400";
+    } else if (pkg.color) {
+        iconStyle = { backgroundColor: pkg.color, color: '#fff' };
+        iconBg = ""; // override
+        iconColor = ""; // override
     }
+    return { iconBg, iconColor, iconStyle };
+};
+
+const ContentSection = ({ label, items, type, onNavigate, pkg }: { label: string, items: any[], type: 'dictionary' | 'list' | 'word' | 'sentence', onNavigate: any, pkg: any }) => {
+    const [expanded, setExpanded] = useState(false);
+    if (!items || items.length === 0) return null;
+
+    const { iconBg, iconColor, iconStyle } = getIconStyles(pkg);
 
     return (
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm mb-3">
@@ -409,7 +412,7 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({ packageId,
                 />
 
                 <SectionItem
-                    icon={<Mic size={20} style={{ color: pkg.color }} />}
+                    icon={<Mic size={20} />}
                     label="Audio"
                     items={data.audio}
                     type="audio"
@@ -418,7 +421,7 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({ packageId,
                 />
 
                 <SectionItem
-                    icon={<SquaresPlus size={20} style={{ color: pkg.color }} />}
+                    icon={<SquaresPlus size={20} />}
                     label="Word Forms"
                     items={data.wordForms}
                     type="form"
@@ -427,7 +430,7 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({ packageId,
                 />
 
                 <SectionItem
-                    icon={<StickyNote size={20} style={{ color: pkg.color }} />}
+                    icon={<StickyNote size={20} />}
                     label="Notes"
                     items={data.notes}
                     type="note"
@@ -436,7 +439,7 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({ packageId,
                 />
 
                 <SectionItem
-                    icon={<ListPlus size={20} style={{ color: pkg.color }} />}
+                    icon={<ListPlus size={20} />}
                     label="Glosses"
                     items={data.glosses}
                     type="gloss"
@@ -494,6 +497,8 @@ const SectionItem = ({
 
     if (items.length === 0) return null;
 
+    const { iconBg, iconColor, iconStyle } = getIconStyles(pkg);
+
     return (
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm transition-all">
             <button
@@ -503,7 +508,8 @@ const SectionItem = ({
                 <div className="flex items-center gap-3">
                     {icon && (
                         <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-slate-100 dark:bg-slate-800"
+                            className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${iconBg} ${iconColor}`}
+                            style={iconStyle}
                         >
                             {icon}
                         </div>
@@ -653,6 +659,7 @@ const AudioCard = ({ audio, pkg, onNavigate }: { audio: any, pkg: any, onNavigat
     };
 
     const isOfficial = audio.packageId === 'official-cherokee-data';
+    const speakerName = isOfficial ? (audio.id.split('_')[0] || 'Official Speaker') : (audio.speaker || 'Unknown Speaker');
 
     return (
         <div className="p-4">
@@ -668,7 +675,7 @@ const AudioCard = ({ audio, pkg, onNavigate }: { audio: any, pkg: any, onNavigat
                 </button>
 
                 <div className="flex flex-col">
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{isOfficial ? 'Official Speaker' : (audio.speaker || 'Unknown Speaker')}</span>
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{speakerName}</span>
                     <span className="text-[10px] text-slate-400 font-mono truncate max-w-[200px]">{audio.id}</span>
                 </div>
             </div>
