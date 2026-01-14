@@ -307,10 +307,10 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                         <button
                             onClick={(e) => { e.stopPropagation(); onReadInContext(sentence.id); }}
                             className="text-xs font-medium text-sky-600 dark:text-sky-400 hover:underline flex items-center gap-1"
-                            title="Read in context"
+                            title="See in context"
                         >
                             <BookOpen size={12} />
-                            Read
+                            See in Context
                         </button>
                     )}
                     {/* List Add Button */}

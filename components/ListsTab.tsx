@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Star, ListIcon, Trash2, Pencil, ChevronRight, GripVertical, Folder, ArrowLeft, Plus, X, Search, Check, Volume2, Pause, Eye, EyeOff, Mic, StickyNote, ListPlus } from './Icons';
+import { Star, ListIcon, Trash2, Pencil, ChevronRight, GripVertical, Folder, ArrowLeft, Plus, X, Search, Check, Volume2, Pause, Eye, EyeOff, Mic, StickyNote, ListPlus, BookOpen } from './Icons';
 import { Modal, SourceBadge } from './UI';
 import { usePackageManager } from './PackageManagerContext';
 import { useCorpus } from './CorpusContext';
@@ -36,6 +36,7 @@ interface ListsTabProps {
     setActiveListId?: (id: string | null) => void;
     view?: 'all' | 'detail';
     setView?: (view: 'all' | 'detail') => void;
+    onReadInContext?: (sentenceId: string) => void;
 }
 
 const MiniAudioButton = ({ audio, isOfficial = false, color }: { audio: any, isOfficial?: boolean, color?: string }) => {
@@ -257,7 +258,8 @@ const ListsTab: React.FC<ListsTabProps> = ({
     activeListId: propActiveListId,
     setActiveListId: propSetActiveListId,
     view: propView,
-    setView: propSetView
+    setView: propSetView,
+    onReadInContext
 }) => {
     const { getPackageColor, packages, importedData } = usePackageManager();
     const { userAudioMeta, personalWords, glosses } = useCorpus();
@@ -992,8 +994,21 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                             return (
                                                 <tr key={sentence.id} onClick={() => onEntryClick(sentence)} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors active:bg-amber-50 dark:active:bg-amber-900/20">
                                                     <td className="p-3 align-middle">
-                                                        <div className="font-noto-cherokee text-lg text-slate-800 dark:text-slate-100 leading-tight">{sentence.syllabary || ''}</div>
-                                                        <div className="font-noto-serif text-sm text-slate-500 dark:text-slate-400 font-medium">{sentence.translit || ''}</div>
+                                                        <div className="flex justify-between items-start">
+                                                            <div>
+                                                                <div className="font-noto-cherokee text-lg text-slate-800 dark:text-slate-100 leading-tight">{sentence.syllabary || ''}</div>
+                                                                <div className="font-noto-serif text-sm text-slate-500 dark:text-slate-400 font-medium">{sentence.translit || ''}</div>
+                                                            </div>
+                                                            {onReadInContext && (
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); onReadInContext(sentence.id); }}
+                                                                    className="text-[10px] font-bold text-sky-600 dark:text-sky-400 hover:underline flex items-center gap-1 mt-1"
+                                                                >
+                                                                    <BookOpen size={10} />
+                                                                    <span className="hidden sm:inline">See in Context</span>
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                         <div className="md:hidden mt-2 font-noto-serif text-slate-600 dark:text-slate-300 text-sm line-clamp-2">
                                                             {sentence.english || ''}
                                                         </div>

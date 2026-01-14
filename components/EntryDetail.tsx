@@ -7,7 +7,7 @@ import AudioRecorder from './AudioRecorder';
 import { useCorpus } from './CorpusContext';
 import { SentenceCard } from './SentenceCard';
 
-const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, userWordForms, onSaveAudio, onDeleteAudio, favorites, customLists, customListOrder, onClose, onEdit, onToggleFavorite, onToggleList, onDelete, onSearchTerm, onOpenNewListModal, onMove, personalWords, onEditSentence, onDeleteSentence, onCreateWord, onManageForms }) => {
+const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, userWordForms, onSaveAudio, onDeleteAudio, favorites, customLists, customListOrder, onClose, onEdit, onToggleFavorite, onToggleList, onDelete, onSearchTerm, onOpenNewListModal, onMove, personalWords, onEditSentence, onDeleteSentence, onCreateWord, onManageForms, onReadInContext }) => {
     const [showListSheet, setShowListSheet] = useState(false);
     const [showRecorder, setShowRecorder] = useState(false);
     const [recorderTarget, setRecorderTarget] = useState<'entry' | 'sentence' | string>('entry');
@@ -170,13 +170,10 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
                     <button onClick={onClose} className="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full"><ArrowLeft size={24} className="text-slate-700 dark:text-slate-200" /></button>
                 </div>
                 <div className="flex-1 overflow-y-auto p-5 pb-24">
-                    <SentenceCard sentence={e} onSaveAudio={onSaveAudio} userAudioMeta={userAudioMeta} personalWords={personalWords} onDeleteAudio={onDeleteAudio}
-                        favorites={favorites}
-                        customLists={customLists}
-                        onToggleFavorite={onToggleFavorite}
-                        onToggleList={onToggleList}
-                        onOpenNewListModal={onOpenNewListModal}
-                    />
+                                            <SentenceCard sentence={e} onSaveAudio={onSaveAudio} userAudioMeta={userAudioMeta} personalWords={personalWords} onDeleteAudio={onDeleteAudio}
+                                                favorites={favorites} customLists={customLists} onToggleFavorite={onToggleFavorite} onToggleList={onToggleList} onOpenNewListModal={onOpenNewListModal}
+                                                onReadInContext={onReadInContext}
+                                            />
                     <div className="mt-12 text-xs text-slate-300 font-mono text-center">Ref ID: {e.id}</div>
                 </div>
             </div>
@@ -538,6 +535,7 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
                                                 onToggleFavorite={onToggleFavorite}
                                                 onToggleList={onToggleList}
                                                 onOpenNewListModal={onOpenNewListModal}
+                                                onReadInContext={onReadInContext}
                                             />
                                         </div>
                                     ))}

@@ -19,6 +19,7 @@ import { RainbowGradient } from './components/Icons';
 import { ReaderTab } from './components/ReaderTab';
 import { ReaderView } from './components/ReaderView';
 import { TextImporter } from './components/TextImporter';
+import { useReader } from './components/ReaderContext';
 
 const DEFAULT_SETTINGS = {
     darkMode: false,
@@ -31,6 +32,7 @@ const DEFAULT_SETTINGS = {
 function App() {
     const { packages, importedData } = usePackageManager();
     const { dictionary, sentences, userSentences, glosses, loading, entryToSentencesMap, addUserSentence, removeUserSentence, removeUserSentences, removeUserGloss, customDictionaries, personalWords, setCustomDictionaries, setPersonalWords, userAudioMeta, saveAudio, deleteAudio, sentenceMap, userWordForms, setUserWordForms, userNotes, setUserNotes } = useCorpus();
+    const { findBookAndChapterForSentence } = useReader();
 
     // Legacy state replacements
     const csvData = dictionary; // Map dictionary to csvData for compatibility
@@ -737,6 +739,20 @@ function App() {
             }
         });
     };
+
+    const handleReadInContext = (sentenceId: string) => {
+        const location = findBookAndChapterForSentence(sentenceId);
+        if (location) {
+            setSelectedEntry(null);
+            updateUrl(null);
+            setActiveBookId(location.bookId);
+            setActiveChapterId(location.chapterId);
+            setScrollToSentenceId(sentenceId);
+            setReaderView('reading');
+            setActiveTab('reader');
+        }
+    };
+
     const createNewList = () => {
         if (!newListName.trim() || newListName === 'Favorites') { showToast("Invalid Name"); return; }
         const exists = Object.values(customLists).some((l: any) => l.name === newListName);
@@ -1441,6 +1457,7 @@ function App() {
                                     onToggleFavorite={toggleFavorite}
                                     onToggleList={toggleInList}
                                     onOpenNewListModal={() => setShowNewListModal(true)}
+                                    onReadInContext={handleReadInContext}
                                 />
                             ) : (
                                 <EntryCard key={item.Index} entry={item} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} />
@@ -1457,6 +1474,7 @@ function App() {
                                         onToggleFavorite={toggleFavorite}
                                         onToggleList={toggleInList}
                                         onOpenNewListModal={() => setShowNewListModal(true)}
+                                        onReadInContext={handleReadInContext}
                                     />;
                                 }
                                 return <EntryCard key={entry.Index} entry={entry} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} isDimmed={true} />;
@@ -1533,6 +1551,7 @@ function App() {
                         setActiveListId={setActiveListId}
                         view={listsView}
                         setView={setListsView}
+                        onReadInContext={handleReadInContext}
                     />
                 )}
                 {activeTab === 'widgets' && <WidgetsTab />}
@@ -1579,6 +1598,7 @@ function App() {
                 )}
                 {activeTab === 'packages' && <PackageManagerTab
                     customLists={customLists}
+                    onReadInContext={handleReadInContext}
                     onNavigate={(type, payload) => {
                         if (type === 'dictionary') {
                             setActiveTab('personal');
@@ -1623,6 +1643,7 @@ function App() {
                                     onToggleFavorite={toggleFavorite}
                                     onToggleList={toggleInList}
                                     onOpenNewListModal={() => setShowNewListModal(true)}
+                                    onReadInContext={handleReadInContext}
                                 />)
                             )}
                         </div>{customDictionaries[activeDictionaryId] && <button onClick={() => openWordModal()} className="absolute bottom-6 right-6 bg-slate-900 dark:bg-slate-700 text-white p-4 rounded-full shadow-xl z-20 hover:scale-105 transition-transform"><Plus size={24} /></button>}</div>))
@@ -1683,6 +1704,7 @@ function App() {
                         onDeleteSentence={handleDeleteSentence}
                         onCreateWord={() => openWordModal(null)}
                         onManageForms={handleManageForms}
+                        onReadInContext={handleReadInContext}
                     />
                 )
             }

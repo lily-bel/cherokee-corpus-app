@@ -11,9 +11,10 @@ import { PackageDetailView } from './PackageDetailView';
 interface PackageManagerTabProps {
     customLists: Record<string, ListData | string[]>;
     onNavigate: (type: 'dictionary' | 'list' | 'word' | 'sentence', payload: any) => void;
+    onReadInContext?: (sentenceId: string) => void;
 }
 
-const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists, onNavigate }) => {
+const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists, onNavigate, onReadInContext }) => {
     const { packages, togglePackage, removePackage } = usePackageManager();
     const { removePackageAudio, userAudioMeta, glosses } = useCorpus();
     const { importPackage } = usePackageImport();
@@ -58,6 +59,7 @@ const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists, onNa
                 onBack={() => setSelectedPackageId(null)}
                 customLists={customLists}
                 onNavigate={onNavigate}
+                onReadInContext={onReadInContext}
             />
         );
     }
