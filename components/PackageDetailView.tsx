@@ -18,9 +18,27 @@ interface PackageDetailViewProps {
     onNavigate: (type: 'dictionary' | 'list' | 'word' | 'sentence', payload: any) => void;
 }
 
-const ContentSection = ({ label, items, type, onNavigate }: { label: string, items: any[], type: 'dictionary' | 'list' | 'word' | 'sentence', onNavigate: any }) => {
+const ContentSection = ({ label, items, type, onNavigate, pkg }: { label: string, items: any[], type: 'dictionary' | 'list' | 'word' | 'sentence', onNavigate: any, pkg: any }) => {
     const [expanded, setExpanded] = useState(false);
     if (!items || items.length === 0) return null;
+
+    let iconBg = "bg-slate-100 dark:bg-slate-800";
+    let iconColor = "text-slate-500";
+    let iconStyle = {};
+
+    if (type === 'dictionary') {
+        if (pkg.id === 'user') {
+            iconBg = "bg-amber-100 dark:bg-amber-900/30";
+            iconColor = "text-amber-600 dark:text-amber-500";
+        } else if (pkg.type === 'official') {
+            iconBg = "bg-slate-200 dark:bg-slate-700";
+            iconColor = "text-slate-500 dark:text-slate-400";
+        } else if (pkg.color) {
+            iconStyle = { backgroundColor: pkg.color, color: '#fff' };
+            iconBg = ""; // override
+            iconColor = ""; // override
+        }
+    }
 
     return (
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm mb-3">
@@ -29,7 +47,7 @@ const ContentSection = ({ label, items, type, onNavigate }: { label: string, ite
                 className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
             >
                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-500">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${iconBg} ${iconColor}`} style={iconStyle}>
                         {type === 'dictionary' ? <Folder size={18} /> : <ListIcon size={18} />}
                     </div>
                     <span className="font-bold text-slate-700 dark:text-slate-200">{label}</span>
@@ -354,12 +372,13 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({ packageId,
                             items={data.dictionaries}
                             type="dictionary"
                             onNavigate={onNavigate}
+                            pkg={pkg}
                         />
                     )}
 
 
                 <SectionItem
-                    icon={<ListIcon size={20} style={{ color: pkg.color }} />}
+                    icon={null}
                     label="Lists"
                     items={data.lists}
                     type="list"
@@ -524,7 +543,7 @@ const SectionItem = ({
                                 {type === 'note' && <NoteCard note={item} onNavigate={onNavigate} />}
                                 {type === 'form' && <WordFormCard form={item} onNavigate={onNavigate} />}
                                 {type === 'gloss' && <GlossCard gloss={item} onNavigate={onNavigate} />}
-                                {type === 'list' && <ListCard list={item} pkg={pkg} onNavigate={onNavigate} />}
+                                {type === 'list' && <ListCard list={item} onNavigate={onNavigate} />}
                                 {type === 'dictionary' && (
                                     <div
                                         onClick={() => onNavigate && onNavigate('dictionary', item.id)}
@@ -839,18 +858,12 @@ const GlossCard = ({ gloss, onNavigate }: { gloss: any, onNavigate?: (type: 'dic
     );
 };
 
-const ListCard = ({ list, pkg, onNavigate }: { list: any, pkg: any, onNavigate?: (type: 'dictionary' | 'list' | 'word' | 'sentence', payload: any) => void }) => (
+const ListCard = ({ list, onNavigate }: { list: any, onNavigate?: (type: 'dictionary' | 'list' | 'word' | 'sentence', payload: any) => void }) => (
     <div
         onClick={() => onNavigate && onNavigate('list', list.id)}
         className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
     >
         <div className="flex items-center gap-3">
-            <div
-                className="w-10 h-10 rounded-lg flex items-center justify-center text-white"
-                style={{ backgroundColor: pkg.color }}
-            >
-                <ListIcon size={20} />
-            </div>
             <div>
                 <div className="font-bold text-slate-800 dark:text-slate-100">{list.name}</div>
                 <div className="text-xs text-slate-500">{list.count} items</div>
