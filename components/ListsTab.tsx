@@ -472,9 +472,12 @@ const ListsTab: React.FC<ListsTabProps> = ({
     const handleRemoveFromList = (item: any) => {
         if (!activeListId) return;
 
-        // Disable removing from built-in lists
         const list = getList(activeListId);
-        if (list?.type.startsWith('builtin') || list?.type === 'default') return;
+        if (!list) return;
+
+        // Only allow removing from user lists and favorites
+        const canEdit = list.type === 'user' || list.id === 'favorites';
+        if (!canEdit) return;
 
         // Determine ID to remove (word Index or prefixed sentence ID)
         const removeId = (id: string) => {
@@ -551,8 +554,9 @@ const ListsTab: React.FC<ListsTabProps> = ({
         const list = getList(activeListId);
         if (!list) return;
 
-        // Built-in lists are read-only for manual addition
-        if (list.type.startsWith('builtin') || list.type === 'default') return;
+        // Only allow editing user lists and favorites
+        const canEdit = list.type === 'user' || list.id === 'favorites';
+        if (!canEdit) return;
 
         const isCurrentlyIn = list.items.includes(itemId);
         const nextItems = isCurrentlyIn
@@ -859,7 +863,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
     };
 
     if (view === 'detail' && activeList) {
-        const isBuiltIn = activeList.type.startsWith('builtin') || activeList.type === 'default';
+        const canEdit = activeList.type === 'user' || activeList.id === 'favorites';
         return (
             <div className="flex flex-col h-full bg-[#F9F9F7] dark:bg-slate-950">
                 {/* Header */}
@@ -899,7 +903,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                         <div className="text-center py-12 text-slate-400 flex flex-col items-center">
                             <ListIcon size={48} className="mb-4 opacity-20" />
                             <p>No {listMode} in this list.</p>
-                            {!isBuiltIn && listMode === 'words' && <button onClick={() => setShowAddWordsModal(true)} className="mt-4 text-amber-600 font-bold hover:underline">Add Words</button>}
+                            {canEdit && listMode === 'words' && <button onClick={() => setShowAddWordsModal(true)} className="mt-4 text-amber-600 font-bold hover:underline">Add Words</button>}
                         </div>
                     ) : (
                         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
@@ -961,7 +965,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                                         </div>
                                                     </td>
                                                     <td className="p-3 text-right">
-                                                        {!isBuiltIn && (
+                                                        {canEdit && (
                                                             <button onClick={(e) => { e.stopPropagation(); handleRemoveFromList(word!.Index); }} className="text-slate-300 hover:text-red-400 transition-colors">
                                                                 <X size={16} />
                                                             </button>
@@ -1015,7 +1019,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                                         </div>
                                                     </td>
                                                     <td className="p-3 text-right">
-                                                        {!isBuiltIn && (
+                                                        {canEdit && (
                                                             <button onClick={(e) => { e.stopPropagation(); handleRemoveFromList(sentence.id); }} className="text-slate-300 hover:text-red-400 transition-colors">
                                                                 <X size={16} />
                                                             </button>
@@ -1032,7 +1036,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                 </div>
 
                 {/* Add Button */}
-                {!isBuiltIn && (
+                {canEdit && (
                     <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
                         <button onClick={() => setShowAddWordsModal(true)} className="w-full py-3 bg-amber-500 text-white font-bold rounded-xl shadow-lg hover:bg-amber-600 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
                             <Plus size={24} />
