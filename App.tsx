@@ -1276,130 +1276,99 @@ function App() {
         <div className="h-screen w-full bg-[#F9F9F7] dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans flex flex-col overflow-hidden relative">
             <RainbowGradient />
             <header className="bg-white dark:bg-slate-900 px-4 py-3 shadow-sm z-10 flex items-center justify-between shrink-0 h-[60px]"><h1 className="font-noto-serif text-xl text-slate-800 dark:text-slate-100">ᏣᎳᎩ-English Dictionary</h1><button onClick={() => setShowSettingsModal(true)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300"><Menu size={24} strokeWidth={1.5} /></button></header>
-            <main className="flex-1 overflow-hidden relative flex flex-col">
-                {activeTab === 'search' && (
-                    <div className="flex flex-col h-full">
-                        <div className="p-4 bg-[#F9F9F7] dark:bg-slate-950">
-                            <div className="relative">
-                                <div className="absolute left-3 top-3.5 text-slate-400"><Search size={20} /></div>
-                                <input type="text" className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-3 pl-10 pr-4 text-lg shadow-sm outline-none font-noto-serif text-slate-800 dark:text-slate-100" placeholder={settings.enableRegex ? "Regex Search..." : "Search..."} value={inputValue} onChange={(e) => setInputValue(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') addToHistory(query); }} />
-                                {inputValue ? <button onClick={() => { setInputValue(''); setQuery(''); }} className="absolute right-3 top-3.5 text-slate-300"><X size={20} /></button> : null}
-                            </div>
-                            <div className="flex justify-end mt-2 items-center gap-4">
-                                {/* Search Scope Toggle */}
-                                <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-lg flex text-sm font-medium">
-                                    <button
-                                        onClick={() => setSearchScope('dictionary')}
-                                        className={`px-3 py-1 rounded-md transition-all ${searchScope === 'dictionary' ? 'bg-white dark:bg-slate-700 shadow text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'} `}
-                                    >
-                                        Dictionary
-                                    </button>
-                                    <button
-                                        onClick={() => setSearchScope('sentences')}
-                                        className={`px-3 py-1 rounded-md transition-all ${searchScope === 'sentences' ? 'bg-white dark:bg-slate-700 shadow text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'} `}
-                                    >
-                                        Sentences
-                                    </button>
-                                </div>
-                                <button onClick={() => setShowFilters(!showFilters)} className="flex items-center gap-1 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide hover:text-amber-700"><Filter size={12} /> Filter Sources</button>
-                            </div>
-                            {showFilters && (
-                                <div className="mt-2 p-3 bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-2 animate-fade-in max-h-64 overflow-y-auto">
-                                    {/* Source List */}
-                                    {searchScope === 'dictionary' && availableSources.map(src => {
-                                        if (src.code === 'Other') {
-                                            return (
-                                                <div key="OtherGroup" className="flex flex-col">
-                                                    <div className="flex items-center justify-between p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded">
-                                                        <label className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer flex-1">
-                                                            {/* Tri-state Checkbox Implementation */}
-                                                            <div onClick={(e) => { e.preventDefault(); toggleAllSmallSources(); }} className="w-4 h-4 rounded border border-slate-300 dark:border-slate-600 flex items-center justify-center bg-white dark:bg-slate-800 overflow-hidden">
-                                                                {otherGroupState === 'all' && <div className="w-full h-full bg-amber-600 flex items-center justify-center"><Check size={12} className="text-white" /></div>}
-                                                                {otherGroupState === 'some' && <div className="w-full h-full bg-amber-600 flex items-center justify-center"><Minus size={12} className="text-white" /></div>}
-                                                            </div>
-
-                                                            <span className="font-bold uppercase text-xs text-slate-500 dark:text-slate-400 mr-2 min-w-[3rem] shrink-0 text-center bg-slate-100 dark:bg-slate-800 rounded px-1">...</span>
-                                                            <span className="font-bold text-slate-600 dark:text-slate-400">Other Sources</span>
-                                                            <span className="ml-auto text-xs text-slate-400 font-mono">({src.count})</span>
-                                                        </label>
-                                                        <button onClick={(e) => { e.preventDefault(); setExpandOthers(!expandOthers); }} className="p-1 ml-2 text-slate-400 hover:text-amber-600">
-                                                            {expandOthers ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                                                        </button>
-                                                    </div>
-
-                                                    {/* Indented Small Sources */}
-                                                    {expandOthers && (
-                                                        <div className="ml-8 mt-1 border-l-2 border-slate-100 dark:border-slate-800 pl-2 space-y-1">
-                                                            {expandedSmallSourcesDict.map(smallSrc => (
-                                                                <label key={smallSrc.code} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded">
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        checked={filters[smallSrc.code] !== false}
-                                                                        onChange={() => setFilters(prev => ({ ...prev, [smallSrc.code]: !prev[smallSrc.code] }))}
-                                                                        className="accent-amber-600 w-4 h-4 rounded"
-                                                                    />
-                                                                    <div className="flex-1 flex items-center min-w-0">
-                                                                        <span className="font-bold uppercase text-xs text-slate-500 dark:text-slate-400 mr-2 min-w-[3rem] shrink-0 text-center bg-slate-100 dark:bg-slate-800 rounded px-1">{smallSrc.code}</span>
-                                                                        <span className="truncate">{smallSrc.name}</span>
-                                                                        <span className="ml-auto text-[10px] text-slate-300 font-mono">({smallSrc.count})</span>
-                                                                    </div>
-                                                                </label>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            );
-                                        }
-
-                                        return (
-                                            <label key={src.code} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded">
-                                                <input type="checkbox" checked={filters[src.code] !== false} onChange={() => setFilters(prev => ({ ...prev, [src.code]: !prev[src.code] }))} className="accent-amber-600 w-4 h-4 rounded" />
-                                                <div className="flex-1 flex items-center min-w-0">
-                                                    <span className="font-bold uppercase text-xs text-slate-500 dark:text-slate-400 mr-2 min-w-[3rem] shrink-0 text-center bg-slate-100 dark:bg-slate-800 rounded px-1">{src.badge}</span>
-                                                    <span className="truncate">{src.name}</span>
-                                                    <span className="ml-auto text-xs text-slate-400 font-mono">({src.count})</span>
-                                                </div>
-                                            </label>
-                                        )
-                                    })}
-
-                                    {/* Sentence Sources */}
-                                    {searchScope === 'sentences' && (
-                                        <>
-                                            {availableSentenceSources.mainSources.map(src => {
-                                                if (src.code === 'other_group') {
+            <main className={`flex-1 overflow-hidden relative flex flex-col ${selectedEntry ? 'z-50' : 'z-0'}`}>
+                {selectedEntry ? (
+                    <EntryDetail
+                        entry={selectedEntry}
+                        notebooks={notebooks}
+                        userNotes={userNotes}
+                        userAudioMeta={userAudioMeta}
+                        userWordForms={userWordForms}
+                        onSaveAudio={saveAudio}
+                        onDeleteAudio={deleteAudio}
+                        favorites={favorites}
+                        customLists={customLists}
+                        customListOrder={customListOrder}
+                        onClose={() => { setSelectedEntry(null); updateUrl(null); }}
+                        onEdit={(entry, content, isNote) => isNote ? openNotesModal(entry, content, false) : openWordModal(entry)}
+                        onToggleFavorite={toggleFavorite}
+                        onToggleList={toggleInList}
+                        onDelete={(idx) => { setWordToDelete(idx); }}
+                        onSearchTerm={handleSearchTerm}
+                        onOpenNewListModal={() => setShowNewListModal(true)}
+                        onMove={openMoveModal}
+                        personalWords={personalWords}
+                        onEditSentence={handleEditSentence}
+                        onDeleteSentence={handleDeleteSentence}
+                        onCreateWord={() => openWordModal(null)}
+                        onManageForms={handleManageForms}
+                    />
+                ) : (
+                    <>
+                        {activeTab === 'search' && (
+                            <div className="flex flex-col h-full">
+                                <div className="p-4 bg-[#F9F9F7] dark:bg-slate-950">
+                                    <div className="relative">
+                                        <div className="absolute left-3 top-3.5 text-slate-400"><Search size={20} /></div>
+                                        <input type="text" className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-3 pl-10 pr-4 text-lg shadow-sm outline-none font-noto-serif text-slate-800 dark:text-slate-100" placeholder={settings.enableRegex ? "Regex Search..." : "Search..."} value={inputValue} onChange={(e) => setInputValue(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') addToHistory(query); }} />
+                                        {inputValue ? <button onClick={() => { setInputValue(''); setQuery(''); }} className="absolute right-3 top-3.5 text-slate-300"><X size={20} /></button> : null}
+                                    </div>
+                                    <div className="flex justify-end mt-2 items-center gap-4">
+                                        {/* Search Scope Toggle */}
+                                        <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-lg flex text-sm font-medium">
+                                            <button
+                                                onClick={() => setSearchScope('dictionary')}
+                                                className={`px-3 py-1 rounded-md transition-all ${searchScope === 'dictionary' ? 'bg-white dark:bg-slate-700 shadow text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'} `}
+                                            >
+                                                Dictionary
+                                            </button>
+                                            <button
+                                                onClick={() => setSearchScope('sentences')}
+                                                className={`px-3 py-1 rounded-md transition-all ${searchScope === 'sentences' ? 'bg-white dark:bg-slate-700 shadow text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'} `}
+                                            >
+                                                Sentences
+                                            </button>
+                                        </div>
+                                        <button onClick={() => setShowFilters(!showFilters)} className="flex items-center gap-1 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide hover:text-amber-700"><Filter size={12} /> Filter Sources</button>
+                                    </div>
+                                    {showFilters && (
+                                        <div className="mt-2 p-3 bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-2 animate-fade-in max-h-64 overflow-y-auto">
+                                            {/* Source List */}
+                                            {searchScope === 'dictionary' && availableSources.map(src => {
+                                                if (src.code === 'Other') {
                                                     return (
-                                                        <div key="other_group" className="flex flex-col">
+                                                        <div key="OtherGroup" className="flex flex-col">
                                                             <div className="flex items-center justify-between p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded">
                                                                 <label className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer flex-1">
                                                                     {/* Tri-state Checkbox Implementation */}
-                                                                    <div onClick={(e) => { e.preventDefault(); toggleAllSentenceSmallSources(); }} className="w-4 h-4 rounded border border-slate-300 dark:border-slate-600 flex items-center justify-center bg-white dark:bg-slate-800 overflow-hidden">
-                                                                        {sentenceOtherGroupState === 'all' && <div className="w-full h-full bg-amber-600 flex items-center justify-center"><Check size={12} className="text-white" /></div>}
-                                                                        {sentenceOtherGroupState === 'some' && <div className="w-full h-full bg-amber-600 flex items-center justify-center"><Minus size={12} className="text-white" /></div>}
+                                                                    <div onClick={(e) => { e.preventDefault(); toggleAllSmallSources(); }} className="w-4 h-4 rounded border border-slate-300 dark:border-slate-600 flex items-center justify-center bg-white dark:bg-slate-800 overflow-hidden">
+                                                                        {otherGroupState === 'all' && <div className="w-full h-full bg-amber-600 flex items-center justify-center"><Check size={12} className="text-white" /></div>}
+                                                                        {otherGroupState === 'some' && <div className="w-full h-full bg-amber-600 flex items-center justify-center"><Minus size={12} className="text-white" /></div>}
                                                                     </div>
 
                                                                     <span className="font-bold uppercase text-xs text-slate-500 dark:text-slate-400 mr-2 min-w-[3rem] shrink-0 text-center bg-slate-100 dark:bg-slate-800 rounded px-1">...</span>
                                                                     <span className="font-bold text-slate-600 dark:text-slate-400">Other Sources</span>
-                                                                    <span className="ml-auto text-xs text-slate-400 font-mono">({availableSentenceSources.otherSources.length})</span>
+                                                                    <span className="ml-auto text-xs text-slate-400 font-mono">({src.count})</span>
                                                                 </label>
-                                                                <button onClick={(e) => { e.preventDefault(); setExpandedSmallSources(!expandedSmallSources); }} className="p-1 ml-2 text-slate-400 hover:text-amber-600">
-                                                                    {expandedSmallSources ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                                                <button onClick={(e) => { e.preventDefault(); setExpandOthers(!expandOthers); }} className="p-1 ml-2 text-slate-400 hover:text-amber-600">
+                                                                    {expandOthers ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                                                                 </button>
                                                             </div>
 
-                                                            {expandedSmallSources && (
+                                                            {/* Indented Small Sources */}
+                                                            {expandOthers && (
                                                                 <div className="ml-8 mt-1 border-l-2 border-slate-100 dark:border-slate-800 pl-2 space-y-1">
-                                                                    {availableSentenceSources.otherSources.map(smallSrc => (
+                                                                    {expandedSmallSourcesDict.map(smallSrc => (
                                                                         <label key={smallSrc.code} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded">
                                                                             <input
                                                                                 type="checkbox"
-                                                                                checked={sentenceFilters[smallSrc.code] !== false}
-                                                                                onChange={() => setSentenceFilters(prev => ({ ...prev, [smallSrc.code]: !prev[smallSrc.code] }))}
+                                                                                checked={filters[smallSrc.code] !== false}
+                                                                                onChange={() => setFilters(prev => ({ ...prev, [smallSrc.code]: !prev[smallSrc.code] }))}
                                                                                 className="accent-amber-600 w-4 h-4 rounded"
                                                                             />
                                                                             <div className="flex-1 flex items-center min-w-0">
                                                                                 <span className="font-bold uppercase text-xs text-slate-500 dark:text-slate-400 mr-2 min-w-[3rem] shrink-0 text-center bg-slate-100 dark:bg-slate-800 rounded px-1">{smallSrc.code}</span>
-                                                                                <span className="truncate">{smallSrc.name.replace(`[${smallSrc.code}] `, '')}</span>
+                                                                                <span className="truncate">{smallSrc.name}</span>
                                                                                 <span className="ml-auto text-[10px] text-slate-300 font-mono">({smallSrc.count})</span>
                                                                             </div>
                                                                         </label>
@@ -1412,7 +1381,7 @@ function App() {
 
                                                 return (
                                                     <label key={src.code} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded">
-                                                        <input type="checkbox" checked={sentenceFilters[src.code] !== false} onChange={() => setSentenceFilters(prev => ({ ...prev, [src.code]: !prev[src.code] }))} className="accent-amber-600 w-4 h-4 rounded" />
+                                                        <input type="checkbox" checked={filters[src.code] !== false} onChange={() => setFilters(prev => ({ ...prev, [src.code]: !prev[src.code] }))} className="accent-amber-600 w-4 h-4 rounded" />
                                                         <div className="flex-1 flex items-center min-w-0">
                                                             <span className="font-bold uppercase text-xs text-slate-500 dark:text-slate-400 mr-2 min-w-[3rem] shrink-0 text-center bg-slate-100 dark:bg-slate-800 rounded px-1">{src.badge}</span>
                                                             <span className="truncate">{src.name}</span>
@@ -1421,205 +1390,266 @@ function App() {
                                                     </label>
                                                 )
                                             })}
-                                        </>
+
+                                            {/* Sentence Sources */}
+                                            {searchScope === 'sentences' && (
+                                                <>
+                                                    {availableSentenceSources.mainSources.map(src => {
+                                                        if (src.code === 'other_group') {
+                                                            return (
+                                                                <div key="other_group" className="flex flex-col">
+                                                                    <div className="flex items-center justify-between p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded">
+                                                                        <label className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer flex-1">
+                                                                            {/* Tri-state Checkbox Implementation */}
+                                                                            <div onClick={(e) => { e.preventDefault(); toggleAllSentenceSmallSources(); }} className="w-4 h-4 rounded border border-slate-300 dark:border-slate-600 flex items-center justify-center bg-white dark:bg-slate-800 overflow-hidden">
+                                                                                {sentenceOtherGroupState === 'all' && <div className="w-full h-full bg-amber-600 flex items-center justify-center"><Check size={12} className="text-white" /></div>}
+                                                                                {sentenceOtherGroupState === 'some' && <div className="w-full h-full bg-amber-600 flex items-center justify-center"><Minus size={12} className="text-white" /></div>}
+                                                                            </div>
+
+                                                                            <span className="font-bold uppercase text-xs text-slate-500 dark:text-slate-400 mr-2 min-w-[3rem] shrink-0 text-center bg-slate-100 dark:bg-slate-800 rounded px-1">...</span>
+                                                                            <span className="font-bold text-slate-600 dark:text-slate-400">Other Sources</span>
+                                                                            <span className="ml-auto text-xs text-slate-400 font-mono">({availableSentenceSources.otherSources.length})</span>
+                                                                        </label>
+                                                                        <button onClick={(e) => { e.preventDefault(); setExpandedSmallSources(!expandedSmallSources); }} className="p-1 ml-2 text-slate-400 hover:text-amber-600">
+                                                                            {expandedSmallSources ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                                                        </button>
+                                                                    </div>
+
+                                                                    {expandedSmallSources && (
+                                                                        <div className="ml-8 mt-1 border-l-2 border-slate-100 dark:border-slate-800 pl-2 space-y-1">
+                                                                            {availableSentenceSources.otherSources.map(smallSrc => (
+                                                                                <label key={smallSrc.code} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded">
+                                                                                    <input
+                                                                                        type="checkbox"
+                                                                                        checked={sentenceFilters[smallSrc.code] !== false}
+                                                                                        onChange={() => setSentenceFilters(prev => ({ ...prev, [smallSrc.code]: !prev[smallSrc.code] }))}
+                                                                                        className="accent-amber-600 w-4 h-4 rounded"
+                                                                                    />
+                                                                                    <div className="flex-1 flex items-center min-w-0">
+                                                                                        <span className="font-bold uppercase text-xs text-slate-500 dark:text-slate-400 mr-2 min-w-[3rem] shrink-0 text-center bg-slate-100 dark:bg-slate-800 rounded px-1">{smallSrc.code}</span>
+                                                                                        <span className="truncate">{smallSrc.name.replace(`[${smallSrc.code}] `, '')}</span>
+                                                                                        <span className="ml-auto text-[10px] text-slate-300 font-mono">({smallSrc.count})</span>
+                                                                                    </div>
+                                                                                </label>
+                                                                            ))}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        }
+
+                                                        return (
+                                                            <label key={src.code} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded">
+                                                                <input type="checkbox" checked={sentenceFilters[src.code] !== false} onChange={() => setSentenceFilters(prev => ({ ...prev, [src.code]: !prev[src.code] }))} className="accent-amber-600 w-4 h-4 rounded" />
+                                                                <div className="flex-1 flex items-center min-w-0">
+                                                                    <span className="font-bold uppercase text-xs text-slate-500 dark:text-slate-400 mr-2 min-w-[3rem] shrink-0 text-center bg-slate-100 dark:bg-slate-800 rounded px-1">{src.badge}</span>
+                                                                    <span className="truncate">{src.name}</span>
+                                                                    <span className="ml-auto text-xs text-slate-400 font-mono">({src.count})</span>
+                                                                </div>
+                                                            </label>
+                                                        )
+                                                    })}
+                                                </>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
-                            )}
-                        </div>
-                        <div className="flex-1 overflow-y-auto">{query ? (<>{paginatedResults.active.length === 0 && paginatedResults.inactive.length === 0 && <div className="text-center mt-12 text-slate-400">No results found</div>}{paginatedResults.active.map(item => {
-                            // Check if it's a Sentence (either wrapped in .item or direct with .id but no .Index)
-                            const isSentence = item.item || (item.id && !item.Index);
-                            const data = item.item || item;
+                                <div className="flex-1 overflow-y-auto">{query ? (<>{paginatedResults.active.length === 0 && paginatedResults.inactive.length === 0 && <div className="text-center mt-12 text-slate-400">No results found</div>}{paginatedResults.active.map(item => {
+                                    // Check if it's a Sentence (either wrapped in .item or direct with .id but no .Index)
+                                    const isSentence = item.item || (item.id && !item.Index);
+                                    const data = item.item || item;
 
-                            return isSentence ? (
-                                <SentenceCard key={data.id} sentence={data} onClick={() => handleEntryClick(data)} notebooks={notebooks} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} personalWords={personalWords} onCreateWord={() => openWordModal(null)}
-                                    favorites={favorites}
-                                    customLists={customLists}
-                                    onToggleFavorite={toggleFavorite}
-                                    onToggleList={toggleInList}
-                                    onOpenNewListModal={() => setShowNewListModal(true)}
+                                    return isSentence ? (
+                                        <SentenceCard key={data.id} sentence={data} onClick={() => handleEntryClick(data)} notebooks={notebooks} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} personalWords={personalWords} onCreateWord={() => openWordModal(null)}
+                                            favorites={favorites}
+                                            customLists={customLists}
+                                            onToggleFavorite={toggleFavorite}
+                                            onToggleList={toggleInList}
+                                            onOpenNewListModal={() => setShowNewListModal(true)}
+                                        />
+                                    ) : (
+                                        <EntryCard key={item.Index} entry={item} notebooks={notebooks} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} />
+                                    );
+                                })}
+
+
+
+                                    {paginatedResults.inactive.length > 0 && <><div className="px-4 py-2 bg-slate-50 dark:bg-slate-900/50 text-xs font-bold text-slate-400 uppercase tracking-widest border-y border-slate-100 dark:border-slate-800 mt-4">Filtered</div>{paginatedResults.inactive.map(entry => {
+                                        if (entry.item && (entry.type === 'text' || entry.type === 'deep')) {
+                                            return <SentenceCard key={entry.item.id} sentence={entry.item} onClick={() => handleEntryClick(entry.item)} isDimmed={true} notebooks={notebooks} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} personalWords={personalWords} onCreateWord={() => openWordModal(null)}
+                                                favorites={favorites}
+                                                customLists={customLists}
+                                                onToggleFavorite={toggleFavorite}
+                                                onToggleList={toggleInList}
+                                                onOpenNewListModal={() => setShowNewListModal(true)}
+                                            />;
+                                        }
+                                        return <EntryCard key={entry.Index} entry={entry} notebooks={notebooks} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} isDimmed={true} />;
+                                    })}</>}
+                                    {paginatedResults.hasMore && (
+                                        <div className="p-4">
+                                            <button onClick={() => setResultLimit(prev => prev + 50)} className="w-full py-3 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors">
+                                                Show More Results
+                                            </button>
+                                        </div>
+                                    )}
+                                    {/* Create New Button - MOVED HERE */}
+                                    <div className="p-4 pt-0">
+                                        <button
+                                            onClick={() => openWordModal(null)}
+                                            className="w-full py-3 border-2 border-dashed border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-bold rounded-xl hover:border-amber-400 hover:text-amber-600 dark:hover:border-amber-700 dark:hover:text-amber-500 transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            <Plus size={20} /> Create New {searchScope === 'sentences' ? 'Sentence' : 'Word'}
+                                        </button>
+                                    </div>
+                                </>) : (
+                                    <div className="p-4">
+                                        {searchHistory.length > 0 ? (
+                                            <>
+                                                <div className="flex items-center justify-between mb-2"><h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Recent Searches</h3><button onClick={() => setSearchHistory([])} className="text-xs text-red-400 font-bold uppercase">Clear</button></div>
+                                                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                                                    {searchHistory.map((h, i) => (
+                                                        <div key={i} onClick={() => handleSearchTerm(h)} className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between active:bg-slate-50 dark:active:bg-slate-800 cursor-pointer">
+                                                            <div className="flex items-center gap-3 text-slate-600 dark:text-slate-300"><Clock size={16} className="text-slate-400" /><span>{h}</span></div>
+                                                            <button onClick={(e) => deleteHistoryItem(e, h)} className="p-1 text-slate-300 hover:text-slate-500"><X size={16} /></button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="flex flex-col items-center justify-center h-64 text-slate-300 dark:text-slate-700"><Book size={48} strokeWidth={1} className="mb-4 opacity-20" /><p>Type to search the dictionary</p></div>
+                                        )}
+                                    </div>
+                                )}</div></div>
+                        )
+                        }
+                        {activeTab === 'lists' && (
+                            <ListsTab
+                                customLists={customLists}
+                                setCustomLists={setCustomLists}
+                                customListOrder={customListOrder}
+                                setCustomListOrder={setCustomListOrder}
+                                favorites={favorites}
+                                setFavorites={setFavorites}
+                                allData={allData}
+                                notebooks={notebooks}
+                                userNotes={userNotes}
+                                userAudioMeta={userAudioMeta}
+                                onEntryClick={handleEntryClick}
+                                onPerformSearch={(q, scope) => {
+                                    const isModal = scope === 'modal';
+                                    const isModalSentences = scope === 'modal_sentences';
+                                    const activeSettings = (isModal || isModalSentences) ? {
+                                        searchLangs: { syllabary: true, translit: true, english: true, tone: false },
+                                        searchScopes: { main: isModal, otherForms: isModal, sentences: isModalSentences, notes: false },
+                                        enableRegex: false
+                                    } : settings;
+                                    const activePos = (isModal || isModalSentences) ? "All" : posFilter;
+                                    const activeNotes = (isModal || isModalSentences) ? {} : userNotes;
+                                    const activePrioritized = (isModal || isModalSentences) ? [] : prioritizedSources;
+
+                                    return performSearch(q, allData, [...sentences, ...userSentences], entryToSentencesMap, activeSettings, notebooks, activeNotes, activePos, isModalSentences ? 'sentences' : (isModal ? 'dictionary' : (scope || 'dictionary')), activePrioritized);
+                                }}
+                                settings={settings}
+                                openWordModal={openWordModal}
+                                sentences={sentences}
+                                userSentences={userSentences}
+                                activeListId={activeListId}
+                                setActiveListId={setActiveListId}
+                                view={listsView}
+                                setView={setListsView}
+                            />
+                        )}
+                        {activeTab === 'widgets' && <WidgetsTab />}
+                        {activeTab === 'reader' && (
+                            readerView === 'importing' ? (
+                                <TextImporter
+                                    onBack={() => setReaderView('list')}
+                                    onComplete={(_storyId) => {
+                                        setReaderView('list');
+                                    }}
+                                    notebooks={notebooks}
+                                />
+                            ) : readerView === 'reading' && activeBookId && activeChapterId ? (
+                                <ReaderView
+                                    bookId={activeBookId}
+                                    chapterId={activeChapterId}
+                                    scrollToSentenceId={scrollToSentenceId}
+                                    onBack={() => {
+                                        setReaderView('list');
+                                        setActiveBookId(null);
+                                        setActiveChapterId(null);
+                                        setScrollToSentenceId(undefined);
+                                    }}
+                                    notebooks={notebooks}
+                                    onCreateWord={openWordModal}
                                 />
                             ) : (
-                                <EntryCard key={item.Index} entry={item} notebooks={notebooks} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} />
-                            );
-                        })}
-
-
-
-                            {paginatedResults.inactive.length > 0 && <><div className="px-4 py-2 bg-slate-50 dark:bg-slate-900/50 text-xs font-bold text-slate-400 uppercase tracking-widest border-y border-slate-100 dark:border-slate-800 mt-4">Filtered</div>{paginatedResults.inactive.map(entry => {
-                                if (entry.item && (entry.type === 'text' || entry.type === 'deep')) {
-                                    return <SentenceCard key={entry.item.id} sentence={entry.item} onClick={() => handleEntryClick(entry.item)} isDimmed={true} notebooks={notebooks} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} personalWords={personalWords} onCreateWord={() => openWordModal(null)}
-                                        favorites={favorites}
-                                        customLists={customLists}
-                                        onToggleFavorite={toggleFavorite}
-                                        onToggleList={toggleInList}
-                                        onOpenNewListModal={() => setShowNewListModal(true)}
-                                    />;
+                                <ReaderTab
+                                    notebooks={notebooks}
+                                    onNavigateToReader={(bookId, chapterId, sentenceId) => {
+                                        setActiveBookId(bookId);
+                                        setActiveChapterId(chapterId);
+                                        setScrollToSentenceId(sentenceId);
+                                        setReaderView('reading');
+                                    }}
+                                    onOpenImporter={() => setReaderView('importing')}
+                                />
+                            )
+                        )}
+                        {activeTab === 'packages' && <PackageManagerTab
+                            customLists={customLists}
+                            onNavigate={(type, payload) => {
+                                if (type === 'notebook') {
+                                    setActiveTab('personal');
+                                    setActiveNotebookId(payload);
+                                } else if (type === 'list') {
+                                    setActiveTab('lists');
+                                    setActiveListId(payload);
+                                    setListsView('detail');
+                                } else if (type === 'word' || type === 'sentence') {
+                                    handleEntryClick(payload);
                                 }
-                                return <EntryCard key={entry.Index} entry={entry} notebooks={notebooks} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} isDimmed={true} />;
-                            })}</>}
-                            {paginatedResults.hasMore && (
-                                <div className="p-4">
-                                    <button onClick={() => setResultLimit(prev => prev + 50)} className="w-full py-3 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors">
-                                        Show More Results
-                                    </button>
+                            }}
+                        />}
+                        {
+                            activeTab === 'personal' && (!activeNotebookId ? (<div className="flex flex-col h-full"><div className="px-4 py-4 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0"><h2 className="font-noto-serif text-2xl font-bold text-slate-800 dark:text-slate-100">Notebooks</h2><button onClick={() => setShowNewNotebookModal(true)} className="bg-slate-900 dark:bg-slate-700 text-white p-2 rounded-full shadow-md"><Plus size={20} /></button></div><div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-4 content-start">{notebookList.map((nb: any) => {
+                                const isImported = nb.type === 'imported';
+                                const colorClass = isImported ? `text-${nb.color === 'amber' ? 'amber' : (nb.color === 'slate' ? 'slate' : nb.color)}-600 dark:text-${nb.color === 'amber' ? 'amber' : (nb.color === 'slate' ? 'slate' : nb.color)}-400` : 'text-amber-500 hover:text-amber-600';
+                                // Handle hex colors
+                                const style = (isImported && nb.color.startsWith('#')) ? { color: nb.color } : {};
+
+                                return (<div key={nb.id} onClick={() => setActiveNotebookId(nb.id)} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 flex flex-col shadow-sm hover:shadow-md transition-shadow active:bg-slate-50 dark:active:bg-slate-800 cursor-pointer h-32 justify-between"><Folder size={32} className={isImported && nb.color.startsWith('#') ? "" : (isImported ? colorClass : "text-amber-500")} style={style} /><div><h3 className="font-bold text-slate-800 dark:text-slate-200 line-clamp-1">{nb.name}</h3><p className="text-xs text-slate-400">{nb.countWords} words, {nb.countSentences} sentences</p></div></div>);
+                            })}{notebookList.length === 0 && (<div className="col-span-2 text-center py-12 text-slate-400 flex flex-col items-center"><BookOpen size={48} className="mb-4 opacity-20" /><p>No notebooks yet.</p><button onClick={() => setShowNewNotebookModal(true)} className="mt-4 text-sky-600 dark:text-sky-400 font-bold">Create one</button></div>)}</div><div className="p-4 border-t border-slate-200 dark:border-slate-800"><label className="w-full flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold py-3 rounded-xl cursor-pointer transition-colors"><Download size={20} /><span>Import CSV</span><input type="file" className="hidden" accept=".csv" onChange={handleImportNotebook} /></label></div></div>) : (<div className="flex flex-col h-full"><div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col gap-3 shrink-0">
+                                <div className="flex items-center gap-3">
+                                    <button onClick={() => setActiveNotebookId(null)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full -ml-2"><ArrowLeft size={20} className="text-slate-500 dark:text-slate-400" /></button>
+                                    <div className="flex-1 flex items-center gap-2"><h2 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100">{notebooks[activeNotebookId]?.name || notebookList.find(n => n.id === activeNotebookId)?.name || 'Notebook'}</h2>
+                                        {notebooks[activeNotebookId] && <button onClick={() => { setRenameData({ type: 'notebook', target: activeNotebookId, value: notebooks[activeNotebookId].name }); setShowNewNotebookModal(true); }} className="p-1 text-slate-400 hover:text-sky-600 rounded-full"><Pencil size={14} /></button>}
+                                    </div>
+                                    <div className="flex gap-2 ml-auto"><button onClick={handleExportNotebook} className="p-1.5 text-slate-400 hover:text-amber-600 rounded"><Share size={20} /></button><button onClick={() => setNotebookToDelete(activeNotebookId)} className="p-1.5 text-slate-400 hover:text-red-500 rounded"><Trash2 size={20} /></button></div>
                                 </div>
-                            )}
-                            {/* Create New Button - MOVED HERE */}
-                            <div className="p-4 pt-0">
-                                <button
-                                    onClick={() => openWordModal(null)}
-                                    className="w-full py-3 border-2 border-dashed border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-bold rounded-xl hover:border-amber-400 hover:text-amber-600 dark:hover:border-amber-700 dark:hover:text-amber-500 transition-colors flex items-center justify-center gap-2"
-                                >
-                                    <Plus size={20} /> Create New {searchScope === 'sentences' ? 'Sentence' : 'Word'}
-                                </button>
+                                <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+                                    <button onClick={() => setNotebookMode('words')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${notebookMode === 'words' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'} `}>Words</button>
+                                    <button onClick={() => setNotebookMode('sentences')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${notebookMode === 'sentences' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'} `}>Sentences</button>
+                                </div>
                             </div>
-                        </>) : (
-                            <div className="p-4">
-                                {searchHistory.length > 0 ? (
-                                    <>
-                                        <div className="flex items-center justify-between mb-2"><h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Recent Searches</h3><button onClick={() => setSearchHistory([])} className="text-xs text-red-400 font-bold uppercase">Clear</button></div>
-                                        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-                                            {searchHistory.map((h, i) => (
-                                                <div key={i} onClick={() => handleSearchTerm(h)} className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between active:bg-slate-50 dark:active:bg-slate-800 cursor-pointer">
-                                                    <div className="flex items-center gap-3 text-slate-600 dark:text-slate-300"><Clock size={16} className="text-slate-400" /><span>{h}</span></div>
-                                                    <button onClick={(e) => deleteHistoryItem(e, h)} className="p-1 text-slate-300 hover:text-slate-500"><X size={16} /></button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </>
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center h-64 text-slate-300 dark:text-slate-700"><Book size={48} strokeWidth={1} className="mb-4 opacity-20" /><p>Type to search the dictionary</p></div>
-                                )}
-                            </div>
-                        )}</div></div>
-                )
-                }
-                {activeTab === 'lists' && (
-                    <ListsTab
-                        customLists={customLists}
-                        setCustomLists={setCustomLists}
-                        customListOrder={customListOrder}
-                        setCustomListOrder={setCustomListOrder}
-                        favorites={favorites}
-                        setFavorites={setFavorites}
-                        allData={allData}
-                        notebooks={notebooks}
-                        userNotes={userNotes}
-                        userAudioMeta={userAudioMeta}
-                        onEntryClick={handleEntryClick}
-                        onPerformSearch={(q, scope) => {
-                            const isModal = scope === 'modal';
-                            const isModalSentences = scope === 'modal_sentences';
-                            const activeSettings = (isModal || isModalSentences) ? {
-                                searchLangs: { syllabary: true, translit: true, english: true, tone: false },
-                                searchScopes: { main: isModal, otherForms: isModal, sentences: isModalSentences, notes: false },
-                                enableRegex: false
-                            } : settings;
-                            const activePos = (isModal || isModalSentences) ? "All" : posFilter;
-                            const activeNotes = (isModal || isModalSentences) ? {} : userNotes;
-                            const activePrioritized = (isModal || isModalSentences) ? [] : prioritizedSources;
+                                <div className="flex-1 overflow-y-auto p-4" key={activeNotebookId + '-' + notebookMode}>
+                                    {notebookMode === 'words' ? (
+                                        sortedNotebookWords.length === 0 ? <div className="text-center py-12 text-slate-400">Empty notebook.<br />Tap + to add a word.</div> : sortedNotebookWords.map(entry => <EntryCard key={entry.Index} entry={entry} notebooks={notebooks} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} />)
+                                    ) : (
+                                        (notebooks[activeNotebookId] ? userSentences : sentences).filter(s => s.source === activeNotebookId).length === 0 ? <div className="text-center py-12 text-slate-400">No sentences yet.<br />Tap + to add one.</div> : (notebooks[activeNotebookId] ? userSentences : sentences).filter(s => s.source === activeNotebookId).map(s => <SentenceCard key={s.id} sentence={s} notebooks={notebooks} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} personalWords={personalWords} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} onDeleteAudio={deleteAudio}
+                                            favorites={favorites}
+                                            customLists={customLists}
+                                            onToggleFavorite={toggleFavorite}
+                                            onToggleList={toggleInList}
+                                            onOpenNewListModal={() => setShowNewListModal(true)}
+                                        />)
+                                    )}
+                                </div>{notebooks[activeNotebookId] && <button onClick={() => openWordModal()} className="absolute bottom-6 right-6 bg-slate-900 dark:bg-slate-700 text-white p-4 rounded-full shadow-xl z-20 hover:scale-105 transition-transform"><Plus size={24} /></button>}</div>))
 
-                            return performSearch(q, allData, [...sentences, ...userSentences], entryToSentencesMap, activeSettings, notebooks, activeNotes, activePos, isModalSentences ? 'sentences' : (isModal ? 'dictionary' : (scope || 'dictionary')), activePrioritized);
-                        }}
-                        settings={settings}
-                        openWordModal={openWordModal}
-                        sentences={sentences}
-                        userSentences={userSentences}
-                        activeListId={activeListId}
-                        setActiveListId={setActiveListId}
-                        view={listsView}
-                        setView={setListsView}
-                    />
-                )}
-                {activeTab === 'widgets' && <WidgetsTab />}
-                {activeTab === 'reader' && (
-                    readerView === 'importing' ? (
-                        <TextImporter
-                            onBack={() => setReaderView('list')}
-                            onComplete={(_storyId) => {
-                                setReaderView('list');
-                            }}
-                            notebooks={notebooks}
-                        />
-                    ) : readerView === 'reading' && activeBookId && activeChapterId ? (
-                        <ReaderView
-                            bookId={activeBookId}
-                            chapterId={activeChapterId}
-                            scrollToSentenceId={scrollToSentenceId}
-                            onBack={() => {
-                                setReaderView('list');
-                                setActiveBookId(null);
-                                setActiveChapterId(null);
-                                setScrollToSentenceId(undefined);
-                            }}
-                            notebooks={notebooks}
-                            onCreateWord={openWordModal}
-                        />
-                    ) : (
-                        <ReaderTab
-                            notebooks={notebooks}
-                            onNavigateToReader={(bookId, chapterId, sentenceId) => {
-                                setActiveBookId(bookId);
-                                setActiveChapterId(chapterId);
-                                setScrollToSentenceId(sentenceId);
-                                setReaderView('reading');
-                            }}
-                            onOpenImporter={() => setReaderView('importing')}
-                        />
-                    )
-                )}
-                {activeTab === 'packages' && <PackageManagerTab
-                    customLists={customLists}
-                    onNavigate={(type, payload) => {
-                        if (type === 'notebook') {
-                            setActiveTab('personal');
-                            setActiveNotebookId(payload);
-                        } else if (type === 'list') {
-                            setActiveTab('lists');
-                            setActiveListId(payload);
-                            setListsView('detail');
-                        } else if (type === 'word' || type === 'sentence') {
-                            handleEntryClick(payload);
                         }
-                    }}
-                />}
-                {
-                    activeTab === 'personal' && (!activeNotebookId ? (<div className="flex flex-col h-full"><div className="px-4 py-4 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0"><h2 className="font-noto-serif text-2xl font-bold text-slate-800 dark:text-slate-100">Notebooks</h2><button onClick={() => setShowNewNotebookModal(true)} className="bg-slate-900 dark:bg-slate-700 text-white p-2 rounded-full shadow-md"><Plus size={20} /></button></div><div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-4 content-start">{notebookList.map((nb: any) => {
-                        const isImported = nb.type === 'imported';
-                        const colorClass = isImported ? `text-${nb.color === 'amber' ? 'amber' : (nb.color === 'slate' ? 'slate' : nb.color)}-600 dark:text-${nb.color === 'amber' ? 'amber' : (nb.color === 'slate' ? 'slate' : nb.color)}-400` : 'text-amber-500 hover:text-amber-600';
-                        // Handle hex colors
-                        const style = (isImported && nb.color.startsWith('#')) ? { color: nb.color } : {};
-
-                        return (<div key={nb.id} onClick={() => setActiveNotebookId(nb.id)} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 flex flex-col shadow-sm hover:shadow-md transition-shadow active:bg-slate-50 dark:active:bg-slate-800 cursor-pointer h-32 justify-between"><Folder size={32} className={isImported && nb.color.startsWith('#') ? "" : (isImported ? colorClass : "text-amber-500")} style={style} /><div><h3 className="font-bold text-slate-800 dark:text-slate-200 line-clamp-1">{nb.name}</h3><p className="text-xs text-slate-400">{nb.countWords} words, {nb.countSentences} sentences</p></div></div>);
-                    })}{notebookList.length === 0 && (<div className="col-span-2 text-center py-12 text-slate-400 flex flex-col items-center"><BookOpen size={48} className="mb-4 opacity-20" /><p>No notebooks yet.</p><button onClick={() => setShowNewNotebookModal(true)} className="mt-4 text-sky-600 dark:text-sky-400 font-bold">Create one</button></div>)}</div><div className="p-4 border-t border-slate-200 dark:border-slate-800"><label className="w-full flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold py-3 rounded-xl cursor-pointer transition-colors"><Download size={20} /><span>Import CSV</span><input type="file" className="hidden" accept=".csv" onChange={handleImportNotebook} /></label></div></div>) : (<div className="flex flex-col h-full"><div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col gap-3 shrink-0">
-                        <div className="flex items-center gap-3">
-                            <button onClick={() => setActiveNotebookId(null)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full -ml-2"><ArrowLeft size={20} className="text-slate-500 dark:text-slate-400" /></button>
-                            <div className="flex-1 flex items-center gap-2"><h2 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100">{notebooks[activeNotebookId]?.name || notebookList.find(n => n.id === activeNotebookId)?.name || 'Notebook'}</h2>
-                                {notebooks[activeNotebookId] && <button onClick={() => { setRenameData({ type: 'notebook', target: activeNotebookId, value: notebooks[activeNotebookId].name }); setShowNewNotebookModal(true); }} className="p-1 text-slate-400 hover:text-sky-600 rounded-full"><Pencil size={14} /></button>}
-                            </div>
-                            <div className="flex gap-2 ml-auto"><button onClick={handleExportNotebook} className="p-1.5 text-slate-400 hover:text-amber-600 rounded"><Share size={20} /></button><button onClick={() => setNotebookToDelete(activeNotebookId)} className="p-1.5 text-slate-400 hover:text-red-500 rounded"><Trash2 size={20} /></button></div>
-                        </div>
-                        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
-                            <button onClick={() => setNotebookMode('words')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${notebookMode === 'words' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'} `}>Words</button>
-                            <button onClick={() => setNotebookMode('sentences')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${notebookMode === 'sentences' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'} `}>Sentences</button>
-                        </div>
-                    </div>
-                        <div className="flex-1 overflow-y-auto p-4" key={activeNotebookId + '-' + notebookMode}>
-                            {notebookMode === 'words' ? (
-                                sortedNotebookWords.length === 0 ? <div className="text-center py-12 text-slate-400">Empty notebook.<br />Tap + to add a word.</div> : sortedNotebookWords.map(entry => <EntryCard key={entry.Index} entry={entry} notebooks={notebooks} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} />)
-                            ) : (
-                                (notebooks[activeNotebookId] ? userSentences : sentences).filter(s => s.source === activeNotebookId).length === 0 ? <div className="text-center py-12 text-slate-400">No sentences yet.<br />Tap + to add one.</div> : (notebooks[activeNotebookId] ? userSentences : sentences).filter(s => s.source === activeNotebookId).map(s => <SentenceCard key={s.id} sentence={s} notebooks={notebooks} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} personalWords={personalWords} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} onDeleteAudio={deleteAudio}
-                                    favorites={favorites}
-                                    customLists={customLists}
-                                    onToggleFavorite={toggleFavorite}
-                                    onToggleList={toggleInList}
-                                    onOpenNewListModal={() => setShowNewListModal(true)}
-                                />)
-                            )}
-                        </div>{notebooks[activeNotebookId] && <button onClick={() => openWordModal()} className="absolute bottom-6 right-6 bg-slate-900 dark:bg-slate-700 text-white p-4 rounded-full shadow-xl z-20 hover:scale-105 transition-transform"><Plus size={24} /></button>}</div>))
-
-                }
+                    </>
+                )}
             </main >
             <nav className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 pb-safe pt-2 px-6 flex justify-between shrink-0 h-[80px] pb-5">
                 <button onClick={() => { setActiveTab('search'); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'search' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
@@ -1648,36 +1678,6 @@ function App() {
                 </button>
             </nav>
 
-            {/* DETAIL VIEW MOUNT */}
-            {
-                selectedEntry && (
-                    <EntryDetail
-                        entry={selectedEntry}
-                        notebooks={notebooks}
-                        userNotes={userNotes}
-                        userAudioMeta={userAudioMeta}
-                        userWordForms={userWordForms}
-                        onSaveAudio={saveAudio}
-                        onDeleteAudio={deleteAudio}
-                        favorites={favorites}
-                        customLists={customLists}
-                        customListOrder={customListOrder}
-                        onClose={() => { setSelectedEntry(null); updateUrl(null); }}
-                        onEdit={(entry, content, isNote) => isNote ? openNotesModal(entry, content, false) : openWordModal(entry)}
-                        onToggleFavorite={toggleFavorite}
-                        onToggleList={toggleInList}
-                        onDelete={(idx) => { setWordToDelete(idx); }}
-                        onSearchTerm={handleSearchTerm}
-                        onOpenNewListModal={() => setShowNewListModal(true)}
-                        onMove={openMoveModal}
-                        personalWords={personalWords}
-                        onEditSentence={handleEditSentence}
-                        onDeleteSentence={handleDeleteSentence}
-                        onCreateWord={() => openWordModal(null)}
-                        onManageForms={handleManageForms}
-                    />
-                )
-            }
 
             {/* MODALS */}
             {
