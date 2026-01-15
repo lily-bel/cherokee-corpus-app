@@ -15,13 +15,13 @@ interface GlossPopoverProps {
     onAdd?: () => void;
     onAddToQueue?: () => void;  // Add to Investigation Queue
     personalWords?: any[];
-    notebooks?: any;
+    customDictionaries?: any;
     sourceMap?: Record<string, string>;
 }
 
 import { usePackageManager } from './PackageManagerContext';
 
-export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord, dictionaryMap, position, onClose, onEntryClick, onEdit, onDelete, onAdd, onAddToQueue, personalWords, notebooks, sourceMap }) => {
+export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord, dictionaryMap, position, onClose, onEntryClick, onEdit, onDelete, onAdd, onAddToQueue, personalWords, customDictionaries, sourceMap }) => {
     const { getPackageColor } = usePackageManager();
     const popoverRef = useRef<HTMLDivElement>(null);
     const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
@@ -74,11 +74,11 @@ export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord,
                         const pw = personalWords.find(w => w.Index === gloss.entry_id || w.id === gloss.entry_id);
                         if (pw) entry = { ...pw, id: pw.Index };
                     }
-                    const isUser = gloss.source === 'user' || (notebooks && notebooks[gloss.source]);
+                    const isUser = gloss.source === 'user' || (customDictionaries && customDictionaries[gloss.source]);
                     const pkgColor = getPackageColor(gloss.source) || (isUser ? '#fbbf24' : undefined);
 
                     // Resolve Source Name
-                    const sourceName = notebooks?.[gloss.source]?.name || sourceMap?.[gloss.source] || gloss.source;
+                    const sourceName = customDictionaries?.[gloss.source]?.name || sourceMap?.[gloss.source] || gloss.source;
 
                     // IGT Segments
                     let igtSegments: { c: string, e: string }[] = [];

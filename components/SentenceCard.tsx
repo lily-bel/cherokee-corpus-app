@@ -13,7 +13,7 @@ interface SentenceCardProps {
     sentence: Sentence;
     onClick?: () => void;
     isDimmed?: boolean;
-    notebooks?: any;
+    customDictionaries?: any;
     userNotes?: Record<string, string>;
     onEditNote?: (id: string, note: string) => void;
     onEditSentence?: (id: string) => void;
@@ -34,7 +34,7 @@ interface SentenceCardProps {
     onReadInContext?: (sentenceId: string) => void;
 }
 
-export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, isDimmed, notebooks, userNotes, onEditNote, onEditSentence, sourceMap, onSaveAudio, userAudioMeta, personalWords, onDeleteSentence, onDeleteAudio, onCreateWord, favorites, customLists, onToggleFavorite, onToggleList, onOpenNewListModal, onReadInContext }) => {
+export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, isDimmed, customDictionaries, userNotes, onEditNote, onEditSentence, sourceMap, onSaveAudio, userAudioMeta, personalWords, onDeleteSentence, onDeleteAudio, onCreateWord, favorites, customLists, onToggleFavorite, onToggleList, onOpenNewListModal, onReadInContext }) => {
     const { glossMap, dictionaryMap, addUserGloss, removeUserGloss, removeUserSentence } = useCorpus();
     const { packages, getPackageColor, importedData } = usePackageManager(); // Add this line
     const [activePopover, setActivePopover] = useState<{ index: number, rect: { x: number, y: number } } | null>(null);
@@ -53,6 +53,16 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
     const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
 
     const glosses = glossMap.get(sentence.id) || [];
+
+    const getGlossColor = (g: Gloss) => {
+        if (g.source === 'user' || (customDictionaries && customDictionaries[g.source]) || g.source.startsWith('nb_')) {
+            return '#fbbf24'; // User gold
+        }
+        const color = getPackageColor(g.source);
+        if (color?.startsWith('#')) return color;
+        return '#cbd5e1'; // Default
+    };
+
 
     const tokens = useMemo(() => {
         const syl = sentence.syllabary ? sentence.syllabary.split(' ') : [];
@@ -118,7 +128,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
             }
 
             // Fallbacks
-            if (g.source === 'user' || (notebooks && notebooks[g.source]) || g.source.startsWith('nb_')) {
+            if (g.source === 'user' || (customDictionaries && customDictionaries[g.source]) || g.source.startsWith('nb_')) {
                 return COLORS.amber; // #fbbf24
             }
 
@@ -297,10 +307,10 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                         <button
                             onClick={(e) => { e.stopPropagation(); onReadInContext(sentence.id); }}
                             className="text-xs font-medium text-sky-600 dark:text-sky-400 hover:underline flex items-center gap-1"
-                            title="Read in context"
+                            title="See in context"
                         >
                             <BookOpen size={12} />
-                            Read
+                            See in Context
                         </button>
                     )}
                     {/* List Add Button */}
@@ -311,7 +321,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                         </button>
                     )}
                     {sentence.audio && <div className="text-slate-400"><Mic size={14} /></div>}
-                    <SourceBadge source={sentence.source} name={notebooks?.[sentence.source]?.name || sourceMap?.[sentence.source] || sentence.source} />
+                    <SourceBadge source={sentence.source} name={customDictionaries?.[sentence.source]?.name || sourceMap?.[sentence.source] || sentence.source} />
                 </div>
             </div>
 
@@ -434,6 +444,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                             const pkgColor = getPackageColor(audio.packageId || 'user');
                             const isCustomColor = pkgColor && pkgColor.startsWith('#');
                             const isPlaying = playingAudioId === audio.id;
+                            const speakerName = isOfficial ? (audio.id.split('_')[0] || 'Official') : (audio.speaker || 'User');
                             let style = {};
                             let className = "flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors shadow-sm group ";
 
@@ -466,7 +477,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                                         className="flex items-center gap-2"
                                     >
                                         {isPlaying ? <Pause size={12} className="fill-current" /> : <Mic size={12} />}
-                                        <span>{isPlaying ? 'Playing...' : (audio.speaker || 'User')}</span>
+                                        <span>{isPlaying ? 'Playing...' : speakerName}</span>
                                     </button>
                                     {!isOfficial && onDeleteAudio && (
                                         <button onClick={(e) => { e.stopPropagation(); if (window.confirm("Delete audio?")) onDeleteAudio(sentence.id + '_sentence', audio.id); }} className="ml-1 pl-2 border-l border-white/20 hover:text-red-200 transition-colors flex items-center">
@@ -625,7 +636,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                         setShowLinker(null);
                     } : undefined}
                     onCreateNew={onCreateWord}
-                    notebooks={notebooks}
+                    customDictionaries={customDictionaries}
                 />
             )}
             {showRecorder && (

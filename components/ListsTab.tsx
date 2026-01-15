@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Star, ListIcon, Trash2, Pencil, ChevronRight, GripVertical, Folder, ArrowLeft, Plus, X, Search, Check, Volume2, Pause, Eye, EyeOff, Mic, StickyNote, ListPlus } from './Icons';
+import { Star, ListIcon, Trash2, Pencil, ChevronRight, GripVertical, Folder, ArrowLeft, Plus, X, Search, Check, Volume2, Pause, Eye, EyeOff, Mic, StickyNote, ListPlus, BookOpen } from './Icons';
 import { Modal, SourceBadge } from './UI';
 import { usePackageManager } from './PackageManagerContext';
 import { useCorpus } from './CorpusContext';
@@ -23,7 +23,7 @@ interface ListsTabProps {
     favorites: string[];
     setFavorites: React.Dispatch<React.SetStateAction<string[]>>;
     allData: any[];
-    notebooks: any;
+    customDictionaries: any;
     userNotes: any;
     userAudioMeta: any;
     onEntryClick: (entry: any) => void;
@@ -36,6 +36,7 @@ interface ListsTabProps {
     setActiveListId?: (id: string | null) => void;
     view?: 'all' | 'detail';
     setView?: (view: 'all' | 'detail') => void;
+    onReadInContext?: (sentenceId: string) => void;
 }
 
 const MiniAudioButton = ({ audio, isOfficial = false, color }: { audio: any, isOfficial?: boolean, color?: string }) => {
@@ -100,12 +101,15 @@ const MiniAudioButton = ({ audio, isOfficial = false, color }: { audio: any, isO
         bgClass = "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-amber-600";
     }
 
+    const audioId = typeof audio === 'string' ? audio : audio.id;
+    const speakerName = isOfficial ? (audioId.split('_')[0] || "Official Audio") : (audio.speaker || "User Recording");
+
     return (
         <button
             onClick={handlePlay}
             className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors shrink-0 ${bgClass}`}
             style={style}
-            title={isOfficial ? "Official Audio" : (audio.speaker || "User Recording")}
+            title={speakerName}
         >
             {isPlaying ? <Pause size={14} className="fill-current" /> : <Icon size={14} />}
         </button>
@@ -119,7 +123,7 @@ const AddWordsModal = ({
     activeList,
     onToggleItem,
     onPerformSearch,
-    notebooks
+    customDictionaries
 }: {
     isOpen: boolean,
     onClose: () => void,
@@ -127,7 +131,7 @@ const AddWordsModal = ({
     activeList: ListData | null,
     onToggleItem: (id: string) => void,
     onPerformSearch: (query: string, scope?: 'dictionary' | 'sentences' | 'modal' | 'modal_sentences') => any[],
-    notebooks: any
+    customDictionaries: any
 }) => {
     const { getPackageColor } = usePackageManager();
     const [query, setQuery] = useState('');
@@ -190,7 +194,7 @@ const AddWordsModal = ({
                                         {source && (
                                             <SourceBadge
                                                 source={source}
-                                                name={notebooks?.[source]?.name}
+                                                name={customDictionaries?.[source]?.name}
                                                 customColor={getPackageColor(source)}
                                             />
                                         )}
@@ -244,7 +248,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
     favorites,
     setFavorites,
     allData,
-    notebooks: propNotebooks,
+    customDictionaries: propCustomDictionaries,
     userAudioMeta: propUserAudioMeta,
     onEntryClick,
     onPerformSearch,
@@ -254,7 +258,8 @@ const ListsTab: React.FC<ListsTabProps> = ({
     activeListId: propActiveListId,
     setActiveListId: propSetActiveListId,
     view: propView,
-    setView: propSetView
+    setView: propSetView,
+    onReadInContext
 }) => {
     const { getPackageColor, packages, importedData } = usePackageManager();
     const { userAudioMeta, personalWords, glosses } = useCorpus();
@@ -472,22 +477,28 @@ const ListsTab: React.FC<ListsTabProps> = ({
     const handleRemoveFromList = (item: any) => {
         if (!activeListId) return;
 
-        // Disable removing from built-in lists
         const list = getList(activeListId);
-        if (list?.type.startsWith('builtin') || list?.type === 'default') return;
+        if (!list) return;
+
+        // Only allow removing from user lists and favorites
+        const canEdit = list.type === 'user' || list.id === 'favorites';
+        if (!canEdit) return;
 
         // Determine ID to remove (word Index or prefixed sentence ID)
         const removeId = (id: string) => {
             if (activeListId === 'favorites') {
                 setFavorites(prev => prev.filter(i => i !== id));
             } else {
-                setCustomLists(prev => ({
-                    ...prev,
-                    [activeListId]: {
-                        ...prev[activeListId] as ListData,
-                        items: (prev[activeListId] as ListData).items.filter(i => i !== id)
-                    }
-                }));
+                setCustomLists(prev => {
+                    if (!prev[activeListId]) return prev;
+                    return {
+                        ...prev,
+                        [activeListId]: {
+                            ...prev[activeListId] as ListData,
+                            items: (prev[activeListId] as ListData).items.filter(i => i !== id)
+                        }
+                    };
+                });
             }
         };
 
@@ -548,8 +559,9 @@ const ListsTab: React.FC<ListsTabProps> = ({
         const list = getList(activeListId);
         if (!list) return;
 
-        // Built-in lists are read-only for manual addition
-        if (list.type.startsWith('builtin') || list.type === 'default') return;
+        // Only allow editing user lists and favorites
+        const canEdit = list.type === 'user' || list.id === 'favorites';
+        if (!canEdit) return;
 
         const isCurrentlyIn = list.items.includes(itemId);
         const nextItems = isCurrentlyIn
@@ -560,13 +572,17 @@ const ListsTab: React.FC<ListsTabProps> = ({
         if (activeListId === 'favorites') {
             setFavorites(prev => isCurrentlyIn ? prev.filter(i => i !== itemId) : [...prev, itemId]);
         } else {
-            setCustomLists(prev => ({
-                ...prev,
-                [activeListId]: {
-                    ...list,
-                    items: nextItems
-                }
-            }));
+            setCustomLists(prev => {
+                const currentList = prev[activeListId];
+                if (!currentList) return prev;
+                return {
+                    ...prev,
+                    [activeListId]: {
+                        ...currentList,
+                        items: nextItems
+                    }
+                };
+            });
         }
     };
 
@@ -845,14 +861,14 @@ const ListsTab: React.FC<ListsTabProps> = ({
                     activeList={activeList}
                     onToggleItem={handleToggleItem}
                     onPerformSearch={onPerformSearch}
-                    notebooks={propNotebooks}
+                    customDictionaries={propCustomDictionaries}
                 />
             </>
         );
     };
 
     if (view === 'detail' && activeList) {
-        const isBuiltIn = activeList.type.startsWith('builtin') || activeList.type === 'default';
+        const canEdit = activeList.type === 'user' || activeList.id === 'favorites';
         return (
             <div className="flex flex-col h-full bg-[#F9F9F7] dark:bg-slate-950">
                 {/* Header */}
@@ -892,7 +908,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                         <div className="text-center py-12 text-slate-400 flex flex-col items-center">
                             <ListIcon size={48} className="mb-4 opacity-20" />
                             <p>No {listMode} in this list.</p>
-                            {!isBuiltIn && listMode === 'words' && <button onClick={() => setShowAddWordsModal(true)} className="mt-4 text-amber-600 font-bold hover:underline">Add Words</button>}
+                            {canEdit && listMode === 'words' && <button onClick={() => setShowAddWordsModal(true)} className="mt-4 text-amber-600 font-bold hover:underline">Add Words</button>}
                         </div>
                     ) : (
                         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
@@ -954,7 +970,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                                         </div>
                                                     </td>
                                                     <td className="p-3 text-right">
-                                                        {!isBuiltIn && (
+                                                        {canEdit && (
                                                             <button onClick={(e) => { e.stopPropagation(); handleRemoveFromList(word!.Index); }} className="text-slate-300 hover:text-red-400 transition-colors">
                                                                 <X size={16} />
                                                             </button>
@@ -978,8 +994,21 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                             return (
                                                 <tr key={sentence.id} onClick={() => onEntryClick(sentence)} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors active:bg-amber-50 dark:active:bg-amber-900/20">
                                                     <td className="p-3 align-middle">
-                                                        <div className="font-noto-cherokee text-lg text-slate-800 dark:text-slate-100 leading-tight">{sentence.syllabary || ''}</div>
-                                                        <div className="font-noto-serif text-sm text-slate-500 dark:text-slate-400 font-medium">{sentence.translit || ''}</div>
+                                                        <div className="flex justify-between items-start">
+                                                            <div>
+                                                                <div className="font-noto-cherokee text-lg text-slate-800 dark:text-slate-100 leading-tight">{sentence.syllabary || ''}</div>
+                                                                <div className="font-noto-serif text-sm text-slate-500 dark:text-slate-400 font-medium">{sentence.translit || ''}</div>
+                                                            </div>
+                                                            {onReadInContext && (
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); onReadInContext(sentence.id); }}
+                                                                    className="text-[10px] font-bold text-sky-600 dark:text-sky-400 hover:underline flex items-center gap-1 mt-1"
+                                                                >
+                                                                    <BookOpen size={10} />
+                                                                    <span className="hidden sm:inline">See in Context</span>
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                         <div className="md:hidden mt-2 font-noto-serif text-slate-600 dark:text-slate-300 text-sm line-clamp-2">
                                                             {sentence.english || ''}
                                                         </div>
@@ -1008,7 +1037,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                                         </div>
                                                     </td>
                                                     <td className="p-3 text-right">
-                                                        {!isBuiltIn && (
+                                                        {canEdit && (
                                                             <button onClick={(e) => { e.stopPropagation(); handleRemoveFromList(sentence.id); }} className="text-slate-300 hover:text-red-400 transition-colors">
                                                                 <X size={16} />
                                                             </button>
@@ -1025,7 +1054,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                 </div>
 
                 {/* Add Button */}
-                {!isBuiltIn && (
+                {canEdit && (
                     <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
                         <button onClick={() => setShowAddWordsModal(true)} className="w-full py-3 bg-amber-500 text-white font-bold rounded-xl shadow-lg hover:bg-amber-600 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
                             <Plus size={24} />
@@ -1078,25 +1107,25 @@ const ListsTab: React.FC<ListsTabProps> = ({
                 onPointerCancel={handlePointerUpRow}
                 style={{ touchAction: 'pan-y' }}
                 className={`
-                    relative bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between cursor-pointer active:scale-[0.98] select-none
+                    relative bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between cursor-pointer active:scale-[0.98] select-none
                     ${draggingId === list.id ? 'opacity-90 border-amber-500 scale-105 z-50 transition-none shadow-xl' : 'transition-all'}
                     ${isHidden ? 'opacity-60 grayscale' : ''}
                 `}
             >
-                <div className="flex items-center gap-4 pointer-events-none">
+                <div className="flex items-center gap-3 pointer-events-none">
                     {!isHidden && (
                         <div
                             className="text-slate-300 dark:text-slate-700 shrink-0"
                         >
-                            <GripVertical size={20} />
+                            <GripVertical size={18} />
                         </div>
                     )}
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${colorClass}`} style={style}>
-                        {icon}
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${colorClass}`} style={style}>
+                        {React.cloneElement(icon as React.ReactElement, { size: 20 })}
                     </div>
                     <div>
-                        <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">{list.name}</h3>
-                        <p className="text-xs text-slate-400">{list.items.filter(id => {
+                        <h3 className="font-bold text-slate-800 dark:text-slate-100 leading-tight">{list.name}</h3>
+                        <p className="text-[10px] uppercase tracking-wider text-slate-400 mt-0.5">{list.items.filter(id => {
                             // Logic copied from previous implementation to robustly count valid items
                             if (id.startsWith('s_')) {
                                 const sId = id.substring(2);
@@ -1106,17 +1135,17 @@ const ListsTab: React.FC<ListsTabProps> = ({
                         }).length} items</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                     {isBuiltIn && (
                         <button
                             onClick={(e) => toggleBuiltInVisibility(list.id, e)}
-                            className="p-2 text-slate-300 hover:text-slate-500 dark:hover:text-slate-200"
+                            className="p-2 text-slate-300 hover:text-slate-500 dark:hover:text-slate-200 pointer-events-auto"
                             title={isHidden ? "Unhide" : "Hide"}
                         >
-                            {isHidden ? <EyeOff size={20} /> : <Eye size={20} />}
+                            {isHidden ? <EyeOff size={18} /> : <Eye size={18} />}
                         </button>
                     )}
-                    <ChevronRight size={20} className="text-slate-300" />
+                    <ChevronRight size={18} className="text-slate-300" />
                 </div>
             </div>
         );
@@ -1124,10 +1153,10 @@ const ListsTab: React.FC<ListsTabProps> = ({
 
     return (
         <div className="flex flex-col h-full">
-            <div className="px-4 py-4 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0">
-                <h2 className="font-noto-serif text-2xl font-bold text-slate-800 dark:text-slate-100">My Lists</h2>
+            <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0">
+                <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">My Lists</h1>
                 <div className="flex gap-2">
-                    <button onClick={() => { setNewListName(''); setShowNewListModal(true); }} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900 transition-colors">
+                    <button onClick={() => { setNewListName(''); setShowNewListModal(true); }} className="bg-slate-900 dark:bg-slate-700 text-white p-2 rounded-full shadow-md">
                         <Plus size={20} />
                     </button>
                 </div>

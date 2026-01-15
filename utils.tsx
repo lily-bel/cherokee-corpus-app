@@ -58,8 +58,8 @@ export const downloadFile = (content: any, filename: string, type: string) => {
   URL.revokeObjectURL(url);
 };
 
-export const exportNotebookToCSV = (notebookId: string, name: string, words: any[]) => {
-  const nbWords = words.filter(w => w.notebookId === notebookId);
+export const exportDictionaryToCSV = (dictionaryId: string, name: string, words: any[]) => {
+  const nbWords = words.filter(w => w.customDictionaryId === dictionaryId);
   const headers = ['Syllabary', 'Transliteration', 'Definition', 'PoS', 'Tone', 'Notes'];
   const rows = [headers.join(',')];
   nbWords.forEach(w => {
@@ -76,7 +76,7 @@ export const exportNotebookToCSV = (notebookId: string, name: string, words: any
   downloadFile(rows.join('\n'), `${name.replace(/[^a-z0-9]/gi, '_')}.csv`, 'text/csv');
 };
 
-export const importNotebookFromCSV = (file: File, callback: (data: any[]) => void) => {
+export const importDictionaryFromCSV = (file: File, callback: (data: any[]) => void) => {
   const reader = new FileReader();
   reader.onload = (e) => {
     const text = (e.target as FileReader).result as string;
@@ -194,7 +194,7 @@ export const getAllUserAudioKeys = async () => {
 };
 
 // --- SEARCH ALGORITHM ---
-export const performSearch = (query: string, allData: any[], sentences: any[], entryToSentencesMap: Map<string, string[]>, settings: any, notebooks: any, userNotes: any, posFilter: string, searchScope: string, prioritizedSources: string[] = []) => {
+export const performSearch = (query: string, allData: any[], sentences: any[], entryToSentencesMap: Map<string, string[]>, settings: any, customDictionaries: any, userNotes: any, posFilter: string, searchScope: string, prioritizedSources: string[] = []) => {
   if (!query) return [];
   const lowerQuery = query.toLowerCase().trim();
   const queryWithTones = lowerQuery.replace(/[1234?]/g, m => ({ '1': '¹', '2': '²', '3': '³', '4': '⁴', '?': 'ʔ' }[m] || m));
@@ -262,7 +262,7 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
     }
 
     const fieldsToSearch: string[] = [];
-    const isPersonal = notebooks && notebooks[entry.Source];
+    const isPersonal = customDictionaries && customDictionaries[entry.Source];
 
     if (searchScopes.main) {
       if (searchLangs.translit && entry.Entry) fieldsToSearch.push(entry.Entry);
@@ -307,7 +307,7 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
     if (score > 0) {
       const entryId = parseInt(entry.Index || entry.id || "0");
 
-      if (notebooks[entry.Source]) score += 10;
+      if (customDictionaries[entry.Source]) score += 10;
       else if (entryId >= 100000) score += 4;
       if (prioritizedSources.includes(entry.Source)) score += 2;
 

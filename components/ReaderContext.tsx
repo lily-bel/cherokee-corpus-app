@@ -1,21 +1,33 @@
 import React, { createContext, useContext, useMemo, useState, useEffect } from 'react';
 import { Sentence, useCorpus } from './CorpusContext';
+import { usePackageManager } from './PackageManagerContext';
 
 // --- Types ---
 
 export interface Book {
-    id: string;           // Generated from story name or source
-    title: string;        // Story column or source name
+    id: string;           // Generated from source
+    title: string;        // Source name from metadata
     author?: string;      // From first sentence
-    source: string;       // Data source
-    chapterCount: number; // Number of chapters
-    sentenceCount: number;// Total sentences
+    source: string;       // Data source (shorthand)
+    storyCount: number;
+    sentenceCount: number;
+    isCollection: boolean; // true if ONLY "Individual Sentences"
+    userType?: 'book' | 'notebook';
+}
+
+export interface Story {
+    id: string;
+    title: string;
+    bookId: string;
+    chapterCount: number;
+    sentenceCount: number;
+    isSequential: boolean; // false for "Individual Sentences"
 }
 
 export interface Chapter {
     id: string;
     name: string;
-    bookId: string;
+    storyId: string;
     sentenceIds: string[];
 }
 
@@ -29,10 +41,11 @@ export interface InvestigationItem {
 
 interface ReaderContextType {
     books: Book[];
-    getChaptersForBook: (bookId: string) => Chapter[];
-    getSentencesForChapter: (bookId: string, chapterId: string) => Sentence[];
+    getStoriesForBook: (bookId: string) => Story[];
+    getChaptersForStory: (storyId: string) => Chapter[];
+    getSentencesForChapter: (chapterId: string) => Sentence[];
     getSentencesForBook: (bookId: string) => Sentence[];
-    findBookAndChapterForSentence: (sentenceId: string) => { bookId: string, chapterId: string } | null;
+    findBookAndChapterForSentence: (sentenceId: string) => { bookId: string, storyId: string, chapterId: string } | null;
     investigationQueue: InvestigationItem[];
     addToInvestigationQueue: (sentenceId: string, wordIndex: number, notes?: string) => void;
     removeFromInvestigationQueue: (itemId: string) => void;
@@ -49,138 +62,168 @@ export const useReader = () => {
     return context;
 };
 
-// Helper: Create a stable book ID from source (not story)
+// Helper: Create a stable book ID from source
 const createBookId = (source: string): string => {
     return `book_${source.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`;
 };
 
-// Helper: Create a stable chapter ID from story name
-const createChapterId = (bookId: string, story: string | undefined): string => {
-    if (story && story.trim()) {
-        return `${bookId}_ch_${story.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`;
-    }
-    return `${bookId}_main`;
+// Helper: Create a stable story ID
+const createStoryId = (bookId: string, story: string | undefined): string => {
+    const storyName = story && story.trim() ? story : 'Individual Sentences';
+    return `${bookId}_st_${storyName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`;
+};
+
+// Helper: Create a stable chapter ID
+const createChapterId = (storyId: string, chapter: string | undefined): string => {
+    const chapterName = chapter && chapter.trim() ? chapter : '1';
+    return `${storyId}_ch_${chapterName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`;
 };
 
 export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const { sentences, userSentences } = useCorpus();
+    const { sentences, userSentences, customDictionaries: userDictionaries } = useCorpus();
+    const { packages } = usePackageManager();
 
     const [investigationQueue, setInvestigationQueue] = useState<InvestigationItem[]>([]);
 
-    // Load investigation queue from localStorage
-    useEffect(() => {
-        try {
-            const saved = localStorage.getItem('cherokee_app_investigation_queue');
-            if (saved) {
-                setInvestigationQueue(JSON.parse(saved));
-            }
-        } catch (e) {
-            console.error("Failed to load investigation queue", e);
-        }
-    }, []);
-
-    // Save investigation queue to localStorage
-    useEffect(() => {
-        try {
-            localStorage.setItem('cherokee_app_investigation_queue', JSON.stringify(investigationQueue));
-        } catch (e) {
-            console.error("Failed to save investigation queue", e);
-        }
-    }, [investigationQueue]);
+    // ... (rest of investigation queue effects) ...
 
     // Combine all sentences
     const allSentences = useMemo(() => {
         return [...sentences, ...userSentences];
     }, [sentences, userSentences]);
 
-    // Group sentences into books
-    const { books, sentencesByBook, chaptersByBook } = useMemo(() => {
-        const bookMap = new Map<string, {
-            sentences: Sentence[];
-            title: string;
-            author?: string;
-            source: string;
-        }>();
+    // Group sentences into books, stories, and chapters
+    const { books, storiesByBook, chaptersByStory, sentencesByChapter } = useMemo(() => {
+        const sourceMap = new Map<string, Sentence[]>();
 
         allSentences.forEach(sentence => {
-            // Group by SOURCE (not story) - source becomes the book
-            const bookId = createBookId(sentence.source);
-
-            if (!bookMap.has(bookId)) {
-                bookMap.set(bookId, {
-                    sentences: [],
-                    title: sentence.source,  // Will be replaced by metadata lookup if available
-                    author: sentence.author,
-                    source: sentence.source
-                });
+            if (!sourceMap.has(sentence.source)) {
+                sourceMap.set(sentence.source, []);
             }
+            sourceMap.get(sentence.source)!.push(sentence);
+        });
 
-            bookMap.get(bookId)!.sentences.push(sentence);
+        // Ensure all user-created BOOKS are represented, even if empty
+        Object.entries(userDictionaries).forEach(([id, nb]) => {
+            if (nb.type === 'book' && !sourceMap.has(id)) {
+                sourceMap.set(id, []);
+            }
         });
 
         const books: Book[] = [];
-        const sentencesByBook = new Map<string, Sentence[]>();
-        const chaptersByBook = new Map<string, Chapter[]>();
+        const storiesByBook = new Map<string, Story[]>();
+        const chaptersByStory = new Map<string, Chapter[]>();
+        const sentencesByChapter = new Map<string, string[]>();
 
-        bookMap.forEach((data, bookId) => {
-            // Sort sentences by line number or index
-            const sortedSentences = [...data.sentences].sort((a, b) => {
-                if (a.line !== undefined && b.line !== undefined) {
-                    return a.line - b.line;
-                }
-                // Fallback to ID comparison for sources without line numbers
-                return a.id.localeCompare(b.id);
-            });
+        sourceMap.forEach((sourceSentences, source) => {
+            const bookId = createBookId(source);
 
-            sentencesByBook.set(bookId, sortedSentences);
+            // Find title from metadata or custom dictionaries
+            let title = source;
+            let author = sourceSentences.length > 0 ? sourceSentences[0].author : undefined;
 
-            // Group into chapters using STORY field (not chapter field)
-            const chapterMap = new Map<string, Sentence[]>();
-            sortedSentences.forEach(sentence => {
-                const chapterId = createChapterId(bookId, sentence.story);
-                if (!chapterMap.has(chapterId)) {
-                    chapterMap.set(chapterId, []);
-                }
-                chapterMap.get(chapterId)!.push(sentence);
-            });
-
-            const chapters: Chapter[] = [];
-            chapterMap.forEach((chapterSentences, chapterId) => {
-                // Sort within chapter by line
-                const sorted = [...chapterSentences].sort((a, b) => {
-                    if (a.line !== undefined && b.line !== undefined) {
-                        return a.line - b.line;
+            if (userDictionaries[source]) {
+                title = userDictionaries[source].name;
+            } else {
+                for (const p of packages) {
+                    if (p.metadata.source_names && p.metadata.source_names[source]) {
+                        title = p.metadata.source_names[source];
+                        break;
                     }
-                    return a.id.localeCompare(b.id);
-                });
-
-                chapters.push({
-                    id: chapterId,
-                    name: sorted[0].story || 'Main',  // Story becomes chapter name
-                    bookId: bookId,
-                    sentenceIds: sorted.map(s => s.id)
-                });
-            });
-
-            // Sort chapters - try to sort numerically if possible
-            chapters.sort((a, b) => {
-                const aNum = parseInt(a.name, 10);
-                const bNum = parseInt(b.name, 10);
-                if (!isNaN(aNum) && !isNaN(bNum)) {
-                    return aNum - bNum;
+                    if (p.id === source) {
+                        title = p.name;
+                        break;
+                    }
                 }
-                return a.name.localeCompare(b.name);
+            }
+            
+            // Group sentences in this source by STORY
+            const storyMap = new Map<string, Sentence[]>();
+            sourceSentences.forEach(s => {
+                const storyName = s.story && s.story.trim() ? s.story : 'Individual Sentences';
+                if (!storyMap.has(storyName)) {
+                    storyMap.set(storyName, []);
+                }
+                storyMap.get(storyName)!.push(s);
             });
 
-            chaptersByBook.set(bookId, chapters);
+            const stories: Story[] = [];
+            storyMap.forEach((storySentences, storyName) => {
+                const storyId = createStoryId(bookId, storyName);
+                const isSequential = storyName !== 'Individual Sentences';
+
+                // Group story sentences by CHAPTER
+                const chapterMap = new Map<string, Sentence[]>();
+                storySentences.forEach(s => {
+                    const chapterName = s.chapter && s.chapter.trim() ? s.chapter : '1';
+                    if (!chapterMap.has(chapterName)) {
+                        chapterMap.set(chapterName, []);
+                    }
+                    chapterMap.get(chapterName)!.push(s);
+                });
+
+                const chapters: Chapter[] = [];
+                chapterMap.forEach((chapterSentences, chapterName) => {
+                    const chapterId = createChapterId(storyId, chapterName);
+                    
+                    // Sort sentences within chapter
+                    const sorted = [...chapterSentences].sort((a, b) => {
+                        if (a.line !== undefined && b.line !== undefined) {
+                            return a.line - b.line;
+                        }
+                        return a.id.localeCompare(b.id);
+                    });
+
+                    chapters.push({
+                        id: chapterId,
+                        name: isSequential ? `Chapter ${chapterName}` : 'Sentences',
+                        storyId: storyId,
+                        sentenceIds: sorted.map(s => s.id)
+                    });
+
+                    sentencesByChapter.set(chapterId, sorted.map(s => s.id));
+                });
+
+                // Sort chapters numerically
+                chapters.sort((a, b) => {
+                    const aNum = parseInt(a.name.replace(/\D/g, ''), 10);
+                    const bNum = parseInt(b.name.replace(/\D/g, ''), 10);
+                    if (!isNaN(aNum) && !isNaN(bNum)) return aNum - bNum;
+                    return a.name.localeCompare(b.name);
+                });
+
+                chaptersByStory.set(storyId, chapters);
+
+                stories.push({
+                    id: storyId,
+                    title: storyName,
+                    bookId: bookId,
+                    chapterCount: chapters.length,
+                    sentenceCount: storySentences.length,
+                    isSequential
+                });
+            });
+
+            // Sort stories
+            stories.sort((a, b) => {
+                if (a.title === 'Individual Sentences') return 1;
+                if (b.title === 'Individual Sentences') return -1;
+                return a.title.localeCompare(b.title);
+            });
+
+            storiesByBook.set(bookId, stories);
+
+            const isCollection = (stories.length === 1 && !stories[0].isSequential) || (stories.length === 0 && userDictionaries[source]?.type !== 'book');
 
             books.push({
                 id: bookId,
-                title: data.title,
-                author: data.author,
-                source: data.source,
-                chapterCount: chapters.length,
-                sentenceCount: sortedSentences.length
+                title: title,
+                author: author,
+                source: source,
+                storyCount: stories.length,
+                sentenceCount: sourceSentences.length,
+                isCollection,
+                userType: userDictionaries[source]?.type
             });
         });
 
@@ -193,43 +236,53 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             return a.title.localeCompare(b.title);
         });
 
-        return { books, sentencesByBook, chaptersByBook };
-    }, [allSentences]);
+        return { books, storiesByBook, chaptersByStory, sentencesByChapter };
+    }, [allSentences, packages, userDictionaries]);
 
-    // Create a sentence lookup map for reverse lookups
-    const sentenceToBookChapter = useMemo(() => {
-        const map = new Map<string, { bookId: string, chapterId: string }>();
+    // Create a sentence lookup map
+    const sentenceToLocation = useMemo(() => {
+        const map = new Map<string, { bookId: string, storyId: string, chapterId: string }>();
 
-        chaptersByBook.forEach((chapters, bookId) => {
-            chapters.forEach(chapter => {
-                chapter.sentenceIds.forEach(sentenceId => {
-                    map.set(sentenceId, { bookId, chapterId: chapter.id });
+        storiesByBook.forEach((stories, bookId) => {
+            stories.forEach(story => {
+                const chapters = chaptersByStory.get(story.id) || [];
+                chapters.forEach(chapter => {
+                    chapter.sentenceIds.forEach(sentenceId => {
+                        map.set(sentenceId, { bookId, storyId: story.id, chapterId: chapter.id });
+                    });
                 });
             });
         });
 
         return map;
-    }, [chaptersByBook]);
+    }, [storiesByBook, chaptersByStory]);
 
-    const getChaptersForBook = (bookId: string): Chapter[] => {
-        return chaptersByBook.get(bookId) || [];
+    const getStoriesForBook = (bookId: string): Story[] => {
+        return storiesByBook.get(bookId) || [];
     };
 
-    const getSentencesForChapter = (bookId: string, chapterId: string): Sentence[] => {
-        const chapters = chaptersByBook.get(bookId) || [];
-        const chapter = chapters.find(c => c.id === chapterId);
-        if (!chapter) return [];
+    const getChaptersForStory = (storyId: string): Chapter[] => {
+        return chaptersByStory.get(storyId) || [];
+    };
 
+    const getSentencesForChapter = (chapterId: string): Sentence[] => {
+        const sentenceIds = sentencesByChapter.get(chapterId) || [];
         const sentenceMap = new Map(allSentences.map(s => [s.id, s]));
-        return chapter.sentenceIds.map(id => sentenceMap.get(id)).filter(Boolean) as Sentence[];
+        return sentenceIds.map(id => sentenceMap.get(id)).filter(Boolean) as Sentence[];
     };
 
     const getSentencesForBook = (bookId: string): Sentence[] => {
-        return sentencesByBook.get(bookId) || [];
+        const stories = storiesByBook.get(bookId) || [];
+        const allIds = stories.flatMap(story => {
+            const chapters = chaptersByStory.get(story.id) || [];
+            return chapters.flatMap(ch => ch.sentenceIds);
+        });
+        const sentenceMap = new Map(allSentences.map(s => [s.id, s]));
+        return allIds.map(id => sentenceMap.get(id)).filter(Boolean) as Sentence[];
     };
 
-    const findBookAndChapterForSentence = (sentenceId: string): { bookId: string, chapterId: string } | null => {
-        return sentenceToBookChapter.get(sentenceId) || null;
+    const findBookAndChapterForSentence = (sentenceId: string) => {
+        return sentenceToLocation.get(sentenceId) || null;
     };
 
     const addToInvestigationQueue = (sentenceId: string, wordIndex: number, notes?: string) => {
@@ -256,7 +309,8 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return (
         <ReaderContext.Provider value={{
             books,
-            getChaptersForBook,
+            getStoriesForBook,
+            getChaptersForStory,
             getSentencesForChapter,
             getSentencesForBook,
             findBookAndChapterForSentence,

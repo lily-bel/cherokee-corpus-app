@@ -10,10 +10,11 @@ import { PackageDetailView } from './PackageDetailView';
 
 interface PackageManagerTabProps {
     customLists: Record<string, ListData | string[]>;
-    onNavigate: (type: 'notebook' | 'list' | 'word' | 'sentence', payload: any) => void;
+    onNavigate: (type: 'dictionary' | 'list' | 'word' | 'sentence', payload: any) => void;
+    onReadInContext?: (sentenceId: string) => void;
 }
 
-const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists, onNavigate }) => {
+const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists, onNavigate, onReadInContext }) => {
     const { packages, togglePackage, removePackage } = usePackageManager();
     const { removePackageAudio, userAudioMeta, glosses } = useCorpus();
     const { importPackage } = usePackageImport();
@@ -58,14 +59,15 @@ const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists, onNa
                 onBack={() => setSelectedPackageId(null)}
                 customLists={customLists}
                 onNavigate={onNavigate}
+                onReadInContext={onReadInContext}
             />
         );
     }
 
     return (
         <div className="flex flex-col h-full bg-[#F9F9F7] dark:bg-slate-950">
-            <div className="px-4 py-4 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0">
-                <h2 className="font-noto-serif text-2xl font-bold text-slate-800 dark:text-slate-100">Packages</h2>
+            <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0">
+                <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Packages</h1>
                 <div className="flex gap-2">
                     <button
                         onClick={() => setShowExportModal(true)}
@@ -231,7 +233,7 @@ const ColorPickerModal = ({ pkgId, onClose }: { pkgId: string, onClose: () => vo
                 </div>
 
                 <div className="flex items-center gap-3 mb-6 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
-                    <div className="w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-sm transition-colors duration-300" style={{ backgroundColor: pkg.color }}>
+                    <div className="w-12 h-12 shrink-0 aspect-square rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-sm transition-colors duration-300" style={{ backgroundColor: pkg.color }}>
                         {(pkg.name.split(' ').length > 1 ? (pkg.name.split(' ')[0][0] + pkg.name.split(' ')[1][0]).toUpperCase() : pkg.name.substring(0, 2).toUpperCase())}
                     </div>
                     <div>
@@ -302,7 +304,7 @@ const PackageItem = ({
 }) => {
     const {
         personalWords, userSentences, glosses: allGlosses,
-        notebooks, userNotes, userWordForms
+        customDictionaries, userNotes, userWordForms
     } = useCorpus();
     const isOfficial = pkg.type === 'official';
     const isUser = pkg.type === 'user';
@@ -313,7 +315,7 @@ const PackageItem = ({
     const glossCount = isUser ? allGlosses.filter(g => g.source === 'user').length : (pkg.metadata?.stats?.glosses || 0);
     const listCount = pkg.metadata?.stats?.lists || 0;
 
-    const notebookCount = isUser ? Object.keys(notebooks).length : (pkg.metadata?.stats?.notebooks || 0);
+    const dictionaryCount = isUser ? Object.keys(customDictionaries).length : (pkg.metadata?.stats?.notebooks || 0);
     const noteCount = isUser ? Object.keys(userNotes).length : (pkg.metadata?.stats?.notes || 0);
     const wordFormCount = isUser ? Object.keys(userWordForms).length : (pkg.metadata?.stats?.word_forms || 0);
 
@@ -324,7 +326,7 @@ const PackageItem = ({
         >
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-sm transition-colors duration-300" style={{ backgroundColor: pkg.color }}>
+                    <div className="w-10 h-10 shrink-0 aspect-square rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-sm transition-colors duration-300" style={{ backgroundColor: pkg.color }}>
                         {(pkg.name.split(' ').length > 1 ? (pkg.name.split(' ')[0][0] + pkg.name.split(' ')[1][0]).toUpperCase() : pkg.name.substring(0, 2).toUpperCase())}
                     </div>
                     <div>
@@ -355,7 +357,7 @@ const PackageItem = ({
                 <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-500 dark:text-slate-400 font-mono">
                     <span className="flex items-center gap-1">Words: {wordCount}</span>
                     <span className="flex items-center gap-1">Sentences: {sentCount}</span>
-                    <span className="flex items-center gap-1"><Book size={14} className="opacity-70" /> Notebooks: {notebookCount}</span>
+                    <span className="flex items-center gap-1"><Book size={14} className="opacity-70" /> Dictionaries: {dictionaryCount}</span>
                     {(pkg.metadata?.stats?.audio_files !== undefined && pkg.metadata.stats.audio_files > 0) && (
                         <span className="flex items-center gap-1"><Mic size={14} className="opacity-70" /> Audio: {pkg.metadata.stats.audio_files}</span>
                     )}

@@ -6,24 +6,28 @@ import { GlossPopover } from './GlossPopover';
 import { LinkerModal } from './LinkerModal';
 import { ArrowLeft, BookOpen, Eye, EyeOff, Type } from './Icons';
 
-type StudyMode = 'study' | 'read';  // study = show glosses/translation, read = clean reading
-type ScriptMode = 'both' | 'syllabary' | 'translit';  // which script to show
+type StudyMode = 'study' | 'read';
+type ScriptMode = 'both' | 'syllabary' | 'translit';
 
 interface ReaderViewProps {
     bookId: string;
     chapterId: string;
     scrollToSentenceId?: string;
     onBack: () => void;
-    notebooks?: Record<string, any>;
+    customDictionaries?: Record<string, any>;
     onCreateWord?: () => void;
 }
+
+const CHUNK_SIZE = 20;
+const MAX_VISIBLE_CHUNKS = 4; // Keep enough context to prevent flickering
+const ESTIMATED_HEIGHT = 150; // Estimate for height calculation
 
 export const ReaderView: React.FC<ReaderViewProps> = ({
     bookId,
     chapterId,
     scrollToSentenceId,
     onBack,
-    notebooks,
+    customDictionaries,
     onCreateWord
 }) => {
     const { glossMap, dictionaryMap, addUserGloss, removeUserGloss, personalWords } = useCorpus();
@@ -46,15 +50,144 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
     } | null>(null);
     const [flashingSentenceId, setFlashingSentenceId] = useState<string | null>(null);
 
+    // Virtualization State
+    const [visibleRange, setVisibleRange] = useState({ start: 0, end: CHUNK_SIZE });
+    const [topSpacerHeight, setTopSpacerHeight] = useState(0);
+    const sentenceHeights = useRef<Map<string, number>>(new Map());
+
     const containerRef = useRef<HTMLDivElement>(null);
     const sentenceRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+    const topSentinelRef = useRef<HTMLDivElement>(null);
+    const bottomSentinelRef = useRef<HTMLDivElement>(null);
 
     const book = books.find(b => b.id === bookId);
-    const sentences = useMemo(() => getSentencesForChapter(bookId, chapterId), [bookId, chapterId, getSentencesForChapter]);
+    const sentences = useMemo(() => getSentencesForChapter(chapterId), [chapterId, getSentencesForChapter]);
 
-    // Scroll to sentence on mount
+    // Initialize/Reset View on Chapter/Scroll Target Change
+    useEffect(() => {
+        const total = sentences.length;
+        if (total === 0) {
+            setVisibleRange({ start: 0, end: 0 });
+            setTopSpacerHeight(0);
+            return;
+        }
+
+        let start = 0;
+        let initialTopHeight = 0;
+
+        if (scrollToSentenceId) {
+            const index = sentences.findIndex(s => s.id === scrollToSentenceId);
+            if (index !== -1) {
+                // Center roughly
+                start = Math.max(0, index - Math.floor(CHUNK_SIZE / 2));
+                // Estimate previous height
+                // Use measured heights if we visited before, otherwise estimate
+                for (let i = 0; i < start; i++) {
+                    initialTopHeight += sentenceHeights.current.get(sentences[i].id) || ESTIMATED_HEIGHT;
+                }
+            } else {
+                // If ID not found, start at 0
+                start = 0;
+            }
+        }
+
+        // If switching chapters, we might want to reset heights or keep them?
+        // Since IDs are unique, keeping them in the map is fine/beneficial if we return.
+        
+        const end = Math.min(total, start + CHUNK_SIZE);
+        setVisibleRange({ start, end });
+        setTopSpacerHeight(initialTopHeight);
+
+    }, [chapterId, scrollToSentenceId, sentences]);
+
+
+    // Intersection Observer for Infinite Scroll
+    useEffect(() => {
+        const options = {
+            root: containerRef.current,
+            rootMargin: '400px', // Load well in advance
+            threshold: 0
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) return;
+
+                if (entry.target === bottomSentinelRef.current) {
+                    // LOAD MORE DOWN
+                    setVisibleRange(prev => {
+                        if (prev.end >= sentences.length) return prev;
+                        
+                        const newEnd = Math.min(sentences.length, prev.end + CHUNK_SIZE);
+                        
+                        // Unload top if too many
+                        let newStart = prev.start;
+                        let heightToAdd = 0;
+                        const maxItems = CHUNK_SIZE * MAX_VISIBLE_CHUNKS;
+                        
+                        if (newEnd - prev.start > maxItems) {
+                            const unloadCount = CHUNK_SIZE; // Unload a chunk
+                            const targetStart = prev.start + unloadCount;
+                            
+                            for (let i = prev.start; i < targetStart; i++) {
+                                const s = sentences[i];
+                                const h = sentenceHeights.current.get(s.id) || ESTIMATED_HEIGHT;
+                                heightToAdd += h;
+                            }
+                            newStart = targetStart;
+                        }
+
+                        if (heightToAdd > 0) {
+                            setTopSpacerHeight(h => h + heightToAdd);
+                        }
+
+                        return { start: newStart, end: newEnd };
+                    });
+                } else if (entry.target === topSentinelRef.current) {
+                    // LOAD MORE UP
+                    setVisibleRange(prev => {
+                        if (prev.start <= 0) return prev;
+
+                        const newStart = Math.max(0, prev.start - CHUNK_SIZE);
+                        
+                        // Unload bottom if too many
+                        let newEnd = prev.end;
+                        const maxItems = CHUNK_SIZE * MAX_VISIBLE_CHUNKS;
+                        
+                        if (prev.end - newStart > maxItems) {
+                            newEnd = prev.end - CHUNK_SIZE;
+                        }
+
+                        // Remove from spacer
+                        let heightToRemove = 0;
+                        for (let i = newStart; i < prev.start; i++) {
+                            const s = sentences[i];
+                            const h = sentenceHeights.current.get(s.id) || ESTIMATED_HEIGHT;
+                            heightToRemove += h;
+                        }
+
+                        setTopSpacerHeight(h => Math.max(0, h - heightToRemove));
+
+                        return { start: newStart, end: newEnd };
+                    });
+                }
+            });
+        }, options);
+
+        const topEl = topSentinelRef.current;
+        const botEl = bottomSentinelRef.current;
+
+        if (topEl) observer.observe(topEl);
+        if (botEl) observer.observe(botEl);
+
+        return () => observer.disconnect();
+    }, [sentences]);
+
+
+    // Scroll to sentence on mount/update
     useEffect(() => {
         if (scrollToSentenceId) {
+            // Wait for render
             const timeout = setTimeout(() => {
                 const el = sentenceRefs.current.get(scrollToSentenceId);
                 if (el) {
@@ -65,7 +198,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
             }, 100);
             return () => clearTimeout(timeout);
         }
-    }, [scrollToSentenceId]);
+    }, [scrollToSentenceId, visibleRange]); // Re-run if range changes (might reveal target)
 
     const tokenizeSentence = (sentence: Sentence) => {
         const syl = sentence.syllabary ? sentence.syllabary.split(' ') : [];
@@ -84,7 +217,6 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
         event.stopPropagation();
         const rect = (event.target as HTMLElement).getBoundingClientRect();
 
-        // Always open the popover - this allows user to add to queue even if no glosses
         setActivePopover({
             sentenceId: sentence.id,
             wordIndex,
@@ -106,11 +238,10 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
         );
         if (wordGlosses.length === 0) return null;
 
-        // Get color of first gloss
         const gloss = wordGlosses[0];
         const color = getPackageColor(gloss.source);
         if (color?.startsWith('#')) return color;
-        if (gloss.source === 'user' || notebooks?.[gloss.source]) return '#fbbf24';
+        if (gloss.source === 'user' || customDictionaries?.[gloss.source]) return '#fbbf24';
         return '#cbd5e1';
     };
 
@@ -128,8 +259,8 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
 
     const getScriptIcon = () => {
         if (scriptMode === 'both') return Type;
-        if (scriptMode === 'syllabary') return Eye;  // Cherokee focus
-        return EyeOff;  // Translit focus
+        if (scriptMode === 'syllabary') return Eye;
+        return EyeOff;
     };
 
     const getScriptLabel = () => {
@@ -139,6 +270,11 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
     };
 
     const ScriptIcon = getScriptIcon();
+
+    // visible subset
+    const visibleSentences = useMemo(() => {
+        return sentences.slice(visibleRange.start, visibleRange.end);
+    }, [sentences, visibleRange]);
 
     return (
         <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950">
@@ -162,9 +298,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                         </div>
                     </div>
 
-                    {/* Mode Toggles */}
                     <div className="flex items-center gap-2">
-                        {/* Study/Read Toggle */}
                         <button
                             onClick={toggleStudyMode}
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-sm transition-colors ${studyMode === 'study'
@@ -176,7 +310,6 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                             <span>{studyMode === 'study' ? 'Study' : 'Read'}</span>
                         </button>
 
-                        {/* Script Toggle */}
                         <button
                             onClick={toggleScriptMode}
                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-sm bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
@@ -193,8 +326,14 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                 ref={containerRef}
                 className="flex-1 overflow-y-auto p-6"
             >
-                <div className="max-w-2xl mx-auto">
-                    {sentences.map((sentence, _sentenceIdx) => {
+                <div className="max-w-2xl mx-auto relative">
+                    {/* Top Spacer */}
+                    <div style={{ height: topSpacerHeight }} />
+                    
+                    {/* Top Sentinel */}
+                    <div ref={topSentinelRef} className="h-4 w-full" />
+
+                    {visibleSentences.map((sentence, _sentenceIdx) => {
                         const tokens = tokenizeSentence(sentence);
                         const isFlashing = flashingSentenceId === sentence.id;
 
@@ -202,7 +341,15 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                             <div
                                 key={sentence.id}
                                 ref={el => {
-                                    if (el) sentenceRefs.current.set(sentence.id, el);
+                                    if (el) {
+                                        sentenceRefs.current.set(sentence.id, el);
+                                        // Measure height
+                                        const h = el.getBoundingClientRect().height;
+                                        // Add margin bottom (mb-6 = 24px)
+                                        sentenceHeights.current.set(sentence.id, h + 24);
+                                    } else {
+                                        sentenceRefs.current.delete(sentence.id);
+                                    }
                                 }}
                                 className={`mb-6 transition-all duration-500 ${isFlashing ? 'bg-amber-100 dark:bg-amber-900/30 rounded-lg p-4 -mx-4 shadow-lg' : ''
                                     }`}
@@ -213,7 +360,6 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                                         const glossColor = getGlossColor(sentence.id, tokenIdx);
                                         const isClickable = studyMode === 'study';
 
-                                        // Syllabary only mode
                                         if (scriptMode === 'syllabary') {
                                             return (
                                                 <span
@@ -229,7 +375,6 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                                             );
                                         }
 
-                                        // Translit only mode
                                         if (scriptMode === 'translit') {
                                             return (
                                                 <span
@@ -245,7 +390,6 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                                             );
                                         }
 
-                                        // Both scripts (interlinear) mode
                                         return (
                                             <span
                                                 key={tokenIdx}
@@ -269,7 +413,6 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                                     })}
                                 </div>
 
-                                {/* English translation (shown in study mode) */}
                                 {studyMode === 'study' && sentence.english && (
                                     <p className="mt-3 text-slate-500 dark:text-slate-400 italic text-sm border-t border-slate-100 dark:border-slate-800 pt-2">
                                         {sentence.english}
@@ -278,6 +421,9 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                             </div>
                         );
                     })}
+
+                    {/* Bottom Sentinel */}
+                    <div ref={bottomSentinelRef} className="h-4 w-full" />
 
                     {sentences.length === 0 && (
                         <div className="flex flex-col items-center justify-center py-20 text-slate-400">
@@ -346,7 +492,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                             setActivePopover(null);
                         }}
                         personalWords={personalWords}
-                        notebooks={notebooks}
+                        customDictionaries={customDictionaries}
                     />
                 );
             })()}
@@ -358,7 +504,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                     targetWord={showLinker.targetWord}
                     dictionary={Array.from(dictionaryMap.values())}
                     personalWords={personalWords}
-                    notebooks={notebooks}
+                    customDictionaries={customDictionaries}
                     onClose={() => setShowLinker(null)}
                     onSelect={(entry, notes, breakdownCherokee, breakdownEnglish) => {
                         addUserGloss({

@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef } from 'react';
 import { usePackageManager } from './PackageManagerContext';
 import { useCorpus } from './CorpusContext';
 import {
-    ArrowLeft, Book, Mic, StickyNote,
+    ArrowLeft, Folder, Mic, StickyNote,
     ChevronDown, ChevronRight, ListIcon, ListPlus, SquaresPlus,
     Search, Pause, Volume2
 } from './Icons';
@@ -15,13 +15,75 @@ interface PackageDetailViewProps {
     packageId: string;
     onBack: () => void;
     customLists: Record<string, any>;
-    onNavigate: (type: 'notebook' | 'list' | 'word' | 'sentence', payload: any) => void;
+    onNavigate: (type: 'dictionary' | 'list' | 'word' | 'sentence', payload: any) => void;
+    onReadInContext?: (sentenceId: string) => void;
 }
 
-export const PackageDetailView: React.FC<PackageDetailViewProps> = ({ packageId, onBack, customLists, onNavigate }) => {
+const getIconStyles = (pkg: any) => {
+    let iconBg = "bg-slate-100 dark:bg-slate-800";
+    let iconColor = "text-slate-500";
+    let iconStyle = {};
+
+    if (pkg.id === 'user') {
+        iconBg = "bg-amber-100 dark:bg-amber-900/30";
+        iconColor = "text-amber-600 dark:text-amber-500";
+    } else if (pkg.type === 'official') {
+        iconBg = "bg-slate-200 dark:bg-slate-700";
+        iconColor = "text-slate-500 dark:text-slate-400";
+    } else if (pkg.color) {
+        iconStyle = { backgroundColor: pkg.color, color: '#fff' };
+        iconBg = ""; // override
+        iconColor = ""; // override
+    }
+    return { iconBg, iconColor, iconStyle };
+};
+
+const ContentSection = ({ label, items, type, onNavigate, pkg }: { label: string, items: any[], type: 'dictionary' | 'list' | 'word' | 'sentence', onNavigate: any, pkg: any }) => {
+    const [expanded, setExpanded] = useState(false);
+    if (!items || items.length === 0) return null;
+
+    const { iconBg, iconColor, iconStyle } = getIconStyles(pkg);
+
+    return (
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm mb-3">
+            <button
+                onClick={() => setExpanded(!expanded)}
+                className="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+            >
+                <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${iconBg} ${iconColor}`} style={iconStyle}>
+                        {type === 'dictionary' ? <Folder size={18} /> : <ListIcon size={18} />}
+                    </div>
+                    <span className="font-bold text-slate-700 dark:text-slate-200">{label}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                    <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2.5 py-0.5 rounded-full text-xs font-bold font-mono">
+                        {items.length}
+                    </span>
+                    {expanded ? <ChevronDown size={20} className="text-slate-400" /> : <ChevronRight size={20} className="text-slate-400" />}
+                </div>
+            </button>
+            {expanded && (
+                <div className="divide-y divide-slate-100 dark:divide-slate-800 border-t border-slate-100 dark:border-slate-800">
+                    {items.map(item => (
+                        <div
+                            key={item.id}
+                            onClick={() => onNavigate(type, item.id)}
+                            className="p-3 pl-14 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors font-medium text-slate-700 dark:text-slate-300"
+                        >
+                            {item.name}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+export const PackageDetailView: React.FC<PackageDetailViewProps> = ({ packageId, onBack, customLists, onNavigate, onReadInContext }) => {
     const { packages, importedData } = usePackageManager(); // importedData needed for official/imported packages
     const {
-        notebooks, personalWords, userSentences,
+        customDictionaries, personalWords, userSentences,
         userAudioMeta, glosses, userNotes, userWordForms,
         dictionary, sentences,
         saveAudio, deleteAudio
@@ -117,7 +179,7 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({ packageId,
 
         if (isUser) {
             // User Data
-            const nbList = Object.values(notebooks);
+            const dictionaryList = Object.values(customDictionaries);
 
             // Filter audio for user
             const audioList: any[] = [];
@@ -163,8 +225,8 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({ packageId,
             }).filter(Boolean);
 
             return {
-                notebooks: nbList.map(n => ({ ...n, count: 1 })),
-                words: personalWords.map(w => ({ ...w, source: w.notebookId || w.source })), // Ensure notebookId is used for source
+                dictionaries: dictionaryList.map(n => ({ ...n, count: 1 })),
+                words: personalWords.map(w => ({ ...w, source: w.customDictionaryId || w.source })), // Ensure customDictionaryId is used for source
                 sentences: userSentences,
                 audio: audioList,
                 glosses: userGlosses,
@@ -233,53 +295,56 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({ packageId,
                 parent: getParent(n.target_id, undefined, pData)
             })) || [];
 
-            const glosses = pData.glosses.map((g: any) => {
+            const glosses = (pData.glosses || []).map((g: any) => {
                 const sent = pData.sentences?.find((s: any) => s.id === g.sentence_id);
                 const linkedEntry = findAnywhere(g.entry_id, 'W');
                 return { ...g, sentence: sent, linkedEntry };
             });
 
             return {
-                notebooks: [],
-                words: pData.dictionary,
-                sentences: pData.sentences,
+                dictionaries: [],
+                words: pData.dictionary || [],
+                sentences: pData.sentences || [],
                 audio: audioList,
                 glosses: glosses,
+                lists: pData.lists || [],
                 notes: notes,
-                wordForms: wordForms,
-                lists: pData.lists?.map((l: any) => ({ ...l, count: l.items.length })) || []
+                wordForms: wordForms
             };
         }
-    }, [isUser, isOfficial, pkg.id, importedData, notebooks, personalWords, userSentences, userAudioMeta, glosses, userNotes, userWordForms, dictionary, sentences, customLists]);
+    }, [isUser, isOfficial, pkg.id, importedData, customDictionaries, personalWords, userSentences, userAudioMeta, glosses, userNotes, userWordForms, dictionary, sentences, customLists]);
 
     if (!data) return <div className="p-8 text-center text-slate-400">Loading package data...</div>;
 
     if (selectedEntry) {
-        return <EntryDetail
-            entry={selectedEntry}
-            notebooks={notebooks}
-            userNotes={userNotes}
-            userAudioMeta={userAudioMeta}
-            userWordForms={userWordForms}
-            onSaveAudio={saveAudio}
-            onDeleteAudio={deleteAudio}
-            favorites={[]} // Pass if needed
-            customLists={customLists}
-            customListOrder={[]}
-            onClose={() => setSelectedEntry(null)}
-            onEdit={() => { }}
-            onToggleFavorite={() => { }}
-            onToggleList={() => { }}
-            onDelete={() => { }}
-            onSearchTerm={() => { }}
-            onOpenNewListModal={() => { }}
-            onMove={() => { }}
-            personalWords={personalWords}
-            onEditSentence={() => { }}
-            onDeleteSentence={() => { }}
-            onCreateWord={() => { }}
-            onManageForms={() => { }}
-        />;
+        return (
+            <EntryDetail
+                entry={selectedEntry}
+                customDictionaries={customDictionaries}
+                userNotes={userNotes}
+                userAudioMeta={userAudioMeta}
+                userWordForms={userWordForms}
+                onSaveAudio={saveAudio}
+                onDeleteAudio={deleteAudio}
+                favorites={[]} // Pass if needed
+                customLists={customLists}
+                customListOrder={[]}
+                onClose={() => setSelectedEntry(null)}
+                onEdit={() => { }}
+                onToggleFavorite={() => { }}
+                onToggleList={() => { }}
+                onDelete={() => { }}
+                onSearchTerm={() => { }}
+                onOpenNewListModal={() => { }}
+                onMove={() => { }}
+                personalWords={personalWords}
+                onEditSentence={() => { }}
+                onDeleteSentence={() => { }}
+                onCreateWord={() => { }}
+                onManageForms={() => { }}
+                onReadInContext={onReadInContext}
+            />
+        );
     }
 
     return (
@@ -306,17 +371,19 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({ packageId,
 
             {/* Content Stats List */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                <SectionItem
-                    icon={<Book size={20} style={{ color: pkg.color }} />}
-                    label="Notebooks"
-                    items={data.notebooks}
-                    type="notebook"
-                    pkg={pkg}
-                    onNavigate={onNavigate}
-                />
+                    {data.dictionaries && data.dictionaries.length > 0 && (
+                        <ContentSection
+                            label="Dictionaries"
+                            items={data.dictionaries}
+                            type="dictionary"
+                            onNavigate={onNavigate}
+                            pkg={pkg}
+                        />
+                    )}
+
 
                 <SectionItem
-                    icon={<ListIcon size={20} style={{ color: pkg.color }} />}
+                    icon={null}
                     label="Lists"
                     items={data.lists}
                     type="list"
@@ -332,7 +399,8 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({ packageId,
                     type="word"
                     pkg={pkg}
                     onItemClick={setSelectedEntry}
-                    extraProps={{ notebooks, userNotes, userAudioMeta, userWordForms, favorites: [], customLists: {} }} // Pass required props for EntryCard
+                    extraProps={{ customDictionaries, userNotes, userAudioMeta, userWordForms, favorites: [], customLists: {} }}
+                     // Pass required props for EntryCard
                 />
 
                 <SectionItem
@@ -346,7 +414,7 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({ packageId,
                 />
 
                 <SectionItem
-                    icon={<Mic size={20} style={{ color: pkg.color }} />}
+                    icon={<Mic size={20} />}
                     label="Audio"
                     items={data.audio}
                     type="audio"
@@ -355,7 +423,7 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({ packageId,
                 />
 
                 <SectionItem
-                    icon={<SquaresPlus size={20} style={{ color: pkg.color }} />}
+                    icon={<SquaresPlus size={20} />}
                     label="Word Forms"
                     items={data.wordForms}
                     type="form"
@@ -364,7 +432,7 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({ packageId,
                 />
 
                 <SectionItem
-                    icon={<StickyNote size={20} style={{ color: pkg.color }} />}
+                    icon={<StickyNote size={20} />}
                     label="Notes"
                     items={data.notes}
                     type="note"
@@ -373,7 +441,7 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({ packageId,
                 />
 
                 <SectionItem
-                    icon={<ListPlus size={20} style={{ color: pkg.color }} />}
+                    icon={<ListPlus size={20} />}
                     label="Glosses"
                     items={data.glosses}
                     type="gloss"
@@ -400,11 +468,11 @@ const SectionItem = ({
     label: string,
     items: any[],
     searchable?: boolean,
-    type: 'word' | 'sentence' | 'audio' | 'gloss' | 'list' | 'note' | 'form' | 'notebook',
+    type: 'word' | 'sentence' | 'audio' | 'gloss' | 'list' | 'note' | 'form' | 'dictionary',
     onItemClick?: (item: any) => void,
     extraProps?: any,
     pkg: any,
-    onNavigate?: (type: 'notebook' | 'list' | 'word' | 'sentence', payload: any) => void
+    onNavigate?: (type: 'dictionary' | 'list' | 'word' | 'sentence', payload: any) => void
 }) => {
     const [expanded, setExpanded] = useState(false);
     const [query, setQuery] = useState('');
@@ -431,6 +499,8 @@ const SectionItem = ({
 
     if (items.length === 0) return null;
 
+    const { iconBg, iconColor, iconStyle } = getIconStyles(pkg);
+
     return (
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm transition-all">
             <button
@@ -440,7 +510,8 @@ const SectionItem = ({
                 <div className="flex items-center gap-3">
                     {icon && (
                         <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-slate-100 dark:bg-slate-800"
+                            className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${iconBg} ${iconColor}`}
+                            style={iconStyle}
                         >
                             {icon}
                         </div>
@@ -480,10 +551,10 @@ const SectionItem = ({
                                 {type === 'note' && <NoteCard note={item} onNavigate={onNavigate} />}
                                 {type === 'form' && <WordFormCard form={item} onNavigate={onNavigate} />}
                                 {type === 'gloss' && <GlossCard gloss={item} onNavigate={onNavigate} />}
-                                {type === 'list' && <ListCard list={item} pkg={pkg} onNavigate={onNavigate} />}
-                                {type === 'notebook' && (
+                                {type === 'list' && <ListCard list={item} onNavigate={onNavigate} />}
+                                {type === 'dictionary' && (
                                     <div
-                                        onClick={() => onNavigate && onNavigate('notebook', item.id)}
+                                        onClick={() => onNavigate && onNavigate('dictionary', item.id)}
                                         className="p-3 pl-4 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
                                     >
                                         <div className="font-bold text-slate-800 dark:text-slate-100">{item.name}</div>
@@ -511,7 +582,7 @@ const SectionItem = ({
 
 // --- SUB COMPONENTS ---
 
-const EntryPreview = ({ entry, onNavigate }: { entry: any, onNavigate?: (type: 'notebook' | 'list' | 'word' | 'sentence', payload: any) => void }) => {
+const EntryPreview = ({ entry, onNavigate }: { entry: any, onNavigate?: (type: 'dictionary' | 'list' | 'word' | 'sentence', payload: any) => void }) => {
     if (!entry) return null;
     return (
         <div
@@ -530,7 +601,7 @@ const EntryPreview = ({ entry, onNavigate }: { entry: any, onNavigate?: (type: '
 
 const CompactSentenceCard = ({ sentence, onClick }: { sentence: any, onClick?: (s: any) => void }) => {
     const { getPackageColor } = usePackageManager();
-    const { notebooks } = useCorpus();
+    const { customDictionaries } = useCorpus();
     return (
         <div
             onClick={() => onClick && onClick(sentence)}
@@ -542,7 +613,7 @@ const CompactSentenceCard = ({ sentence, onClick }: { sentence: any, onClick?: (
             <div className="absolute top-4 right-4">
                 <SourceBadge
                     source={sentence.source}
-                    name={notebooks[sentence.source]?.name}
+                    name={customDictionaries[sentence.source]?.name}
                     customColor={getPackageColor(sentence.source)}
                 />
             </div>
@@ -550,7 +621,7 @@ const CompactSentenceCard = ({ sentence, onClick }: { sentence: any, onClick?: (
     );
 };
 
-const AudioCard = ({ audio, pkg, onNavigate }: { audio: any, pkg: any, onNavigate?: (type: 'notebook' | 'list' | 'word' | 'sentence', payload: any) => void }) => {
+const AudioCard = ({ audio, pkg, onNavigate }: { audio: any, pkg: any, onNavigate?: (type: 'dictionary' | 'list' | 'word' | 'sentence', payload: any) => void }) => {
     const parent = audio.parent;
     const [playing, setPlaying] = useState(false);
     const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -590,6 +661,7 @@ const AudioCard = ({ audio, pkg, onNavigate }: { audio: any, pkg: any, onNavigat
     };
 
     const isOfficial = audio.packageId === 'official-cherokee-data';
+    const speakerName = isOfficial ? (audio.id.split('_')[0] || 'Official Speaker') : (audio.speaker || 'Unknown Speaker');
 
     return (
         <div className="p-4">
@@ -605,7 +677,7 @@ const AudioCard = ({ audio, pkg, onNavigate }: { audio: any, pkg: any, onNavigat
                 </button>
 
                 <div className="flex flex-col">
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{isOfficial ? 'Official Speaker' : (audio.speaker || 'Unknown Speaker')}</span>
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{speakerName}</span>
                     <span className="text-[10px] text-slate-400 font-mono truncate max-w-[200px]">{audio.id}</span>
                 </div>
             </div>
@@ -613,7 +685,7 @@ const AudioCard = ({ audio, pkg, onNavigate }: { audio: any, pkg: any, onNavigat
     );
 };
 
-const NoteCard = ({ note, onNavigate }: { note: any, onNavigate?: (type: 'notebook' | 'list' | 'word' | 'sentence', payload: any) => void }) => {
+const NoteCard = ({ note, onNavigate }: { note: any, onNavigate?: (type: 'dictionary' | 'list' | 'word' | 'sentence', payload: any) => void }) => {
     const { parent } = note;
     return (
         <div className="p-4">
@@ -625,7 +697,7 @@ const NoteCard = ({ note, onNavigate }: { note: any, onNavigate?: (type: 'notebo
     );
 };
 
-const WordFormCard = ({ form, onNavigate }: { form: any, onNavigate?: (type: 'notebook' | 'list' | 'word' | 'sentence', payload: any) => void }) => {
+const WordFormCard = ({ form, onNavigate }: { form: any, onNavigate?: (type: 'dictionary' | 'list' | 'word' | 'sentence', payload: any) => void }) => {
     const { parent } = form;
 
     let formsData: { label: string, value: string, desc: string }[] = [];
@@ -697,7 +769,7 @@ const WordFormCard = ({ form, onNavigate }: { form: any, onNavigate?: (type: 'no
     );
 };
 
-const GlossCard = ({ gloss, onNavigate }: { gloss: any, onNavigate?: (type: 'notebook' | 'list' | 'word' | 'sentence', payload: any) => void }) => {
+const GlossCard = ({ gloss, onNavigate }: { gloss: any, onNavigate?: (type: 'dictionary' | 'list' | 'word' | 'sentence', payload: any) => void }) => {
     const { sentence, linkedEntry } = gloss;
     if (!sentence) return <div className="p-4 text-xs text-red-400">Orphaned Gloss</div>;
 
@@ -795,18 +867,12 @@ const GlossCard = ({ gloss, onNavigate }: { gloss: any, onNavigate?: (type: 'not
     );
 };
 
-const ListCard = ({ list, pkg, onNavigate }: { list: any, pkg: any, onNavigate?: (type: 'notebook' | 'list' | 'word' | 'sentence', payload: any) => void }) => (
+const ListCard = ({ list, onNavigate }: { list: any, onNavigate?: (type: 'dictionary' | 'list' | 'word' | 'sentence', payload: any) => void }) => (
     <div
         onClick={() => onNavigate && onNavigate('list', list.id)}
         className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
     >
         <div className="flex items-center gap-3">
-            <div
-                className="w-10 h-10 rounded-lg flex items-center justify-center text-white"
-                style={{ backgroundColor: pkg.color }}
-            >
-                <ListIcon size={20} />
-            </div>
             <div>
                 <div className="font-bold text-slate-800 dark:text-slate-100">{list.name}</div>
                 <div className="text-xs text-slate-500">{list.count} items</div>
