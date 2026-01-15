@@ -1299,7 +1299,7 @@ function App() {
                 {selectedEntry ? (
                     <EntryDetail
                         entry={selectedEntry}
-                        notebooks={notebooks}
+                        customDictionaries={customDictionaries}
                         userNotes={userNotes}
                         userAudioMeta={userAudioMeta}
                         userWordForms={userWordForms}
@@ -1321,6 +1321,7 @@ function App() {
                         onDeleteSentence={handleDeleteSentence}
                         onCreateWord={() => openWordModal(null)}
                         onManageForms={handleManageForms}
+                        onReadInContext={handleReadInContext}
                     />
                 ) : (
                     <>
@@ -1707,37 +1708,7 @@ function App() {
                 </button>
             </nav>
 
-            {/* DETAIL VIEW MOUNT */}
-            {
-                selectedEntry && (
-                    <EntryDetail
-                        entry={selectedEntry}
-                        customDictionaries={customDictionaries}
-                        userNotes={userNotes}
-                        userAudioMeta={userAudioMeta}
-                        userWordForms={userWordForms}
-                        onSaveAudio={saveAudio}
-                        onDeleteAudio={deleteAudio}
-                        favorites={favorites}
-                        customLists={customLists}
-                        customListOrder={customListOrder}
-                        onClose={() => { setSelectedEntry(null); updateUrl(null); }}
-                        onEdit={(entry, content, isNote) => isNote ? openNotesModal(entry, content, false) : openWordModal(entry)}
-                        onToggleFavorite={toggleFavorite}
-                        onToggleList={toggleInList}
-                        onDelete={(idx) => { setWordToDelete(idx); }}
-                        onSearchTerm={handleSearchTerm}
-                        onOpenNewListModal={() => setShowNewListModal(true)}
-                        onMove={openMoveModal}
-                        personalWords={personalWords}
-                        onEditSentence={handleEditSentence}
-                        onDeleteSentence={handleDeleteSentence}
-                        onCreateWord={() => openWordModal(null)}
-                        onManageForms={handleManageForms}
-                        onReadInContext={handleReadInContext}
-                    />
-                )
-            }
+
 
             {/* MODALS */}
             {
