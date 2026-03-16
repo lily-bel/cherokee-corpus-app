@@ -17,6 +17,7 @@ interface PackageDetailViewProps {
     customLists: Record<string, any>;
     onNavigate: (type: 'dictionary' | 'list' | 'word' | 'sentence', payload: any) => void;
     onReadInContext?: (sentenceId: string) => void;
+    onShowSettings: () => void;
 }
 
 const getIconStyles = (pkg: any) => {
@@ -80,7 +81,9 @@ const ContentSection = ({ label, items, type, onNavigate, pkg }: { label: string
     );
 };
 
-export const PackageDetailView: React.FC<PackageDetailViewProps> = ({ packageId, onBack, customLists, onNavigate, onReadInContext }) => {
+export const PackageDetailView: React.FC<PackageDetailViewProps> = ({
+    packageId, onBack, customLists, onNavigate, onReadInContext, onShowSettings
+}) => {
     const { packages, importedData } = usePackageManager(); // importedData needed for official/imported packages
     const {
         customDictionaries, personalWords, userSentences,
@@ -343,6 +346,7 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({ packageId,
                 onCreateWord={() => { }}
                 onManageForms={() => { }}
                 onReadInContext={onReadInContext}
+                onShowSettings={onShowSettings}
             />
         );
     }

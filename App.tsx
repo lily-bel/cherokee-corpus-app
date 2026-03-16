@@ -1294,7 +1294,14 @@ function App() {
     return (
         <div className="h-screen w-full bg-[#F9F9F7] dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans flex flex-col overflow-hidden relative">
             <RainbowGradient />
-            <header className="bg-white dark:bg-slate-900 px-4 py-3 shadow-sm z-10 flex items-center justify-between shrink-0 h-[60px]"><h1 className="font-noto-serif text-xl text-slate-800 dark:text-slate-100">ᏣᎳᎩ-English Dictionary</h1><button onClick={() => setShowSettingsModal(true)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300"><Menu size={24} strokeWidth={1.5} /></button></header>
+            {!selectedEntry && (
+                <header className="bg-white dark:bg-slate-900 px-4 py-3 shadow-sm z-10 flex items-center justify-between shrink-0 h-[60px]">
+                    <h1 className="font-noto-serif text-xl text-slate-800 dark:text-slate-100">ᏣᎳᎩ-English Dictionary</h1>
+                    <button onClick={() => setShowSettingsModal(true)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
+                        <Menu size={24} strokeWidth={1.5} />
+                    </button>
+                </header>
+            )}
             <main className={`flex-1 overflow-hidden relative flex flex-col ${selectedEntry ? 'z-50' : 'z-0'}`}>
                 {selectedEntry ? (
                     <EntryDetail
@@ -1322,6 +1329,7 @@ function App() {
                         onCreateWord={() => openWordModal(null)}
                         onManageForms={handleManageForms}
                         onReadInContext={handleReadInContext}
+                        onShowSettings={() => setShowSettingsModal(true)}
                     />
                 ) : (
                     <>
@@ -1640,6 +1648,7 @@ function App() {
                                     handleEntryClick(payload);
                                 }
                             }}
+                            onShowSettings={() => setShowSettingsModal(true)}
                         />}
                         {
                             activeTab === 'personal' && (!activeDictionaryId ? (<div className="flex flex-col h-full"><div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0"><h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Custom Dictionaries</h1><button onClick={() => setShowNewDictionaryModal(true)} className="bg-slate-900 dark:bg-slate-700 text-white p-2 rounded-full shadow-md"><Plus size={20} /></button></div><div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-4 content-start">{dictionaryList.map((nb: any) => {

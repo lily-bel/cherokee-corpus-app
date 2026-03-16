@@ -178,12 +178,12 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
 
                 {/* Table */}
                 <div className="flex-1 overflow-y-auto p-0">
-                    <table className="w-full text-left border-collapse">
+                    <table className="w-full text-left border-collapse table-fixed">
                         <thead className="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-bold sticky top-0 z-10 shadow-sm">
                             <tr>
-                                <th className="p-4 border-b border-slate-100 dark:border-slate-700 w-1/4">Form Name</th>
+                                <th className="p-4 border-b border-slate-100 dark:border-slate-700 w-1/3">Form Name</th>
                                 <th className="p-4 border-b border-slate-100 dark:border-slate-700">Details</th>
-                                <th className="p-4 border-b border-slate-100 dark:border-slate-700 w-24 text-right">Audio</th>
+                                <th className="p-4 border-b border-slate-100 dark:border-slate-700 w-20 text-center">Audio</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -221,18 +221,18 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
                                                 className="absolute left-0 top-0 bottom-0 w-1.5"
                                                 style={{ backgroundColor: borderStyle.borderLeftColor }}
                                             />
-                                            <div className="font-bold text-slate-700 dark:text-slate-200 text-sm">{form.label}</div>
+                                            <div className="font-bold text-slate-700 dark:text-slate-200 text-sm break-words">{form.label}</div>
                                         </td>
                                         <td className="p-4 align-top">
-                                            <div className="flex flex-col gap-0.5">
-                                                <div className="font-noto-cherokee text-xl text-slate-800 dark:text-slate-100">{form.syllabary}</div>
-                                                <div className="font-noto-serif text-amber-700 dark:text-amber-400 font-medium">{form.translit}</div>
-                                                <div className="text-xs text-slate-500 dark:text-slate-400 italic">{form.tone}</div>
-                                                {form.notes && <div className="text-xs text-slate-400 mt-1 border-t border-slate-100 dark:border-slate-800 pt-1">{form.notes}</div>}
+                                            <div className="flex flex-col gap-0.5 overflow-hidden">
+                                                <div className="font-noto-cherokee text-xl text-slate-800 dark:text-slate-100 break-words">{form.syllabary}</div>
+                                                <div className="font-noto-serif text-amber-700 dark:text-amber-400 font-medium break-words">{form.translit}</div>
+                                                <div className="text-xs text-slate-500 dark:text-slate-400 italic break-words">{form.tone}</div>
+                                                {form.notes && <div className="text-xs text-slate-400 mt-1 border-t border-slate-100 dark:border-slate-800 pt-1 break-words">{form.notes}</div>}
                                             </div>
                                         </td>
-                                        <td className="p-4 align-top text-right">
-                                            <div className="flex flex-col items-end gap-2">
+                                        <td className="p-4 align-top">
+                                            <div className="flex flex-col items-center gap-2">
                                                 {formAudios.map((audio: any) => {
                                                     const audioPkg = packages.find(p => p.id === audio.packageId);
                                                     const isOfficial = audioPkg ? audioPkg.type === 'official' : false;
