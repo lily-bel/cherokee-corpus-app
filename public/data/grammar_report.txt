@@ -14,40 +14,48 @@ Subj -> Obj          | completive p | future       | future imper | habitual    
 1d-ex -> 2p          |              |              |              |              |              |              |              | LT          
 1d-ex -> 2s          |              |              |              |              |              |              |              | LT          
 1d-ex -> 3a          |              |              |              |              |              |              |              | LT          
-1d-ex -> 3pi         | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
+1d-ex -> 3p          | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
+1d-ex -> 3pa         |              |              |              |              |              |              |              | LT          
 1d-ex -> 3s          | KBLT         | KBLT         | LT           | KBLT         | KBLT         | LT           | KBLT         | KBLT        
 1d-in -> 3a          |              |              |              |              |              |              |              | LT          
-1d-in -> 3pi         | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
+1d-in -> 3p          | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
+1d-in -> 3pa         |              |              |              |              |              |              |              | LT          
 1d-in -> 3s          | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
 1p-ex -> 2s          |              |              |              |              |              |              |              | LT          
 1p-ex -> 3a          |              |              |              |              |              |              |              | LT          
-1p-ex -> 3pi         | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
+1p-ex -> 3p          | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
+1p-ex -> 3pa         |              |              |              |              |              |              |              | LT          
 1p-ex -> 3s          | KBLT         | KBLT         | LT           | KBLT         | KBLT         | LT           | KBLT         | KBLT        
 1p-in -> 3a          |              |              |              |              |              |              |              | LT          
-1p-in -> 3pi         | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
+1p-in -> 3p          | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
+1p-in -> 3pa         |              |              |              |              |              |              |              | LT          
 1p-in -> 3s          | KBLT         | KBLT         | LT           | KBLT         | KBLT         | LT           | KBLT         | KBLT        
 1s -> 2d             |              |              |              |              |              |              |              | LT          
 1s -> 2p             |              |              |              |              |              |              |              | LT          
 1s -> 2s             |              |              |              |              |              |              |              | LT          
 1s -> 3a             | LT           | LT           |              | LT           | LT           |              | LT           | CNLT        
-1s -> 3pi            | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
+1s -> 3p             | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
+1s -> 3pa            |              |              |              |              |              |              |              | LT          
 1s -> 3s             | KBLT         | LT           | LT           | KBLT         | KBLT         | LT           | KBLT         | CNHDKBLILT  
 2d -> 1d-ex          |              |              |              |              |              |              |              | LT          
 2d -> 1p-ex          |              |              |              |              |              |              |              | LT          
 2d -> 1s             |              |              |              |              |              |              |              | LT          
 2d -> 3a             |              |              | LT           |              |              | LT           |              | LT          
-2d -> 3pi            | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
+2d -> 3p             | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
+2d -> 3pa            |              |              |              |              |              |              |              | LT          
 2d -> 3s             | KBLT         | KBLT         | LT           | KBLT         | KBLT         | LILT         | KBLT         | KBLT        
 2p -> 1d-ex          |              |              |              |              |              |              |              | LT          
 2p -> 1s             |              |              |              |              |              |              |              | LT          
 2p -> 3a             |              |              | LT           |              |              | LT           |              | LT          
-2p -> 3pi            | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
+2p -> 3p             | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
+2p -> 3pa            |              |              |              |              |              |              |              | LT          
 2p -> 3s             | KBLT         | KBLT         | LT           | KBLT         | KBLT         | LT           | KBLT         | KBLT        
 2s -> 1d-ex          |              |              |              |              |              |              |              | LT          
 2s -> 1p-ex          |              |              |              |              |              |              |              | LT          
 2s -> 1s             |              |              |              |              |              |              |              | LT          
 2s -> 3a             |              |              | LT           |              |              | CNLT         |              | LT          
-2s -> 3pi            | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
+2s -> 3p             | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
+2s -> 3pa            |              |              |              |              |              |              |              | LT          
 2s -> 3s             | KBLT         | LT           | LT           | KBLT         | KBLT         | CNHDLT       | KBLT         | KBLT        
 3p -> 1d-ex          |              |              |              |              |              |              |              | LT          
 3p -> 1d-in          |              |              |              |              |              |              |              | LT          
@@ -58,8 +66,9 @@ Subj -> Obj          | completive p | future       | future imper | habitual    
 3p -> 2p             |              |              |              |              |              |              |              | LT          
 3p -> 2s             |              |              |              |              |              |              |              | LT          
 3p -> 3a             |              |              |              |              |              |              |              | LT          
-3p -> 3pi            | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
-3p -> 3s             | KBLILT       | KBLT         | LT           | KBLILT       | KBLT         | LT           | KBLILT       | KBLILT      
+3p -> 3p             | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
+3p -> 3pa            |              |              |              |              |              |              |              | LT          
+3p -> 3s             | KBLILT       | KBLT         | LT           | KBLILT       | KBLT         | LT           | KBLILT       | KBLT        
 3s -> 1d-ex          |              |              |              |              |              |              |              | LT          
 3s -> 1d-in          |              |              |              |              |              |              |              | LT          
 3s -> 1p-ex          |              |              |              |              |              |              |              | LT          
@@ -69,14 +78,15 @@ Subj -> Obj          | completive p | future       | future imper | habitual    
 3s -> 2p             |              |              |              |              |              |              |              | LT          
 3s -> 2s             |              |              |              |              |              |              |              | LT          
 3s -> 3a             | LT           | LT           | LT           | LT           | LT           | LT           | CNLT         | CNLT        
-3s -> 3pi            | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
-3s -> 3s             | CNHDKBLT     | KBLT         | LT           | CNHDKBLT     | KBLT         | LT           | CNHDKBLT     | CNHDKBLT    
+3s -> 3p             | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
+3s -> 3pa            |              |              |              | LT           |              |              |              | LT          
+3s -> 3s             | CNHDKBLT     | KBLT         | LT           | CNHDKBLT     | KBLT         | LT           | CNHDKBLT     | CNHDKBLILT  
 
 NON-VERB FORMS AND VARIANTS
 ===========================
 noun|plural animate|           : CN
-noun|plural|                   : CN
+noun|plural|                   : CN, LI
 noun|singular animate|         : CN
-noun|singular|                 : CN
+noun|singular|                 : CN, LI
 noun|unknown|                  : CN
 variant||                      : CN
