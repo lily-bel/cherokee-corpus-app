@@ -26,14 +26,14 @@ Subj -> Obj          | completive p | future       | future imper | habitual    
 1p-ex -> 3p          | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
 1p-ex -> 3pa         |              |              |              |              |              |              |              | LT          
 1p-ex -> 3s          | KBLT         | KBLT         | LT           | KBLT         | KBLT         | LT           | KBLT         | KBLT        
-1p-in -> 3a          |              |              |              |              |              |              |              | LT          
+1p-in -> 3a          | KB           |              |              | KB           | KB           |              | KB           | KBLT        
 1p-in -> 3p          | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
 1p-in -> 3pa         |              |              |              |              |              |              |              | LT          
 1p-in -> 3s          | KBLT         | KBLT         | LT           | KBLT         | KBLT         | LT           | KBLT         | KBLT        
 1s -> 2d             |              |              |              |              |              |              |              | LT          
 1s -> 2p             |              |              |              |              |              |              |              | LT          
 1s -> 2s             |              |              |              |              |              |              |              | LT          
-1s -> 3a             | LT           | LT           |              | LT           | LT           |              | LT           | CNLT        
+1s -> 3a             | KBLT         | LT           |              | KBLT         | KBLT         |              | KBLT         | CNKBLT      
 1s -> 3p             | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
 1s -> 3pa            |              |              |              |              |              |              |              | LT          
 1s -> 3s             | KBLT         | LT           | LT           | KBLT         | KBLT         | LT           | KBLT         | CNHDKBLILT  
@@ -53,7 +53,7 @@ Subj -> Obj          | completive p | future       | future imper | habitual    
 2s -> 1d-ex          |              |              |              |              |              |              |              | LT          
 2s -> 1p-ex          |              |              |              |              |              |              |              | LT          
 2s -> 1s             |              |              |              |              |              |              |              | LT          
-2s -> 3a             |              |              | LT           |              |              | CNLT         |              | LT          
+2s -> 3a             | KB           |              | LT           | KB           | KB           | CNLT         | KB           | KBLT        
 2s -> 3p             | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
 2s -> 3pa            |              |              |              |              |              |              |              | LT          
 2s -> 3s             | KBLT         | LT           | LT           | KBLT         | KBLT         | CNHDLT       | KBLT         | KBLT        
@@ -65,7 +65,7 @@ Subj -> Obj          | completive p | future       | future imper | habitual    
 3p -> 2d             |              |              |              |              |              |              |              | LT          
 3p -> 2p             |              |              |              |              |              |              |              | LT          
 3p -> 2s             |              |              |              |              |              |              |              | LT          
-3p -> 3a             |              |              |              |              |              |              |              | LT          
+3p -> 3a             | KB           |              |              | KB           | KB           |              | KB           | KBLT        
 3p -> 3p             | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
 3p -> 3pa            |              |              |              |              |              |              |              | LT          
 3p -> 3s             | KBLILT       | KBLT         | LT           | KBLILT       | KBLT         | LT           | KBLILT       | KBLT        
@@ -77,7 +77,7 @@ Subj -> Obj          | completive p | future       | future imper | habitual    
 3s -> 2d             |              |              |              |              |              |              |              | LT          
 3s -> 2p             |              |              |              |              |              |              |              | LT          
 3s -> 2s             |              |              |              |              |              |              |              | LT          
-3s -> 3a             | LT           | LT           | LT           | LT           | LT           | LT           | CNLT         | CNLT        
+3s -> 3a             | KBLT         | LT           | LT           | KBLT         | KBLT         | LT           | CNKBLT       | CNKBLT      
 3s -> 3p             | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
 3s -> 3pa            |              |              |              | LT           |              |              |              | LT          
 3s -> 3s             | CNHDKBLT     | KBLT         | LT           | CNHDKBLT     | KBLT         | LT           | CNHDKBLT     | CNHDKBLILT  
