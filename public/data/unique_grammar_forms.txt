@@ -84,4 +84,3 @@ noun|plural|
 noun|singular animate|
 noun|singular|
 noun|unknown|
-variant||

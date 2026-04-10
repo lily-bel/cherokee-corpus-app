@@ -33,4 +33,3 @@ noun|plural|                   : CN, LI
 noun|singular animate|         : CN
 noun|singular|                 : CN, LI
 noun|unknown|                  : CN
-variant||                      : CN
