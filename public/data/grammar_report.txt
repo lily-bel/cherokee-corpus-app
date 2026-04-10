@@ -21,7 +21,7 @@ Subj -> Obj          | completive p | future       | habitual     | immediate pa
 2s -> 3a             | KB           |              | KB           | KB           | CN           | KB           | KB          
 2s -> 3s             | KB           |              | KB           | KB           | CNHD         | KB           | KB          
 3p -> 3a             | KB           |              | KB           | KB           |              | KB           | KB          
-3p -> 3s             | KBLI         | KB           | KBLI         | KB           |              | KBLI         | KB          
+3p -> 3s             | KBLI         | KB           | KBLI         | KB           |              | KBLI         | CNKB        
 3s -> 3a             | KB           |              | KB           | KB           |              | CNKB         | CNKB        
 3s -> 3s             | CNHDKB       | KB           | CNHDKB       | KB           |              | CNHDKB       | CNHDKBLI    
 
