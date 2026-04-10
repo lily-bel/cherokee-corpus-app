@@ -8,14 +8,22 @@ Source Abbreviations:
   LI: lily-dict.csv
   HD: hierarchical-dict.json
 
-Subj -> Obj          | completive p | habitual     | imperative   | infinitive   | present     
------------------------------------------------------------------------------------------------
-1s -> 3a             |              |              |              |              | CN          
-1s -> 3s             |              |              |              |              | CN          
-2s -> 3a             |              |              | CN           |              |             
-2s -> 3s             |              |              | CN           |              |             
-3s -> 3a             |              |              |              | CN           | CN          
-3s -> 3s             | CN           | CN           |              | CN           | CN          
+Subj -> Obj          | completive p | future       | habitual     | immediate pa | imperative   | infinitive   | present     
+-----------------------------------------------------------------------------------------------------------------------------
+1d-ex -> 3s          | KB           | KB           | KB           | KB           |              | KB           | KB          
+1p-ex -> 3s          | KB           | KB           | KB           | KB           |              | KB           | KB          
+1p-in -> 3a          | KB           |              | KB           | KB           |              | KB           | KB          
+1p-in -> 3s          | KB           | KB           | KB           | KB           |              | KB           | KB          
+1s -> 3a             | KB           |              | KB           | KB           |              | KB           | CNKB        
+1s -> 3s             | KB           |              | KB           | KB           |              | KB           | CNHDKBLI    
+2d -> 3s             | KB           | KB           | KB           | KB           | LI           | KB           | KB          
+2p -> 3s             | KB           | KB           | KB           | KB           |              | KB           | KB          
+2s -> 3a             | KB           |              | KB           | KB           | CN           | KB           | KB          
+2s -> 3s             | KB           |              | KB           | KB           | CNHD         | KB           | KB          
+3p -> 3a             | KB           |              | KB           | KB           |              | KB           | KB          
+3p -> 3s             | KBLI         | KB           | KBLI         | KB           |              | KBLI         | KB          
+3s -> 3a             | KB           |              | KB           | KB           |              | CNKB         | CNKB        
+3s -> 3s             | CNHDKB       | KB           | CNHDKB       | KB           |              | CNHDKB       | CNHDKBLI    
 
 NON-VERB FORMS AND VARIANTS
 ===========================
@@ -24,5 +32,5 @@ noun|plural inanimate|         : CN
 noun|plural|                   : CN, LI
 noun|singular animate|         : CN
 noun|singular|                 : CN, LI
-noun|unknown|                  : CN, HD, KB
+noun|unknown|                  : CN
 variant||                      : CN

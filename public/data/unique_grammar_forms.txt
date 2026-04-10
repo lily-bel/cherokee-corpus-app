@@ -1,11 +1,81 @@
+1d-ex|3s|completive past
+1d-ex|3s|future
+1d-ex|3s|habitual
+1d-ex|3s|immediate past
+1d-ex|3s|infinitive
+1d-ex|3s|present
+1p-ex|3s|completive past
+1p-ex|3s|future
+1p-ex|3s|habitual
+1p-ex|3s|immediate past
+1p-ex|3s|infinitive
+1p-ex|3s|present
+1p-in|3a|completive past
+1p-in|3a|habitual
+1p-in|3a|immediate past
+1p-in|3a|infinitive
+1p-in|3a|present
+1p-in|3s|completive past
+1p-in|3s|future
+1p-in|3s|habitual
+1p-in|3s|immediate past
+1p-in|3s|infinitive
+1p-in|3s|present
+1s|3a|completive past
+1s|3a|habitual
+1s|3a|immediate past
+1s|3a|infinitive
 1s|3a|present
+1s|3s|completive past
+1s|3s|habitual
+1s|3s|immediate past
+1s|3s|infinitive
 1s|3s|present
+2d|3s|completive past
+2d|3s|future
+2d|3s|habitual
+2d|3s|immediate past
+2d|3s|imperative
+2d|3s|infinitive
+2d|3s|present
+2p|3s|completive past
+2p|3s|future
+2p|3s|habitual
+2p|3s|immediate past
+2p|3s|infinitive
+2p|3s|present
+2s|3a|completive past
+2s|3a|habitual
+2s|3a|immediate past
 2s|3a|imperative
+2s|3a|infinitive
+2s|3a|present
+2s|3s|completive past
+2s|3s|habitual
+2s|3s|immediate past
 2s|3s|imperative
+2s|3s|infinitive
+2s|3s|present
+3p|3a|completive past
+3p|3a|habitual
+3p|3a|immediate past
+3p|3a|infinitive
+3p|3a|present
+3p|3s|completive past
+3p|3s|future
+3p|3s|habitual
+3p|3s|immediate past
+3p|3s|infinitive
+3p|3s|present
+3s|3a|completive past
+3s|3a|habitual
+3s|3a|immediate past
 3s|3a|infinitive
 3s|3a|present
 3s|3s|completive past
+3s|3s|future
 3s|3s|habitual
+3s|3s|immediate past
 3s|3s|infinitive
 3s|3s|present
 noun|plural animate|
