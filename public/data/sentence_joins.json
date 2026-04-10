@@ -17651,3529 +17651,7 @@
     "gloss_english": "have"
   },
   {
-    "base_id": "9186bdbb206c00ea",
-    "sentence_id": "8e7f60cdd3bb",
-    "source file": "lily-dict.csv",
-    "source": "cn",
-    "gloss_syllabary": "ᎤᎵᎬᏚᎸᎢ.",
-    "gloss_phonetic": "ulgvdulvi.",
-    "gloss_english": "she had covered her face."
-  },
-  {
-    "base_id": "3ec457d892deb765",
-    "sentence_id": "a6c9f0fa54ae",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏥᎷᏱᏍᎦ",
-    "gloss_english": "I am chopping it"
-  },
-  {
-    "base_id": "a5226b0bcf1bcb27",
-    "sentence_id": "e450b21b4f36",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎦᎾᎩᎳ",
-    "gloss_english": "He lives"
-  },
-  {
-    "base_id": "081758bb01252395",
-    "sentence_id": "038b229098e7",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏓᏥᏬᏂᏏ",
-    "gloss_english": "I will speak"
-  },
-  {
-    "base_id": "477c6868fa8c6250",
-    "sentence_id": "d274087ca79a",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏧᏣ",
-    "gloss_english": "boy"
-  },
-  {
-    "base_id": "1afba204181545d4",
-    "sentence_id": "61049019cfb1",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏂᎨᎯ",
-    "gloss_english": "are chasing"
-  },
-  {
-    "base_id": "c4418f11b1fb30b4",
-    "sentence_id": "059a812c41d3",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᎾᎵᏍᎩᎠ",
-    "gloss_english": "are dancing"
-  },
-  {
-    "base_id": "2b723a4f2c03fd2d",
-    "sentence_id": "bbd1cd0672cd",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏓᏍᏗᎩᎠ",
-    "gloss_english": "He is eating"
-  },
-  {
-    "base_id": "fb49c3ad7ec696b3",
-    "sentence_id": "735d5ac4cfa6",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏓᏥᎶᏍᏗᎭ",
-    "gloss_english": "is drawing"
-  },
-  {
-    "base_id": "6ffc0bc173676eda",
-    "sentence_id": "1dde974c4b65",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏍᏕᎾ",
-    "gloss_english": "go"
-  },
-  {
-    "base_id": "3a18ebf327a57374",
-    "sentence_id": "393dff6ead9c",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏁᎯ",
-    "gloss_english": "live in"
-  },
-  {
-    "base_id": "ea781acebe13bbe4",
-    "sentence_id": "2fbba05e1f39",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏕᎦᏰᏫᏍᎦ",
-    "gloss_english": "She is sewing"
-  },
-  {
-    "base_id": "6ee5df7d15f98f13",
-    "sentence_id": "238c29cc2099",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎬᏂᏍᎦ",
-    "gloss_english": "is cooking"
-  },
-  {
-    "base_id": "df842f7d2bae1447",
-    "sentence_id": "be81a1d674ff",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏥᎳᏃ",
-    "gloss_english": "the fire"
-  },
-  {
-    "base_id": "85e1c4eca0d67b29",
-    "sentence_id": "edd43873a60c",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏗᏂᏲᎵ",
-    "gloss_english": "the children"
-  },
-  {
-    "base_id": "0b294dff32d43666",
-    "sentence_id": "2732d58ef499",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎡᏆ",
-    "gloss_english": "large"
-  },
-  {
-    "base_id": "3783fe35a1cd5a23",
-    "sentence_id": "e9a40fc213b8",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏚᏯ",
-    "gloss_english": "beans"
-  },
-  {
-    "base_id": "95295f6a9355ca44",
-    "sentence_id": "6ddb9bb8987e",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎾᏚᎵᎭ",
-    "gloss_english": "want"
-  },
-  {
-    "base_id": "4e10e3a83ab42eac",
-    "sentence_id": "c52041ce5170",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏗᎩᎸᏫᏍᏓᏁᏗ",
-    "gloss_english": "to work"
-  },
-  {
-    "base_id": "d12aefde33213275",
-    "sentence_id": "9229b8f2ab82",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏗᏇᏅᏒᏃ",
-    "gloss_english": "home"
-  },
-  {
-    "base_id": "75b246844e88a7c3",
-    "sentence_id": "cbc16d660e89",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏥᏭᏓᎾᏫᏛᎮᎢ",
-    "gloss_english": "jumped"
-  },
-  {
-    "base_id": "a0cc5b2e0fa366f3",
-    "sentence_id": "65846cd5a741",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "(Ꭶ)Ꮩ",
-    "gloss_english": "What"
-  },
-  {
-    "base_id": "0a3ec0a997c328d1",
-    "sentence_id": "9e87fcbb34e7",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎲᎦᎢᏴ",
-    "gloss_english": "When"
-  },
-  {
-    "base_id": "8adcf966a7c0f22c",
-    "sentence_id": "2d62a38890cc",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎦᎪ",
-    "gloss_english": "Who"
-  },
-  {
-    "base_id": "21ea2824b9c19009",
-    "sentence_id": "6c4347859e72",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏬᏚᎯ",
-    "gloss_english": "pretty"
-  },
-  {
-    "base_id": "75411053fe1b529c",
-    "sentence_id": "b7753ee67aed",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᎨᏯ",
-    "gloss_english": "a woman"
-  },
-  {
-    "base_id": "9b878ff82a5bb2f1",
-    "sentence_id": "8007a386b198",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏙᏌ",
-    "gloss_english": "gnats"
-  },
-  {
-    "base_id": "62486a843d8fc97a",
-    "sentence_id": "1819e70e6e0a",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏎᎦ",
-    "gloss_english": "awhile"
-  },
-  {
-    "base_id": "7b6d22a1f2385f6a",
-    "sentence_id": "7f88727cbb86",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏐᏊ",
-    "gloss_english": "one"
-  },
-  {
-    "base_id": "5c4f407da537a729",
-    "sentence_id": "53cdf58ecaaf",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏘᎾ",
-    "gloss_english": "lice"
-  },
-  {
-    "base_id": "fa375e74f0e5b98e",
-    "sentence_id": "b8a36d4ddda2",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏴᎩ",
-    "gloss_english": "Spear"
-  },
-  {
-    "base_id": "c78c9ff9105675b6",
-    "sentence_id": "c29a0fd679c9",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎢᏣᏙᎴᏆᏍᎨᏍᏗ",
-    "gloss_english": "You should be learning"
-  },
-  {
-    "base_id": "29ab40a633dfebac",
-    "sentence_id": "77fb7c7b28e7",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎦᎭᏗ",
-    "gloss_english": "a wedge"
-  },
-  {
-    "base_id": "b2b06f759f8f45d7",
-    "sentence_id": "e89a5fc0e1cb",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎬᏗ",
-    "gloss_english": "from"
-  },
-  {
-    "base_id": "3f793696df0eb7fd",
-    "sentence_id": "9320f422a8f3",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎭᏫᏂ",
-    "gloss_english": "inside"
-  },
-  {
-    "base_id": "312ef5817fc57d70",
-    "sentence_id": "24ca2601ba8d",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎢᏳᏍᏗ",
-    "gloss_english": "like"
-  },
-  {
-    "base_id": "d5b39698d6b3782c",
-    "sentence_id": "0cccdaa15df8",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎧᎶᏇᏗ",
-    "gloss_english": "locust"
-  },
-  {
-    "base_id": "83ade10385415e2d",
-    "sentence_id": "f753cdc2b4f5",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏃᎴ",
-    "gloss_english": "and"
-  },
-  {
-    "base_id": "0855420c2ab62a2d",
-    "sentence_id": "2ab46251f8c7",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏅᏬᏗ",
-    "gloss_english": "medicine"
-  },
-  {
-    "base_id": "218fbcfe641101de",
-    "sentence_id": "753d9afda9ec",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏅᏱ ᎤᏅᏮᎢ",
-    "gloss_english": "rock armor"
-  },
-  {
-    "base_id": "a69e4c4485ec9dea",
-    "sentence_id": "c0947a817efc",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎣᏍᏓ",
-    "gloss_english": "good"
-  },
-  {
-    "base_id": "fd8780b6767240f8",
-    "sentence_id": "c7501db31449",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎢᏥᏍᏗᏳ",
-    "gloss_english": "where to look"
-  },
-  {
-    "base_id": "0647c9005787cee2",
-    "sentence_id": "8347c2b90074",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏧᎶᏕᎸᎩ",
-    "gloss_english": "He kicked"
-  },
-  {
-    "base_id": "e057ad50137abf63",
-    "sentence_id": "14fcfe15830f",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎩᎵ",
-    "gloss_english": "the dog"
-  },
-  {
-    "base_id": "aba5cccadddb5157",
-    "sentence_id": "eb8cc24141d9",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏧᎳᏍᎩ",
-    "gloss_english": "the pot"
-  },
-  {
-    "base_id": "98a40b9d7f989a90",
-    "sentence_id": "709e9f80744d",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏴᎩ ᎤᏩᏑᎦᎵ",
-    "gloss_english": "Spear Finger"
-  },
-  {
-    "base_id": "e2012d0f8cce5507",
-    "sentence_id": "7d8732c0b8a6",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎦᎵᎲᎢ",
-    "gloss_english": "sleeping"
-  },
-  {
-    "base_id": "bf7ed836cdc46a78",
-    "sentence_id": "9d1fdf8493e0",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏚᏍᏗᏰᏔᏅᎢ",
-    "gloss_english": "He begged them"
-  },
-  {
-    "base_id": "ad213ae8b27af31e",
-    "sentence_id": "cb575d8f60c7",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏕᏣᎵᎪᏁᎸ",
-    "gloss_english": "having become partners of"
-  },
-  {
-    "base_id": "b38840f6dedac141",
-    "sentence_id": "12de57922460",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏩᏂᎦᎳ",
-    "gloss_english": "infirmity"
-  },
-  {
-    "base_id": "f006a845a5446f0a",
-    "sentence_id": "70eb16c363ba",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏂᎩᎬ",
-    "gloss_english": "the blood"
-  },
-  {
-    "base_id": "5990884ed3e93356",
-    "sentence_id": "0e71aa6dbeb5",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏌᎳᏓᏅᎩ",
-    "gloss_english": "did lift up"
-  },
-  {
-    "base_id": "656ce83724e3e387",
-    "sentence_id": "eacb37f54a22",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎩᎦᎨ",
-    "gloss_english": "red"
-  },
-  {
-    "base_id": "3f32b859884b8a87",
-    "sentence_id": "ef728f1c4bb7",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏓᎨᏗ",
-    "gloss_english": "glass"
-  },
-  {
-    "base_id": "ced7dbe2d7444f5c",
-    "sentence_id": "2f8c57f3bc3d",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎫᎫ",
-    "gloss_english": "vials"
-  },
-  {
-    "base_id": "89c797aa0ecad2bf",
-    "sentence_id": "d41286bcc0a1",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᎪᎲᏍᎬᎢ",
-    "gloss_english": "her burning"
-  },
-  {
-    "base_id": "bac3d964de17e04c",
-    "sentence_id": "af26c2439c1c",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏣᏍᏚᏅᎩ",
-    "gloss_english": "seal"
-  },
-  {
-    "base_id": "cfbf03b1e7b585e6",
-    "sentence_id": "19fa9108d3fd",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎦᏁᎩᏍᎨᏍᏗ",
-    "gloss_english": "take"
-  },
-  {
-    "base_id": "7768b615aa128b28",
-    "sentence_id": "62438ea82a73",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᎦᏴᎵ",
-    "gloss_english": "thousands"
-  },
-  {
-    "base_id": "173c36954c40c71f",
-    "sentence_id": "1d4d43df4a6a",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᎾᎦᎵᏍᎬᎩ",
-    "gloss_english": "lightnings"
-  },
-  {
-    "base_id": "fd3a2209b2252200",
-    "sentence_id": "4d5b853fa5fd",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏴᏓᏆᎶᎥᎩ",
-    "gloss_english": "thunders"
-  },
-  {
-    "base_id": "b9b4533b0a24b173",
-    "sentence_id": "5c49e8f7bd2b",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎪᏅᎩ",
-    "gloss_english": "was burnt up"
-  },
-  {
-    "base_id": "010cc612a22e8b57",
-    "sentence_id": "3ecc017bef23",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᎪᎾ",
-    "gloss_english": "hungry"
-  },
-  {
-    "base_id": "e78be41684e7e4ca",
-    "sentence_id": "2ad8a8d5e18a",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎾᎪᎸᏒ",
-    "gloss_english": "did turn aside"
-  },
-  {
-    "base_id": "782dada4d75414e0",
-    "sentence_id": "a6ef905d5245",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᎧᎵᎢᎭ",
-    "gloss_english": "fulfilled"
-  },
-  {
-    "base_id": "2519126d8c96f3cc",
-    "sentence_id": "fd183838da2c",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏂᏰᎮᏍᏗ",
-    "gloss_english": "shall bear"
-  },
-  {
-    "base_id": "a94edad3932c52ae",
-    "sentence_id": "e9d9070dfe17",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎯᎷᎦ",
-    "gloss_english": "slay"
-  },
-  {
-    "base_id": "706670105036e866",
-    "sentence_id": "580ab24a54db",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏬᎳ",
-    "gloss_english": "doth lodge"
-  },
-  {
-    "base_id": "6bde73264eb5c639",
-    "sentence_id": "325b9890a8e1",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏚᎵᏂᏆᏅᏅᎩ",
-    "gloss_english": "having bowed his knees"
-  },
-  {
-    "base_id": "17b7c058802e7c76",
-    "sentence_id": "a78f20f014ca",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎸᎸᎢ",
-    "gloss_english": "he had bound him"
-  },
-  {
-    "base_id": "1ed5f7ca129d780a",
-    "sentence_id": "babe296c1d55",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎾᏘᏅᏍᏗ",
-    "gloss_english": "to go on with"
-  },
-  {
-    "base_id": "1837f4301cfb4924",
-    "sentence_id": "483ea6fb6ed0",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏂᏍᏓᏱᏛᎩ",
-    "gloss_english": "agreed"
-  },
-  {
-    "base_id": "c232190d07c6f71c",
-    "sentence_id": "c735456e240a",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎨᎵᎠ",
-    "gloss_english": "it doth seem to me"
-  },
-  {
-    "base_id": "5a9e669de8e10358",
-    "sentence_id": "70c3f3aa3df3",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏬᎰᏒᎩ",
-    "gloss_english": "suffered it to fall off"
-  },
-  {
-    "base_id": "ff7a5b86603c510f",
-    "sentence_id": "9962eaeaec48",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᎾᎵᎲᎢ",
-    "gloss_english": "they are striving"
-  },
-  {
-    "base_id": "2b1f95bf1573f9e2",
-    "sentence_id": "ca36be632c1a",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏔᎳᏑᎳᎩ",
-    "gloss_english": "Loose the sandal of thy feet"
-  },
-  {
-    "base_id": "4162c9c1aedb6406",
-    "sentence_id": "efb578d76e3b",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎾᏁᏦᏅᎩ",
-    "gloss_english": "play"
-  },
-  {
-    "base_id": "7146c512cf4dc255",
-    "sentence_id": "1cb18dcea26e",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏗᎧᏃᎩᏍᏙᏗ",
-    "gloss_english": "harp"
-  },
-  {
-    "base_id": "7146c512cf4dc255",
-    "sentence_id": "1cb18dcea26e",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏗᎧᏃᎩᏛ",
-    "gloss_english": "harped"
-  },
-  {
-    "base_id": "9cbb72feacc60a88",
-    "sentence_id": "2ec01bdfff98",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏁᏍᎨᎲᎢ",
-    "gloss_english": "he built"
-  },
-  {
-    "base_id": "8e42272a18531abc",
-    "sentence_id": "dda5f675b1b9",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏥᏯᎵᎡᎵᏤᎭ",
-    "gloss_english": "I thank"
-  },
-  {
-    "base_id": "0b387a6a9e09af76",
-    "sentence_id": "b4b597c996f2",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᎵᏥᏙᎲᏍᎩ",
-    "gloss_english": "one preaching"
-  },
-  {
-    "base_id": "1eee531d2a82409e",
-    "sentence_id": "ab304a921346",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏥᎸᏉᏗᎭ",
-    "gloss_english": "I do glorify"
-  },
-  {
-    "base_id": "1fd5f22d19566bd3",
-    "sentence_id": "367f3480dd57",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏲᏏᏍᎨᏍᏗ",
-    "gloss_english": "doth hunger"
-  },
-  {
-    "base_id": "2942f2db52102d1c",
-    "sentence_id": "5b454092a142",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎭᏫᏯ",
-    "gloss_english": "flesh"
-  },
-  {
-    "base_id": "26f8416771cf84a3",
-    "sentence_id": "c3e010468e21",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏴᏍᏗ",
-    "gloss_english": "bitterness"
-  },
-  {
-    "base_id": "d1eeb77d534cd464",
-    "sentence_id": "2917c55493e1",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏛᏂᏛᎩ",
-    "gloss_english": "revived"
-  },
-  {
-    "base_id": "de6ff67df18ebe2e",
-    "sentence_id": "ea5565f3b632",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏍᏓᏱᏗᏍᎪᎢ",
-    "gloss_english": "He doth harden"
-  },
-  {
-    "base_id": "7c36176c8a22ca23",
-    "sentence_id": "0db52c6d7d09",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏲᎵᎸᎢ",
-    "gloss_english": "salutation"
-  },
-  {
-    "base_id": "910952f53a6ef943",
-    "sentence_id": "e6893a2a2e8d",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏂᎦᏴᎵᎨ",
-    "gloss_english": "advanced in their days"
-  },
-  {
-    "base_id": "d5c32f3032102083",
-    "sentence_id": "45eb9cb8d83b",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏕᎨᎶᎰᎢ",
-    "gloss_english": "doth nourish them"
-  },
-  {
-    "base_id": "b673fb22f5c83895",
-    "sentence_id": "702a90135f06",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎢᏥᎾᏕᎨᏍᏗ",
-    "gloss_english": "sell"
-  },
-  {
-    "base_id": "bcd107574334b1ec",
-    "sentence_id": "01352b9e6769",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏧᎦᎾᏮᎢ",
-    "gloss_english": "south"
-  },
-  {
-    "base_id": "8144cd533013ce16",
-    "sentence_id": "538f41b727ed",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏧᏴᏢᎢ",
-    "gloss_english": "north"
-  },
-  {
-    "base_id": "8673bd12a2180d3e",
-    "sentence_id": "c2915b0e176e",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏭᏕᎵᎬᎢ",
-    "gloss_english": "west"
-  },
-  {
-    "base_id": "8652f20a5c7370cd",
-    "sentence_id": "27ff94a0f7c8",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏚᏫᏒᎢ",
-    "gloss_english": "planted"
-  },
-  {
-    "base_id": "ab1c45c070b45036",
-    "sentence_id": "f7be03a61b7e",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎥᏝ ᏱᏥᏩᏘᎭ",
-    "gloss_english": "do not find"
-  },
-  {
-    "base_id": "83292a3aad70d426",
-    "sentence_id": "bb65f6457995",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎯᎴᏴᏍᏓ",
-    "gloss_english": "cut it off"
-  },
-  {
-    "base_id": "a4002a9968c992b5",
-    "sentence_id": "0c2d903c9841",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏪᎳᏗᏙᎸᎢ",
-    "gloss_english": "with"
-  },
-  {
-    "base_id": "9822f63ae793d0b4",
-    "sentence_id": "5a05cf274877",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏣᏚᎦ",
-    "gloss_english": "dost thou owe"
-  },
-  {
-    "base_id": "ddbbe867cac68ba3",
-    "sentence_id": "12fc7189b626",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏁᎳᏍᎪᎯ",
-    "gloss_english": "eighty"
-  },
-  {
-    "base_id": "9a5559d4b832d146",
-    "sentence_id": "791e4218e1b7",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏐᎣᏁᎳ",
-    "gloss_english": "the nine"
-  },
-  {
-    "base_id": "606ed0c5c7697ce7",
-    "sentence_id": "148c845e9128",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏴᏍᏗ",
-    "gloss_english": "enter"
-  },
-  {
-    "base_id": "12776ebcef96f37e",
-    "sentence_id": "adffd6484b94",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏬᏱ",
-    "gloss_english": "pigeons"
-  },
-  {
-    "base_id": "0a5e4ba2cb210b38",
-    "sentence_id": "89bbc3915c9c",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏂᏏᎾᏌᏅᎬᎢ",
-    "gloss_english": "their craftiness"
-  },
-  {
-    "base_id": "112beb3d3984b462",
-    "sentence_id": "d03410b1b815",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎣᏓᎵ",
-    "gloss_english": "the mountains"
-  },
-  {
-    "base_id": "6c18d2aa9680a5f9",
-    "sentence_id": "35e71041eee1",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᎲᎦ",
-    "gloss_english": "did cast in"
-  },
-  {
-    "base_id": "a986dc7c013c7a50",
-    "sentence_id": "01445f982103",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎾᎡᏍᏗ",
-    "gloss_english": "he who is having"
-  },
-  {
-    "base_id": "b2493a77ac4d6c5a",
-    "sentence_id": "761e338050dd",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏣᏓᏁᏗ",
-    "gloss_english": "thy gift"
-  },
-  {
-    "base_id": "b745aa84e8b4606c",
-    "sentence_id": "2566f3ea25aa",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏂᎬᎢ",
-    "gloss_english": "through all"
-  },
-  {
-    "base_id": "c8da5f76da59a20e",
-    "sentence_id": "8deecf99f392",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏒᏂᎸᎢ",
-    "gloss_english": "she touched him"
-  },
-  {
-    "base_id": "6c0de11b70ae0572",
-    "sentence_id": "d4e742b409ac",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎫᎴᏗᏍᎪᏂᎯ",
-    "gloss_english": "a dove"
-  },
-  {
-    "base_id": "7a608ca0351e005d",
-    "sentence_id": "1ea4f3a3a975",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎦᏓᎭ",
-    "gloss_english": "unclean"
-  },
-  {
-    "base_id": "ff333bfd34f86489",
-    "sentence_id": "37e4eddbf137",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎦᏅᏅ",
-    "gloss_english": "the way"
-  },
-  {
-    "base_id": "173d57f97dbd8d76",
-    "sentence_id": "7baf8da89c72",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏣᏃᏍᎩᏒᎩ",
-    "gloss_english": "steal"
-  },
-  {
-    "base_id": "0abfa0a9b14b9768",
-    "sentence_id": "f66cfdcba840",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎪᎩ",
-    "gloss_english": "the summer"
-  },
-  {
-    "base_id": "0b40e5f6f1a51821",
-    "sentence_id": "b56cdf734587",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏱᎪᎵᎦ",
-    "gloss_english": "I understand"
-  },
-  {
-    "base_id": "6cc0ee829fd53b9a",
-    "sentence_id": "6f659a61b194",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏂᏅᏅᎢ",
-    "gloss_english": "they laid him"
-  },
-  {
-    "base_id": "7803e4dbc119b2ad",
-    "sentence_id": "93dd59e38eb1",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏣᏤᏍᏙ",
-    "gloss_english": "thy couch"
-  },
-  {
-    "base_id": "2dd677f5b3cf4a04",
-    "sentence_id": "552b66de9adb",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏴᏓᏆᎶᏍᎩ",
-    "gloss_english": "thunder"
-  },
-  {
-    "base_id": "f77887b9db75bd02",
-    "sentence_id": "baeb2fbcf1b9",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏫᏍᎩ",
-    "gloss_english": "who is sowing"
-  },
-  {
-    "base_id": "f77887b9db75bd02",
-    "sentence_id": "baeb2fbcf1b9",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏫᏍᎪᎢ",
-    "gloss_english": "doth sow"
-  },
-  {
-    "base_id": "e9ebb8f0a304597e",
-    "sentence_id": "c7b9b85b3d4e",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏑᏓᎵᏍᎪᎯ",
-    "gloss_english": "sixty"
-  },
-  {
-    "base_id": "c82055f52756a94f",
-    "sentence_id": "537aa7b7826b",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎵᏰᎶᎸ",
-    "gloss_phonetic": "it did come to that point",
-    "gloss_english": "having come"
-  },
-  {
-    "base_id": "b4b3a3f9dd799615",
-    "sentence_id": "1fade2e79ffe",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎢᏳᏍᏗᏉ",
-    "gloss_english": "Whatever"
-  },
-  {
-    "base_id": "a90fbcfb51a7fd3b",
-    "sentence_id": "9951f32dfdd1",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᎹ",
-    "gloss_english": "salted"
-  },
-  {
-    "base_id": "d1987f33b53f6500",
-    "sentence_id": "6ab5347f4eb4",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏗᏕᎶᏆᏍᎩ",
-    "gloss_english": "A disciple"
-  },
-  {
-    "base_id": "6e4f27ff93b61280",
-    "sentence_id": "b820c687874f",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏅᎢᏍᏗ",
-    "gloss_english": "fall on the ground"
-  },
-  {
-    "base_id": "900bda11c0567549",
-    "sentence_id": "10422cf82237",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏥᏍᏆᏯ",
-    "gloss_english": "sparrows"
-  },
-  {
-    "base_id": "8db6df4b01250cc6",
-    "sentence_id": "8a6ef0f59471",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏅᏩᏅᎩ",
-    "gloss_english": "he healed him"
-  },
-  {
-    "base_id": "fa77c87e88150e98",
-    "sentence_id": "53228c94299a",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏦᎢ",
-    "gloss_english": "three"
-  },
-  {
-    "base_id": "bac8e2a81b47b4bd",
-    "sentence_id": "f2e43679d286",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎵᏰᏅ",
-    "gloss_english": "herb sprang up"
-  },
-  {
-    "base_id": "8361e014f5d7a2e9",
-    "sentence_id": "c55c3c0eec9e",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎦᏓ",
-    "gloss_english": "earth"
-  },
-  {
-    "base_id": "aa4c978c52a12f30",
-    "sentence_id": "90ef820f9cf8",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏚᏪᏲᏅᎩ",
-    "gloss_english": "he was teaching them"
-  },
-  {
-    "base_id": "16f959dd345b1e5a",
-    "sentence_id": "fd8427376518",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᎰᎵ",
-    "gloss_english": "the mouth"
-  },
-  {
-    "base_id": "16f959dd345b1e5a",
-    "sentence_id": "fd8427376518",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᎰᎵᏍᎩᏂ",
-    "gloss_english": "the mouth"
-  },
-  {
-    "base_id": "c707cb2d9a47f3e3",
-    "sentence_id": "7db8d030c73a",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏱᏍᎨᏍᏗ",
-    "gloss_english": "take up"
-  },
-  {
-    "base_id": "48f15c2be8bd8466",
-    "sentence_id": "c9603ea24099",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᎹᏱ ᎠᎬᎪᎢ",
-    "gloss_english": "often into the water"
-  },
-  {
-    "base_id": "0368f2bce58c0343",
-    "sentence_id": "f53ba350ce6d",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏂᏄᎸᏅᎩ",
-    "gloss_english": "they were not able"
-  },
-  {
-    "base_id": "8321ebdadc1309fc",
-    "sentence_id": "3bac602e89f0",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏐᎣᏁᎳᏍᎪᎯ",
-    "gloss_english": "ninety"
-  },
-  {
-    "base_id": "184aeb40c48356fe",
-    "sentence_id": "367355fd53a2",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏍᏛ",
-    "gloss_english": "the borders"
-  },
-  {
-    "base_id": "00e84f096e1b7684",
-    "sentence_id": "0a436de1e8cc",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏕᏅ",
-    "gloss_english": "having been born in"
-  },
-  {
-    "base_id": "8276af053ad31426",
-    "sentence_id": "1afdd3109022",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎾᏛᎦᏅᎩ",
-    "gloss_english": "heard"
-  },
-  {
-    "base_id": "d85c2b2e542cd5ff",
-    "sentence_id": "a985e8ab8ca6",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎢᏳᏉ",
-    "gloss_english": "the time of"
-  },
-  {
-    "base_id": "643f441081fa36ce",
-    "sentence_id": "3ab794f9a0a4",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎢᏥᎩᏍᎩ",
-    "gloss_english": "are swallowing"
-  },
-  {
-    "base_id": "d6cf8f20cd1d641d",
-    "sentence_id": "80d4cf4878bb",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎪᎳ",
-    "gloss_english": "in winter"
-  },
-  {
-    "base_id": "60c1ee7d95d64c46",
-    "sentence_id": "cd7307a87a42",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎵᏬᏨᎯ",
-    "gloss_english": "the carcase"
-  },
-  {
-    "base_id": "7ffc3d673c3c1bcc",
-    "sentence_id": "e0a0ec7b360b",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏂᏍᏙᏍᎨᏍᏗ ᎠᏍᏙᏍᎩᏱ",
-    "gloss_english": "shall be grinding in the mill"
-  },
-  {
-    "base_id": "0c264438a0d0b2c7",
-    "sentence_id": "468754949dbf",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎢᏥᏯᏪᏐᎸᎦ",
-    "gloss_english": "rest"
-  },
-  {
-    "base_id": "cdd43cf7da9aae85",
-    "sentence_id": "030d9bc4db5b",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎢᎦ ᎤᎶᏐᏅᎯ",
-    "gloss_english": "the morrow"
-  },
-  {
-    "base_id": "502a52fcd4b9b120",
-    "sentence_id": "0d5d8de46385",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᎾᎦᎵᏍᎩ",
-    "gloss_english": "lightning"
-  },
-  {
-    "base_id": "11736d5756d749f5",
-    "sentence_id": "3d120d8d693e",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏗᏓᏬᏍᎩ",
-    "gloss_english": "Baptist"
-  },
-  {
-    "base_id": "e8ba18157a6c120c",
-    "sentence_id": "2f3de6a634a1",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎥᎴ",
-    "gloss_english": "locusts"
-  },
-  {
-    "base_id": "f3ac09480753e03f",
-    "sentence_id": "2ac86c3f597c",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏍᎩᎾ",
-    "gloss_english": "the Devil"
-  },
-  {
-    "base_id": "8f7bb08fb6471e32",
-    "sentence_id": "42da421870ea",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏂᏙᏓ",
-    "gloss_english": "their father"
-  },
-  {
-    "base_id": "970fdaa57a12e393",
-    "sentence_id": "6cf7f34fe9f2",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏨᏍᏙᏗ",
-    "gloss_english": "a lamp"
-  },
-  {
-    "base_id": "dd71ad716062c1ee",
-    "sentence_id": "36ce3acfd1ba",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏓᏕᏲᎲᏍᎨᏍᏗ",
-    "gloss_english": "teach [them]"
-  },
-  {
-    "base_id": "70f9580f36fe0047",
-    "sentence_id": "de40687920f9",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏓᎧᏂᏍᎨᏍᏗ",
-    "gloss_english": "is looking"
-  },
-  {
-    "base_id": "b1814e9e1fe9020a",
-    "sentence_id": "953814693861",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏣᏕᎨᏍᏗ",
-    "gloss_english": "cast from thee"
-  },
-  {
-    "base_id": "55a9f16e9a0f60bd",
-    "sentence_id": "b7b007ab31c0",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎯᏍᏆᎵᏍᎨᏍᏗ",
-    "gloss_english": "cut it off"
-  },
-  {
-    "base_id": "4361469bea4bce87",
-    "sentence_id": "ae95fb69eae9",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏁᎬ",
-    "gloss_english": "white"
-  },
-  {
-    "base_id": "768002044d21902c",
-    "sentence_id": "5012ce6380b9",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏣᏍᎦᎩ",
-    "gloss_english": "thine enemy"
-  },
-  {
-    "base_id": "69beac23b4b73581",
-    "sentence_id": "5ed959595e44",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎭᎬᏍᏉᏍᎨᏍᏗ",
-    "gloss_english": "wash thy face"
-  },
-  {
-    "base_id": "2482b1570a5d084d",
-    "sentence_id": "f3799e786521",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎯᏰᎸᎢ",
-    "gloss_english": "thy body"
-  },
-  {
-    "base_id": "a19b3e27aafde231",
-    "sentence_id": "c4c1f1a6e086",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏰᎵᏉ",
-    "gloss_english": "sufficient"
-  },
-  {
-    "base_id": "f2d2fc6a0525496e",
-    "sentence_id": "dcd811095b34",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏴᎦᏅᎥᏏ",
-    "gloss_english": "will he present to him"
-  },
-  {
-    "base_id": "835a36e6614763cc",
-    "sentence_id": "00e2ca0e4406",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏗᎦᎴᏂ",
-    "gloss_english": "his ears"
-  },
-  {
-    "base_id": "f58c3cbe181c1282",
-    "sentence_id": "778fa561fd2a",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏗᎪᏪᎵᏍᎩ",
-    "gloss_english": "scribe"
-  },
-  {
-    "base_id": "1d13560308e26a03",
-    "sentence_id": "a01a9d5d450b",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏓᏰᏍᎩ ᎤᏢᎩ",
-    "gloss_english": "a leper"
-  },
-  {
-    "base_id": "18eba293753b26da",
-    "sentence_id": "971904f2e17a",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏧᎳ",
-    "gloss_english": "The foxes"
-  },
-  {
-    "base_id": "bfe5ba8d69ea9659",
-    "sentence_id": "13c1ada2051f",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏏᏆ",
-    "gloss_english": "swine"
-  },
-  {
-    "base_id": "827d25928ad31d5b",
-    "sentence_id": "834320619121",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎿᏛᎦ",
-    "gloss_english": "Do this"
-  },
-  {
-    "base_id": "827d25928ad31d5b",
-    "sentence_id": "834320619121",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎾᏛᏁᎰᎢ",
-    "gloss_english": "he doth"
-  },
-  {
-    "base_id": "962dc597e3c845f9",
-    "sentence_id": "cfe7f765eec6",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏗᏤᏲᎲᏍᎩ",
-    "gloss_english": "your teacher"
-  },
-  {
-    "base_id": "9557fb9f0e92acd4",
-    "sentence_id": "68e9bdd5597e",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᎵᏥᏙᎲᏍᎬᎩ",
-    "gloss_english": "proclaiming"
-  },
-  {
-    "base_id": "ae76be6eba8294e7",
-    "sentence_id": "b00e34856f36",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎯᎾᎩ",
-    "gloss_english": "take up"
-  },
-  {
-    "base_id": "83c0344b120c36bf",
-    "sentence_id": "f8af6f253267",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎦᎸᎶᎢ",
-    "gloss_english": "the heavens"
-  },
-  {
-    "base_id": "020b766f204b20de",
-    "sentence_id": "3dfdeac4ca74",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏍᏛᎩ",
-    "gloss_english": "the deep"
-  },
-  {
-    "base_id": "5c94d235aeb81a2c",
-    "sentence_id": "e6932ba8242e",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏂᏣᏘ",
-    "gloss_english": "a multitude"
-  },
-  {
-    "base_id": "1673aed57ed8f555",
-    "sentence_id": "6ab0f0f5987c",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏣᏗ",
-    "gloss_english": "fish"
-  },
-  {
-    "base_id": "e8b167c11391e9f1",
-    "sentence_id": "f8102f74d72b",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎦᏄᎸᎯ",
-    "gloss_english": "herb"
-  },
-  {
-    "base_id": "325e6f3507992c26",
-    "sentence_id": "bdebd8ad70be",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏰᎵ",
-    "gloss_english": "in the midst"
-  },
-  {
-    "base_id": "a56c1053dcdc86d3",
-    "sentence_id": "9ec707fa6dde",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᎴ ᏣᏙᏓ ᎦᏁᎸ ᎭᏓᏅᎾ",
-    "gloss_english": "from the house of thy father"
-  },
-  {
-    "base_id": "d454e767331de4be",
-    "sentence_id": "d5d93a4c234f",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏔᎴᎲᎦ",
-    "gloss_english": "rise"
-  },
-  {
-    "base_id": "ce5eaaa4acbc8e4b",
-    "sentence_id": "adef388d33d7",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎩᎾᏘᏲᎸᎩ",
-    "gloss_english": "strife"
-  },
-  {
-    "base_id": "ce5eaaa4acbc8e4b",
-    "sentence_id": "adef388d33d7",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎾᏘᏲᎸᎩ"
-  },
-  {
-    "base_id": "5778a9cf6508f636",
-    "sentence_id": "f31485821c99",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎦᏲᎵ",
-    "gloss_english": "a little"
-  },
-  {
-    "base_id": "6f695ad229722a61",
-    "sentence_id": "68ab085515ee",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎭᏑᎬᎵ",
-    "gloss_english": "knead"
-  },
-  {
-    "base_id": "a2cd0390c2567af0",
-    "sentence_id": "7dd4f37aedb7",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎦᎵᏦᏕ",
-    "gloss_english": "the house"
-  },
-  {
-    "base_id": "3ed86084e627e016",
-    "sentence_id": "3a916da9909b",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎢᏥᏄᎪᎢ",
-    "gloss_english": "go out from"
-  },
-  {
-    "base_id": "8a71a289806223aa",
-    "sentence_id": "047d6c315ca7",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏅᎩ",
-    "gloss_english": "four"
-  },
-  {
-    "base_id": "099e274c82d7eb2f",
-    "sentence_id": "d9a3d0a600fe",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏣᎩᏍᏗ",
-    "gloss_english": "eat"
-  },
-  {
-    "base_id": "75b404eb44e1a37b",
-    "sentence_id": "0b3cd87a8ab5",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏂᏇᏓᎸᎢ",
-    "gloss_english": "flesh"
-  },
-  {
-    "base_id": "51a628208e80b7db",
-    "sentence_id": "e9781d31408e",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎭᏰᎳᏍᏗ",
-    "gloss_english": "the knife"
-  },
-  {
-    "base_id": "cb6a61a43e5e3205",
-    "sentence_id": "cccdb0d677a4",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏓ",
-    "gloss_english": "the wood"
-  },
-  {
-    "base_id": "9e9bf4e039801dae",
-    "sentence_id": "d78607ef7131",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎭᏗᏔ",
-    "gloss_english": "Drink"
-  },
-  {
-    "base_id": "dea146d3e5716826",
-    "sentence_id": "289f860dba97",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎧᏁᏍᎦ",
-    "gloss_english": "straw"
-  },
-  {
-    "base_id": "1ca2e040504fe03c",
-    "sentence_id": "869549966d65",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎵᏍᏓᏴᏗ",
-    "gloss_english": "to eat"
-  },
-  {
-    "base_id": "1ca2e040504fe03c",
-    "sentence_id": "869549966d65",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎥᏝ ᏴᎦᎦᎵᏍᏓᏴᎲᎦ",
-    "gloss_english": "I do not eat"
-  },
-  {
-    "base_id": "66b543826f151fd8",
-    "sentence_id": "4cc29ff856d3",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎨᎻᎵᎯ",
-    "gloss_english": "the camel"
-  },
-  {
-    "base_id": "bfc150b13dc64402",
-    "sentence_id": "3a58d65b9093",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎦᏚ",
-    "gloss_english": "bread"
-  },
-  {
-    "base_id": "9f97d04c3deca4c1",
-    "sentence_id": "369f331dbcf4",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎦᏄᎪᎬᎢ",
-    "gloss_english": "a well"
-  },
-  {
-    "base_id": "7feca8c520a4ce3e",
-    "sentence_id": "2eda3febb0e4",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎾᏍᎪᏒ",
-    "gloss_english": "they have digged"
-  },
-  {
-    "base_id": "629a4fc74d8a232c",
-    "sentence_id": "9cc5b6a0a280",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏴᏤᏂ",
-    "gloss_english": "the smooth of his neck"
-  },
-  {
-    "base_id": "17ed79b4e02a4864",
-    "sentence_id": "f762f1ae2239",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏘᏄᎦ",
-    "gloss_english": "take up"
-  },
-  {
-    "base_id": "545fb4a22768ec5e",
-    "sentence_id": "ee3fd96cd25f",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎪᎢ",
-    "gloss_english": "oil"
-  },
-  {
-    "base_id": "c82041464e9793b0",
-    "sentence_id": "dc8f9f1612ca",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏗᎩᎪᎳ",
-    "gloss_english": "my bone"
-  },
-  {
-    "base_id": "0e5b1d753925d0c2",
-    "sentence_id": "fca0fb5d7aae",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏑᎾᏙᏓᏆᏍᏗ",
-    "gloss_english": "the week"
-  },
-  {
-    "base_id": "01ab8cbb4c87a986",
-    "sentence_id": "1324b6331ef7",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᎩᏰᎯ",
-    "gloss_english": "my husband"
-  },
-  {
-    "base_id": "463bcdb438bbbf1a",
-    "sentence_id": "fc67a64387cf",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏣᎧᏛᎢ",
-    "gloss_english": "thy face"
-  },
-  {
-    "base_id": "a82dd823ac0d9f76",
-    "sentence_id": "0bdb72116db6",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏓᏔᏅᎯ",
-    "gloss_english": "the fruit"
-  },
-  {
-    "base_id": "29acdc969747cadc",
-    "sentence_id": "21151dc714c4",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏂᏥ",
-    "gloss_english": "mother"
-  },
-  {
-    "base_id": "6e519c9ae3e539e6",
-    "sentence_id": "a5ae0e84377f",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏲᎢ",
-    "gloss_english": "evil"
-  },
-  {
-    "base_id": "1ab76027d676930d",
-    "sentence_id": "fa2b971324c5",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎸᎢ",
-    "gloss_english": "her sister"
-  },
-  {
-    "base_id": "0341fd3d06fbbd9c",
-    "sentence_id": "adbbb94ff557",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏑᏓᎵ",
-    "gloss_english": "six"
-  },
-  {
-    "base_id": "45d84dbad28b4170",
-    "sentence_id": "a36fcc9a68d1",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏣᏁᏨᎢ",
-    "gloss_english": "thy word"
-  },
-  {
-    "base_id": "83e3bf7216a80f5a",
-    "sentence_id": "432760f43660",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎡᏉᏂ",
-    "gloss_english": "River"
-  },
-  {
-    "base_id": "e76e4e52c49704cd",
-    "sentence_id": "23230960ac1c",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᎱᎵ",
-    "gloss_english": "tabret"
-  },
-  {
-    "base_id": "b09f9149210f8105",
-    "sentence_id": "89b22c38becf",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏒᎯ ᏒᏃᏱ",
-    "gloss_english": "yesternight"
-  },
-  {
-    "base_id": "cff7960d4926807a",
-    "sentence_id": "618434344dac",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎯᎩ",
-    "gloss_english": "receive"
-  },
-  {
-    "base_id": "a8e6ba981c4ff476",
-    "sentence_id": "a69c8e8875ba",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎵᏦᏔᏅᎢ",
-    "gloss_english": "stretched out his tent"
-  },
-  {
-    "base_id": "46f20c41a6c36d63",
-    "sentence_id": "9ddc9a4ac850",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎦᎵᏆᏚ",
-    "gloss_english": "seventeen"
-  },
-  {
-    "base_id": "b2cb3da3eb6b8410",
-    "sentence_id": "a732bc355d5f",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎾᎵᎪᎭ",
-    "gloss_english": "himself with his"
-  },
-  {
-    "base_id": "a2f825bc82c46864",
-    "sentence_id": "192cca2d5a9c",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎢᏣᏛᏓᏍᏓ",
-    "gloss_english": "Hear"
-  },
-  {
-    "base_id": "c4f853721ef2e833",
-    "sentence_id": "62811033cdb5",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏙᎳᏅᏍᏗ",
-    "gloss_english": "staff"
-  },
-  {
-    "base_id": "9b252808997808af",
-    "sentence_id": "e22ec59ea431",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏓᎧᏅᎢ",
-    "gloss_english": "eyes"
-  },
-  {
-    "base_id": "138b716f0fc106dc",
-    "sentence_id": "4fb577982725",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏙᏱ",
-    "gloss_english": "without"
-  },
-  {
-    "base_id": "e1ab73cfe7713670",
-    "sentence_id": "3d340098ee49",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏕᎯᎶᎩᏍᎨᏍᏗ",
-    "gloss_english": "thou tillest"
-  },
-  {
-    "base_id": "1ab719764fbaa17d",
-    "sentence_id": "8c2d9eb6ec0c",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎦᎵᏆᏍᎪᎯ",
-    "gloss_english": "seventy"
-  },
-  {
-    "base_id": "5b6b97b60e0a0937",
-    "sentence_id": "36558a8cb334",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏥᎦᏘᏯ",
-    "gloss_english": "keeper -- I"
-  },
-  {
-    "base_id": "f62b43f915262a0b",
-    "sentence_id": "07b5d5a99a17",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏖᎸᎳᏗ",
-    "gloss_english": "grapes"
-  },
-  {
-    "base_id": "f805eca703b1e2d6",
-    "sentence_id": "073950247554",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏔᎷᏣ",
-    "gloss_english": "baskets"
-  },
-  {
-    "base_id": "4cccb0ea0115d66e",
-    "sentence_id": "563cc2928d44",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏌᎳᏙᏗ",
-    "gloss_english": "lift up"
-  },
-  {
-    "base_id": "7cfebe96430ea500",
-    "sentence_id": "9a67b7eed6c2",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏎᎯᎲᎢ",
-    "gloss_english": "to number"
-  },
-  {
-    "base_id": "eacaa664eb29a7cb",
-    "sentence_id": "2c65eeacfc9f",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏃᏳ",
-    "gloss_english": "sand"
-  },
-  {
-    "base_id": "e5b6e9080941d5f0",
-    "sentence_id": "5f81049314a0",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏩᏚᎵᏏ",
-    "gloss_english": "honey"
-  },
-  {
-    "base_id": "f9374a5b0dc82e1a",
-    "sentence_id": "9f7bf9226ee8",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎢᎦ",
-    "gloss_english": "noon"
-  },
-  {
-    "base_id": "c9d5f624aa4d09f2",
-    "sentence_id": "478c012c87bd",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎢᏅᎯᏳ",
-    "gloss_english": "far off"
-  },
-  {
-    "base_id": "d1f81853eaa845d3",
-    "sentence_id": "539587130b44",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏓᏆᎴᎷ",
-    "gloss_english": "waggons"
-  },
-  {
-    "base_id": "397aea2bbf9e08d5",
-    "sentence_id": "dc2f58eaa9bc",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏕᏣᎧᎭ",
-    "gloss_english": "possession of"
-  },
-  {
-    "base_id": "efc4c5718910e133",
-    "sentence_id": "3d1809428598",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎯᏍᎩ",
-    "gloss_english": "five"
-  },
-  {
-    "base_id": "304ee04c99107a97",
-    "sentence_id": "884fb5877c97",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎦᏔ",
-    "gloss_english": "seed"
-  },
-  {
-    "base_id": "7778ec6c1442df85",
-    "sentence_id": "a53865e2085a",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎦᏅᎦ",
-    "gloss_english": "Crouching"
-  },
-  {
-    "base_id": "7198d458b1b69328",
-    "sentence_id": "ec485f4f2684",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏩᏯ",
-    "gloss_english": "a wolf"
-  },
-  {
-    "base_id": "c53e2048ea2e2fc2",
-    "sentence_id": "94228d5458e0",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏂᎩᎵᎨᏂ",
-    "gloss_english": "the neck"
-  },
-  {
-    "base_id": "d97e82a5c53c02ad",
-    "sentence_id": "d178203ca6e9",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏴ",
-    "gloss_english": "I"
-  },
-  {
-    "base_id": "d7b106570228e780",
-    "sentence_id": "0b022baf127b",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎯᏍᎦᏍᎪᎯ",
-    "gloss_english": "fifty"
-  },
-  {
-    "base_id": "441ff7a91cefaa74",
-    "sentence_id": "2d3440c1673d",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎢᎪᎯᏛ",
-    "gloss_english": "during"
-  },
-  {
-    "base_id": "77420b4a7ca4c61e",
-    "sentence_id": "23325cab5946",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏅᎪᎳᏛ",
-    "gloss_english": "the bow"
-  },
-  {
-    "base_id": "c2ce11bf06a4b078",
-    "sentence_id": "e2186bd0444d",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎶᎩᎸ",
-    "gloss_english": "the cloud"
-  },
-  {
-    "base_id": "c94cfb61df86257d",
-    "sentence_id": "a3b34d3e116c",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎭᏛᏅᎢᏍᏓ",
-    "gloss_english": "make ready"
-  },
-  {
-    "base_id": "b345c77cf382919b",
-    "sentence_id": "3838c8b2dc07",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎦᎵᎬ",
-    "gloss_english": "fiery"
-  },
-  {
-    "base_id": "a6d5b1b6727f6f8e",
-    "sentence_id": "8d6f501b2d66",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎥᏝ ᏱᎦᎸᏍᎦ",
-    "gloss_english": "doth not slumber"
-  },
-  {
-    "base_id": "1da22fd09897cfda",
-    "sentence_id": "6c0ddf6e6df2",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏥᎩᎵᏲᎦ",
-    "gloss_english": "I suffer"
-  },
-  {
-    "base_id": "f7e44eee05a41ede",
-    "sentence_id": "e0b9d253262a",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᎾᏕᎶᏆᏍᎪᎢ",
-    "gloss_english": "learning"
-  },
-  {
-    "base_id": "7e615092ba89d73a",
-    "sentence_id": "285f82ef7d35",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎦᏌᎴᎾ",
-    "gloss_english": "the cloak"
-  },
-  {
-    "base_id": "d10dc4d35965d246",
-    "sentence_id": "4c320695bff7",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏓᏂᏉᏘᎯ",
-    "gloss_english": "he"
-  },
-  {
-    "base_id": "d10dc4d35965d246",
-    "sentence_id": "4c320695bff7",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏱᎦᏂᏆᏘᎭ",
-    "gloss_english": "who is despising"
-  },
-  {
-    "base_id": "d10dc4d35965d246",
-    "sentence_id": "4c320695bff7",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_english": "despise"
-  },
-  {
-    "base_id": "92d315e19191527f",
-    "sentence_id": "5eea0d571f43",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏂ",
-    "gloss_english": "strawberries"
-  },
-  {
-    "base_id": "f6891937c0cdb416",
-    "sentence_id": "da24e1b66ae9",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏗᎵ",
-    "gloss_english": "Skunks"
-  },
-  {
-    "base_id": "cb54c8a1cc90d3eb",
-    "sentence_id": "2e8f59b3fcd7",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎯᎸᎥᎦ",
-    "gloss_english": "Put"
-  },
-  {
-    "base_id": "cce83cdf7e484a9a",
-    "sentence_id": "e23d01858098",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏫᏘᏯᎧᏏ",
-    "gloss_english": "Brooms"
-  },
-  {
-    "base_id": "d7bf95349eefe89c",
-    "sentence_id": "af3eb29c5b2c",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎧᎵᏎᏥ",
-    "gloss_english": "candy"
-  },
-  {
-    "base_id": "29345388b5f5b49d",
-    "sentence_id": "a02efcdbe3be",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎧᏁᏌᎢᎢ",
-    "gloss_english": "box"
-  },
-  {
-    "base_id": "a38a4e4edd89468e",
-    "sentence_id": "a55b0582e88c",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏆᎾ",
-    "gloss_english": "Peaches"
-  },
-  {
-    "base_id": "dc569571f257ef24",
-    "sentence_id": "3bf1307cce6a",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏃᏈᏏ",
-    "gloss_english": "meadowlarks"
-  },
-  {
-    "base_id": "5494652842b63ef9",
-    "sentence_id": "00a8830b69f8",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏌᎶᎵ",
-    "gloss_english": "A squirrel"
-  },
-  {
-    "base_id": "b11ef1bb53039bfe",
-    "sentence_id": "7e6b205c6c0f",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏍᏓᏯ",
-    "gloss_english": "hard"
-  },
-  {
-    "base_id": "5dddcde0ea8c0a20",
-    "sentence_id": "d3992a0f7819",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏐᏈᎵ",
-    "gloss_english": "Horses"
-  },
-  {
-    "base_id": "9fc777af8c7f9d0f",
-    "sentence_id": "e2e1b36b7103",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏪᏥ ᎠᎨᏳᏣ",
-    "gloss_english": "Daughter"
-  },
-  {
-    "base_id": "7f3f0d374d424756",
-    "sentence_id": "9b8ca2f8c29e",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏪᏌ",
-    "gloss_english": "Cats"
-  },
-  {
-    "base_id": "cd8bb0a738cf9832",
-    "sentence_id": "63558f60757a",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏓᏍᏓᏴᏗ",
-    "gloss_english": "the stove"
-  },
-  {
-    "base_id": "8f69e401c698b4bd",
-    "sentence_id": "d2b94c091b55",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏓᏬᎠ",
-    "gloss_english": "is bathing"
-  },
-  {
-    "base_id": "4d6a756e25d6b9ee",
-    "sentence_id": "2172db4e1877",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎦᎵᏍᎬ",
-    "gloss_english": "it is shined on by the sun"
-  },
-  {
-    "base_id": "4d290f3209527734",
-    "sentence_id": "387d254f3d5e",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᎬᏱ",
-    "gloss_english": "First"
-  },
-  {
-    "base_id": "207c430a7477b819",
-    "sentence_id": "446b2e477ad3",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏫ",
-    "gloss_english": "deer"
-  },
-  {
-    "base_id": "f88316a345f2a34f",
-    "sentence_id": "7388f0ce9a55",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᎧᏲᏗᏍᎪᎢ",
-    "gloss_english": "is dried by"
-  },
-  {
-    "base_id": "1bcf55f832a7c1ae",
-    "sentence_id": "a856a3dd7d40",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏓᎦᏏ",
-    "gloss_english": "Turtle"
-  },
-  {
-    "base_id": "4d540b3c8d614b04",
-    "sentence_id": "189d43412d8b",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎦᏓᏘ",
-    "gloss_english": "flag"
-  },
-  {
-    "base_id": "c41b125e3856ab1b",
-    "sentence_id": "6223519eb9eb",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎦᏚᏏ",
-    "gloss_english": "up the mountain"
-  },
-  {
-    "base_id": "3778f626f80b6316",
-    "sentence_id": "90a8500760dd",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎦᎶᎯᏎᎭ",
-    "gloss_english": "is being passed by"
-  },
-  {
-    "base_id": "e555d4afc95e12b9",
-    "sentence_id": "60ff8393638d",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎦᎾᎦᏘ",
-    "gloss_english": "The doctor"
-  },
-  {
-    "base_id": "2aa999247f4e55b7",
-    "sentence_id": "a8c19cc994ff",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎦᏂᏌᎲᎢ",
-    "gloss_english": "his burial"
-  },
-  {
-    "base_id": "814512c71e3ac8bc",
-    "sentence_id": "4f4597a3a235",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏗᎪᏪᎵ",
-    "gloss_english": "the book"
-  },
-  {
-    "base_id": "e7764125d673cd4b",
-    "sentence_id": "f2dda09e2422",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎫᎴ",
-    "gloss_english": "acorns"
-  },
-  {
-    "base_id": "c3817c139e9e0375",
-    "sentence_id": "b3dbf4dccc26",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏂᎦᏓ",
-    "gloss_english": "everyone"
-  },
-  {
-    "base_id": "d74cd5193421fd0b",
-    "sentence_id": "53638f9162f4",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏔᎵ",
-    "gloss_english": "Two"
-  },
-  {
-    "base_id": "93dc9afb26dc2423",
-    "sentence_id": "70c577507cfd",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏥᏍᏚ",
-    "gloss_english": "rabbit"
-  },
-  {
-    "base_id": "ed031e6dcd99b320",
-    "sentence_id": "d6c2f6cde15d",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏕᏗᏴᏌᏗᏒᎢ",
-    "gloss_english": "in the year"
-  },
-  {
-    "base_id": "ab14ed4e41c2659f",
-    "sentence_id": "5275c61e3637",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᎩᏙ",
-    "gloss_english": "brother"
-  },
-  {
-    "base_id": "be60f2608a7c46a9",
-    "sentence_id": "c34764410777",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎦᎾᏍᏓ",
-    "gloss_english": "sweets"
-  },
-  {
-    "base_id": "e84d92a2c929d5f4",
-    "sentence_id": "3ec13669cf96",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏱᏗᏣᎭ",
-    "gloss_english": "might you have"
-  },
-  {
-    "base_id": "c58b4b618d890fd4",
-    "sentence_id": "cb7111b3e816",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏱᏣᏩᎯ",
-    "gloss_english": "to buy"
-  },
-  {
-    "base_id": "a0afe90d747ff1c3",
-    "sentence_id": "cf1f901ef45c",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎵᏍᏓᏴᏗ",
-    "gloss_english": "food"
-  },
-  {
-    "base_id": "6e9e1d76bf624fa9",
-    "sentence_id": "7ba91642e5f8",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏂᏃᏕᎾ",
-    "gloss_english": "the sheep"
-  },
-  {
-    "base_id": "e51fa052a3432fdd",
-    "sentence_id": "d6bb4a091a6e",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏁᏍᏓᎳ ᎤᏅᏗ",
-    "gloss_english": "ice cream"
-  },
-  {
-    "base_id": "56488ec8dbfb897c",
-    "sentence_id": "9ce46c667fd7",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏍᏗᎢ",
-    "gloss_english": "baby"
-  },
-  {
-    "base_id": "d98ca7649b6fe598",
-    "sentence_id": "23cd32566d73",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏣᎴᏍᏗ",
-    "gloss_english": "the wheat"
-  },
-  {
-    "base_id": "ce212a025e512d31",
-    "sentence_id": "f0cded86a984",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏆᏤᎵ",
-    "gloss_english": "my"
-  },
-  {
-    "base_id": "f689457125386ad6",
-    "sentence_id": "75450cf69c7b",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎥᎥ",
-    "gloss_english": "yes"
-  },
-  {
-    "base_id": "66ad1edaf8c65ab4",
-    "sentence_id": "588b5970ca05",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏲᎾ",
-    "gloss_english": "bear"
-  },
-  {
-    "base_id": "9172f9498ec71140",
-    "sentence_id": "878bee46932e",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏗᎦᎸᏙᏗ",
-    "gloss_english": "vase"
-  },
-  {
-    "base_id": "e8c839fb9e52d37d",
-    "sentence_id": "91dea1ba8cd9",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏗᎦᏃᎨᏂ",
-    "gloss_english": "his arms"
-  },
-  {
-    "base_id": "6555342a5624684d",
-    "sentence_id": "2ff7442e9bf7",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎪᎱᏍᏗ",
-    "gloss_english": "a thing"
-  },
-  {
-    "base_id": "436df5e539b22a5f",
-    "sentence_id": "41979d9205ed",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏗᎦᏯᎸᏗ",
-    "gloss_english": "postage stamps"
-  },
-  {
-    "base_id": "300cecd497505342",
-    "sentence_id": "60ab6640a458",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎭᏩ",
-    "gloss_english": "Alright"
-  },
-  {
-    "base_id": "6e4ae6f213d32e4a",
-    "sentence_id": "0e20531803b1",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎧᎾᏁᏍᎩ",
-    "gloss_english": "A spider"
-  },
-  {
-    "base_id": "e8a998fd0c9fe778",
-    "sentence_id": "10316906e5d9",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏅᏯ",
-    "gloss_english": "rocks"
-  },
-  {
-    "base_id": "2918f69b7a780b5e",
-    "sentence_id": "1bf516e6e327",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎫᎫ",
-    "gloss_english": "Owl"
-  },
-  {
-    "base_id": "2003ef4a55e66e4a",
-    "sentence_id": "908a60015543",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎵᏏ",
-    "gloss_english": "grandmother"
-  },
-  {
-    "base_id": "5c74241fba1057d0",
-    "sentence_id": "490a36e08a72",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏍᏓᎦᎸᎢ",
-    "gloss_english": "the cave"
-  },
-  {
-    "base_id": "086965b98c9de9a8",
-    "sentence_id": "cbf5d2af5f68",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏩᏂ",
-    "gloss_english": "wool"
-  },
-  {
-    "base_id": "d0d3bbe44ab3bfbb",
-    "sentence_id": "d9002f621d51",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏪᏗ",
-    "gloss_english": "old"
-  },
-  {
-    "base_id": "5e8dd14d9df9e55b",
-    "sentence_id": "dcf8a46f2355",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏂᎪᎯᎸᎢ",
-    "gloss_english": "always"
-  },
-  {
-    "base_id": "181b1e1b1b9bbfcd",
-    "sentence_id": "190cbaaba020",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎩᎸᏅᎩ",
-    "gloss_english": "did sit upon it"
-  },
-  {
-    "base_id": "d528b74aff78d6c2",
-    "sentence_id": "47904b8e6de4",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎩᎸᏅᎩ",
-    "gloss_english": "did sit upon"
-  },
-  {
-    "base_id": "ce68408d0a5ac359",
-    "sentence_id": "7f0a4b8a1f28",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎦᏗᎨᏂ",
-    "gloss_english": "his heel"
-  },
-  {
-    "base_id": "159a5389f3cab371",
-    "sentence_id": "8ad121e9c917",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎦᏁᏥᎢ",
-    "gloss_english": "the breast"
-  },
-  {
-    "base_id": "65d6bd33dd824112",
-    "sentence_id": "a6b02d1d1b9b",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏥᏁᎸᎭ",
-    "gloss_english": "shall give it"
-  },
-  {
-    "base_id": "65d6bd33dd824112",
-    "sentence_id": "a6b02d1d1b9b",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏁᎸᎩ",
-    "gloss_english": "he giveth [it]"
-  },
-  {
-    "base_id": "745b5a7f18f5f53c",
-    "sentence_id": "f4f805e89722",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎢᏥᏯᎡᏍᏗ",
-    "gloss_english": "shall be in"
-  },
-  {
-    "base_id": "2c6f78dc136a7e38",
-    "sentence_id": "caddc45615ef",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏱᏥᏔᏲᎯᎭ",
-    "gloss_english": "ask"
-  },
-  {
-    "base_id": "40b169959d0b853f",
-    "sentence_id": "93445d867171",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎵᎥᏂᎸᎩ",
-    "gloss_english": "scourge"
-  },
-  {
-    "base_id": "48bb4c1eced65570",
-    "sentence_id": "c5ce79d6d7d9",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏗᎦᏅᏍᎨᏂ",
-    "gloss_english": "his legs"
-  },
-  {
-    "base_id": "b3e41cf488175315",
-    "sentence_id": "6d6bccda536d",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏲᎸᎩ",
-    "gloss_english": "bearing"
-  },
-  {
-    "base_id": "be49ab900be8adb5",
-    "sentence_id": "cf411d834584",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎥᎤᎷᏨᎩ",
-    "gloss_english": "came"
-  },
-  {
-    "base_id": "474707d6b939d07b",
-    "sentence_id": "797535d22354",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎴᏅᏔᏅᎩ",
-    "gloss_english": "beginning of"
-  },
-  {
-    "base_id": "a3f7d12a134ee295",
-    "sentence_id": "c1e7b7ea7959",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏕᎦᏍᎩᎸᎢ",
-    "gloss_english": "the tables"
-  },
-  {
-    "base_id": "68c759d8885641ca",
-    "sentence_id": "db0767f8d3ee",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎾᏅᏓᏛᎩ",
-    "gloss_english": "remembered"
-  },
-  {
-    "base_id": "2e18e3f8c8615d0b",
-    "sentence_id": "f654f2c63bb4",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎢᏥᏲᏍᏓ",
-    "gloss_english": "Destroy"
-  },
-  {
-    "base_id": "6c4ec5fb38ddc0dc",
-    "sentence_id": "a3e6ba96cab5",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎦᏔᎲᏒᎩ",
-    "gloss_english": "she turned backward"
-  },
-  {
-    "base_id": "26792ca90391e831",
-    "sentence_id": "0c0238ba87f7",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏥᏍᏆᎨᏂ",
-    "gloss_english": "my side"
-  },
-  {
-    "base_id": "9bd0a631c9686f60",
-    "sentence_id": "47beddd0adb7",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎩᏒᎩ",
-    "gloss_english": "take"
-  },
-  {
-    "base_id": "12d093d56ca2466e",
-    "sentence_id": "101c06eada89",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏱᎪᎯᏳᎲᏍᎦ",
-    "gloss_english": "is believing"
-  },
-  {
-    "base_id": "aecfe606e4f38e26",
-    "sentence_id": "925a52f00adf",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏱᏓᏓᏂᎸᎦ",
-    "gloss_english": "receiveth"
-  },
-  {
-    "base_id": "b5189d9f3e49b586",
-    "sentence_id": "0268e0301205",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎧᏃᎮᎭ",
-    "gloss_english": "he doth testify"
-  },
-  {
-    "base_id": "b5189d9f3e49b586",
-    "sentence_id": "0268e0301205",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏃᎮᎸᎢ",
-    "gloss_english": "his testimony"
-  },
-  {
-    "base_id": "8c099da5ca214e56",
-    "sentence_id": "75aa0f852989",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎥᏝ ᎩᎶᎢ",
-    "gloss_english": "no one"
-  },
-  {
-    "base_id": "9fc062025c229cf6",
-    "sentence_id": "55202006e10a",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏬᎯᏳᏅᎩ",
-    "gloss_english": "believed"
-  },
-  {
-    "base_id": "5ff39fe2f91da0fa",
-    "sentence_id": "742df44e53d2",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎮᏓ",
-    "gloss_english": "be walking"
-  },
-  {
-    "base_id": "21cb3c4026c6b856",
-    "sentence_id": "f5870ad5f6f8",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏂᏣᏛ",
-    "gloss_english": "many"
-  },
-  {
-    "base_id": "df087f3b2486dd78",
-    "sentence_id": "a5d0cf384cb7",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏕᎦᏁᎭ",
-    "gloss_english": "hath"
-  },
-  {
-    "base_id": "a7fdc5bb38453c3a",
-    "sentence_id": "f4c8217e9955",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏲᎢᏍᏗ",
-    "gloss_english": "be broken"
-  },
-  {
-    "base_id": "28a81845e7777027",
-    "sentence_id": "60de66afb281",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏔᏕᎩᏍᎨᏍᏗ",
-    "gloss_english": "doth thirst"
-  },
-  {
-    "base_id": "b7f59f96b0a69d5f",
-    "sentence_id": "ac7a2a7452e1",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏂᏌᏛᎥᏍᎬᎩ",
-    "gloss_english": "trying him"
-  },
-  {
-    "base_id": "7ff1b78306e699ac",
-    "sentence_id": "0f897f7247ab",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏬᏪᎳᏅᎩ",
-    "gloss_english": "he was writing"
-  },
-  {
-    "base_id": "94be5ffae407b790",
-    "sentence_id": "474c10b6c894",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏣᏕᏅᎩ",
-    "gloss_english": "born"
-  },
-  {
-    "base_id": "64ce132b379f5d1d",
-    "sentence_id": "0e9b89ec1671",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎵᏥᏍᏋᎩ",
-    "gloss_english": "he spat"
-  },
-  {
-    "base_id": "5cdec8ff73c51668",
-    "sentence_id": "8b31edf23830",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏔᏲᏎᎮᏍᏗ",
-    "gloss_english": "let him ask from"
-  },
-  {
-    "base_id": "e899573f4c7b5b36",
-    "sentence_id": "c3dd7adb7c9d",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏂᎬᎨᏍᏗ",
-    "gloss_english": "lack"
-  },
-  {
-    "base_id": "e67c4541a25e0f83",
-    "sentence_id": "677173e18e60",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏂᎬᎨᏍᏗ",
-    "gloss_english": "lack"
-  },
-  {
-    "base_id": "f246b7fe79c1f871",
-    "sentence_id": "bf7cfc03d4a0",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏕᎧᏃᎩᏍᎨᏍᏗ",
-    "gloss_english": "sing"
-  },
-  {
-    "base_id": "d2be4af09339bada",
-    "sentence_id": "b6c4307f565c",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏑᎾᎴᎢ",
-    "gloss_english": "to-morrow"
-  },
-  {
-    "base_id": "fb7ffe05c0cedb4c",
-    "sentence_id": "5f4e8b3567e5",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎣᏏᏳ",
-    "gloss_english": "good"
-  },
-  {
-    "base_id": "e2f2d4df2b7bce9c",
-    "sentence_id": "285271ecbd32",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏍᎪᎵ",
-    "gloss_english": "his head"
-  },
-  {
-    "base_id": "d6523192cbdd171b",
-    "sentence_id": "db140b3353fb",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎾᎵᎢᏃ",
-    "gloss_english": "his Friend"
-  },
-  {
-    "base_id": "51969bc9b18759ad",
-    "sentence_id": "b13dc07c9358",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏓᏙᎵᏍᏗᏍᎬᎩ",
-    "gloss_english": "praying"
-  },
-  {
-    "base_id": "355022e6b014dcfd",
-    "sentence_id": "afeb341d04c9",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏣᏓᏅᏖᏗ",
-    "gloss_english": "thou must consider"
-  },
-  {
-    "base_id": "7fd484e8b2109ffb",
-    "sentence_id": "9458a9238d08",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏓᏁᎸ",
-    "gloss_english": "house"
-  },
-  {
-    "base_id": "1049dd2ee66fb027",
-    "sentence_id": "8f65504fd984",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏓᏛᏛᏅᎩ",
-    "gloss_english": "asked him"
-  },
-  {
-    "base_id": "28e2f8634f02734c",
-    "sentence_id": "12c24b67c37c",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏕᎰᏍᎬᎢ",
-    "gloss_english": "for shame"
-  },
-  {
-    "base_id": "85e641055008fc0d",
-    "sentence_id": "4b6399e193e0",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏕᏯᏙᏗ",
-    "gloss_english": "troublesome"
-  },
-  {
-    "base_id": "223c7585148112e6",
-    "sentence_id": "a772aca43f19",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎦᏕᎶᎣᏍᎦᏍᎩᏂ",
-    "gloss_english": "perceive"
-  },
-  {
-    "base_id": "10348d60814159ef",
-    "sentence_id": "79fddac33f7c",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏛᏅ",
-    "gloss_english": "said"
-  },
-  {
-    "base_id": "f32b80290f2cda54",
-    "sentence_id": "fb5f506c6026",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎪᎵᏰᎥᏃ",
-    "gloss_english": "and as he read"
-  },
-  {
-    "base_id": "cb485d6cccea5fee",
-    "sentence_id": "e6b58ef4894f",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏥᎪᏩᏘᎭ",
-    "gloss_english": "I see it"
-  },
-  {
-    "base_id": "b05fdf08746d99f6",
-    "sentence_id": "879e6ee986d7",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᎾᎵᏃᎮᏔᏂᏐ",
-    "gloss_english": "went talking"
-  },
-  {
-    "base_id": "3a3db57e93baf63d",
-    "sentence_id": "a853314cd16c",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏍᏓᏩᏛᏒᎩ",
-    "gloss_english": "he after"
-  },
-  {
-    "base_id": "6915c49aaf507b60",
-    "sentence_id": "fed549c3c7ab",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏕᏥᏰᏌᏛ",
-    "gloss_english": "my fingers"
-  },
-  {
-    "base_id": "7610fb30e0b28655",
-    "sentence_id": "79ab70628d97",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᎢᏒᎩ",
-    "gloss_english": "was walking"
-  },
-  {
-    "base_id": "924e8051027a97f6",
-    "sentence_id": "38922fc991b9",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎥᏝ ᏱᏥᎦᏔᎭ",
-    "gloss_english": "I do not know"
-  },
-  {
-    "base_id": "e5822bf08a6a01eb",
-    "sentence_id": "349fe8cca5bc",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏗᎦᏙᎵ",
-    "gloss_english": "eyes"
-  },
-  {
-    "base_id": "b70d7b0b2e8ac4d1",
-    "sentence_id": "4634af2fe411",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᎴ",
-    "gloss_english": "and"
-  },
-  {
-    "base_id": "81450159620be9d7",
-    "sentence_id": "b900438e9f53",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎵᎮᎵᏨᎩ",
-    "gloss_english": "rejoiced"
-  },
-  {
-    "base_id": "4d2a50d92469520f",
-    "sentence_id": "9f04c0990bfe",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏥᎦᎵᏎᎭ",
-    "gloss_english": "that is upon my back"
-  },
-  {
-    "base_id": "6644b22f373bb97f",
-    "sentence_id": "b530f5a3d3e0",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᎹ",
-    "gloss_english": "Water"
-  },
-  {
-    "base_id": "53cefc6c2fa15dac",
-    "sentence_id": "e1a7e4508b0c",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏍᏓᏱᏳ",
-    "gloss_english": "hard"
-  },
-  {
-    "base_id": "2bd91a7599b10fba",
-    "sentence_id": "48c46214921c",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏓᏍᏕᎵᏍᎩ",
-    "gloss_english": "Help"
-  },
-  {
-    "base_id": "1bcb3dac28c11569",
-    "sentence_id": "43d5261e6a4d",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏆᏎᎮᎸ",
-    "gloss_english": "I am directed by"
-  },
-  {
-    "base_id": "6699db6c5f53bb0a",
-    "sentence_id": "d87ebfbb317f",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏎᏃ",
-    "gloss_english": "but"
-  },
-  {
-    "base_id": "7253bb2d85466d40",
-    "sentence_id": "202af9bac89b",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏍᎦᎢᎲᎢ",
-    "gloss_english": "for fear"
-  },
-  {
-    "base_id": "5b678a0fd52d8e79",
-    "sentence_id": "bb9a9126b36a",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᎩᏍᎦᏅᏨ",
-    "gloss_english": "my sin"
-  },
-  {
-    "base_id": "17e5d00cc6fbb811",
-    "sentence_id": "037b0e31c705",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏍᎦᏯ",
-    "gloss_english": "Man"
-  },
-  {
-    "base_id": "569338e4a00edb81",
-    "sentence_id": "389bf9f528a0",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏍᎪᎸᎩ",
-    "gloss_english": "fadeth"
-  },
-  {
-    "base_id": "b6f314786cf9d853",
-    "sentence_id": "9b4681b4e778",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏂᏍᏆᏂᎪᏒᎩ",
-    "gloss_english": "amazed"
-  },
-  {
-    "base_id": "c2fbfe75e35a88a2",
-    "sentence_id": "3c3cd3e7d290",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏓᎬᎩᏯᏅᎲᎩ",
-    "gloss_english": "called after me"
-  },
-  {
-    "base_id": "0f4cb53ff9b69c63",
-    "sentence_id": "7c0c66aeda04",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎡᎯᏍᏗ",
-    "gloss_english": "distress"
-  },
-  {
-    "base_id": "4204d801ba985154",
-    "sentence_id": "cb78a68ef220",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎡᎳᏗ",
-    "gloss_english": "down"
-  },
-  {
-    "base_id": "296591dd53db4834",
-    "sentence_id": "f0c678b3977c",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎡᎶᎯ",
-    "gloss_english": "the world"
-  },
-  {
-    "base_id": "f8ea494b5216d500",
-    "sentence_id": "6618b441e90e",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎯᏙᎨᏍᏗ",
-    "gloss_english": "stand"
-  },
-  {
-    "base_id": "f8ea494b5216d500",
-    "sentence_id": "6618b441e90e",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎦᏙᎪ",
-    "gloss_english": "he stood"
-  },
-  {
-    "base_id": "dc9484b77adc7a09",
-    "sentence_id": "2cfff9b2d586",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎦᎵᏉᎩ",
-    "gloss_english": "seven"
-  },
-  {
-    "base_id": "6441d1adde6f30cd",
-    "sentence_id": "af25ded896c2",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎦᎶᎯᏍᏗ",
-    "gloss_english": "gate"
-  },
-  {
-    "base_id": "afae871ee872ce97",
-    "sentence_id": "a0edefb789f4",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎦᎸᎳᏗ",
-    "gloss_english": "high"
-  },
-  {
-    "base_id": "6caf82e9440011b7",
-    "sentence_id": "61abf596c834",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏂᏴᎲᎩ",
-    "gloss_english": "caught"
-  },
-  {
-    "base_id": "4688246eb4524633",
-    "sentence_id": "26a8e6619c7c",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎦᏳᎳ",
-    "gloss_english": "already"
-  },
-  {
-    "base_id": "86f092a0124f6a14",
-    "sentence_id": "8e51c3bbbd79",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎪᎯ",
-    "gloss_english": "after a little time"
-  },
-  {
-    "base_id": "451e850bcfe22f92",
-    "sentence_id": "cad9764d3d78",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏩᎩᏒᎩ",
-    "gloss_english": "drew him out"
-  },
-  {
-    "base_id": "158dc84667464a90",
-    "sentence_id": "2f1fa1075ebb",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᏂ",
-    "gloss_english": "here"
-  },
-  {
-    "base_id": "8b871b3d45aa4b6a",
-    "sentence_id": "704507b6145b",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎯᎠ",
-    "gloss_english": "this"
-  },
-  {
-    "base_id": "60244291e9fc3b16",
-    "sentence_id": "5a7606eafa56",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎢᏧᎳ",
-    "gloss_english": "both"
-  },
-  {
-    "base_id": "ba01fa63f1fe7575",
-    "sentence_id": "d7f12e88c0bb",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎾᏉ",
-    "gloss_english": "Now"
-  },
-  {
-    "base_id": "2b463b7da077bec0",
-    "sentence_id": "f92a91e8e65e",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎾᎥᏂ",
-    "gloss_english": "near"
-  },
-  {
-    "base_id": "a05499c217bf439a",
-    "sentence_id": "3a061855f840",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏄᏪᏒᎩ",
-    "gloss_english": "saying"
-  },
-  {
-    "base_id": "10642be76c4ab8a0",
-    "sentence_id": "3b8df919614b",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏅᏃᎯ",
-    "gloss_english": "the way"
-  },
-  {
-    "base_id": "269e084cb80fbd5d",
-    "sentence_id": "9e676c8582c8",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎣᏂ",
-    "gloss_english": "no more"
-  },
-  {
-    "base_id": "37f5d1f2d23f046d",
-    "sentence_id": "e13185f59636",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎣᏏ",
-    "gloss_english": "very well"
-  },
-  {
-    "base_id": "b2e9f3e241815159",
-    "sentence_id": "38f700983827",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏥᏍᏆ",
-    "gloss_english": "A Bird"
-  },
-  {
-    "base_id": "0edda7520782255c",
-    "sentence_id": "7f6cd2a8b547",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏧᎬᏩᎶᏗ",
-    "gloss_english": "treasure"
-  },
-  {
-    "base_id": "f8c4fb5bdd1f9a44",
-    "sentence_id": "cb2595f18167",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏧᎾᏓᎨᏳᎯᏉᏍᎩᏂ",
-    "gloss_english": "but loving"
-  },
-  {
-    "base_id": "baa0394da1c8d41b",
-    "sentence_id": "e6514e1ca2a8",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏓᎵᎢ",
-    "gloss_english": "his Wife"
-  },
-  {
-    "base_id": "134044d6a5c5e5dc",
-    "sentence_id": "0a6c31f7fcc9",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏓᏅᏙ",
-    "gloss_english": "the heart"
-  },
-  {
-    "base_id": "aa13d8efc8c5acd6",
-    "sentence_id": "4d27f442165b",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎬᏫᏳᎯ",
-    "gloss_english": "The Lord"
-  },
-  {
-    "base_id": "7cdfce2b5eee3631",
-    "sentence_id": "2599300dc34d",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏗᏣᎳᏏᏕᏂ",
-    "gloss_english": "thy feet"
-  },
-  {
-    "base_id": "9ff82e85ccecd906",
-    "sentence_id": "64d20fb6dee6",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏪᎷᏅᏉ",
-    "gloss_english": "crying"
-  },
-  {
-    "base_id": "3cd251cd8d173708",
-    "sentence_id": "3fcf9e731315",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎠᎩᎾᏫᎠ",
-    "gloss_english": "tremble"
-  },
-  {
-    "base_id": "3df280f7def9ba84",
-    "sentence_id": "71d0847c24d7",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏁᎳᏅᎯ",
-    "gloss_english": "God"
-  },
-  {
-    "base_id": "e74d3ec4629403d7",
-    "sentence_id": "f0c4fbd440a1",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏍᏗ",
-    "gloss_english": "little"
-  },
-  {
-    "base_id": "4dcccdd6a110801a",
-    "sentence_id": "4bd01b735ebf",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏣᏘ",
-    "gloss_english": "greatly"
-  },
-  {
-    "base_id": "19d2919cefc96367",
-    "sentence_id": "13c59b411761",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏨᏒ",
-    "gloss_english": "you"
-  },
-  {
-    "base_id": "19d2919cefc96367",
-    "sentence_id": "13c59b411761",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_english": "alone"
-  },
-  {
-    "base_id": "db3415d3254cc9ee",
-    "sentence_id": "54e9278033d4",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏬᏰᏂ",
-    "gloss_english": "hand"
-  },
-  {
-    "base_id": "9e5134ba2f2f035e",
-    "sentence_id": "5096ba0b3872",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᏲᎱᏎᏗ ᎨᏎᏍᏗ",
-    "gloss_english": "shall lose it"
-  },
-  {
-    "base_id": "3ff93b37ecee1ec4",
-    "sentence_id": "f4b07a030e13",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏫᏥᎦᏘ",
-    "gloss_english": "I am going to"
-  },
-  {
-    "base_id": "0b56c84b2cfc6f73",
-    "sentence_id": "94652edb85a1",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏭᏯᏅᎲᎩ",
-    "gloss_english": "he called for"
-  },
-  {
-    "base_id": "c8bd44256022b266",
-    "sentence_id": "96932237e613",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏴᏫ",
-    "gloss_english": "Person"
-  },
-  {
-    "base_id": "e8e95e709da81703",
-    "sentence_id": "7bbad0846dc8",
-    "source file": "lily-dict.csv",
-    "source": "hsbc",
-    "gloss_syllabary": "ᏔᎵᏦᏁ",
-    "gloss_phonetic": "Talijone"
-  },
-  {
-    "base_id": "4d5bd28d15990af7",
-    "sentence_id": "4d9e843ae39e",
-    "source file": "lily-dict.csv",
-    "source": "cn",
-    "gloss_syllabary": "ᎧᏁᎬ",
-    "gloss_phonetic": "kanegv",
-    "gloss_english": "Voices"
-  },
-  {
-    "base_id": "4d5bd28d15990af7",
-    "sentence_id": "30b5ee0b2030",
-    "source file": "lily-dict.csv",
-    "source": "cn",
-    "gloss_syllabary": "ᏥᏁᎬᎢ",
-    "gloss_phonetic": "jinegvi",
-    "gloss_english": "voice"
-  },
-  {
-    "base_id": "47e7069b7eb43231",
-    "sentence_id": "d5db69d62050",
-    "source file": "lily-dict.csv",
-    "source": "hsbc",
-    "gloss_syllabary": "ᎤᏖᏗ",
-    "gloss_phonetic": "uteʔdi",
-    "gloss_english": "delicious"
-  },
-  {
-    "base_id": "b17420918b51f359",
-    "sentence_id": "bbaa6961f5a7",
-    "source file": "lily-dict.csv",
-    "source": "CNT",
-    "gloss_syllabary": "ᏏᏂᎹᏂ",
-    "gloss_phonetic": "sinimani",
-    "gloss_english": "cinnamon"
-  },
-  {
-    "base_id": "719577a3f756f728",
-    "sentence_id": "e3bcc34d2c33",
-    "source file": "lily-dict.csv",
-    "source": "CNT",
-    "gloss_syllabary": "ᎠᏜ ᎤᎦᎾᏍᏛ ᎦᏩᏒᎩ",
-    "gloss_phonetic": "adla uganasda gawasvgi",
-    "gloss_english": "frankincense"
-  },
-  {
-    "base_id": "88cb98fc9350822b",
-    "sentence_id": "56f0dfbabf5a",
-    "source file": "lily-dict.csv",
-    "source": "CNT",
-    "gloss_syllabary": "ᏟᏌᏇᏌ",
-    "gloss_phonetic": "tlisaquesa",
-    "gloss_english": "chrysoprasus"
-  },
-  {
-    "base_id": "fb7f9fecba4a70b8",
-    "sentence_id": "57c2763e362c",
-    "source file": "lily-dict.csv",
-    "source": "CNT",
-    "gloss_syllabary": "ᏒᏟ ",
-    "gloss_phonetic": "svtli",
-    "gloss_english": "mint"
-  },
-  {
-    "base_id": "35193e0f2ecb4d94",
-    "sentence_id": "a4287a997947",
-    "source file": "lily-dict.csv",
-    "source": "CNT",
-    "gloss_syllabary": "ᎡᏒ",
-    "gloss_phonetic": "esv",
-    "gloss_english": "anise"
-  },
-  {
-    "base_id": "d9b9764573b2b9b6",
-    "sentence_id": "81bf4426d4dc",
-    "source file": "lily-dict.csv",
-    "source": "CNT",
-    "gloss_syllabary": "ᎦᎻᏂ",
-    "gloss_phonetic": "gamini",
-    "gloss_english": "cummin"
-  },
-  {
-    "base_id": "4ed7976ebfdf3035",
-    "sentence_id": "33a6d7ea99d4",
-    "source file": "lily-dict.csv",
-    "source": "CNT",
-    "gloss_syllabary": "ᏗᎦᎸᏉᏗ ᏅᏯ",
-    "gloss_phonetic": "digalvquodi nvya",
-    "gloss_english": "precious stones."
-  },
-  {
-    "base_id": "a15eb2803e158c8d",
-    "sentence_id": "04645201fea4",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏚᏈᏴᎮᎢ",
-    "gloss_phonetic": "duquiyvheɂi",
-    "gloss_english": "did he pay"
-  },
-  {
-    "base_id": "27bec1b939779fa3",
+    "base_id": "f4a05d7e9edba724",
     "sentence_id": "abb8b751e042",
     "source file": "lily-dict.csv",
     "source": "cn",
@@ -21182,16 +17660,52 @@
     "gloss_english": "laid aside (removed) her veil"
   },
   {
-    "base_id": "80ae4ef47e04223b",
-    "sentence_id": "18504faa27a8",
+    "base_id": "2bb149c89eca2d3d",
+    "sentence_id": "7cd8924b681a",
     "source file": "lily-dict.csv",
-    "source": "CNT",
-    "gloss_syllabary": "ᏬᎩᏅᏍᏙᏗᏱ",
-    "gloss_phonetic": "woginvsdodiyi",
-    "gloss_english": "sail"
+    "source": "cn",
+    "gloss_syllabary": "ᎤᎵᎬᏚᎳᏁᎢ",
+    "gloss_phonetic": "ulgvdulaneɂi.",
+    "gloss_english": "covered herself with a veil"
   },
   {
-    "base_id": "bc8bc46a4a101dec",
+    "base_id": "4da3a7d87ab17bfa",
+    "sentence_id": "4d9e843ae39e",
+    "source file": "lily-dict.csv",
+    "source": "cn",
+    "gloss_syllabary": "ᎧᏁᎬ",
+    "gloss_phonetic": "kanegv",
+    "gloss_english": "Voices"
+  },
+  {
+    "base_id": "4da3a7d87ab17bfa",
+    "sentence_id": "30b5ee0b2030",
+    "source file": "lily-dict.csv",
+    "source": "cn",
+    "gloss_syllabary": "ᏥᏁᎬᎢ",
+    "gloss_phonetic": "jinegvi",
+    "gloss_english": "voice"
+  },
+  {
+    "base_id": "fd67a6ba8a102431",
+    "sentence_id": "8e7f60cdd3bb",
+    "source file": "lily-dict.csv",
+    "source": "cn",
+    "gloss_syllabary": "ᎤᎵᎬᏚᎸᎢ.",
+    "gloss_phonetic": "ulgvdulvi.",
+    "gloss_english": "she had covered her face."
+  },
+  {
+    "base_id": "41fbbcde50828e26",
+    "sentence_id": "e3bcc34d2c33",
+    "source file": "lily-dict.csv",
+    "source": "CNT",
+    "gloss_syllabary": "ᎠᏜ ᎤᎦᎾᏍᏛ ᎦᏩᏒᎩ",
+    "gloss_phonetic": "adla uganasda gawasvgi",
+    "gloss_english": "frankincense"
+  },
+  {
+    "base_id": "ef7a6d1ff0452034",
     "sentence_id": "a94f2a895073",
     "source file": "lily-dict.csv",
     "source": "CNT",
@@ -21200,169 +17714,7 @@
     "gloss_english": "lading"
   },
   {
-    "base_id": "68180a17dd85a5da",
-    "sentence_id": "31168173d5ff",
-    "source file": "lily-dict.csv",
-    "source": "CNT",
-    "gloss_syllabary": "ᏗᏔᎳᏗᏍᏗᏱᏃ",
-    "gloss_phonetic": "ditaladisdiyihno",
-    "gloss_english": "haven"
-  },
-  {
-    "base_id": "8d5a213237c99af7",
-    "sentence_id": "fa7960ee867d",
-    "source file": "lily-dict.csv",
-    "source": "CNT",
-    "gloss_syllabary": "ᎢᎪᎷᏅᏗ",
-    "gloss_phonetic": "igolunvdi",
-    "gloss_english": "fathoms"
-  },
-  {
-    "base_id": "f9dd81a7f2a03f94",
-    "sentence_id": "cc9dc15e2524",
-    "source file": "lily-dict.csv",
-    "source": "CNT",
-    "gloss_syllabary": "ᏔᎷᎩᏍᎩ ᏥᏳ ᏗᎦᎾᎯᏍᏙᏗ",
-    "gloss_phonetic": "talugisgi tsiyu diganahisdohdi",
-    "gloss_english": "anchors"
-  },
-  {
-    "base_id": "9aa2a4c5f0f34a1f",
-    "sentence_id": "312117a282b9",
-    "source file": "lily-dict.csv",
-    "source": "CNT",
-    "gloss_syllabary": "ᎠᎺᏉᎯ ᏭᏩᏂᎦᎸᎢ",
-    "gloss_phonetic": "amequohi wuwanigalvi",
-    "gloss_english": "creek with a shore"
-  },
-  {
-    "base_id": "ba76433ce232a260",
-    "sentence_id": "b4fece79796f",
-    "source file": "lily-dict.csv",
-    "source": "CNT",
-    "gloss_syllabary": "ᏌᏙᏂᎩ",
-    "gloss_phonetic": "sadonigi",
-    "gloss_english": "sardonyx"
-  },
-  {
-    "base_id": "16bbff5e818a36de",
-    "sentence_id": "7885be75b826",
-    "source file": "lily-dict.csv",
-    "source": "CNT",
-    "gloss_syllabary": "ᏌᏗᏱ",
-    "gloss_phonetic": "sadiyi",
-    "gloss_english": "sardius"
-  },
-  {
-    "base_id": "57c062c252d8a308",
-    "sentence_id": "9e2c7a985d8f",
-    "source file": "lily-dict.csv",
-    "source": "CNT",
-    "gloss_syllabary": "ᎩᏐᎳᏗ",
-    "gloss_phonetic": "gisoladi",
-    "gloss_english": "gisoladi"
-  },
-  {
-    "base_id": "4910772e2602a248",
-    "sentence_id": "c11ab0f13006",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᎤᎵᏍᏆᎵᏗ",
-    "gloss_phonetic": "uhlsgwahldi",
-    "gloss_english": "finally"
-  },
-  {
-    "base_id": "bcb4c12ed99078b8",
-    "sentence_id": "88ba195887c2",
-    "source file": "lily-dict.csv",
-    "source": "CNT",
-    "gloss_syllabary": "ᏣᏍᏆ",
-    "gloss_phonetic": "tsasqua",
-    "gloss_english": "jasper"
-  },
-  {
-    "base_id": "b0a381506a72c9d7",
-    "sentence_id": "8d33656a309f",
-    "source file": "lily-dict.csv",
-    "source": "hsbc",
-    "gloss_syllabary": "ᏁᎳᏦᏁᏉ",
-    "gloss_phonetic": "neltsonegwo",
-    "gloss_english": "twenty-eight"
-  },
-  {
-    "base_id": "d6683249ad0696ad",
-    "sentence_id": "014b3afaa8e2",
-    "source file": "lily-dict.csv",
-    "source": "hsbc",
-    "gloss_syllabary": "ᏐᏁᎳᏦᏁ",
-    "gloss_phonetic": "soneltsone",
-    "gloss_english": "twenty-nine"
-  },
-  {
-    "base_id": "ee9ec5ca4ebaf76d",
-    "sentence_id": "50735df6018f",
-    "source file": "lily-dict.csv",
-    "source": "hsbc",
-    "gloss_syllabary": "ᎤᏓᏢᏓᏍ",
-    "gloss_phonetic": "Udatlvdas",
-    "gloss_english": "cream"
-  },
-  {
-    "base_id": "ed234933a931da4a",
-    "sentence_id": "06d813c231bb",
-    "source file": "lily-dict.csv",
-    "source": "CNT",
-    "gloss_syllabary": "ᏗᏥᎾᏫᏱ",
-    "gloss_phonetic": "ditsinawiyi",
-    "gloss_english": "in your hearts"
-  },
-  {
-    "base_id": "fc87c23ac811e8a2",
-    "sentence_id": "abc67f34002d",
-    "source file": "lily-dict.csv",
-    "source": "CNT",
-    "gloss_syllabary": "ᎢᏨᏁᏤᎭ",
-    "gloss_phonetic": "itsvnetseha,",
-    "gloss_english": "I command you,"
-  },
-  {
-    "base_id": "934d4946b4ca7422",
-    "sentence_id": "20713a2405c3",
-    "source file": "lily-dict.csv",
-    "source": "hsbc",
-    "gloss_syllabary": "ᎯᏍᎩᏦᏁ",
-    "gloss_phonetic": "hisgitsone",
-    "gloss_english": "twenty-five"
-  },
-  {
-    "base_id": "a80bdb28c2704842",
-    "sentence_id": "fd7d3b95147b",
-    "source file": "lily-dict.csv",
-    "source": "hsbc",
-    "gloss_syllabary": "ᏑᏓᎵᏦᏁ",
-    "gloss_phonetic": "su²³dạ³lʔtsoʔne",
-    "gloss_english": "the 26th"
-  },
-  {
-    "base_id": "549b4e099b57dff7",
-    "sentence_id": "0186ec41afd0",
-    "source file": "lily-dict.csv",
-    "source": "rrd",
-    "gloss_syllabary": "ᏣᏙᏩᏗᏍᎬ",
-    "gloss_phonetic": "tsadowadisgv",
-    "gloss_english": "your shadow"
-  },
-  {
-    "base_id": "28323062e30a6891",
-    "sentence_id": "582fde277875",
-    "source file": "lily-dict.csv",
-    "source": "CNT",
-    "gloss_syllabary": "ᎦᎾᎯᏍᏙᏗ",
-    "gloss_phonetic": "ganahisdohdi",
-    "gloss_english": "anchor"
-  },
-  {
-    "base_id": "28c9aebcb14f8eea",
+    "base_id": "93f4586eb19b6874",
     "sentence_id": "9622be21e4f0",
     "source file": "lily-dict.csv",
     "source": "CNT",
@@ -21371,25 +17723,16 @@
     "gloss_english": "evangelist"
   },
   {
-    "base_id": "7e5c3ce0c0475de5",
-    "sentence_id": "414cba7947c0",
+    "base_id": "05ce3b881894312e",
+    "sentence_id": "312117a282b9",
     "source file": "lily-dict.csv",
     "source": "CNT",
-    "gloss_syllabary": "ᏤᏏᏂ",
-    "gloss_phonetic": "tsesini",
-    "gloss_english": "jacinth"
+    "gloss_syllabary": "ᎠᎺᏉᎯ ᏭᏩᏂᎦᎸᎢ",
+    "gloss_phonetic": "amequohi wuwanigalvi",
+    "gloss_english": "creek with a shore"
   },
   {
-    "base_id": "00f719462861716d",
-    "sentence_id": "c219db406fc7",
-    "source file": "lily-dict.csv",
-    "source": "CNT",
-    "gloss_syllabary": "ᏙᏆᏏ",
-    "gloss_phonetic": "toquasi",
-    "gloss_english": "topaz"
-  },
-  {
-    "base_id": "df0ab824139da84f",
+    "base_id": "f8f29e46c58466ca",
     "sentence_id": "b7ad682a2d99",
     "source file": "lily-dict.csv",
     "source": "CNT",
@@ -21398,7 +17741,178 @@
     "gloss_english": "amethyst"
   },
   {
-    "base_id": "5bbed57c4b68481b",
+    "base_id": "f2a1499c0950db50",
+    "sentence_id": "31168173d5ff",
+    "source file": "lily-dict.csv",
+    "source": "CNT",
+    "gloss_syllabary": "ᏗᏔᎳᏗᏍᏗᏱᏃ",
+    "gloss_phonetic": "ditaladisdiyihno",
+    "gloss_english": "haven"
+  },
+  {
+    "base_id": "f4a768e6a865e67c",
+    "sentence_id": "a4287a997947",
+    "source file": "lily-dict.csv",
+    "source": "CNT",
+    "gloss_syllabary": "ᎡᏒ",
+    "gloss_phonetic": "esv",
+    "gloss_english": "anise"
+  },
+  {
+    "base_id": "c3ab97b87d298bbc",
+    "sentence_id": "33a6d7ea99d4",
+    "source file": "lily-dict.csv",
+    "source": "CNT",
+    "gloss_syllabary": "ᏗᎦᎸᏉᏗ ᏅᏯ",
+    "gloss_phonetic": "digalvquodi nvya",
+    "gloss_english": "precious stones."
+  },
+  {
+    "base_id": "7ff4cc88351cd966",
+    "sentence_id": "81bf4426d4dc",
+    "source file": "lily-dict.csv",
+    "source": "CNT",
+    "gloss_syllabary": "ᎦᎻᏂ",
+    "gloss_phonetic": "gamini",
+    "gloss_english": "cummin"
+  },
+  {
+    "base_id": "645a1030f1a65302",
+    "sentence_id": "582fde277875",
+    "source file": "lily-dict.csv",
+    "source": "CNT",
+    "gloss_syllabary": "ᎦᎾᎯᏍᏙᏗ",
+    "gloss_phonetic": "ganahisdohdi",
+    "gloss_english": "anchor"
+  },
+  {
+    "base_id": "3045c5e851d80249",
+    "sentence_id": "18504faa27a8",
+    "source file": "lily-dict.csv",
+    "source": "CNT",
+    "gloss_syllabary": "ᏬᎩᏅᏍᏙᏗᏱ",
+    "gloss_phonetic": "woginvsdodiyi",
+    "gloss_english": "sail"
+  },
+  {
+    "base_id": "dc8a4ed216342c7b",
+    "sentence_id": "9e2c7a985d8f",
+    "source file": "lily-dict.csv",
+    "source": "CNT",
+    "gloss_syllabary": "ᎩᏐᎳᏗ",
+    "gloss_phonetic": "gisoladi",
+    "gloss_english": "gisoladi"
+  },
+  {
+    "base_id": "4f028e4aac07202e",
+    "sentence_id": "fa7960ee867d",
+    "source file": "lily-dict.csv",
+    "source": "CNT",
+    "gloss_syllabary": "ᎢᎪᎷᏅᏗ",
+    "gloss_phonetic": "igolunvdi",
+    "gloss_english": "fathoms"
+  },
+  {
+    "base_id": "2b84d42ffa806aec",
+    "sentence_id": "abc67f34002d",
+    "source file": "lily-dict.csv",
+    "source": "CNT",
+    "gloss_syllabary": "ᎢᏨᏁᏤᎭ",
+    "gloss_phonetic": "itsvnetseha,",
+    "gloss_english": "I command you,"
+  },
+  {
+    "base_id": "ca3b5d44aead5257",
+    "sentence_id": "7885be75b826",
+    "source file": "lily-dict.csv",
+    "source": "CNT",
+    "gloss_syllabary": "ᏌᏗᏱ",
+    "gloss_phonetic": "sadiyi",
+    "gloss_english": "sardius"
+  },
+  {
+    "base_id": "cea31a3e77fbae75",
+    "sentence_id": "b4fece79796f",
+    "source file": "lily-dict.csv",
+    "source": "CNT",
+    "gloss_syllabary": "ᏌᏙᏂᎩ",
+    "gloss_phonetic": "sadonigi",
+    "gloss_english": "sardonyx"
+  },
+  {
+    "base_id": "0f8024c4838ade6d",
+    "sentence_id": "bbaa6961f5a7",
+    "source file": "lily-dict.csv",
+    "source": "CNT",
+    "gloss_syllabary": "ᏏᏂᎹᏂ",
+    "gloss_phonetic": "sinimani",
+    "gloss_english": "cinnamon"
+  },
+  {
+    "base_id": "99ddb8b85a050da1",
+    "sentence_id": "57c2763e362c",
+    "source file": "lily-dict.csv",
+    "source": "CNT",
+    "gloss_syllabary": "ᏒᏟ ",
+    "gloss_phonetic": "svtli",
+    "gloss_english": "mint"
+  },
+  {
+    "base_id": "a30804e70a96b569",
+    "sentence_id": "cc9dc15e2524",
+    "source file": "lily-dict.csv",
+    "source": "CNT",
+    "gloss_syllabary": "ᏔᎷᎩᏍᎩ ᏥᏳ ᏗᎦᎾᎯᏍᏙᏗ",
+    "gloss_phonetic": "talugisgi tsiyu diganahisdohdi",
+    "gloss_english": "anchors"
+  },
+  {
+    "base_id": "573e1c9f70a4aae3",
+    "sentence_id": "56f0dfbabf5a",
+    "source file": "lily-dict.csv",
+    "source": "CNT",
+    "gloss_syllabary": "ᏟᏌᏇᏌ",
+    "gloss_phonetic": "tlisaquesa",
+    "gloss_english": "chrysoprasus"
+  },
+  {
+    "base_id": "a406fc0c8c54a7f9",
+    "sentence_id": "c219db406fc7",
+    "source file": "lily-dict.csv",
+    "source": "CNT",
+    "gloss_syllabary": "ᏙᏆᏏ",
+    "gloss_phonetic": "toquasi",
+    "gloss_english": "topaz"
+  },
+  {
+    "base_id": "c5852a20f5601676",
+    "sentence_id": "88ba195887c2",
+    "source file": "lily-dict.csv",
+    "source": "CNT",
+    "gloss_syllabary": "ᏣᏍᏆ",
+    "gloss_phonetic": "tsasqua",
+    "gloss_english": "jasper"
+  },
+  {
+    "base_id": "22c11bf28827cdc9",
+    "sentence_id": "414cba7947c0",
+    "source file": "lily-dict.csv",
+    "source": "CNT",
+    "gloss_syllabary": "ᏤᏏᏂ",
+    "gloss_phonetic": "tsesini",
+    "gloss_english": "jacinth"
+  },
+  {
+    "base_id": "b930986ac5fb7e2e",
+    "sentence_id": "06d813c231bb",
+    "source file": "lily-dict.csv",
+    "source": "CNT",
+    "gloss_syllabary": "ᏗᏥᎾᏫᏱ",
+    "gloss_phonetic": "ditsinawiyi",
+    "gloss_english": "in your hearts"
+  },
+  {
+    "base_id": "14232d00695aa119",
     "sentence_id": "1aa536df4193",
     "source file": "lily-dict.csv",
     "source": "hsbc",
@@ -21407,12 +17921,3498 @@
     "gloss_english": "twenty-seven."
   },
   {
-    "base_id": "2105d2df2b6a9f5b",
-    "sentence_id": "7cd8924b681a",
+    "base_id": "4774d161e80c1a37",
+    "sentence_id": "20713a2405c3",
     "source file": "lily-dict.csv",
-    "source": "cn",
-    "gloss_syllabary": "ᎤᎵᎬᏚᎳᏁᎢ",
-    "gloss_phonetic": "ulgvdulaneɂi.",
-    "gloss_english": "covered herself with a veil"
+    "source": "hsbc",
+    "gloss_syllabary": "ᎯᏍᎩᏦᏁ",
+    "gloss_phonetic": "hisgitsone",
+    "gloss_english": "twenty-five"
+  },
+  {
+    "base_id": "a670f06a18695dcf",
+    "sentence_id": "8d33656a309f",
+    "source file": "lily-dict.csv",
+    "source": "hsbc",
+    "gloss_syllabary": "ᏁᎳᏦᏁᏉ",
+    "gloss_phonetic": "neltsonegwo",
+    "gloss_english": "twenty-eight"
+  },
+  {
+    "base_id": "c5800fdffd4917fb",
+    "sentence_id": "014b3afaa8e2",
+    "source file": "lily-dict.csv",
+    "source": "hsbc",
+    "gloss_syllabary": "ᏐᏁᎳᏦᏁ",
+    "gloss_phonetic": "soneltsone",
+    "gloss_english": "twenty-nine"
+  },
+  {
+    "base_id": "39c1a2476fe1de8a",
+    "sentence_id": "fd7d3b95147b",
+    "source file": "lily-dict.csv",
+    "source": "hsbc",
+    "gloss_syllabary": "ᏑᏓᎵᏦᏁ",
+    "gloss_phonetic": "su²³dạ³lʔtsoʔne",
+    "gloss_english": "the 26th"
+  },
+  {
+    "base_id": "1601ac3d57d66bf5",
+    "sentence_id": "7bbad0846dc8",
+    "source file": "lily-dict.csv",
+    "source": "hsbc",
+    "gloss_syllabary": "ᏔᎵᏦᏁ",
+    "gloss_phonetic": "Talijone"
+  },
+  {
+    "base_id": "ce4a612177c3a224",
+    "sentence_id": "50735df6018f",
+    "source file": "lily-dict.csv",
+    "source": "hsbc",
+    "gloss_syllabary": "ᎤᏓᏢᏓᏍ",
+    "gloss_phonetic": "Udatlvdas",
+    "gloss_english": "cream"
+  },
+  {
+    "base_id": "9f699056bfc268c8",
+    "sentence_id": "d5db69d62050",
+    "source file": "lily-dict.csv",
+    "source": "hsbc",
+    "gloss_syllabary": "ᎤᏖᏗ",
+    "gloss_phonetic": "uteʔdi",
+    "gloss_english": "delicious"
+  },
+  {
+    "base_id": "796a91524f05dfe7",
+    "sentence_id": "d274087ca79a",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏧᏣ",
+    "gloss_english": "boy"
+  },
+  {
+    "base_id": "6d9e51bcdea74971",
+    "sentence_id": "b13dc07c9358",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏓᏙᎵᏍᏗᏍᎬᎩ",
+    "gloss_english": "praying"
+  },
+  {
+    "base_id": "6f112001cc96a8bd",
+    "sentence_id": "761e338050dd",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏣᏓᏁᏗ",
+    "gloss_english": "thy gift"
+  },
+  {
+    "base_id": "c98e6bb1f61eb391",
+    "sentence_id": "afeb341d04c9",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏣᏓᏅᏖᏗ",
+    "gloss_english": "thou must consider"
+  },
+  {
+    "base_id": "3ebb8ab8504078d0",
+    "sentence_id": "ef728f1c4bb7",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏓᎨᏗ",
+    "gloss_english": "glass"
+  },
+  {
+    "base_id": "8af45d32c5e862dd",
+    "sentence_id": "cbc16d660e89",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏥᏭᏓᎾᏫᏛᎮᎢ",
+    "gloss_english": "jumped"
+  },
+  {
+    "base_id": "68c07ba808c51250",
+    "sentence_id": "9458a9238d08",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏓᏁᎸ",
+    "gloss_english": "house"
+  },
+  {
+    "base_id": "186f362d1c115aa4",
+    "sentence_id": "9ec707fa6dde",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᎴ ᏣᏙᏓ ᎦᏁᎸ ᎭᏓᏅᎾ",
+    "gloss_english": "from the house of thy father"
+  },
+  {
+    "base_id": "a6c5269d0d865a29",
+    "sentence_id": "63558f60757a",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏓᏍᏓᏴᏗ",
+    "gloss_english": "the stove"
+  },
+  {
+    "base_id": "12a4ac6adc68b946",
+    "sentence_id": "8f65504fd984",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏓᏛᏛᏅᎩ",
+    "gloss_english": "asked him"
+  },
+  {
+    "base_id": "b6d26db0e5e149e0",
+    "sentence_id": "d2b94c091b55",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏓᏬᎠ",
+    "gloss_english": "is bathing"
+  },
+  {
+    "base_id": "0bf9b562ae4a8c65",
+    "sentence_id": "a01a9d5d450b",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏓᏰᏍᎩ ᎤᏢᎩ",
+    "gloss_english": "a leper"
+  },
+  {
+    "base_id": "2eae53af0a818447",
+    "sentence_id": "e0b9d253262a",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᎾᏕᎶᏆᏍᎪᎢ",
+    "gloss_english": "learning"
+  },
+  {
+    "base_id": "27324e24d51cd4bf",
+    "sentence_id": "12c24b67c37c",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏕᎰᏍᎬᎢ",
+    "gloss_english": "for shame"
+  },
+  {
+    "base_id": "7187ceafafec407e",
+    "sentence_id": "474c10b6c894",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏣᏕᏅᎩ",
+    "gloss_english": "born"
+  },
+  {
+    "base_id": "4ea06330a3bc9eaa",
+    "sentence_id": "4b6399e193e0",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏕᏯᏙᏗ",
+    "gloss_english": "troublesome"
+  },
+  {
+    "base_id": "ce0c9a4779944423",
+    "sentence_id": "a772aca43f19",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎦᏕᎶᎣᏍᎦᏍᎩᏂ",
+    "gloss_english": "perceive"
+  },
+  {
+    "base_id": "88617c510708b111",
+    "sentence_id": "79fddac33f7c",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏛᏅ",
+    "gloss_english": "said"
+  },
+  {
+    "base_id": "60d390596630343f",
+    "sentence_id": "d78607ef7131",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎭᏗᏔ",
+    "gloss_english": "Drink"
+  },
+  {
+    "base_id": "4e6eee0d4d978010",
+    "sentence_id": "c29a0fd679c9",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎢᏣᏙᎴᏆᏍᎨᏍᏗ",
+    "gloss_english": "You should be learning"
+  },
+  {
+    "base_id": "6772710d14600c3c",
+    "sentence_id": "62811033cdb5",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏙᎳᏅᏍᏗ",
+    "gloss_english": "staff"
+  },
+  {
+    "base_id": "0524131e2eb37782",
+    "sentence_id": "2917c55493e1",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏛᏂᏛᎩ",
+    "gloss_english": "revived"
+  },
+  {
+    "base_id": "5875c5634bfb28e2",
+    "sentence_id": "a3b34d3e116c",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎭᏛᏅᎢᏍᏓ",
+    "gloss_english": "make ready"
+  },
+  {
+    "base_id": "efa8e8cfe76ef7c0",
+    "sentence_id": "2172db4e1877",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎦᎵᏍᎬ",
+    "gloss_english": "it is shined on by the sun"
+  },
+  {
+    "base_id": "01b1fb79744ff4fc",
+    "sentence_id": "62438ea82a73",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᎦᏴᎵ",
+    "gloss_english": "thousands"
+  },
+  {
+    "base_id": "94197c7fcd4758ac",
+    "sentence_id": "e6893a2a2e8d",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏂᎦᏴᎵᎨ",
+    "gloss_english": "advanced in their days"
+  },
+  {
+    "base_id": "60be8684a3b7b1e4",
+    "sentence_id": "b7753ee67aed",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᎨᏯ",
+    "gloss_english": "a woman"
+  },
+  {
+    "base_id": "9edb1644c290a2b4",
+    "sentence_id": "47beddd0adb7",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎩᏒᎩ",
+    "gloss_english": "take"
+  },
+  {
+    "base_id": "9aaf1106d7d47ed9",
+    "sentence_id": "d9a3d0a600fe",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏣᎩᏍᏗ",
+    "gloss_english": "eat"
+  },
+  {
+    "base_id": "6f0f94803f5ff3b4",
+    "sentence_id": "618434344dac",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎯᎩ",
+    "gloss_english": "receive"
+  },
+  {
+    "base_id": "c261448cdc5114ed",
+    "sentence_id": "6c0ddf6e6df2",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏥᎩᎵᏲᎦ",
+    "gloss_english": "I suffer"
+  },
+  {
+    "base_id": "88f39707633c1b5c",
+    "sentence_id": "5c49e8f7bd2b",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎪᏅᎩ",
+    "gloss_english": "was burnt up"
+  },
+  {
+    "base_id": "b6f544b215e20205",
+    "sentence_id": "d41286bcc0a1",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᎪᎲᏍᎬᎢ",
+    "gloss_english": "her burning"
+  },
+  {
+    "base_id": "b4c5b64100c3cbe9",
+    "sentence_id": "fb5f506c6026",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎪᎵᏰᎥᏃ",
+    "gloss_english": "and as he read"
+  },
+  {
+    "base_id": "8f08d3b35fa9d7cf",
+    "sentence_id": "2ad8a8d5e18a",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎾᎪᎸᏒ",
+    "gloss_english": "did turn aside"
+  },
+  {
+    "base_id": "06d0ee569f1d2105",
+    "sentence_id": "3ecc017bef23",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᎪᎾ",
+    "gloss_english": "hungry"
+  },
+  {
+    "base_id": "a8f6263a19d448a7",
+    "sentence_id": "e6b58ef4894f",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏥᎪᏩᏘᎭ",
+    "gloss_english": "I see it"
+  },
+  {
+    "base_id": "8b120594e66c8c40",
+    "sentence_id": "c9603ea24099",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᎹᏱ ᎠᎬᎪᎢ",
+    "gloss_english": "often into the water"
+  },
+  {
+    "base_id": "c81ac0ddec5707b8",
+    "sentence_id": "5ed959595e44",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎭᎬᏍᏉᏍᎨᏍᏗ",
+    "gloss_english": "wash thy face"
+  },
+  {
+    "base_id": "54a6d4bd2e61f8e4",
+    "sentence_id": "387d254f3d5e",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᎬᏱ",
+    "gloss_english": "First"
+  },
+  {
+    "base_id": "9711756b1b7f75c5",
+    "sentence_id": "cccdb0d677a4",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏓ",
+    "gloss_english": "the wood"
+  },
+  {
+    "base_id": "2e21bd3435cab93c",
+    "sentence_id": "e9d9070dfe17",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎯᎷᎦ",
+    "gloss_english": "slay"
+  },
+  {
+    "base_id": "05b9c93547936d7f",
+    "sentence_id": "9962eaeaec48",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᎾᎵᎲᎢ",
+    "gloss_english": "they are striving"
+  },
+  {
+    "base_id": "b1acbd31577f6958",
+    "sentence_id": "879e6ee986d7",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᎾᎵᏃᎮᏔᏂᏐ",
+    "gloss_english": "went talking"
+  },
+  {
+    "base_id": "1b7c2e533abbc30b",
+    "sentence_id": "537aa7b7826b",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎵᏰᎶᎸ",
+    "gloss_phonetic": "it did come to that point",
+    "gloss_english": "having come"
+  },
+  {
+    "base_id": "37ca28e560da03d6",
+    "sentence_id": "a78f20f014ca",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎸᎸᎢ",
+    "gloss_english": "he had bound him"
+  },
+  {
+    "base_id": "799ea1088d9fe4c7",
+    "sentence_id": "2ec01bdfff98",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏁᏍᎨᎲᎢ",
+    "gloss_english": "he built"
+  },
+  {
+    "base_id": "5622537a1e258b2e",
+    "sentence_id": "efb578d76e3b",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎾᏁᏦᏅᎩ",
+    "gloss_english": "play"
+  },
+  {
+    "base_id": "b54b2f3198a419c0",
+    "sentence_id": "fd8427376518",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᎰᎵ",
+    "gloss_english": "the mouth"
+  },
+  {
+    "base_id": "b54b2f3198a419c0",
+    "sentence_id": "fd8427376518",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᎰᎵᏍᎩᏂ",
+    "gloss_english": "the mouth"
+  },
+  {
+    "base_id": "2075fe76dfebcc23",
+    "sentence_id": "a853314cd16c",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏍᏓᏩᏛᏒᎩ",
+    "gloss_english": "he after"
+  },
+  {
+    "base_id": "149360b464fff4a3",
+    "sentence_id": "bbd1cd0672cd",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏓᏍᏗᎩᎠ",
+    "gloss_english": "He is eating"
+  },
+  {
+    "base_id": "82157168600e643a",
+    "sentence_id": "b7b007ab31c0",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎯᏍᏆᎵᏍᎨᏍᏗ",
+    "gloss_english": "cut it off"
+  },
+  {
+    "base_id": "3f7f25ebfde08fa8",
+    "sentence_id": "caddc45615ef",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏱᏥᏔᏲᎯᎭ",
+    "gloss_english": "ask"
+  },
+  {
+    "base_id": "5d3d3bb941e77f43",
+    "sentence_id": "8b31edf23830",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏔᏲᏎᎮᏍᏗ",
+    "gloss_english": "let him ask from"
+  },
+  {
+    "base_id": "89abb71e57b59c11",
+    "sentence_id": "babe296c1d55",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎾᏘᏅᏍᏗ",
+    "gloss_english": "to go on with"
+  },
+  {
+    "base_id": "667220fa5f441ee4",
+    "sentence_id": "23230960ac1c",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᎱᎵ",
+    "gloss_english": "tabret"
+  },
+  {
+    "base_id": "9a74e4fc9d475ed5",
+    "sentence_id": "35e71041eee1",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᎲᎦ",
+    "gloss_english": "did cast in"
+  },
+  {
+    "base_id": "5c80fb631a2ad3ad",
+    "sentence_id": "f7be03a61b7e",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎥᏝ ᏱᏥᏩᏘᎭ",
+    "gloss_english": "do not find"
+  },
+  {
+    "base_id": "5ede7f097b6d51fb",
+    "sentence_id": "446b2e477ad3",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏫ",
+    "gloss_english": "deer"
+  },
+  {
+    "base_id": "db65f35559d7db9a",
+    "sentence_id": "baeb2fbcf1b9",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏫᏍᎩ",
+    "gloss_english": "who is sowing"
+  },
+  {
+    "base_id": "db65f35559d7db9a",
+    "sentence_id": "baeb2fbcf1b9",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏫᏍᎪᎢ",
+    "gloss_english": "doth sow"
+  },
+  {
+    "base_id": "7cc6b25cc7f3a478",
+    "sentence_id": "f3799e786521",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎯᏰᎸᎢ",
+    "gloss_english": "thy body"
+  },
+  {
+    "base_id": "db2615625f166c56",
+    "sentence_id": "fed549c3c7ab",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏕᏥᏰᏌᏛ",
+    "gloss_english": "my fingers"
+  },
+  {
+    "base_id": "38c234fa0e23809a",
+    "sentence_id": "6d6bccda536d",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏲᎸᎩ",
+    "gloss_english": "bearing"
+  },
+  {
+    "base_id": "02c74ac58be5751d",
+    "sentence_id": "552b66de9adb",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏴᏓᏆᎶᏍᎩ",
+    "gloss_english": "thunder"
+  },
+  {
+    "base_id": "02dc3e00938151fc",
+    "sentence_id": "79ab70628d97",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᎢᏒᎩ",
+    "gloss_english": "was walking"
+  },
+  {
+    "base_id": "8e314e7738d541db",
+    "sentence_id": "7388f0ce9a55",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᎧᏲᏗᏍᎪᎢ",
+    "gloss_english": "is dried by"
+  },
+  {
+    "base_id": "c687864e9081f410",
+    "sentence_id": "a6ef905d5245",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᎧᎵᎢᎭ",
+    "gloss_english": "fulfilled"
+  },
+  {
+    "base_id": "1ed0f91c87ed1f7e",
+    "sentence_id": "e22ec59ea431",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏓᎧᏅᎢ",
+    "gloss_english": "eyes"
+  },
+  {
+    "base_id": "7db359ffea24c34b",
+    "sentence_id": "61049019cfb1",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏂᎨᎯ",
+    "gloss_english": "are chasing"
+  },
+  {
+    "base_id": "38bea45c5509e162",
+    "sentence_id": "190cbaaba020",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎩᎸᏅᎩ",
+    "gloss_english": "did sit upon it"
+  },
+  {
+    "base_id": "70bd7e022bd8f5f5",
+    "sentence_id": "3ab794f9a0a4",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎢᏥᎩᏍᎩ",
+    "gloss_english": "are swallowing"
+  },
+  {
+    "base_id": "c0ec315e2710146a",
+    "sentence_id": "38922fc991b9",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎥᏝ ᏱᏥᎦᏔᎭ",
+    "gloss_english": "I do not know"
+  },
+  {
+    "base_id": "ce50c9bf9bd5d44d",
+    "sentence_id": "a3e6ba96cab5",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎦᏔᎲᏒᎩ",
+    "gloss_english": "she turned backward"
+  },
+  {
+    "base_id": "f29120c4c0be6e72",
+    "sentence_id": "36558a8cb334",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏥᎦᏘᏯ",
+    "gloss_english": "keeper -- I"
+  },
+  {
+    "base_id": "64aac0d9e226c390",
+    "sentence_id": "349fe8cca5bc",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏗᎦᏙᎵ",
+    "gloss_english": "eyes"
+  },
+  {
+    "base_id": "7a85c90f822d9082",
+    "sentence_id": "04645201fea4",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏚᏈᏴᎮᎢ",
+    "gloss_phonetic": "duquiyvheɂi",
+    "gloss_english": "did he pay"
+  },
+  {
+    "base_id": "bd16883c24fa7a80",
+    "sentence_id": "4634af2fe411",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᎴ",
+    "gloss_english": "and"
+  },
+  {
+    "base_id": "31e6e36db376fe0d",
+    "sentence_id": "797535d22354",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎴᏅᏔᏅᎩ",
+    "gloss_english": "beginning of"
+  },
+  {
+    "base_id": "30d0aac19fd84b39",
+    "sentence_id": "dda5f675b1b9",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏥᏯᎵᎡᎵᏤᎭ",
+    "gloss_english": "I thank"
+  },
+  {
+    "base_id": "4d9d6adee102a7c4",
+    "sentence_id": "b900438e9f53",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎵᎮᎵᏨᎩ",
+    "gloss_english": "rejoiced"
+  },
+  {
+    "base_id": "19babeb0f693c347",
+    "sentence_id": "cb575d8f60c7",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏕᏣᎵᎪᏁᎸ",
+    "gloss_english": "having become partners of"
+  },
+  {
+    "base_id": "f35044c42c77d2ec",
+    "sentence_id": "9f04c0990bfe",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏥᎦᎵᏎᎭ",
+    "gloss_english": "that is upon my back"
+  },
+  {
+    "base_id": "d6e632e7acdc801b",
+    "sentence_id": "f2e43679d286",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎵᏰᏅ",
+    "gloss_english": "herb sprang up"
+  },
+  {
+    "base_id": "588452538fb14496",
+    "sentence_id": "8347c2b90074",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏧᎶᏕᎸᎩ",
+    "gloss_english": "He kicked"
+  },
+  {
+    "base_id": "7c8e71b0c6e667ec",
+    "sentence_id": "869549966d65",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎵᏍᏓᏴᏗ",
+    "gloss_english": "to eat"
+  },
+  {
+    "base_id": "7c8e71b0c6e667ec",
+    "sentence_id": "869549966d65",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎥᏝ ᏴᎦᎦᎵᏍᏓᏴᎲᎦ",
+    "gloss_english": "I do not eat"
+  },
+  {
+    "base_id": "3570e431ba90d218",
+    "sentence_id": "059a812c41d3",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᎾᎵᏍᎩᎠ",
+    "gloss_english": "are dancing"
+  },
+  {
+    "base_id": "66b4eedd4d0e0683",
+    "sentence_id": "68e9bdd5597e",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᎵᏥᏙᎲᏍᎬᎩ",
+    "gloss_english": "proclaiming"
+  },
+  {
+    "base_id": "b4b436895a130e49",
+    "sentence_id": "b4b597c996f2",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᎵᏥᏙᎲᏍᎩ",
+    "gloss_english": "one preaching"
+  },
+  {
+    "base_id": "b5076d10c6ffd386",
+    "sentence_id": "0e9b89ec1671",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎵᏥᏍᏋᎩ",
+    "gloss_english": "he spat"
+  },
+  {
+    "base_id": "8b456886c4ca0f3b",
+    "sentence_id": "369f331dbcf4",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎦᏄᎪᎬᎢ",
+    "gloss_english": "a well"
+  },
+  {
+    "base_id": "694b311f3a323754",
+    "sentence_id": "9951f32dfdd1",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᎹ",
+    "gloss_english": "salted"
+  },
+  {
+    "base_id": "e1e5a16e59d97f1f",
+    "sentence_id": "b530f5a3d3e0",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᎹ",
+    "gloss_english": "Water"
+  },
+  {
+    "base_id": "23caddb7d272fcef",
+    "sentence_id": "1d4d43df4a6a",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᎾᎦᎵᏍᎬᎩ",
+    "gloss_english": "lightnings"
+  },
+  {
+    "base_id": "45c2bcd0d0831d23",
+    "sentence_id": "0d5d8de46385",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᎾᎦᎵᏍᎩ",
+    "gloss_english": "lightning"
+  },
+  {
+    "base_id": "355874c218219191",
+    "sentence_id": "5eea0d571f43",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏂ",
+    "gloss_english": "strawberries"
+  },
+  {
+    "base_id": "79e06ef06f1a435c",
+    "sentence_id": "ac7a2a7452e1",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏂᏌᏛᎥᏍᎬᎩ",
+    "gloss_english": "trying him"
+  },
+  {
+    "base_id": "1f320eb6748628e9",
+    "sentence_id": "563cc2928d44",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏌᎳᏙᏗ",
+    "gloss_english": "lift up"
+  },
+  {
+    "base_id": "5b25999bba9d9924",
+    "sentence_id": "0e71aa6dbeb5",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏌᎳᏓᏅᎩ",
+    "gloss_english": "did lift up"
+  },
+  {
+    "base_id": "edbabc6fc93516ea",
+    "sentence_id": "e1a7e4508b0c",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏍᏓᏱᏳ",
+    "gloss_english": "hard"
+  },
+  {
+    "base_id": "f506c4e8fd1ec970",
+    "sentence_id": "483ea6fb6ed0",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏂᏍᏓᏱᏛᎩ",
+    "gloss_english": "agreed"
+  },
+  {
+    "base_id": "7547681bd11d10a5",
+    "sentence_id": "ea5565f3b632",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏍᏓᏱᏗᏍᎪᎢ",
+    "gloss_english": "He doth harden"
+  },
+  {
+    "base_id": "987029c8e34cbbf3",
+    "sentence_id": "48c46214921c",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏓᏍᏕᎵᏍᎩ",
+    "gloss_english": "Help"
+  },
+  {
+    "base_id": "f1d3740325d63884",
+    "sentence_id": "9d1fdf8493e0",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏚᏍᏗᏰᏔᏅᎢ",
+    "gloss_english": "He begged them"
+  },
+  {
+    "base_id": "e78850333c95ca7f",
+    "sentence_id": "e0a0ec7b360b",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏂᏍᏙᏍᎨᏍᏗ ᎠᏍᏙᏍᎩᏱ",
+    "gloss_english": "shall be grinding in the mill"
+  },
+  {
+    "base_id": "1df495a6f6e45513",
+    "sentence_id": "af26c2439c1c",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏣᏍᏚᏅᎩ",
+    "gloss_english": "seal"
+  },
+  {
+    "base_id": "956a9a90167da00b",
+    "sentence_id": "367355fd53a2",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏍᏛ",
+    "gloss_english": "the borders"
+  },
+  {
+    "base_id": "0e1f5aa8370a488f",
+    "sentence_id": "3dfdeac4ca74",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏍᏛᎩ",
+    "gloss_english": "the deep"
+  },
+  {
+    "base_id": "c0615c3b74adf9c0",
+    "sentence_id": "43d5261e6a4d",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏆᏎᎮᎸ",
+    "gloss_english": "I am directed by"
+  },
+  {
+    "base_id": "6ffc040111a45d8d",
+    "sentence_id": "9a67b7eed6c2",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏎᎯᎲᎢ",
+    "gloss_english": "to number"
+  },
+  {
+    "base_id": "789e832bb919efd8",
+    "sentence_id": "d87ebfbb317f",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏎᏃ",
+    "gloss_english": "but"
+  },
+  {
+    "base_id": "34927e60eec34938",
+    "sentence_id": "202af9bac89b",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏍᎦᎢᎲᎢ",
+    "gloss_english": "for fear"
+  },
+  {
+    "base_id": "e6edc87dabb44cc4",
+    "sentence_id": "bb9a9126b36a",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᎩᏍᎦᏅᏨ",
+    "gloss_english": "my sin"
+  },
+  {
+    "base_id": "6a9a44104dcb0449",
+    "sentence_id": "037b0e31c705",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏍᎦᏯ",
+    "gloss_english": "Man"
+  },
+  {
+    "base_id": "cc17a1b66a07bcaf",
+    "sentence_id": "2ac86c3f597c",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏍᎩᎾ",
+    "gloss_english": "the Devil"
+  },
+  {
+    "base_id": "245376e8beced7e8",
+    "sentence_id": "285271ecbd32",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏍᎪᎵ",
+    "gloss_english": "his head"
+  },
+  {
+    "base_id": "1ed767f3d46ba965",
+    "sentence_id": "389bf9f528a0",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏍᎪᎸᎩ",
+    "gloss_english": "fadeth"
+  },
+  {
+    "base_id": "4a4a3619c176b44e",
+    "sentence_id": "2eda3febb0e4",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎾᏍᎪᏒ",
+    "gloss_english": "they have digged"
+  },
+  {
+    "base_id": "c97a9587b398e582",
+    "sentence_id": "0c0238ba87f7",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏥᏍᏆᎨᏂ",
+    "gloss_english": "my side"
+  },
+  {
+    "base_id": "bd0f52ab27ff3d1e",
+    "sentence_id": "9b4681b4e778",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏂᏍᏆᏂᎪᏒᎩ",
+    "gloss_english": "amazed"
+  },
+  {
+    "base_id": "d2a2058dcfd7dbdb",
+    "sentence_id": "89bbc3915c9c",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏂᏏᎾᏌᏅᎬᎢ",
+    "gloss_english": "their craftiness"
+  },
+  {
+    "base_id": "528ab31b4219c256",
+    "sentence_id": "68ab085515ee",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎭᏑᎬᎵ",
+    "gloss_english": "knead"
+  },
+  {
+    "base_id": "55dec7b9298b081f",
+    "sentence_id": "8deecf99f392",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏒᏂᎸᎢ",
+    "gloss_english": "she touched him"
+  },
+  {
+    "base_id": "e63bb60baf36d38a",
+    "sentence_id": "adef388d33d7",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎩᎾᏘᏲᎸᎩ",
+    "gloss_english": "strife"
+  },
+  {
+    "base_id": "e63bb60baf36d38a",
+    "sentence_id": "adef388d33d7",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎾᏘᏲᎸᎩ"
+  },
+  {
+    "base_id": "7ef887bf40985859",
+    "sentence_id": "6ab0f0f5987c",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏣᏗ",
+    "gloss_english": "fish"
+  },
+  {
+    "base_id": "d910048b4a0076ad",
+    "sentence_id": "93dd59e38eb1",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏣᏤᏍᏙ",
+    "gloss_english": "thy couch"
+  },
+  {
+    "base_id": "f2d59369b33fb307",
+    "sentence_id": "be81a1d674ff",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏥᎳᏃ",
+    "gloss_english": "the fire"
+  },
+  {
+    "base_id": "64c07539f96f9454",
+    "sentence_id": "6cf7f34fe9f2",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏨᏍᏙᏗ",
+    "gloss_english": "a lamp"
+  },
+  {
+    "base_id": "11d10d04dcb451c0",
+    "sentence_id": "192cca2d5a9c",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎢᏣᏛᏓᏍᏓ",
+    "gloss_english": "Hear"
+  },
+  {
+    "base_id": "8534f24e0a9de597",
+    "sentence_id": "1afdd3109022",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎾᏛᎦᏅᎩ",
+    "gloss_english": "heard"
+  },
+  {
+    "base_id": "167f9170eeb866e7",
+    "sentence_id": "a6b02d1d1b9b",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏥᏁᎸᎭ",
+    "gloss_english": "shall give it"
+  },
+  {
+    "base_id": "167f9170eeb866e7",
+    "sentence_id": "a6b02d1d1b9b",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏁᎸᎩ",
+    "gloss_english": "he giveth [it]"
+  },
+  {
+    "base_id": "4277a24832e545fa",
+    "sentence_id": "12de57922460",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏩᏂᎦᎳ",
+    "gloss_english": "infirmity"
+  },
+  {
+    "base_id": "597b86341a7896ed",
+    "sentence_id": "f4f805e89722",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎢᏥᏯᎡᏍᏗ",
+    "gloss_english": "shall be in"
+  },
+  {
+    "base_id": "2bd0a39c941e81a6",
+    "sentence_id": "3c3cd3e7d290",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏓᎬᎩᏯᏅᎲᎩ",
+    "gloss_english": "called after me"
+  },
+  {
+    "base_id": "b85943ab8060c97e",
+    "sentence_id": "bdebd8ad70be",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏰᎵ",
+    "gloss_english": "in the midst"
+  },
+  {
+    "base_id": "d9fd63a87545dcaa",
+    "sentence_id": "7db8d030c73a",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏱᏍᎨᏍᏗ",
+    "gloss_english": "take up"
+  },
+  {
+    "base_id": "d5478c91c2adf89e",
+    "sentence_id": "f4c8217e9955",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏲᎢᏍᏗ",
+    "gloss_english": "be broken"
+  },
+  {
+    "base_id": "ca72e7bf5af9c12b",
+    "sentence_id": "edd43873a60c",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏗᏂᏲᎵ",
+    "gloss_english": "the children"
+  },
+  {
+    "base_id": "b86ac7e54d70ca7c",
+    "sentence_id": "0db52c6d7d09",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏲᎵᎸᎢ",
+    "gloss_english": "salutation"
+  },
+  {
+    "base_id": "585e53b5f21ac1d1",
+    "sentence_id": "f654f2c63bb4",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎢᏥᏲᏍᏓ",
+    "gloss_english": "Destroy"
+  },
+  {
+    "base_id": "85d7b0292a2ce4ec",
+    "sentence_id": "c4ee65587d0f",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏴ",
+    "gloss_english": "I"
+  },
+  {
+    "base_id": "442afaa151b9da34",
+    "sentence_id": "4d5b853fa5fd",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏴᏓᏆᎶᎥᎩ",
+    "gloss_english": "thunders"
+  },
+  {
+    "base_id": "0f91de78b7aab708",
+    "sentence_id": "148c845e9128",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏴᏍᏗ",
+    "gloss_english": "enter"
+  },
+  {
+    "base_id": "544bf75b8f0a6ec5",
+    "sentence_id": "9cc5b6a0a280",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏴᏤᏂ",
+    "gloss_english": "the smooth of his neck"
+  },
+  {
+    "base_id": "d47209af7deaae75",
+    "sentence_id": "925a52f00adf",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏱᏓᏓᏂᎸᎦ",
+    "gloss_english": "receiveth"
+  },
+  {
+    "base_id": "e73a1587f94ed98d",
+    "sentence_id": "36ce3acfd1ba",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏓᏕᏲᎲᏍᎨᏍᏗ",
+    "gloss_english": "teach [them]"
+  },
+  {
+    "base_id": "6d285a65319404e3",
+    "sentence_id": "a856a3dd7d40",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏓᎦᏏ",
+    "gloss_english": "Turtle"
+  },
+  {
+    "base_id": "7bc713db5c8cfa66",
+    "sentence_id": "539587130b44",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏓᏆᎴᎷ",
+    "gloss_english": "waggons"
+  },
+  {
+    "base_id": "69a318a0ea39e7df",
+    "sentence_id": "325b9890a8e1",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏚᎵᏂᏆᏅᏅᎩ",
+    "gloss_english": "having bowed his knees"
+  },
+  {
+    "base_id": "8a6ca6878ceb81bf",
+    "sentence_id": "de40687920f9",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏓᎧᏂᏍᎨᏍᏗ",
+    "gloss_english": "is looking"
+  },
+  {
+    "base_id": "7eddb7e28d8588b9",
+    "sentence_id": "ca36be632c1a",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏔᎳᏑᎳᎩ",
+    "gloss_english": "Loose the sandal of thy feet"
+  },
+  {
+    "base_id": "e929247e9130c568",
+    "sentence_id": "d5d93a4c234f",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏔᎴᎲᎦ",
+    "gloss_english": "rise"
+  },
+  {
+    "base_id": "567c78264dc81a72",
+    "sentence_id": "735d5ac4cfa6",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏓᏥᎶᏍᏗᎭ",
+    "gloss_english": "is drawing"
+  },
+  {
+    "base_id": "637577504fe63e38",
+    "sentence_id": "27ff94a0f7c8",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏚᏫᏒᎢ",
+    "gloss_english": "planted"
+  },
+  {
+    "base_id": "cc499f1732678882",
+    "sentence_id": "bf7cfc03d4a0",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏕᎧᏃᎩᏍᎨᏍᏗ",
+    "gloss_english": "sing"
+  },
+  {
+    "base_id": "7c5eaf437677a2e4",
+    "sentence_id": "90ef820f9cf8",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏚᏪᏲᏅᎩ",
+    "gloss_english": "he was teaching them"
+  },
+  {
+    "base_id": "7dcbcb2d5d7ddf0e",
+    "sentence_id": "3d120d8d693e",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏗᏓᏬᏍᎩ",
+    "gloss_english": "Baptist"
+  },
+  {
+    "base_id": "d3cb23917be07b9e",
+    "sentence_id": "cfe7f765eec6",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏗᏤᏲᎲᏍᎩ",
+    "gloss_english": "your teacher"
+  },
+  {
+    "base_id": "bc7cfadde998379b",
+    "sentence_id": "6ab5347f4eb4",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏗᏕᎶᏆᏍᎩ",
+    "gloss_english": "A disciple"
+  },
+  {
+    "base_id": "4805b82e08e7f33e",
+    "sentence_id": "778fa561fd2a",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏗᎪᏪᎵᏍᎩ",
+    "gloss_english": "scribe"
+  },
+  {
+    "base_id": "f3fc71e8802f8004",
+    "sentence_id": "da24e1b66ae9",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏗᎵ",
+    "gloss_english": "Skunks"
+  },
+  {
+    "base_id": "d20121d68139e244",
+    "sentence_id": "8007a386b198",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏙᏌ",
+    "gloss_english": "gnats"
+  },
+  {
+    "base_id": "99ec97bd015b98e0",
+    "sentence_id": "4fb577982725",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏙᏱ",
+    "gloss_english": "without"
+  },
+  {
+    "base_id": "df5d92330b500f56",
+    "sentence_id": "c52041ce5170",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏗᎩᎸᏫᏍᏓᏁᏗ",
+    "gloss_english": "to work"
+  },
+  {
+    "base_id": "0c9aeac23b31a38b",
+    "sentence_id": "742df44e53d2",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎮᏓ",
+    "gloss_english": "be walking"
+  },
+  {
+    "base_id": "2ea534b80d941859",
+    "sentence_id": "1dde974c4b65",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏍᏕᎾ",
+    "gloss_english": "go"
+  },
+  {
+    "base_id": "2b1fbb70569db165",
+    "sentence_id": "2732d58ef499",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎡᏆ",
+    "gloss_english": "large"
+  },
+  {
+    "base_id": "f7dde47841d3bd30",
+    "sentence_id": "432760f43660",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎡᏉᏂ",
+    "gloss_english": "River"
+  },
+  {
+    "base_id": "d5cdbd65a6a30329",
+    "sentence_id": "393dff6ead9c",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏁᎯ",
+    "gloss_english": "live in"
+  },
+  {
+    "base_id": "0a565707b7512dd7",
+    "sentence_id": "7c0c66aeda04",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎡᎯᏍᏗ",
+    "gloss_english": "distress"
+  },
+  {
+    "base_id": "cdfa745d31c447bb",
+    "sentence_id": "cb78a68ef220",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎡᎳᏗ",
+    "gloss_english": "down"
+  },
+  {
+    "base_id": "88c05566b30b70a4",
+    "sentence_id": "c735456e240a",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎨᎵᎠ",
+    "gloss_english": "it doth seem to me"
+  },
+  {
+    "base_id": "b4b8422b5d6be648",
+    "sentence_id": "f0c678b3977c",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎡᎶᎯ",
+    "gloss_english": "the world"
+  },
+  {
+    "base_id": "4557175f7ed0efba",
+    "sentence_id": "189d43412d8b",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎦᏓᏘ",
+    "gloss_english": "flag"
+  },
+  {
+    "base_id": "37d454170329957b",
+    "sentence_id": "7f0a4b8a1f28",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎦᏗᎨᏂ",
+    "gloss_english": "his heel"
+  },
+  {
+    "base_id": "8b0901cb711c9e3c",
+    "sentence_id": "65846cd5a741",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "(Ꭶ)Ꮩ",
+    "gloss_english": "What"
+  },
+  {
+    "base_id": "33542ec98f3fbcde",
+    "sentence_id": "6618b441e90e",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎯᏙᎨᏍᏗ",
+    "gloss_english": "stand"
+  },
+  {
+    "base_id": "33542ec98f3fbcde",
+    "sentence_id": "6618b441e90e",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎦᏙᎪ",
+    "gloss_english": "he stood"
+  },
+  {
+    "base_id": "c012c9ca23f800c9",
+    "sentence_id": "3a58d65b9093",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎦᏚ",
+    "gloss_english": "bread"
+  },
+  {
+    "base_id": "557dbec3a14304b9",
+    "sentence_id": "6223519eb9eb",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎦᏚᏏ",
+    "gloss_english": "up the mountain"
+  },
+  {
+    "base_id": "65ca2b10f31b71c4",
+    "sentence_id": "94228d5458e0",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏂᎩᎵᎨᏂ",
+    "gloss_english": "the neck"
+  },
+  {
+    "base_id": "30796fac4c6ed51e",
+    "sentence_id": "77fb7c7b28e7",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎦᎭᏗ",
+    "gloss_english": "a wedge"
+  },
+  {
+    "base_id": "af4832b025ea04fb",
+    "sentence_id": "c55c3c0eec9e",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎦᏓ",
+    "gloss_english": "earth"
+  },
+  {
+    "base_id": "540c00660ae35779",
+    "sentence_id": "1ea4f3a3a975",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎦᏓᎭ",
+    "gloss_english": "unclean"
+  },
+  {
+    "base_id": "14f0b37a84039a3a",
+    "sentence_id": "9ddc9a4ac850",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎦᎵᏆᏚ",
+    "gloss_english": "seventeen"
+  },
+  {
+    "base_id": "48769dcb1b999538",
+    "sentence_id": "2cfff9b2d586",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎦᎵᏉᎩ",
+    "gloss_english": "seven"
+  },
+  {
+    "base_id": "98fc714c6fd2ae29",
+    "sentence_id": "7d8732c0b8a6",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎦᎵᎲᎢ",
+    "gloss_english": "sleeping"
+  },
+  {
+    "base_id": "86e43ec3ac7c357e",
+    "sentence_id": "8c2d9eb6ec0c",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎦᎵᏆᏍᎪᎯ",
+    "gloss_english": "seventy"
+  },
+  {
+    "base_id": "a6ff8002e8bfa4a9",
+    "sentence_id": "7dd4f37aedb7",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎦᎵᏦᏕ",
+    "gloss_english": "the house"
+  },
+  {
+    "base_id": "07ce2bb1a5d748dc",
+    "sentence_id": "878bee46932e",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏗᎦᎸᏙᏗ",
+    "gloss_english": "vase"
+  },
+  {
+    "base_id": "5fc476e1e7314e76",
+    "sentence_id": "8d6f501b2d66",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎥᏝ ᏱᎦᎸᏍᎦ",
+    "gloss_english": "doth not slumber"
+  },
+  {
+    "base_id": "c09c5f25a3e834c2",
+    "sentence_id": "91dea1ba8cd9",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏗᎦᏃᎨᏂ",
+    "gloss_english": "his arms"
+  },
+  {
+    "base_id": "1d21f9f948c00cff",
+    "sentence_id": "a53865e2085a",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎦᏅᎦ",
+    "gloss_english": "Crouching"
+  },
+  {
+    "base_id": "d9a01ed14d4296af",
+    "sentence_id": "2ff7442e9bf7",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎪᎱᏍᏗ",
+    "gloss_english": "a thing"
+  },
+  {
+    "base_id": "efd98e9c7f84339d",
+    "sentence_id": "fd183838da2c",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏂᏰᎮᏍᏗ",
+    "gloss_english": "shall bear"
+  },
+  {
+    "base_id": "200861e2ebecc6a7",
+    "sentence_id": "00e2ca0e4406",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏗᎦᎴᏂ",
+    "gloss_english": "his ears"
+  },
+  {
+    "base_id": "687ef18ec7dee544",
+    "sentence_id": "bb65f6457995",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎯᎴᏴᏍᏓ",
+    "gloss_english": "cut it off"
+  },
+  {
+    "base_id": "28a270ddc1b6e0a9",
+    "sentence_id": "3838c8b2dc07",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎦᎵᎬ",
+    "gloss_english": "fiery"
+  },
+  {
+    "base_id": "264c168be6960782",
+    "sentence_id": "93445d867171",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎵᎥᏂᎸᎩ",
+    "gloss_english": "scourge"
+  },
+  {
+    "base_id": "aa5d15185e210eef",
+    "sentence_id": "3d340098ee49",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏕᎯᎶᎩᏍᎨᏍᏗ",
+    "gloss_english": "thou tillest"
+  },
+  {
+    "base_id": "84fa0b072fab9808",
+    "sentence_id": "af25ded896c2",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎦᎶᎯᏍᏗ",
+    "gloss_english": "gate"
+  },
+  {
+    "base_id": "7586379a61590c24",
+    "sentence_id": "90a8500760dd",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎦᎶᎯᏎᎭ",
+    "gloss_english": "is being passed by"
+  },
+  {
+    "base_id": "e647dd0c587492f7",
+    "sentence_id": "a6c9f0fa54ae",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏥᎷᏱᏍᎦ",
+    "gloss_english": "I am chopping it"
+  },
+  {
+    "base_id": "82ffbaccaf4d21ec",
+    "sentence_id": "ab304a921346",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏥᎸᏉᏗᎭ",
+    "gloss_english": "I do glorify"
+  },
+  {
+    "base_id": "a2f67924d18ab0a0",
+    "sentence_id": "a0edefb789f4",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎦᎸᎳᏗ",
+    "gloss_english": "high"
+  },
+  {
+    "base_id": "3e7ed5419a8bc11a",
+    "sentence_id": "f8af6f253267",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎦᎸᎶᎢ",
+    "gloss_english": "the heavens"
+  },
+  {
+    "base_id": "094874aa8d87bea3",
+    "sentence_id": "2e8f59b3fcd7",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎯᎸᎥᎦ",
+    "gloss_english": "Put"
+  },
+  {
+    "base_id": "f350f1eeb7f2ed27",
+    "sentence_id": "b00e34856f36",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎯᎾᎩ",
+    "gloss_english": "take up"
+  },
+  {
+    "base_id": "c4529a1e5946097a",
+    "sentence_id": "e450b21b4f36",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎦᎾᎩᎳ",
+    "gloss_english": "He lives"
+  },
+  {
+    "base_id": "57b58d00d491e8b0",
+    "sentence_id": "60ff8393638d",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎦᎾᎦᏘ",
+    "gloss_english": "The doctor"
+  },
+  {
+    "base_id": "429d3f41b8a14975",
+    "sentence_id": "19fa9108d3fd",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎦᏁᎩᏍᎨᏍᏗ",
+    "gloss_english": "take"
+  },
+  {
+    "base_id": "b18675d4dbdb1eb9",
+    "sentence_id": "a5d0cf384cb7",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏕᎦᏁᎭ",
+    "gloss_english": "hath"
+  },
+  {
+    "base_id": "d45b60c1c4a46d34",
+    "sentence_id": "8ad121e9c917",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎦᏁᏥᎢ",
+    "gloss_english": "the breast"
+  },
+  {
+    "base_id": "a5e37c153cc468d1",
+    "sentence_id": "f762f1ae2239",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏘᏄᎦ",
+    "gloss_english": "take up"
+  },
+  {
+    "base_id": "a6c35f722c08f8c8",
+    "sentence_id": "4c320695bff7",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏓᏂᏉᏘᎯ",
+    "gloss_english": "he"
+  },
+  {
+    "base_id": "a6c35f722c08f8c8",
+    "sentence_id": "4c320695bff7",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏱᎦᏂᏆᏘᎭ",
+    "gloss_english": "who is despising"
+  },
+  {
+    "base_id": "a6c35f722c08f8c8",
+    "sentence_id": "4c320695bff7",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_english": "despise"
+  },
+  {
+    "base_id": "5ece1a093c5259ea",
+    "sentence_id": "a8c19cc994ff",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎦᏂᏌᎲᎢ",
+    "gloss_english": "his burial"
+  },
+  {
+    "base_id": "7b58b9e4675897f3",
+    "sentence_id": "61abf596c834",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏂᏴᎲᎩ",
+    "gloss_english": "caught"
+  },
+  {
+    "base_id": "4be1b8fbcd0d2954",
+    "sentence_id": "7baf8da89c72",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏣᏃᏍᎩᏒᎩ",
+    "gloss_english": "steal"
+  },
+  {
+    "base_id": "46c0a1b25432da22",
+    "sentence_id": "3a916da9909b",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎢᏥᏄᎪᎢ",
+    "gloss_english": "go out from"
+  },
+  {
+    "base_id": "42d8a8505a64eecf",
+    "sentence_id": "f8102f74d72b",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎦᏄᎸᎯ",
+    "gloss_english": "herb"
+  },
+  {
+    "base_id": "19e3381b9a166c8f",
+    "sentence_id": "b820c687874f",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏅᎢᏍᏗ",
+    "gloss_english": "fall on the ground"
+  },
+  {
+    "base_id": "5ebc2b692a917dfc",
+    "sentence_id": "37e4eddbf137",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎦᏅᏅ",
+    "gloss_english": "the way"
+  },
+  {
+    "base_id": "e3c0e881e14911bf",
+    "sentence_id": "dcd811095b34",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏴᎦᏅᎥᏏ",
+    "gloss_english": "will he present to him"
+  },
+  {
+    "base_id": "6158080329c088fd",
+    "sentence_id": "c5ce79d6d7d9",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏗᎦᏅᏍᎨᏂ",
+    "gloss_english": "his legs"
+  },
+  {
+    "base_id": "c5e67113ab55c06b",
+    "sentence_id": "6f659a61b194",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏂᏅᏅᎢ",
+    "gloss_english": "they laid him"
+  },
+  {
+    "base_id": "bacb44417f0d941e",
+    "sentence_id": "285f82ef7d35",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎦᏌᎴᎾ",
+    "gloss_english": "the cloak"
+  },
+  {
+    "base_id": "323ed6b8eb564c40",
+    "sentence_id": "c1e7b7ea7959",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏕᎦᏍᎩᎸᎢ",
+    "gloss_english": "the tables"
+  },
+  {
+    "base_id": "14e3db3fdd6aba6c",
+    "sentence_id": "038b229098e7",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏓᏥᏬᏂᏏ",
+    "gloss_english": "I will speak"
+  },
+  {
+    "base_id": "e0e4ed08c080ba0b",
+    "sentence_id": "41979d9205ed",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏗᎦᏯᎸᏗ",
+    "gloss_english": "postage stamps"
+  },
+  {
+    "base_id": "a54bf9d2190420dd",
+    "sentence_id": "2fbba05e1f39",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏕᎦᏰᏫᏍᎦ",
+    "gloss_english": "She is sewing"
+  },
+  {
+    "base_id": "d42a7e0a0a0d3580",
+    "sentence_id": "f31485821c99",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎦᏲᎵ",
+    "gloss_english": "a little"
+  },
+  {
+    "base_id": "941430b1c61251d9",
+    "sentence_id": "26a8e6619c7c",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎦᏳᎳ",
+    "gloss_english": "already"
+  },
+  {
+    "base_id": "82302867eaced71e",
+    "sentence_id": "45eb9cb8d83b",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏕᎨᎶᎰᎢ",
+    "gloss_english": "doth nourish them"
+  },
+  {
+    "base_id": "d9933c6ae00f5d32",
+    "sentence_id": "70eb16c363ba",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏂᎩᎬ",
+    "gloss_english": "the blood"
+  },
+  {
+    "base_id": "a08e6862756a08c3",
+    "sentence_id": "eacb37f54a22",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎩᎦᎨ",
+    "gloss_english": "red"
+  },
+  {
+    "base_id": "892e747e0e4b8bdc",
+    "sentence_id": "14fcfe15830f",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎩᎵ",
+    "gloss_english": "the dog"
+  },
+  {
+    "base_id": "a76d5d8b0df37040",
+    "sentence_id": "f66cfdcba840",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎪᎩ",
+    "gloss_english": "the summer"
+  },
+  {
+    "base_id": "e1a6deac7b3668cf",
+    "sentence_id": "8e51c3bbbd79",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎪᎯ",
+    "gloss_english": "after a little time"
+  },
+  {
+    "base_id": "61ecce3d30694cec",
+    "sentence_id": "101c06eada89",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏱᎪᎯᏳᎲᏍᎦ",
+    "gloss_english": "is believing"
+  },
+  {
+    "base_id": "589698caa9724dd0",
+    "sentence_id": "70c3f3aa3df3",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏬᎰᏒᎩ",
+    "gloss_english": "suffered it to fall off"
+  },
+  {
+    "base_id": "5ea8bcce3337c933",
+    "sentence_id": "4f4597a3a235",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏗᎪᏪᎵ",
+    "gloss_english": "the book"
+  },
+  {
+    "base_id": "74a13b452244b220",
+    "sentence_id": "0f897f7247ab",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏬᏪᎳᏅᎩ",
+    "gloss_english": "he was writing"
+  },
+  {
+    "base_id": "714480def993aa1e",
+    "sentence_id": "ee3fd96cd25f",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎪᎢ",
+    "gloss_english": "oil"
+  },
+  {
+    "base_id": "8de8c88c96f6e0a0",
+    "sentence_id": "80d4cf4878bb",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎪᎳ",
+    "gloss_english": "in winter"
+  },
+  {
+    "base_id": "28c0496d0a754e35",
+    "sentence_id": "b56cdf734587",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏱᎪᎵᎦ",
+    "gloss_english": "I understand"
+  },
+  {
+    "base_id": "664a8f54fb2408c1",
+    "sentence_id": "2f8c57f3bc3d",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎫᎫ",
+    "gloss_english": "vials"
+  },
+  {
+    "base_id": "5c071ca623c2af4a",
+    "sentence_id": "f2dda09e2422",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎫᎴ",
+    "gloss_english": "acorns"
+  },
+  {
+    "base_id": "bd531131fe5d062e",
+    "sentence_id": "d4e742b409ac",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎫᎴᏗᏍᎪᏂᎯ",
+    "gloss_english": "a dove"
+  },
+  {
+    "base_id": "871ea2885ef9967f",
+    "sentence_id": "cad9764d3d78",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏩᎩᏒᎩ",
+    "gloss_english": "drew him out"
+  },
+  {
+    "base_id": "2a522786470c493c",
+    "sentence_id": "e89a5fc0e1cb",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎬᏗ",
+    "gloss_english": "from"
+  },
+  {
+    "base_id": "2c34f0daa6698c24",
+    "sentence_id": "238c29cc2099",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎬᏂᏍᎦ",
+    "gloss_english": "is cooking"
+  },
+  {
+    "base_id": "f29d0b5210fea05b",
+    "sentence_id": "e23d01858098",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏫᏘᏯᎧᏏ",
+    "gloss_english": "Brooms"
+  },
+  {
+    "base_id": "255021af7339ab1b",
+    "sentence_id": "2f1fa1075ebb",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏂ",
+    "gloss_english": "here"
+  },
+  {
+    "base_id": "9244fbaa807b33d3",
+    "sentence_id": "60ab6640a458",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎭᏩ",
+    "gloss_english": "Alright"
+  },
+  {
+    "base_id": "bf591621e9274099",
+    "sentence_id": "9320f422a8f3",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎭᏫᏂ",
+    "gloss_english": "inside"
+  },
+  {
+    "base_id": "9c3d4f2f91e55d32",
+    "sentence_id": "5b454092a142",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎭᏫᏯ",
+    "gloss_english": "flesh"
+  },
+  {
+    "base_id": "a92ac90be5ec59ca",
+    "sentence_id": "e9781d31408e",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎭᏰᎳᏍᏗ",
+    "gloss_english": "the knife"
+  },
+  {
+    "base_id": "9f42fbd5c12653b3",
+    "sentence_id": "704507b6145b",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎯᎠ",
+    "gloss_english": "this"
+  },
+  {
+    "base_id": "9b4366c719baa38f",
+    "sentence_id": "0b022baf127b",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎯᏍᎦᏍᎪᎯ",
+    "gloss_english": "fifty"
+  },
+  {
+    "base_id": "6e835a5eec1c2830",
+    "sentence_id": "3d1809428598",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎯᏍᎩ",
+    "gloss_english": "five"
+  },
+  {
+    "base_id": "3ba65861ce9fa912",
+    "sentence_id": "9e87fcbb34e7",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎲᎦᎢᏴ",
+    "gloss_english": "When"
+  },
+  {
+    "base_id": "cc1ed87dbe67f79d",
+    "sentence_id": "9f7bf9226ee8",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎢᎦ",
+    "gloss_english": "noon"
+  },
+  {
+    "base_id": "e6929ed4c43329e2",
+    "sentence_id": "cf411d834584",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎥᎤᎷᏨᎩ",
+    "gloss_english": "came"
+  },
+  {
+    "base_id": "df014bb5d2a0b6c0",
+    "sentence_id": "2d3440c1673d",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎢᎪᎯᏛ",
+    "gloss_english": "during"
+  },
+  {
+    "base_id": "14dc9389eaa19ce5",
+    "sentence_id": "478c012c87bd",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎢᏅᎯᏳ",
+    "gloss_english": "far off"
+  },
+  {
+    "base_id": "96aa35a3fae434ee",
+    "sentence_id": "5a7606eafa56",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎢᏧᎳ",
+    "gloss_english": "both"
+  },
+  {
+    "base_id": "898e998f9c126b86",
+    "sentence_id": "a985e8ab8ca6",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎢᏳᏉ",
+    "gloss_english": "the time of"
+  },
+  {
+    "base_id": "fd12b1fec4c405bd",
+    "sentence_id": "24ca2601ba8d",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎢᏳᏍᏗ",
+    "gloss_english": "like"
+  },
+  {
+    "base_id": "abeac4fcc56b94d8",
+    "sentence_id": "1fade2e79ffe",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎢᏳᏍᏗᏉ",
+    "gloss_english": "Whatever"
+  },
+  {
+    "base_id": "c404dc789f828526",
+    "sentence_id": "2d62a38890cc",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎦᎪ",
+    "gloss_english": "Who"
+  },
+  {
+    "base_id": "d86601dd478da212",
+    "sentence_id": "af3eb29c5b2c",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎧᎵᏎᏥ",
+    "gloss_english": "candy"
+  },
+  {
+    "base_id": "8a7a86e6717e43e9",
+    "sentence_id": "0cccdaa15df8",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎧᎶᏇᏗ",
+    "gloss_english": "locust"
+  },
+  {
+    "base_id": "921c38fa380e12e6",
+    "sentence_id": "a69c8e8875ba",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎵᏦᏔᏅᎢ",
+    "gloss_english": "stretched out his tent"
+  },
+  {
+    "base_id": "3e7e4a9630ba079c",
+    "sentence_id": "0e20531803b1",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎧᎾᏁᏍᎩ",
+    "gloss_english": "A spider"
+  },
+  {
+    "base_id": "56019ff548394e9f",
+    "sentence_id": "a36fcc9a68d1",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏣᏁᏨᎢ",
+    "gloss_english": "thy word"
+  },
+  {
+    "base_id": "fa1821d8760116f9",
+    "sentence_id": "a02efcdbe3be",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎧᏁᏌᎢᎢ",
+    "gloss_english": "box"
+  },
+  {
+    "base_id": "2b3423d90f2888ac",
+    "sentence_id": "289f860dba97",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎧᏁᏍᎦ",
+    "gloss_english": "straw"
+  },
+  {
+    "base_id": "16e81869b466e46e",
+    "sentence_id": "1cb18dcea26e",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏗᎧᏃᎩᏍᏙᏗ",
+    "gloss_english": "harp"
+  },
+  {
+    "base_id": "16e81869b466e46e",
+    "sentence_id": "1cb18dcea26e",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏗᎧᏃᎩᏛ",
+    "gloss_english": "harped"
+  },
+  {
+    "base_id": "661af0a382b4f872",
+    "sentence_id": "0268e0301205",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎧᏃᎮᎭ",
+    "gloss_english": "he doth testify"
+  },
+  {
+    "base_id": "661af0a382b4f872",
+    "sentence_id": "0268e0301205",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏃᎮᎸᎢ",
+    "gloss_english": "his testimony"
+  },
+  {
+    "base_id": "b2f32746b862a90f",
+    "sentence_id": "8a6ef0f59471",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏅᏩᏅᎩ",
+    "gloss_english": "he healed him"
+  },
+  {
+    "base_id": "340a0b0526577c8c",
+    "sentence_id": "0c2d903c9841",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏪᎳᏗᏙᎸᎢ",
+    "gloss_english": "with"
+  },
+  {
+    "base_id": "b41b6f74adfe239e",
+    "sentence_id": "4cc29ff856d3",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎨᎻᎵᎯ",
+    "gloss_english": "the camel"
+  },
+  {
+    "base_id": "450db9ec6731e728",
+    "sentence_id": "75aa0f852989",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎥᏝ ᎩᎶᎢ",
+    "gloss_english": "no one"
+  },
+  {
+    "base_id": "c96d99e388cba276",
+    "sentence_id": "dc8f9f1612ca",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏗᎩᎪᎳ",
+    "gloss_english": "my bone"
+  },
+  {
+    "base_id": "da14bdbdfa3c00b9",
+    "sentence_id": "a55b0582e88c",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏆᎾ",
+    "gloss_english": "Peaches"
+  },
+  {
+    "base_id": "45ceb2d8dfe4f083",
+    "sentence_id": "834320619121",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎿᏛᎦ",
+    "gloss_english": "Do this"
+  },
+  {
+    "base_id": "45ceb2d8dfe4f083",
+    "sentence_id": "834320619121",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎾᏛᏁᎰᎢ",
+    "gloss_english": "he doth"
+  },
+  {
+    "base_id": "825da29036c6f905",
+    "sentence_id": "d7f12e88c0bb",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎾᏉ",
+    "gloss_english": "Now"
+  },
+  {
+    "base_id": "ea3b94c0adef0382",
+    "sentence_id": "f92a91e8e65e",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎾᎥᏂ",
+    "gloss_english": "near"
+  },
+  {
+    "base_id": "d4bb8527060c40cf",
+    "sentence_id": "12fc7189b626",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏁᎳᏍᎪᎯ",
+    "gloss_english": "eighty"
+  },
+  {
+    "base_id": "fd673a2684af2e66",
+    "sentence_id": "b3dbf4dccc26",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏂᎦᏓ",
+    "gloss_english": "everyone"
+  },
+  {
+    "base_id": "836370ac8a62e7d7",
+    "sentence_id": "3a061855f840",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏄᏪᏒᎩ",
+    "gloss_english": "saying"
+  },
+  {
+    "base_id": "9f624201b59c759f",
+    "sentence_id": "dcf8a46f2355",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏂᎪᎯᎸᎢ",
+    "gloss_english": "always"
+  },
+  {
+    "base_id": "b628e1be6c01e4f6",
+    "sentence_id": "2566f3ea25aa",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏂᎬᎢ",
+    "gloss_english": "through all"
+  },
+  {
+    "base_id": "311ca676298e1da6",
+    "sentence_id": "3bf1307cce6a",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏃᏈᏏ",
+    "gloss_english": "meadowlarks"
+  },
+  {
+    "base_id": "f6ab2dd476c462a0",
+    "sentence_id": "f753cdc2b4f5",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏃᎴ",
+    "gloss_english": "and"
+  },
+  {
+    "base_id": "7b1dc105ae7ef539",
+    "sentence_id": "2c65eeacfc9f",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏃᏳ",
+    "gloss_english": "sand"
+  },
+  {
+    "base_id": "9654da4060dc5530",
+    "sentence_id": "047d6c315ca7",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏅᎩ",
+    "gloss_english": "four"
+  },
+  {
+    "base_id": "b38da241aad3f4e4",
+    "sentence_id": "3b8df919614b",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏅᏃᎯ",
+    "gloss_english": "the way"
+  },
+  {
+    "base_id": "f96cb59a56e8cf8b",
+    "sentence_id": "2ab46251f8c7",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏅᏬᏗ",
+    "gloss_english": "medicine"
+  },
+  {
+    "base_id": "13a60085d7322628",
+    "sentence_id": "10316906e5d9",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏅᏯ",
+    "gloss_english": "rocks"
+  },
+  {
+    "base_id": "242b3336b0822ea8",
+    "sentence_id": "753d9afda9ec",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏅᏱ ᎤᏅᏮᎢ",
+    "gloss_english": "rock armor"
+  },
+  {
+    "base_id": "54a098f05a34a6f9",
+    "sentence_id": "d03410b1b815",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎣᏓᎵ",
+    "gloss_english": "the mountains"
+  },
+  {
+    "base_id": "45e12cdde565e3e6",
+    "sentence_id": "9e676c8582c8",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎣᏂ",
+    "gloss_english": "no more"
+  },
+  {
+    "base_id": "8f28fa6340d642c3",
+    "sentence_id": "c0947a817efc",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎣᏍᏓ",
+    "gloss_english": "good"
+  },
+  {
+    "base_id": "9f0ba4324bb0a054",
+    "sentence_id": "e13185f59636",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎣᏏ",
+    "gloss_english": "very well"
+  },
+  {
+    "base_id": "a6f4e4396e292e33",
+    "sentence_id": "5f4e8b3567e5",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎣᏏᏳ",
+    "gloss_english": "good"
+  },
+  {
+    "base_id": "58504ca9858f387f",
+    "sentence_id": "00a8830b69f8",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏌᎶᎵ",
+    "gloss_english": "A squirrel"
+  },
+  {
+    "base_id": "1647e651b6f2142a",
+    "sentence_id": "7e6b205c6c0f",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏍᏓᏯ",
+    "gloss_english": "hard"
+  },
+  {
+    "base_id": "52ac467a01f56ad8",
+    "sentence_id": "1819e70e6e0a",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏎᎦ",
+    "gloss_english": "awhile"
+  },
+  {
+    "base_id": "8b89fb637f06792e",
+    "sentence_id": "13c1ada2051f",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏏᏆ",
+    "gloss_english": "swine"
+  },
+  {
+    "base_id": "298c6ffd7ffe41b2",
+    "sentence_id": "d3992a0f7819",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏐᏈᎵ",
+    "gloss_english": "Horses"
+  },
+  {
+    "base_id": "73b61718f0f3c3f7",
+    "sentence_id": "7f88727cbb86",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏐᏊ",
+    "gloss_english": "one"
+  },
+  {
+    "base_id": "46c1e78361a99eb3",
+    "sentence_id": "791e4218e1b7",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏐᎣᏁᎳ",
+    "gloss_english": "the nine"
+  },
+  {
+    "base_id": "a8a2e6ab46a456b5",
+    "sentence_id": "3bac602e89f0",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏐᎣᏁᎳᏍᎪᎯ",
+    "gloss_english": "ninety"
+  },
+  {
+    "base_id": "14b3db767f76fbd9",
+    "sentence_id": "c7b9b85b3d4e",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏑᏓᎵᏍᎪᎯ",
+    "gloss_english": "sixty"
+  },
+  {
+    "base_id": "14c988fdee20e522",
+    "sentence_id": "adbbb94ff557",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏑᏓᎵ",
+    "gloss_english": "six"
+  },
+  {
+    "base_id": "efb535489ccaa819",
+    "sentence_id": "b6c4307f565c",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏑᎾᎴᎢ",
+    "gloss_english": "to-morrow"
+  },
+  {
+    "base_id": "48f2e4454f76e06b",
+    "sentence_id": "fca0fb5d7aae",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏑᎾᏙᏓᏆᏍᏗ",
+    "gloss_english": "the week"
+  },
+  {
+    "base_id": "6fc99081c0851c06",
+    "sentence_id": "53638f9162f4",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏔᎵ",
+    "gloss_english": "Two"
+  },
+  {
+    "base_id": "9ca858772c6b6f27",
+    "sentence_id": "073950247554",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏔᎷᏣ",
+    "gloss_english": "baskets"
+  },
+  {
+    "base_id": "2833b7928a1aa239",
+    "sentence_id": "07b5d5a99a17",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏖᎸᎳᏗ",
+    "gloss_english": "grapes"
+  },
+  {
+    "base_id": "361ae3afdfa72caa",
+    "sentence_id": "53cdf58ecaaf",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏘᎾ",
+    "gloss_english": "lice"
+  },
+  {
+    "base_id": "462ac75f7995ae3b",
+    "sentence_id": "70c577507cfd",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏥᏍᏚ",
+    "gloss_english": "rabbit"
+  },
+  {
+    "base_id": "b4f15fa9c070c1c0",
+    "sentence_id": "38f700983827",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏥᏍᏆ",
+    "gloss_english": "A Bird"
+  },
+  {
+    "base_id": "1cec42d3e6f8f6d7",
+    "sentence_id": "10422cf82237",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏥᏍᏆᏯ",
+    "gloss_english": "sparrows"
+  },
+  {
+    "base_id": "fb53952cb26f4f3d",
+    "sentence_id": "53228c94299a",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏦᎢ",
+    "gloss_english": "three"
+  },
+  {
+    "base_id": "2243e3cf6ac929fe",
+    "sentence_id": "01352b9e6769",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏧᎦᎾᏮᎢ",
+    "gloss_english": "south"
+  },
+  {
+    "base_id": "e1a4ee75d81408f3",
+    "sentence_id": "7f6cd2a8b547",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏧᎬᏩᎶᏗ",
+    "gloss_english": "treasure"
+  },
+  {
+    "base_id": "7580a205a3c43428",
+    "sentence_id": "538f41b727ed",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏧᏴᏢᎢ",
+    "gloss_english": "north"
+  },
+  {
+    "base_id": "57a8f0759afacfdc",
+    "sentence_id": "971904f2e17a",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏧᎳ",
+    "gloss_english": "The foxes"
+  },
+  {
+    "base_id": "5bd1574a7789e74f",
+    "sentence_id": "eb8cc24141d9",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏧᎳᏍᎩ",
+    "gloss_english": "the pot"
+  },
+  {
+    "base_id": "48b967673423407f",
+    "sentence_id": "e9a40fc213b8",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏚᏯ",
+    "gloss_english": "beans"
+  },
+  {
+    "base_id": "691166ead75d5daa",
+    "sentence_id": "cb2595f18167",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏧᎾᏓᎨᏳᎯᏉᏍᎩᏂ",
+    "gloss_english": "but loving"
+  },
+  {
+    "base_id": "72f81aa91a5ec64d",
+    "sentence_id": "e6514e1ca2a8",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏓᎵᎢ",
+    "gloss_english": "his Wife"
+  },
+  {
+    "base_id": "ae4069afda8c877d",
+    "sentence_id": "0a6c31f7fcc9",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏓᏅᏙ",
+    "gloss_english": "the heart"
+  },
+  {
+    "base_id": "73b8065f64d50ece",
+    "sentence_id": "0bdb72116db6",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏓᏔᏅᎯ",
+    "gloss_english": "the fruit"
+  },
+  {
+    "base_id": "ee5846523426395e",
+    "sentence_id": "953814693861",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏣᏕᎨᏍᏗ",
+    "gloss_english": "cast from thee"
+  },
+  {
+    "base_id": "3601e71aea46c199",
+    "sentence_id": "d6c2f6cde15d",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏕᏗᏴᏌᏗᏒᎢ",
+    "gloss_english": "in the year"
+  },
+  {
+    "base_id": "02863028904e0cd5",
+    "sentence_id": "0a436de1e8cc",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏕᏅ",
+    "gloss_english": "having been born in"
+  },
+  {
+    "base_id": "32055d7e273753e7",
+    "sentence_id": "5275c61e3637",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᎩᏙ",
+    "gloss_english": "brother"
+  },
+  {
+    "base_id": "cfdf1eb39839a4a9",
+    "sentence_id": "42da421870ea",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏂᏙᏓ",
+    "gloss_english": "their father"
+  },
+  {
+    "base_id": "a78d10e3aed5b85a",
+    "sentence_id": "0186ec41afd0",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏣᏙᏩᏗᏍᎬ",
+    "gloss_phonetic": "tsadowadisgv",
+    "gloss_english": "your shadow"
+  },
+  {
+    "base_id": "89cdb9e2c6f749f6",
+    "sentence_id": "6ddb9bb8987e",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎾᏚᎵᎭ",
+    "gloss_english": "want"
+  },
+  {
+    "base_id": "8a034a6aae121d76",
+    "sentence_id": "c34764410777",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎦᎾᏍᏓ",
+    "gloss_english": "sweets"
+  },
+  {
+    "base_id": "940e849c0818cf60",
+    "sentence_id": "1bf516e6e327",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎫᎫ",
+    "gloss_english": "Owl"
+  },
+  {
+    "base_id": "5adb6c0f16b8ca15",
+    "sentence_id": "4d27f442165b",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎬᏫᏳᎯ",
+    "gloss_english": "The Lord"
+  },
+  {
+    "base_id": "0c0b495096724fb8",
+    "sentence_id": "0b3cd87a8ab5",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏂᏇᏓᎸᎢ",
+    "gloss_english": "flesh"
+  },
+  {
+    "base_id": "84ce92929a1ab2aa",
+    "sentence_id": "3ec13669cf96",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏱᏗᏣᎭ",
+    "gloss_english": "might you have"
+  },
+  {
+    "base_id": "8da47ad0d1217bbc",
+    "sentence_id": "2599300dc34d",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏗᏣᎳᏏᏕᏂ",
+    "gloss_english": "thy feet"
+  },
+  {
+    "base_id": "3489b997c141eb2c",
+    "sentence_id": "db0767f8d3ee",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎾᏅᏓᏛᎩ",
+    "gloss_english": "remembered"
+  },
+  {
+    "base_id": "c96e4012f9a189f2",
+    "sentence_id": "c3dd7adb7c9d",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏂᎬᎨᏍᏗ",
+    "gloss_english": "lack"
+  },
+  {
+    "base_id": "43657116f892eea4",
+    "sentence_id": "23325cab5946",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏅᎪᎳᏛ",
+    "gloss_english": "the bow"
+  },
+  {
+    "base_id": "1c5144f2667049df",
+    "sentence_id": "60de66afb281",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏔᏕᎩᏍᎨᏍᏗ",
+    "gloss_english": "doth thirst"
+  },
+  {
+    "base_id": "4ebc5442697543e8",
+    "sentence_id": "cb7111b3e816",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏱᏣᏩᎯ",
+    "gloss_english": "to buy"
+  },
+  {
+    "base_id": "d7d4e733d51a474b",
+    "sentence_id": "64d20fb6dee6",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏪᎷᏅᏉ",
+    "gloss_english": "crying"
+  },
+  {
+    "base_id": "858ced4909da94ed",
+    "sentence_id": "1324b6331ef7",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᎩᏰᎯ",
+    "gloss_english": "my husband"
+  },
+  {
+    "base_id": "379a29f14cca3492",
+    "sentence_id": "c3e010468e21",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏴᏍᏗ",
+    "gloss_english": "bitterness"
+  },
+  {
+    "base_id": "0290df6b3599d086",
+    "sentence_id": "fc67a64387cf",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏣᎧᏛᎢ",
+    "gloss_english": "thy face"
+  },
+  {
+    "base_id": "8c2071bd5864158d",
+    "sentence_id": "47904b8e6de4",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎩᎸᏅᎩ",
+    "gloss_english": "did sit upon"
+  },
+  {
+    "base_id": "18d3338961d49346",
+    "sentence_id": "884fb5877c97",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎦᏔ",
+    "gloss_english": "seed"
+  },
+  {
+    "base_id": "bae90becfe854e26",
+    "sentence_id": "c11ab0f13006",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎵᏍᏆᎵᏗ",
+    "gloss_phonetic": "uhlsgwahldi",
+    "gloss_english": "finally"
+  },
+  {
+    "base_id": "a7e0baaebf4dd764",
+    "sentence_id": "908a60015543",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎵᏏ",
+    "gloss_english": "grandmother"
+  },
+  {
+    "base_id": "b59bd3f5538ee119",
+    "sentence_id": "cd7307a87a42",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎵᏬᏨᎯ",
+    "gloss_english": "the carcase"
+  },
+  {
+    "base_id": "043cc5c8f8198590",
+    "sentence_id": "e2186bd0444d",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎶᎩᎸ",
+    "gloss_english": "the cloud"
+  },
+  {
+    "base_id": "00ecdc254e8d3c3d",
+    "sentence_id": "030d9bc4db5b",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎢᎦ ᎤᎶᏐᏅᎯ",
+    "gloss_english": "the morrow"
+  },
+  {
+    "base_id": "619fdbd097faf810",
+    "sentence_id": "cf1f901ef45c",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎵᏍᏓᏴᏗ",
+    "gloss_english": "food"
+  },
+  {
+    "base_id": "ff968207e4c91d4c",
+    "sentence_id": "fa2b971324c5",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎸᎢ",
+    "gloss_english": "her sister"
+  },
+  {
+    "base_id": "ef26bc193f742679",
+    "sentence_id": "01445f982103",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎾᎡᏍᏗ",
+    "gloss_english": "he who is having"
+  },
+  {
+    "base_id": "bbf16cc7952fdfc4",
+    "sentence_id": "a732bc355d5f",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎾᎵᎪᎭ",
+    "gloss_english": "himself with his"
+  },
+  {
+    "base_id": "66df74489fd0e523",
+    "sentence_id": "db140b3353fb",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᎾᎵᎢᏃ",
+    "gloss_english": "his Friend"
+  },
+  {
+    "base_id": "42e305640ff36084",
+    "sentence_id": "3fcf9e731315",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᎩᎾᏫᎠ",
+    "gloss_english": "tremble"
+  },
+  {
+    "base_id": "ac20b6cf8f0fa5ca",
+    "sentence_id": "702a90135f06",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎢᏥᎾᏕᎨᏍᏗ",
+    "gloss_english": "sell"
+  },
+  {
+    "base_id": "881494821e385bbf",
+    "sentence_id": "ae95fb69eae9",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏁᎬ",
+    "gloss_english": "white"
+  },
+  {
+    "base_id": "5f0ae821844afac3",
+    "sentence_id": "71d0847c24d7",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏁᎳᏅᎯ",
+    "gloss_english": "God"
+  },
+  {
+    "base_id": "5ab06d62cca97444",
+    "sentence_id": "677173e18e60",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏂᎬᎨᏍᏗ",
+    "gloss_english": "lack"
+  },
+  {
+    "base_id": "a1fc0d7d9e00fb56",
+    "sentence_id": "f5870ad5f6f8",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏂᏣᏛ",
+    "gloss_english": "many"
+  },
+  {
+    "base_id": "60f447367c3d215d",
+    "sentence_id": "e6932ba8242e",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏂᏣᏘ",
+    "gloss_english": "a multitude"
+  },
+  {
+    "base_id": "a9e66017327371d3",
+    "sentence_id": "7ba91642e5f8",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏂᏃᏕᎾ",
+    "gloss_english": "the sheep"
+  },
+  {
+    "base_id": "15ad39e438cdcaba",
+    "sentence_id": "f53ba350ce6d",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏂᏄᎸᏅᎩ",
+    "gloss_english": "they were not able"
+  },
+  {
+    "base_id": "04262d9b5c9b0362",
+    "sentence_id": "d6bb4a091a6e",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏁᏍᏓᎳ ᎤᏅᏗ",
+    "gloss_english": "ice cream"
+  },
+  {
+    "base_id": "e23c6ff32d0c328d",
+    "sentence_id": "490a36e08a72",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏍᏓᎦᎸᎢ",
+    "gloss_english": "the cave"
+  },
+  {
+    "base_id": "f2e67536244b5adf",
+    "sentence_id": "f0c4fbd440a1",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏍᏗ",
+    "gloss_english": "little"
+  },
+  {
+    "base_id": "73aa4355140bcb2c",
+    "sentence_id": "9ce46c667fd7",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏍᏗᎢ",
+    "gloss_english": "baby"
+  },
+  {
+    "base_id": "4400e9615025236e",
+    "sentence_id": "c7501db31449",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎢᏥᏍᏗᏳ",
+    "gloss_english": "where to look"
+  },
+  {
+    "base_id": "a2e49eb68ad07d25",
+    "sentence_id": "5012ce6380b9",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏣᏍᎦᎩ",
+    "gloss_english": "thine enemy"
+  },
+  {
+    "base_id": "f2f4d4c526b87f3b",
+    "sentence_id": "89b22c38becf",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏒᎯ ᏒᏃᏱ",
+    "gloss_english": "yesternight"
+  },
+  {
+    "base_id": "a91d8879590136a4",
+    "sentence_id": "23cd32566d73",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏣᎴᏍᏗ",
+    "gloss_english": "the wheat"
+  },
+  {
+    "base_id": "d7cb54e01d090d6b",
+    "sentence_id": "4bd01b735ebf",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏣᏘ",
+    "gloss_english": "greatly"
+  },
+  {
+    "base_id": "8174161ccd9a764f",
+    "sentence_id": "f0cded86a984",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎠᏆᏤᎵ",
+    "gloss_english": "my"
+  },
+  {
+    "base_id": "9e095e9b2b951db3",
+    "sentence_id": "21151dc714c4",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏂᏥ",
+    "gloss_english": "mother"
+  },
+  {
+    "base_id": "7fba5b5bc04a1026",
+    "sentence_id": "5a05cf274877",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏣᏚᎦ",
+    "gloss_english": "dost thou owe"
+  },
+  {
+    "base_id": "d4460a80ca8964c9",
+    "sentence_id": "dc2f58eaa9bc",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏕᏣᎧᎭ",
+    "gloss_english": "possession of"
+  },
+  {
+    "base_id": "a16f56b0af3b05d6",
+    "sentence_id": "cbf5d2af5f68",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏩᏂ",
+    "gloss_english": "wool"
+  },
+  {
+    "base_id": "cb331b16ec35704e",
+    "sentence_id": "13c59b411761",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏨᏒ",
+    "gloss_english": "you"
+  },
+  {
+    "base_id": "cb331b16ec35704e",
+    "sentence_id": "13c59b411761",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_english": "alone"
+  },
+  {
+    "base_id": "574325e17ace3770",
+    "sentence_id": "d9002f621d51",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏪᏗ",
+    "gloss_english": "old"
+  },
+  {
+    "base_id": "fb493e8d6c1dc654",
+    "sentence_id": "9229b8f2ab82",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏗᏇᏅᏒᏃ",
+    "gloss_english": "home"
+  },
+  {
+    "base_id": "9be7230addc112ec",
+    "sentence_id": "e2e1b36b7103",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏪᏥ ᎠᎨᏳᏣ",
+    "gloss_english": "Daughter"
+  },
+  {
+    "base_id": "c151d808daf47423",
+    "sentence_id": "6c4347859e72",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏬᏚᎯ",
+    "gloss_english": "pretty"
+  },
+  {
+    "base_id": "9b07dd7aadd0cf73",
+    "sentence_id": "55202006e10a",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏬᎯᏳᏅᎩ",
+    "gloss_english": "believed"
+  },
+  {
+    "base_id": "d288845ad857bdd2",
+    "sentence_id": "580ab24a54db",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏬᎳ",
+    "gloss_english": "doth lodge"
+  },
+  {
+    "base_id": "0bca1262c8720a25",
+    "sentence_id": "54e9278033d4",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏬᏰᏂ",
+    "gloss_english": "hand"
+  },
+  {
+    "base_id": "cd572e0ac4128ada",
+    "sentence_id": "468754949dbf",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎢᏥᏯᏪᏐᎸᎦ",
+    "gloss_english": "rest"
+  },
+  {
+    "base_id": "066c3db9a04559b0",
+    "sentence_id": "5096ba0b3872",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏲᎱᏎᏗ ᎨᏎᏍᏗ",
+    "gloss_english": "shall lose it"
+  },
+  {
+    "base_id": "183b09a0c618f4b0",
+    "sentence_id": "a5ae0e84377f",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏲᎢ",
+    "gloss_english": "evil"
+  },
+  {
+    "base_id": "8fb762aa2787f904",
+    "sentence_id": "367f3480dd57",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎤᏲᏏᏍᎨᏍᏗ",
+    "gloss_english": "doth hunger"
+  },
+  {
+    "base_id": "8060f51bdf3f9fb8",
+    "sentence_id": "2f3de6a634a1",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎥᎴ",
+    "gloss_english": "locusts"
+  },
+  {
+    "base_id": "8c4733fc03da256e",
+    "sentence_id": "75450cf69c7b",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᎥᎥ",
+    "gloss_english": "yes"
+  },
+  {
+    "base_id": "effc06d285f22f79",
+    "sentence_id": "5f81049314a0",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏩᏚᎵᏏ",
+    "gloss_english": "honey"
+  },
+  {
+    "base_id": "0618c3d51d76ad41",
+    "sentence_id": "ec485f4f2684",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏩᏯ",
+    "gloss_english": "a wolf"
+  },
+  {
+    "base_id": "95a5a21f99e5a652",
+    "sentence_id": "f4b07a030e13",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏫᏥᎦᏘ",
+    "gloss_english": "I am going to"
+  },
+  {
+    "base_id": "e6a8286e29b0cae4",
+    "sentence_id": "94652edb85a1",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏭᏯᏅᎲᎩ",
+    "gloss_english": "he called for"
+  },
+  {
+    "base_id": "d3c301a34ab5d4ed",
+    "sentence_id": "9b8ca2f8c29e",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏪᏌ",
+    "gloss_english": "Cats"
+  },
+  {
+    "base_id": "c36742b267fe766f",
+    "sentence_id": "adffd6484b94",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏬᏱ",
+    "gloss_english": "pigeons"
+  },
+  {
+    "base_id": "ea4a7b3b27f6a489",
+    "sentence_id": "c2915b0e176e",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏭᏕᎵᎬᎢ",
+    "gloss_english": "west"
+  },
+  {
+    "base_id": "1b8af791ae787d7b",
+    "sentence_id": "c4c1f1a6e086",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏰᎵᏉ",
+    "gloss_english": "sufficient"
+  },
+  {
+    "base_id": "67ed48b3cb3ad370",
+    "sentence_id": "588b5970ca05",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏲᎾ",
+    "gloss_english": "bear"
+  },
+  {
+    "base_id": "00a5ac1bf200fdae",
+    "sentence_id": "b8a36d4ddda2",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏴᎩ",
+    "gloss_english": "Spear"
+  },
+  {
+    "base_id": "e5d04b86af8f089e",
+    "sentence_id": "709e9f80744d",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏴᎩ ᎤᏩᏑᎦᎵ",
+    "gloss_english": "Spear Finger"
+  },
+  {
+    "base_id": "51369034d551fb56",
+    "sentence_id": "96932237e613",
+    "source file": "lily-dict.csv",
+    "source": "rrd",
+    "gloss_syllabary": "ᏴᏫ",
+    "gloss_english": "Person"
   }
 ]
