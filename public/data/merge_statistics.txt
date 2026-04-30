@@ -1,7 +1,7 @@
 CONSOLIDATION MERGE STATISTICS (FINAL SMART ALIGNMENT)
 =======================================================
 
-Total Unique Words: 23764
+Total Unique Words: 23766
 
 STAGE 1: Primary Merges (with cn-app)
 -----------------------------------
@@ -9,6 +9,7 @@ Total Groups: 1790
   - cn-app-dictionary.csv                   :  1790 / 1790 
   - hierarchical-dict.json                  :   551 / 551  
   - kirk-book-data.csv                      :   400 / 498  
+  - learning-to-use-the-cherokee-verb.csv   :    27 / 29   
   - lily-ced                                :  1790 / 1868 
 
 STAGE 2: Secondary Merges (no cn-app)
@@ -17,7 +18,8 @@ Total Groups: 0
 
 STAGE 3: Single Source
 ----------------------
-Total Groups: 21974
+Total Groups: 21976
   - kirk-book-data.csv                      :    55 / 498  
+  - learning-to-use-the-cherokee-verb.csv   :     2 / 29   
   - lily-ced                                :    76 / 1868 
   - lily-non-ced                            : 21843 / 21843

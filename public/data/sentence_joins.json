@@ -17335,6 +17335,322 @@
     "gloss_english": "cannibals."
   },
   {
+    "base_id": "9d106fd3ce32d523",
+    "sentence_id": "5e57896905ec",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_syllabary": "ᎠᏁᏙᎭ",
+    "gloss_phonetic": "anedoha",
+    "gloss_english": "They are walking around"
+  },
+  {
+    "base_id": "9d106fd3ce32d523",
+    "sentence_id": "6bb568191abc",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_syllabary": "ᎠᏁᏙᎭᏍ",
+    "gloss_phonetic": "Anedohas",
+    "gloss_english": "Is"
+  },
+  {
+    "base_id": "9d106fd3ce32d523",
+    "sentence_id": "6bb568191abc",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_english": "here"
+  },
+  {
+    "base_id": "f703a24179905e57",
+    "sentence_id": "a2d6ea03c654",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_syllabary": "ᎠᎵᎮᎵᎦ",
+    "gloss_phonetic": "aliheliga",
+    "gloss_english": "is he happy"
+  },
+  {
+    "base_id": "9748f500ee81307c",
+    "sentence_id": "84eaff1585f4",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_syllabary": "ᎤᏍᎦᎵᏍᏗ",
+    "gloss_phonetic": "usgalsdi",
+    "gloss_english": "to bite"
+  },
+  {
+    "base_id": "4417c5c8a526ec0d",
+    "sentence_id": "785db2ed5729",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_syllabary": "ᎤᏅᏨ",
+    "gloss_phonetic": "unvjv",
+    "gloss_english": "He"
+  },
+  {
+    "base_id": "4417c5c8a526ec0d",
+    "sentence_id": "785db2ed5729",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_english": "fell"
+  },
+  {
+    "base_id": "d965613b3fbf3e73",
+    "sentence_id": "da36f4fd7da9",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_syllabary": "ᎨᎦ",
+    "gloss_phonetic": "gega",
+    "gloss_english": "I am going"
+  },
+  {
+    "base_id": "ac5f5d1da9ef5661",
+    "sentence_id": "eb893c273a44",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_syllabary": "ᎤᏩᎧᎭ",
+    "gloss_phonetic": "uwakaha",
+    "gloss_english": "He has"
+  },
+  {
+    "base_id": "79b190d62087debd",
+    "sentence_id": "719255f6e85e",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_syllabary": "ᎠᏋᏯ",
+    "gloss_phonetic": "agwvya",
+    "gloss_english": "I have"
+  },
+  {
+    "base_id": "ab35ea2372cbfdca",
+    "sentence_id": "ccec4226f0c1",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_syllabary": "ᏣᎾᎠᏍ",
+    "gloss_phonetic": "Janaas",
+    "gloss_english": "Do you have"
+  },
+  {
+    "base_id": "f4395deff0498009",
+    "sentence_id": "6d6218e7d290",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_syllabary": "ᎠᎩᏁᎰᎢ",
+    "gloss_phonetic": "aginehoi",
+    "gloss_english": "I"
+  },
+  {
+    "base_id": "f4395deff0498009",
+    "sentence_id": "6d6218e7d290",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_english": "have"
+  },
+  {
+    "base_id": "2cd49e86661d4912",
+    "sentence_id": "d40fc92f2b6d",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_syllabary": "ᎠᏛᎩᏍᎪᎢ",
+    "gloss_phonetic": "atvgisgoi",
+    "gloss_english": "He hears"
+  },
+  {
+    "base_id": "38fd030b48ecac28",
+    "sentence_id": "056aef7b775a",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_syllabary": "ᏥᏍᏕᎵᎭ",
+    "gloss_phonetic": "jisdeliha",
+    "gloss_english": "I am helping him"
+  },
+  {
+    "base_id": "ecddc03e9bc30160",
+    "sentence_id": "00c8edbceec0",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_syllabary": "ᎤᏩᏍᎦᎸᏅ",
+    "gloss_phonetic": "uwasgalvnv",
+    "gloss_english": "He hid"
+  },
+  {
+    "base_id": "e3cf69b26ee9522e",
+    "sentence_id": "3993ab7ad916",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_syllabary": "ᎤᏩᏂᎸ",
+    "gloss_phonetic": "uwahnilv",
+    "gloss_english": "hit"
+  },
+  {
+    "base_id": "e3cf69b26ee9522e",
+    "sentence_id": "32262b74bc7a",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_syllabary": "ᎬᏂᎭ",
+    "gloss_phonetic": "gvhniha",
+    "gloss_english": "is knocking"
+  },
+  {
+    "base_id": "5641bb4e3f11bdc4",
+    "sentence_id": "2b706579120a",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_syllabary": "ᎢᏥᎸᏉᏓ",
+    "gloss_phonetic": "itsilvgwoda",
+    "gloss_english": "honor"
+  },
+  {
+    "base_id": "e57c2224fe54e682",
+    "sentence_id": "defcb54e02e8",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_syllabary": "ᏕᎦᏥᎸ",
+    "gloss_phonetic": "degajilv",
+    "gloss_english": "I killed"
+  },
+  {
+    "base_id": "e57c2224fe54e682",
+    "sentence_id": "67af7df1ed31",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_syllabary": "ᏥᎸᏉᏗ",
+    "gloss_phonetic": "jilvgwodi",
+    "gloss_english": "I like her"
+  },
+  {
+    "base_id": "58f536014a5003ff",
+    "sentence_id": "67af7df1ed31",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_syllabary": "ᏥᎸᏉᏗ",
+    "gloss_phonetic": "jilvgwodi",
+    "gloss_english": "I like her"
+  },
+  {
+    "base_id": "50a49bb6a4b4d578",
+    "sentence_id": "1d087f80cec7",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_syllabary": "ᏥᏲᎭ",
+    "gloss_phonetic": "jiyoha",
+    "gloss_english": "I'm looking for"
+  },
+  {
+    "base_id": "0491b6c91106ec5d",
+    "sentence_id": "999e8a70e62a",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_syllabary": "ᎤᏓᎨᏳᏎᎢ",
+    "gloss_phonetic": "udageyusei",
+    "gloss_english": "he"
+  },
+  {
+    "base_id": "0491b6c91106ec5d",
+    "sentence_id": "999e8a70e62a",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_english": "loved"
+  },
+  {
+    "base_id": "65eb965f8062f429",
+    "sentence_id": "acd85a11bd42",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_syllabary": "ᎯᏯᏎᎮᎸ",
+    "gloss_phonetic": "hiyasehelv",
+    "gloss_english": "show him"
+  },
+  {
+    "base_id": "83966ad57d104b95",
+    "sentence_id": "cc5c100696f7",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_syllabary": "ᎭᏅᏓᏗᎠᏍ",
+    "gloss_phonetic": "Hanhdadias",
+    "gloss_english": "Do you remember"
+  },
+  {
+    "base_id": "e56b45c24267aa08",
+    "sentence_id": "dad842c30f0b",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_syllabary": "ᏱᎪᏩᏘ",
+    "gloss_phonetic": "hyigowhti",
+    "gloss_english": "you see it"
+  },
+  {
+    "base_id": "94b2482104fac3e2",
+    "sentence_id": "4bfb3e6eeff4",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_syllabary": "ᎭᎴᏫᏍᏙᏓ",
+    "gloss_phonetic": "Halehwisdohda",
+    "gloss_english": "Stop"
+  },
+  {
+    "base_id": "01bd71b01a7f2d07",
+    "sentence_id": "8fa504cdfd58",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_syllabary": "ᏕᎦᎵᏃᎮᏍᎬᎢ",
+    "gloss_phonetic": "degalinohesgvi",
+    "gloss_english": "I was conversing"
+  },
+  {
+    "base_id": "0f32d74e2bbbde74",
+    "sentence_id": "459b694269de",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_syllabary": "uninohisedi",
+    "gloss_phonetic": "ᎤᏂᏃᎯᏎᏗ",
+    "gloss_english": "to tell them"
+  },
+  {
+    "base_id": "7647cccb8dc59781",
+    "sentence_id": "3b9b4251b8bf",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_syllabary": "ᏓᏕᏲᎲᏍᎪᎢ",
+    "gloss_phonetic": "dadehyohvsgoi",
+    "gloss_english": "She teaches"
+  },
+  {
+    "base_id": "5b2ca6d278d4863c",
+    "sentence_id": "e4df0d35bb9a",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_syllabary": "ᎠᎵᎮᎵᏤᎰᎢ",
+    "gloss_phonetic": "alihelichehoi",
+    "gloss_english": "he thanks him"
+  },
+  {
+    "base_id": "a00cf5ebe6f09ebc",
+    "sentence_id": "0a8a65d25a91",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_syllabary": "ᏍᎩᎦᏘᏰᏍᏗ",
+    "gloss_phonetic": "Sgiktiyesdi",
+    "gloss_english": "Wait for me"
+  },
+  {
+    "base_id": "8cf3ce980f2c3128",
+    "sentence_id": "028273298619",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_syllabary": "ᎤᏚᎵᎭ",
+    "gloss_phonetic": "uduliha",
+    "gloss_english": "He wants"
+  },
+  {
+    "base_id": "36505f450d10549a",
+    "sentence_id": "c14aa7b311d2",
+    "source file": "learning-to-use-the-cherokee-verb.csv",
+    "source": "",
+    "gloss_syllabary": "ᎤᎦᏎᏍᏗ",
+    "gloss_phonetic": "uksesdi",
+    "gloss_english": "He's watching"
+  },
+  {
     "base_id": "f4a05d7e9edba724",
     "sentence_id": "abb8b751e042",
     "source file": "lily-dict.csv",
