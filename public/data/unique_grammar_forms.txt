@@ -58,7 +58,7 @@
 1p-ex|3s|present
 1p-in|3a|completive past
 1p-in|3a|habitual
-1p-in|3a|immediate past
+1p-in|3a|imperative
 1p-in|3a|infinitive
 1p-in|3a|present
 1p-in|3pa|present
@@ -85,6 +85,7 @@
 1s|3a|future
 1s|3a|habitual
 1s|3a|immediate past
+1s|3a|imperative
 1s|3a|infinitive
 1s|3a|present
 1s|3pa|present
@@ -155,7 +156,6 @@
 2s|3a|completive past
 2s|3a|future imperative
 2s|3a|habitual
-2s|3a|immediate past
 2s|3a|imperative
 2s|3a|infinitive
 2s|3a|present
@@ -186,7 +186,7 @@
 3p|2s|present
 3p|3a|completive past
 3p|3a|habitual
-3p|3a|immediate past
+3p|3a|imperative
 3p|3a|infinitive
 3p|3a|present
 3p|3pa|present
