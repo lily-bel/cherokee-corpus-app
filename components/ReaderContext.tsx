@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo, useState, useEffect } from 'react';
+import React, { createContext, useContext, useMemo, useState } from 'react';
 import { Sentence, useCorpus } from './CorpusContext';
 import { usePackageManager } from './PackageManagerContext';
 

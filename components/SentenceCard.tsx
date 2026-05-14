@@ -54,16 +54,6 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
 
     const glosses = glossMap.get(sentence.id) || [];
 
-    const getGlossColor = (g: Gloss) => {
-        if (g.source === 'user' || (customDictionaries && customDictionaries[g.source]) || g.source.startsWith('nb_')) {
-            return '#fbbf24'; // User gold
-        }
-        const color = getPackageColor(g.source);
-        if (color?.startsWith('#')) return color;
-        return '#cbd5e1'; // Default
-    };
-
-
     const tokens = useMemo(() => {
         const syl = sentence.syllabary ? sentence.syllabary.split(' ') : [];
         const tr = sentence.translit ? sentence.translit.split(' ') : [];
@@ -113,7 +103,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
 
     const getGlossMeta = (index: number): { uniqueColors: string[], isMultiple: boolean } | null => {
         const wordGlosses = glosses.filter(g => {
-            const indices = g.word_index.split(',').map(Number);
+            const indices = g.word_index ? g.word_index.split(',').map(Number) : [];
             return indices.includes(index);
         });
 
@@ -171,7 +161,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
             return;
         }
 
-        const wordGlosses = glosses.filter(g => g.word_index.split(',').map(Number).includes(index));
+        const wordGlosses = glosses.filter(g => g.word_index ? g.word_index.split(',').map(Number).includes(index) : false);
 
         if (wordGlosses.length > 0) {
             // Open Popover
@@ -223,7 +213,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
 
             // Official Audio (File-based)
             if (audio.packageId === 'official-cherokee-data' || audio.packageId?.startsWith('official')) {
-                const url = `/data/audio/${audio.id}`;
+                const url = `https://cherokeenationdictionary.net/Audio/${audio.id}`;
                 audioRef.current.src = url;
                 audioRef.current.onended = () => setPlayingAudioId(null);
                 audioRef.current.play();
@@ -419,9 +409,10 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                 const sColor = getPackageColor(sentence.source);
                 const isOfficial = packages.find(p => (p.id === sentence.source || p.metadata.source_names?.[sentence.source]) && p.type === 'official');
                 const customColor = isOfficial ? undefined : sColor;
+                const audioUrl = isOfficial ? `https://cherokeenationdictionary.net/Audio/${sentence.audio}` : `/data/audio/${sentence.audio}`;
                 return (
                     <div className="mt-3" onClick={e => e.stopPropagation()}>
-                        <AudioPlayer src={`/data/audio/${sentence.audio}`} label="Play Sentence" icon={Mic} variant="gray" customColor={customColor} />
+                        <AudioPlayer src={audioUrl} label="Play Sentence" icon={Mic} variant="gray" customColor={customColor} />
                     </div>
                 );
             })()}
@@ -524,7 +515,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
             {/* Modals/Popovers */}
             {activePopover && (
                 <GlossPopover
-                    glosses={glosses.filter(g => g.word_index.split(',').map(Number).includes(activePopover.index))}
+                    glosses={glosses.filter(g => g.word_index ? g.word_index.split(',').map(Number).includes(activePopover.index) : false)}
                     targetWord={{ syllabary: tokens[activePopover.index].syl, translit: tokens[activePopover.index].tr }}
                     dictionaryMap={dictionaryMap}
                     position={activePopover.rect}
@@ -564,7 +555,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                         }
 
                         if (entry) {
-                            const indices = gloss.word_index.split(',').map(Number);
+                            const indices = gloss.word_index ? gloss.word_index.split(',').map(Number) : [];
                             const targetWords = indices.map(i => ({ syllabary: tokens[i]?.syl || '', translit: tokens[i]?.tr || '' }));
 
                             setShowLinker({

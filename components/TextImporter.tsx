@@ -1,8 +1,16 @@
 import React, { useState, useMemo } from 'react';
-import { useCorpus, Notebook } from './CorpusContext';
+import { useCorpus, CustomDictionary } from './CorpusContext';
 import { ArrowLeft, ArrowRight, Scissors, Merge as MergeIcon, Check, Type, BookOpen, ChevronDown } from './Icons';
 
 type Step = 'paste' | 'split' | 'metadata' | 'done';
+
+interface ProposedSentence {
+    id: string;
+    text: string;
+    translit?: string;
+}
+
+const generateId = () => 'us_' + Math.random().toString(36).substring(2, 11);
 
 interface TextImporterProps {
     onBack: () => void;

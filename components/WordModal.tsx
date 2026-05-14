@@ -35,14 +35,14 @@ export const WordModal: React.FC<WordModalProps> = ({
     customDictionaries,
     usedFormLabels = []
 }) => {
-    const [formData, setFormData] = useState(initialData);
+    const [formData, setFormData] = useState<WordFormData | undefined>(initialData);
     const [otherForms, setOtherForms] = useState<any[]>([]);
 
     useEffect(() => {
         setFormData(initialData);
         
         // Parse Other_Forms
-        if (initialData.Other_Forms) {
+        if (initialData?.Other_Forms) {
             const forms = initialData.Other_Forms.split('|').map((raw, idx) => {
                 const parts = raw.split(':');
                 const label = parts[0] || '';
@@ -72,8 +72,16 @@ export const WordModal: React.FC<WordModalProps> = ({
             .map(f => `${f.label.trim()}:${f.translit.trim()}^${f.syllabary.trim()}^${f.tone.trim()}^${f.notes.trim()}`)
             .join('|');
 
+        if (!formData) return;
         onSave({
             ...formData,
+            Entry: formData.Entry || '',
+            Syllabary: formData.Syllabary || '',
+            Definition: formData.Definition || '',
+            PoS: formData.PoS || '',
+            Entry_Tone: formData.Entry_Tone || '',
+            Notes: formData.Notes || '',
+            customDictionaryId: formData.customDictionaryId || '',
             Other_Forms: serializedForms
         });
     };
@@ -85,8 +93,8 @@ export const WordModal: React.FC<WordModalProps> = ({
                     <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">Syllabary (Cherokee)</label>
                     <input
                         type="text"
-                        value={formData.Syllabary}
-                        onChange={e => setFormData({ ...formData, Syllabary: e.target.value })}
+                        value={formData?.Syllabary || ''}
+                        onChange={e => setFormData(prev => ({ ...(prev || {} as WordFormData), Syllabary: e.target.value, Entry: prev?.Entry || '', Definition: prev?.Definition || '', PoS: prev?.PoS || '', Entry_Tone: prev?.Entry_Tone || '', Notes: prev?.Notes || '', customDictionaryId: prev?.customDictionaryId || '' }))}
                         className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 font-noto-cherokee text-lg outline-none focus:border-amber-500 dark:text-white"
                     />
                 </div>
@@ -94,8 +102,8 @@ export const WordModal: React.FC<WordModalProps> = ({
                     <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">Transliteration (Cherokee)</label>
                     <input
                         type="text"
-                        value={formData.Entry}
-                        onChange={e => setFormData({ ...formData, Entry: e.target.value })}
+                        value={formData?.Entry || ''}
+                        onChange={e => setFormData(prev => ({ ...(prev || {} as WordFormData), Entry: e.target.value, Syllabary: prev?.Syllabary || '', Definition: prev?.Definition || '', PoS: prev?.PoS || '', Entry_Tone: prev?.Entry_Tone || '', Notes: prev?.Notes || '', customDictionaryId: prev?.customDictionaryId || '' }))}
                         className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 font-noto-serif outline-none focus:border-amber-500 dark:text-white"
                     />
                 </div>
@@ -103,8 +111,8 @@ export const WordModal: React.FC<WordModalProps> = ({
                     <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">{isSentenceMode ? "English Translation" : "Definition"}</label>
                     <input
                         type="text"
-                        value={formData.Definition}
-                        onChange={e => setFormData({ ...formData, Definition: e.target.value })}
+                        value={formData?.Definition || ''}
+                        onChange={e => setFormData(prev => ({ ...(prev || {} as WordFormData), Definition: e.target.value, Entry: prev?.Entry || '', Syllabary: prev?.Syllabary || '', PoS: prev?.PoS || '', Entry_Tone: prev?.Entry_Tone || '', Notes: prev?.Notes || '', customDictionaryId: prev?.customDictionaryId || '' }))}
                         className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 font-noto-serif outline-none focus:border-amber-500 dark:text-white"
                     />
                 </div>
@@ -116,8 +124,8 @@ export const WordModal: React.FC<WordModalProps> = ({
                                 <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">PoS (Optional)</label>
                                 <input
                                     type="text"
-                                    value={formData.PoS}
-                                    onChange={e => setFormData({ ...formData, PoS: e.target.value })}
+                                    value={formData?.PoS || ''}
+                                    onChange={e => setFormData(prev => ({ ...(prev || {} as WordFormData), PoS: e.target.value, Entry: prev?.Entry || '', Syllabary: prev?.Syllabary || '', Definition: prev?.Definition || '', Entry_Tone: prev?.Entry_Tone || '', Notes: prev?.Notes || '', customDictionaryId: prev?.customDictionaryId || '' }))}
                                     placeholder="n, v, adj..."
                                     className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 outline-none focus:border-amber-500 dark:text-white"
                                 />
@@ -126,8 +134,8 @@ export const WordModal: React.FC<WordModalProps> = ({
                                 <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">Tone (Optional)</label>
                                 <input
                                     type="text"
-                                    value={formData.Entry_Tone}
-                                    onChange={e => setFormData({ ...formData, Entry_Tone: formatToneInput(e.target.value) })}
+                                    value={formData?.Entry_Tone || ''}
+                                    onChange={e => setFormData(prev => ({ ...(prev || {} as WordFormData), Entry_Tone: formatToneInput(e.target.value), Entry: prev?.Entry || '', Syllabary: prev?.Syllabary || '', Definition: prev?.Definition || '', PoS: prev?.PoS || '', Notes: prev?.Notes || '', customDictionaryId: prev?.customDictionaryId || '' }))}
                                     placeholder="Type 1-4 for tones"
                                     className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 outline-none focus:border-amber-500 font-sans dark:text-white"
                                 />
@@ -144,8 +152,8 @@ export const WordModal: React.FC<WordModalProps> = ({
                         <div>
                             <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">Notes</label>
                             <textarea
-                                value={formData.Notes}
-                                onChange={e => setFormData({ ...formData, Notes: e.target.value })}
+                                value={formData?.Notes || ''}
+                                onChange={e => setFormData(prev => ({ ...(prev || {} as WordFormData), Notes: e.target.value, Entry: prev?.Entry || '', Syllabary: prev?.Syllabary || '', Definition: prev?.Definition || '', PoS: prev?.PoS || '', Entry_Tone: prev?.Entry_Tone || '', customDictionaryId: prev?.customDictionaryId || '' }))}
                                 rows={3}
                                 className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 outline-none focus:border-amber-500 resize-none dark:text-white"
                                 placeholder="Add conjugations, examples, or extra info here..."
@@ -157,8 +165,8 @@ export const WordModal: React.FC<WordModalProps> = ({
                             <div>
                                 <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">Custom Dictionary</label>
                                 <select
-                                    value={formData.customDictionaryId}
-                                    onChange={e => setFormData({ ...formData, customDictionaryId: e.target.value })}
+                                    value={formData?.customDictionaryId || ''}
+                                    onChange={e => setFormData(prev => ({ ...(prev || {} as WordFormData), customDictionaryId: e.target.value, Entry: prev?.Entry || '', Syllabary: prev?.Syllabary || '', Definition: prev?.Definition || '', PoS: prev?.PoS || '', Entry_Tone: prev?.Entry_Tone || '', Notes: prev?.Notes || '' }))}
                                     className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-3 outline-none focus:ring-2 focus:ring-amber-500 dark:text-white"
                                 >
                                     <option value="" disabled>Select a dictionary...</option>

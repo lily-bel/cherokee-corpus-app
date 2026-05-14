@@ -85,11 +85,32 @@ export interface PersonalWord {
     Other_Forms?: string;
 }
 
+export interface RootEntry {
+    entry_id: string;
+    root_h: string;
+    root_g: string;
+    root_slug: string;
+    definition: string;
+    class_name: string;
+    is_derivation?: boolean;
+    parent_entry_no?: number;
+    segmented_forms?: {
+        present: string;
+        present_1sg: string;
+        imperfective: string;
+        perfective: string;
+        imperative: string;
+        infinitive: string;
+    };
+    [key: string]: any;
+}
+
 interface CorpusContextType {
     dictionary: DictionaryEntry[];
     sentences: Sentence[];
     userSentences: Sentence[];
     glosses: Gloss[];
+    roots: RootEntry[];
     loading: boolean;
 
 
@@ -98,6 +119,8 @@ interface CorpusContextType {
     entryToSentencesMap: Map<string, string[]>; // EntryID -> SentenceID[]
     dictionaryMap: Map<string, DictionaryEntry>; // EntryID -> Entry
     sentenceMap: Map<string, Sentence>; // SentenceID -> Sentence
+    rootMap: Map<string, RootEntry>; // EntryID -> RootEntry
+    groupedRootsMap: Map<string, RootEntry[]>; // RootSlug -> RootEntry[]
 
     // User Data
     customDictionaries: Record<string, CustomDictionary>;
@@ -147,6 +170,8 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const [userAudioMeta, setUserAudioMeta] = useState<Record<string, any[]>>({});
     const [userWordForms, setUserWordForms] = useState<Record<string, string>>({}); // EntryID -> pipe-separated forms
     const [userNotes, setUserNotes] = useState<Record<string, string>>({});
+
+    const [roots, setRoots] = useState<RootEntry[]>([]);
 
     const [customDictionaries, setCustomDictionaries] = useState<Record<string, CustomDictionary>>({});
     const [personalWords, setPersonalWords] = useState<PersonalWord[]>([]);
@@ -239,65 +264,61 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         } catch (e) { console.error("Failed to save user notes", e); }
     }, [userNotes]);
 
-    // Load Audio Manifest - REMOVED per user request
-    /*
-    useEffect(() => {
-        fetch('/data/audio_manifest.json')
-            .then(r => r.ok ? r.json() : [])
-            .then(setAudioManifest)
-            .catch(e => console.error("Failed to load audio manifest", e))
-            .finally(() => setLoading(false));
-    }, []);
-    */
-
-    // Set loading false immediately or after data load?
-    // Previously audioManifest fetch was the last "loading" check.
-    // We should set loading to false after data is ready.
+    // Load Audio Manifest
     useEffect(() => {
         setLoading(false);
-        // Load Audio Manifest and Parse Dynamically
-        fetch('/data/audio_manifest.json')
+        // Load Audio Mapping and Parse Dynamically
+        fetch('/data/audio_mapping.json')
             .then(r => r.ok ? r.json() : [])
-            .then((files: string[]) => {
+            .then((mappings: any[]) => {
                 const newMeta: Record<string, any[]> = {};
-                files.forEach(file => {
-                    // Parse Filename: [speaker]_[W/S]-[ID].[subid]_[index].ext
-                    // Regex: /^(.+)_([WS])-(.+)_\d+\.(.+)$/
-                    const match = file.match(/^(.+)_([WS])-(.+)_\d+\.(.+)$/);
-                    if (match) {
-                        const speaker = match[1];
-                        const type = match[2];
-                        let idSection = match[3];
-
-                        // Strip subid for key (e.g. 1.1 -> 1) if present
-                        let targetId = idSection;
-                        if (targetId.includes('.')) targetId = targetId.split('.')[0];
-
-                        const key = type === 'W' ? targetId : `${targetId}_sentence`;
-
-                        if (!newMeta[key]) newMeta[key] = [];
-                        newMeta[key].push({
-                            id: file, // Use filename as ID for official audio
-                            speaker: speaker.replace(/_/g, ' '), // Normalize underscores to spaces if needed (though new export allows spaces)
-                            packageId: 'official-cherokee-data'
-                        });
+                mappings.forEach(map => {
+                    let targetId = '';
+                    let isSentence = map.type === 'sentence';
+                    if (map.type === 'base_form' || map.type === 'conjugation') {
+                        targetId = map.merged_id;
+                    } else if (map.type === 'sentence') {
+                        targetId = map.sentence_id;
                     }
+                    if (!targetId) return;
+
+                    const key = isSentence ? `${targetId}_sentence` : targetId;
+                    
+                    let speaker = "Official Audio";
+                    const speakerMatch = map.audio_file.match(/^([^_]+)_/);
+                    if (speakerMatch && speakerMatch[1] !== "Word" && speakerMatch[1] !== "Sentence") {
+                        speaker = speakerMatch[1].replace(/([A-Z])/g, ' $1').trim();
+                    }
+
+                    if (!newMeta[key]) newMeta[key] = [];
+                    newMeta[key].push({
+                        id: map.audio_file,
+                        speaker: speaker,
+                        packageId: 'official-cherokee-data'
+                    });
                 });
 
                 if (Object.keys(newMeta).length > 0) {
                     importAudioMeta(newMeta);
                 }
             })
-            .catch(e => console.error("Failed to load audio manifest", e));
+            .catch(e => console.error("Failed to load audio mapping", e));
+
+        // Load Roots Data
+        fetch('/data/roots.json')
+            .then(r => r.ok ? r.json() : [])
+            .then(setRoots)
+            .catch(e => console.error("Failed to load roots data", e));
     }, []);
 
     // Combine Base Data with Active Packages
-    const { dictionary, sentences, combinedGlosses } = useMemo(() => {
+    const { dictionary, sentences, combinedGlosses, combinedWordForms } = useMemo(() => {
         const activeIds = packages.filter(p => p.status === 'active' && (p.type === 'imported' || p.type === 'official')).map(p => p.id);
 
         let d: DictionaryEntry[] = [];
         let s: Sentence[] = [];
         let g: Gloss[] = [];
+        let wf: any[] = [];
 
         activeIds.forEach(id => {
             const data = importedData[id];
@@ -305,30 +326,53 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 if (data.dictionary) d = [...d, ...data.dictionary];
                 if (data.sentences) s = [...s, ...data.sentences];
                 if (data.glosses) g = [...g, ...data.glosses];
+                if (data.word_forms) wf = [...wf, ...data.word_forms];
             }
         });
 
-        return { dictionary: d, sentences: s, combinedGlosses: g };
+        return { dictionary: d, sentences: s, combinedGlosses: g, combinedWordForms: wf };
     }, [packages, importedData]);
 
     // Derived State: Maps
-    const { glossMap, entryToSentencesMap, dictionaryMap, sentenceMap, allGlosses } = useMemo(() => {
+    const { glossMap, entryToSentencesMap, dictionaryMap, sentenceMap, allGlosses, rootMap, groupedRootsMap, wordFormsMap } = useMemo(() => {
         const allGlosses = [...combinedGlosses, ...userGlosses];
 
         const gMap = new Map<string, Gloss[]>();
         const eToSMap = new Map<string, Set<string>>(); // Use Set to avoid duplicates
         const dMap = new Map<string, DictionaryEntry>();
         const sMap = new Map<string, Sentence>();
+        const rMap = new Map<string, RootEntry>();
+        const grMap = new Map<string, RootEntry[]>();
+        const wfMap = new Map<string, any[]>();
 
         // Index Dictionary
         dictionary.forEach(d => {
             const id = d.id || d.Index;
             if (id) dMap.set(id, d);
+
+            // Also index by lily-dict Index for root mapping
+            const lilyIndex = (d as any).sources?.['lily-dict.csv']?.Index;
+            if (lilyIndex) dMap.set(lilyIndex, d);
+        });
+
+        // Index Word Forms
+        combinedWordForms.forEach(f => {
+            if (!wfMap.has(f.word_index)) wfMap.set(f.word_index, []);
+            wfMap.get(f.word_index)!.push(f);
         });
 
         // Index Sentences
         [...sentences, ...userSentences].forEach(s => {
             if (s.id) sMap.set(s.id, s);
+        });
+
+        // Index Roots
+        roots.forEach(r => {
+            rMap.set(r.entry_id, r);
+            if (!grMap.has(r.root_slug)) {
+                grMap.set(r.root_slug, []);
+            }
+            grMap.get(r.root_slug)!.push(r);
         });
 
         // Process Glosses
@@ -359,9 +403,11 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             entryToSentencesMap: finalEToSMap,
             dictionaryMap: dMap,
             sentenceMap: sMap,
-            allGlosses
+            allGlosses,
+            rootMap: rMap,
+            groupedRootsMap: grMap
         };
-    }, [dictionary, sentences, combinedGlosses, userGlosses, userSentences]);
+    }, [dictionary, sentences, combinedGlosses, userGlosses, userSentences, roots]);
 
 
     // Actions
@@ -421,10 +467,8 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
         const index = Date.now();
         // Construct ID: Speaker_Type-ID[_FormIndex]_Timestamp
-        // If formIndex is present, it's Speaker_W-ID.FormIndex_Timestamp
         let audioId = '';
         if (formIndex !== undefined) {
-            // Use period separator for form index as requested: W-10.2
             audioId = `${speaker}_${type}-${id}.${formIndex}_${index}`;
         } else {
             audioId = `${speaker}_${type}-${id}_${index}`;
@@ -434,13 +478,6 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
         setUserAudioMeta(prev => {
             const newMeta = { ...prev };
-            // For form audio, we still store it under the main entry ID in metadata map
-            // The audioId itself distinguishes it.
-            // Or should we store it under a specific key?
-            // "The word form audio is saved the same way except in the audio filename..."
-            // So for metadata retrieval, we fetch metadata for '10' (entry index).
-            // Then we filter based on ID structure when rendering.
-
             if (!newMeta[targetId]) newMeta[targetId] = [];
             newMeta[targetId].push({ id: audioId, speaker, date: Date.now() });
             return newMeta;
@@ -491,7 +528,6 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
             if (filtered.length !== audios.length) {
                 hasChanges = true;
-                // Delete removed audio from DB
                 const removed = audios.filter(a => a.packageId === packageId);
                 for (const audio of removed) {
                     await deleteAudio(entryIndex, audio.id);
@@ -517,11 +553,14 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             sentences,
             userSentences,
             glosses: allGlosses,
+            roots,
             loading,
             glossMap,
             entryToSentencesMap,
             dictionaryMap,
             sentenceMap,
+            rootMap,
+            groupedRootsMap,
             addUserGloss,
             removeUserGloss,
             addUserSentence,

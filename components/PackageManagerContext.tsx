@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import Papa from 'papaparse';
 
 
 // --- Types ---
@@ -81,91 +80,158 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                 const metadata: PackageMetadata = await metaRes.json();
 
                 // Fetch Data Files
-                const [dictRes, sentRes, joinRes] = await Promise.all([
-                    fetch('/data/dictionary.csv').then(r => r.text()),
-                    fetch('/data/sentences.csv').then(r => r.text()),
-                    fetch('/data/join_table.csv').then(r => r.text())
+                const [dictRes, sentRes, joinRes, conjRes, audioMapRes] = await Promise.all([
+                    fetch('/data/base_forms.json').then(r => r.json()),
+                    fetch('/data/sentences.json').then(r => r.json()),
+                    fetch('/data/sentence_joins.json').then(r => r.json()),
+                    fetch('/data/conjugations.json').then(r => r.json()),
+                    fetch('/data/audio_mapping.json').then(r => r.json())
                 ]);
 
-                // Parse CSVs
-                const parseCSV = (csv: string) => {
-                    return new Promise<any[]>((resolve) => {
-                        Papa.parse(csv, {
-                            header: true,
-                            skipEmptyLines: true,
-                            complete: (results) => resolve(results.data)
-                        });
-                    });
-                };
+                const dictionary = dictRes;
+                const sentences = sentRes;
+                const glosses = joinRes;
+                const conjugations = conjRes;
+                const audioMapping = audioMapRes;
 
-                const [dictionary, sentences, glosses] = await Promise.all([
-                    parseCSV(dictRes),
-                    parseCSV(sentRes),
-                    parseCSV(joinRes)
-                ]);
+                const audioByBaseForm: Record<string, string> = {};
+                const audioBySentence: Record<string, string> = {};
+
+                Object.values(audioMapping).forEach((mapping: any) => {
+                    if (mapping.type === 'base_form' && mapping.merged_id) {
+                        audioByBaseForm[mapping.merged_id] = mapping.audio_file;
+                    } else if (mapping.type === 'sentence' && mapping.sentence_id) {
+                        audioBySentence[mapping.sentence_id] = mapping.audio_file;
+                    }
+                });
 
                 // Update metadata stats with actual counts
                 metadata.stats.words = dictionary.length;
                 metadata.stats.sentences = sentences.length;
                 metadata.stats.glosses = glosses.length;
-
-                // Count Word Forms from Other_Forms column
-                let wordFormCount = 0;
-                dictionary.forEach((d: any) => {
-                    if (d.Other_Forms) {
-                        const forms = d.Other_Forms.split('|');
-                        forms.forEach((f: string) => {
-                            if (f.includes(':')) wordFormCount++;
-                        });
-                    }
-                });
-                metadata.stats.word_forms = wordFormCount;
+                metadata.stats.word_forms = conjugations.length;
                 metadata.stats.lists = metadata.stats.lists || 0;
                 metadata.stats.notes = metadata.stats.notes || 0;
-                // Normalize Dictionary Data (Map legacy fields if needed)
-                const normalizedDictionary = dictionary.map((d: any) => ({
-                    ...d,
-                    id: d.Index,
-                    syllabary: d.Syllabary,
-                    translit: d.Entry,
-                    definition: d.Definition,
-                    source: d.Source,
-                    audio: d.Audio,
-                    // Legacy
-                    Index: d.Index,
-                    Entry: d.Entry,
-                    Syllabary: d.Syllabary,
-                    Definition: d.Definition,
-                    Source: d.Source,
-                    Entry_Tone: d.Entry_Tone || d.Entry,
-                    PoS: d.PoS || d.Part_of_Speech || 'Noun',
-                    Source_Long: metadata.source_names?.[d.Source] || d.Source
-                }));
 
-                const normalizedSentences = sentences.map((d: any) => ({
-                    id: d.ID,
-                    syllabary: d.Syllabary,
-                    translit: d.Transliteration,
-                    english: d.English,
-                    source: d.Source,
-                    audio: d.Audio,
-                    // Reader fields
-                    story: d.Story || undefined,
-                    chapter: d.Chapter || undefined,
-                    line: d.Line ? parseInt(d.Line, 10) : undefined,
-                    author: d.Author || undefined,
-                    speaker: d.Speaker || undefined,
-                    tone: d.Tone || undefined,
-                }));
+                // Normalize Dictionary Data
+                const normalizedDictionary = dictionary.map((d: any) => {
+                    let translit = '';
+                    let syllabary = '';
+                    let definition = '';
+                    let PoS = '';
+                    let Entry_Tone = '';
+
+                    const sources = d.sources || {};
+                    let sourceKeys = Object.keys(sources);
+
+                    let sourceSet = new Set<string>();
+                    if (sources['cn-app-dictionary.csv']) sourceSet.add('ced');
+                    if (sources['lily-dict.csv']) {
+                        const s = sources['lily-dict.csv'];
+                        if (s['Source']) sourceSet.add(s['Source']);
+                    }
+                    if (sources['kirk-book-data.csv']) sourceSet.add('kirk');
+                    if (sources['learning-to-use-the-cherokee-verb.csv']) sourceSet.add('ltu');
+                    if (sourceSet.size === 0 && sourceKeys.length > 0) sourceSet.add(sourceKeys[0]); // fallback
+                    let sourceStr = Array.from(sourceSet).join(', ');
+
+                    if (sources['cn-app-dictionary.csv']) {
+                        const s = sources['cn-app-dictionary.csv'];
+                        translit = s['Practical'] || s['Entry'] || '';
+                        syllabary = s['Syllabary'] || '';
+                        definition = s['Translations'] || '';
+                        PoS = s['Part of speech'] || s['Part of speech ch'] || '';
+                        Entry_Tone = s['Tone and length 1'] || s['Tone and length 2'] || '';
+                    } else if (sources['lily-dict.csv']) {
+                        const s = sources['lily-dict.csv'];
+                        translit = s['Entry'] || '';
+                        syllabary = s['Syllabary'] || '';
+                        definition = s['Definition'] || '';
+                        PoS = s['PoS'] || '';
+                        Entry_Tone = s['Entry_Tone'] || '';
+                    } else if (sources['kirk-book-data.csv']) {
+                        const s = sources['kirk-book-data.csv'];
+                        translit = s['Cherokee'] || '';
+                        definition = s['English'] || '';
+                        Entry_Tone = s['Tone'] || '';
+                    } else if (sources['learning-to-use-the-cherokee-verb.csv']) {
+                        const s = sources['learning-to-use-the-cherokee-verb.csv'];
+                        translit = s['Cherokee'] || '';
+                        syllabary = s['Syllabary'] || '';
+                        definition = s['English'] || '';
+                    } else if (sources['hierarchical-dict.json']) {
+                        const s = sources['hierarchical-dict.json'];
+                        translit = s['practical'] || '';
+                        definition = s['definition'] || '';
+                    }
+
+                    const Source_Long = sourceKeys.map(k => metadata.source_names?.[k] || k).join(', ');
+
+                    return {
+                        ...d,
+                        id: d.merged_id,
+                        syllabary,
+                        translit,
+                        definition,
+                        source: sourceStr,
+                        audio: audioByBaseForm[d.merged_id] || '',
+                        // Legacy
+                        Index: d.merged_id,
+                        Entry: translit,
+                        Syllabary: syllabary,
+                        Definition: definition,
+                        Source: sourceStr,
+                        Entry_Tone,
+                        PoS: PoS || 'Noun',
+                        Source_Long: Source_Long || sourceStr
+                    };
+                });
+
+                const normalizedSentences = sentences.map((d: any) => {
+                    let source = d.source;
+                    if (source === 'Cherokee Dictionary 1975 Durbin Feeling') {
+                        source = 'ced';
+                    } else if (!source || source.trim() === '') {
+                        if (d['source file'] === 'cn-app-dictionary.csv') {
+                            source = 'ced';
+                        } else if (d['source file'] === 'learning-to-use-the-cherokee-verb.csv') {
+                            source = 'ltu';
+                        }
+                    }
+
+                    return {
+                        id: d.sentence_id,
+                        syllabary: d.syllabary,
+                        translit: d.phonetic,
+                        english: d.english,
+                        source: source,
+                        audio: audioBySentence[d.sentence_id] || d.audio || '',
+                        // Reader fields
+                        story: d.story || undefined,
+                        chapter: d.chapter || undefined,
+                        line: d.line ? parseInt(d.line, 10) : undefined,
+                        author: d.author || undefined,
+                        speaker: d.speaker || undefined,
+                        tone: d.tone || undefined,
+                    };
+                });
 
                 const normalizedGlosses = glosses.map((d: any) => ({
-                    sentence_id: d.Sentence_ID,
-                    word_index: d.Word_Index,
-                    entry_id: d.Entry_ID,
-                    notes: d.Notes,
-                    source: d.Source
+                    sentence_id: d.sentence_id,
+                    word_index: undefined,
+                    entry_id: d.base_id,
+                    notes: d.gloss_english,
+                    source: d.source
                 }));
 
+                const normalizedWordForms = conjugations.map((c: any) => ({
+                    word_index: c.merged_id,
+                    form_name: c.normalized_key,
+                    syllabary: c['cn-app-dictionary.csv_Syllabary'] || c['lily-dict.csv_Syllabary'] || c['learning-to-use-the-cherokee-verb.csv_Syllabary'] || '',
+                    translit: c['cn-app-dictionary.csv_Practical'] || c['lily-dict.csv_Cherokee'] || c['kirk-book-data.csv_Cherokee'] || c['learning-to-use-the-cherokee-verb.csv_Cherokee'] || '',
+                    tone: c['cn-app-dictionary.csv_Tone and length 1'] || c['lily-dict.csv_Tone'] || c['kirk-book-data.csv_Tone'] || '',
+                    notes: c['cn-app-dictionary.csv_Translations'] || c['learning-to-use-the-cherokee-verb.csv_English'] || c['kirk-book-data.csv_English'] || ''
+                }));
 
                 const officialPackage: Package = {
                     id: 'official-cherokee-data',
@@ -176,7 +242,15 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                     metadata: metadata
                 };
 
-                setImportedData(prev => ({ ...prev, [officialPackage.id]: { dictionary: normalizedDictionary, sentences: normalizedSentences, glosses: normalizedGlosses } }));
+                setImportedData(prev => ({ 
+                    ...prev, 
+                    [officialPackage.id]: { 
+                        dictionary: normalizedDictionary, 
+                        sentences: normalizedSentences, 
+                        glosses: normalizedGlosses,
+                        word_forms: normalizedWordForms
+                    } 
+                }));
 
                 setPackages(prev => {
                     // Avoid duplicates if already loaded

@@ -20,7 +20,7 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
     onOpenImporter
 }) => {
     const { books, getStoriesForBook, getChaptersForStory, investigationQueue, findBookAndChapterForSentence } = useReader();
-    const { packages, getPackageColor } = usePackageManager();
+    const { getPackageColor } = usePackageManager();
     const { setCustomDictionaries } = useCorpus();
 
     const [view, setView] = useState<ViewState>('books');

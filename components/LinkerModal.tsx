@@ -3,6 +3,7 @@ import { DictionaryEntry, useCorpus } from './CorpusContext';
 import { Search, Check, Trash2 } from './Icons';
 import { Modal, SourceBadge } from './UI';
 import { performSearch } from '../utils';
+import { usePackageManager } from './PackageManagerContext';
 
 interface LinkerModalProps {
     initialQuery: string;
@@ -28,18 +29,19 @@ export const LinkerModal: React.FC<LinkerModalProps> = ({ initialQuery, targetWo
     const [breakdownEnglish, setBreakdownEnglish] = useState(initialData?.breakdownEnglish || '');
 
     const { sentences, entryToSentencesMap } = useCorpus();
+    const { importedData } = usePackageManager();
 
     const results = useMemo(() => {
         if (!query) return [];
         const settings = {
             searchLangs: { syllabary: true, translit: true, english: true, tone: false },
-            searchScopes: { main: true, verbs: true, plurals: true, sentences: false, notes: false },
+            searchScopes: { main: true, otherForms: true, sentences: false, notes: false },
             enableRegex: false
         };
         const mappedPersonal = personalWords ? personalWords.map(w => ({ ...w, id: w.Index, Source: (w as any).customDictionaryId })) : [];
         const searchDict = [...dictionary, ...mappedPersonal];
-        return performSearch(query, searchDict, sentences, entryToSentencesMap, settings, customDictionaries || {}, {}, "All", 'dictionary').slice(0, 20);
-    }, [query, dictionary, personalWords, sentences, entryToSentencesMap, customDictionaries]);
+        return performSearch(query, searchDict, sentences, entryToSentencesMap, settings, customDictionaries || {}, {}, "All", 'dictionary', [], importedData).slice(0, 20);
+    }, [query, dictionary, personalWords, sentences, entryToSentencesMap, customDictionaries, importedData]);
 
     const handleEntrySelect = (entry: DictionaryEntry) => {
         setSelectedEntry(entry);

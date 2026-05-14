@@ -20,6 +20,8 @@ import { ReaderTab } from './components/ReaderTab';
 import { ReaderView } from './components/ReaderView';
 import { TextImporter } from './components/TextImporter';
 import { useReader } from './components/ReaderContext';
+import RootView from './components/RootView';
+import ClassView from './components/ClassView';
 
 const DEFAULT_SETTINGS = {
     darkMode: false,
@@ -47,6 +49,8 @@ function App() {
     const [activeTab, setActiveTab] = useState<string>('search');
     const [searchScope, setSearchScope] = useState<'dictionary' | 'sentences'>('dictionary');
     const [selectedEntry, setSelectedEntry] = useState<any | null>(null);
+    const [selectedRoot, setSelectedRoot] = useState<string | null>(null);
+    const [selectedClass, setSelectedClass] = useState<string | null>(null);
     const [activeDictionaryId, setActiveDictionaryId] = useState<string | null>(null);
     const [activeListId, setActiveListId] = useState<string | null>(null);
     const [listsView, setListsView] = useState<'all' | 'detail'>('all');
@@ -964,8 +968,8 @@ function App() {
 
             if (!activeDictionaryId && Object.keys(customDictionaries).length === 0) {
                 const newDictionaryId = 'nb_' + Date.now();
-                const newDictionary = { id: newDictionaryId, name: "My Custom Dictionary", date: Date.now(), type: 'notebook' };
-                setCustomDictionaries({ [newDictionaryId]: newDictionary });
+                const newDictionary = { id: newDictionaryId, name: "My Custom Dictionary", date: Date.now(), type: 'notebook' as const };
+                setCustomDictionaries(prev => ({ ...prev, [newDictionaryId]: newDictionary }));
                 targetSource = newDictionaryId;
             }
 
@@ -1231,8 +1235,8 @@ function App() {
         const isUserLibraryActive = packages.find(p => p.id === 'user')?.status === 'active';
         // Include user sentences in search if scope is sentences AND user library is active
         const combinedSentences = [...sentences, ...(isUserLibraryActive ? userSentences : [])];
-        return performSearch(query, allData, combinedSentences, entryToSentencesMap, settings, customDictionaries, userNotes, posFilter, searchScope, prioritizedSources);
-    }, [query, allData, customDictionaries, settings, userNotes, posFilter, searchScope, sentences, userSentences, entryToSentencesMap, prioritizedSources, packages]);
+        return performSearch(query, allData, combinedSentences, entryToSentencesMap, settings, customDictionaries, userNotes, posFilter, searchScope, prioritizedSources, importedData);
+    }, [query, allData, customDictionaries, settings, userNotes, posFilter, searchScope, sentences, userSentences, entryToSentencesMap, prioritizedSources, packages, importedData]);
 
     const filteredResults = useMemo(() => {
         if (!query && activeTab === 'search') return { active: [], inactive: [] };
@@ -1306,6 +1310,9 @@ function App() {
                 {selectedEntry ? (
                     <EntryDetail
                         entry={selectedEntry}
+                        onClose={() => { setSelectedEntry(null); updateUrl(null); }}
+                        onViewRoot={(slug: string) => setSelectedRoot(slug)}
+                        onViewClass={(cls: string) => setSelectedClass(cls)}
                         customDictionaries={customDictionaries}
                         userNotes={userNotes}
                         userAudioMeta={userAudioMeta}
@@ -1315,7 +1322,6 @@ function App() {
                         favorites={favorites}
                         customLists={customLists}
                         customListOrder={customListOrder}
-                        onClose={() => { setSelectedEntry(null); updateUrl(null); }}
                         onEdit={(entry, content, isNote) => isNote ? openNotesModal(entry, content, false) : openWordModal(entry)}
                         onToggleFavorite={toggleFavorite}
                         onToggleList={toggleInList}
@@ -1578,7 +1584,7 @@ function App() {
                                     const activeNotes = (isModal || isModalSentences) ? {} : userNotes;
                                     const activePrioritized = (isModal || isModalSentences) ? [] : prioritizedSources;
 
-                                    return performSearch(q, allData, [...sentences, ...userSentences], entryToSentencesMap, activeSettings, customDictionaries, activeNotes, activePos, isModalSentences ? 'sentences' : (isModal ? 'dictionary' : (scope || 'dictionary')), activePrioritized);
+                                    return performSearch(q, allData, [...sentences, ...userSentences], entryToSentencesMap, activeSettings, customDictionaries, activeNotes, activePos, isModalSentences ? 'sentences' : (isModal ? 'dictionary' : (scope || 'dictionary')), activePrioritized, importedData);
                                 }}
                                 settings={settings}
                                 openWordModal={openWordModal}
@@ -1832,6 +1838,32 @@ function App() {
             }
 
             <Toast show={toast.show} message={toast.message} type={toast.type} />
+
+            {selectedRoot && (
+                <RootView
+                    slug={selectedRoot}
+                    onClose={() => setSelectedRoot(null)}
+                    onViewEntry={(entry) => {
+                        setSelectedRoot(null);
+                        setSelectedEntry(entry);
+                    }}
+                    onViewClass={(cls) => setSelectedClass(cls)}
+                    onShowSettings={() => setShowSettingsModal(true)}
+                />
+            )}
+
+            {selectedClass && (
+                <ClassView
+                    className={selectedClass}
+                    onClose={() => setSelectedClass(null)}
+                    onViewClass={(cls) => setSelectedClass(cls)}
+                    onViewEntry={(entry) => {
+                        setSelectedClass(null);
+                        setSelectedEntry(entry);
+                    }}
+                    onShowSettings={() => setShowSettingsModal(true)}
+                />
+            )}
         </div >
     );
 }

@@ -2,6 +2,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { X, Mic, Trash2, Pause, Volume2, Plus } from './Icons';
+import { getFriendlyLabel } from '../utils';
 
 interface WordFormsModalProps {
     isOpen: boolean;
@@ -122,7 +123,7 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
     importedFormsForThisEntry.sort((a, b) => (a.order || 0) - (b.order || 0)).forEach(f => {
         allForms.push({
             type: 'imported',
-            label: f.form_name,
+            label: getFriendlyLabel(f.form_name),
             translit: f.translit,
             syllabary: f.syllabary,
             tone: f.tone,

@@ -322,6 +322,8 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({
     if (selectedEntry) {
         return (
             <EntryDetail
+                onViewRoot={() => {}}
+                onViewClass={() => {}}
                 entry={selectedEntry}
                 customDictionaries={customDictionaries}
                 userNotes={userNotes}
@@ -643,7 +645,7 @@ const AudioCard = ({ audio, pkg, onNavigate }: { audio: any, pkg: any, onNavigat
             const audioId = audio.id;
 
             if (isOfficial) {
-                url = audioId.startsWith('http') ? audioId : `/data/audio/${audioId}`;
+                url = audioId.startsWith('http') ? audioId : `https://cherokeenationdictionary.net/Audio/${audioId}`;
             } else if (audio.src) {
                 url = audio.src;
             } else {

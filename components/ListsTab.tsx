@@ -56,7 +56,7 @@ const MiniAudioButton = ({ audio, isOfficial = false, color }: { audio: any, isO
             const audioId = typeof audio === 'string' ? audio : audio.id;
 
             if (isOfficial) {
-                url = audioId.startsWith('http') ? audioId : `/data/audio/${audioId}`;
+                url = audioId.startsWith('http') ? audioId : `https://cherokeenationdictionary.net/Audio/${audioId}`;
             } else if (audio.src) {
                 url = audio.src;
             } else {

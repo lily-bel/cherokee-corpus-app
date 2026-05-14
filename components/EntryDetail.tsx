@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Pencil, ListPlus, Star, ListIcon, X, Plus, Folder, Pause, MicPlus, Trash2, Mic, ChevronRight, Menu } from './Icons';
+import { ArrowLeft, Pencil, ListPlus, Star, ListIcon, X, Plus, Folder, Pause, MicPlus, Trash2, Mic, Menu } from './Icons';
 import { AudioPlayer, SourceBadge } from './UI';
-import { renderStyledText, getAudioFromDB } from '../utils';
+import { renderStyledText, getAudioFromDB, getFriendlyLabel } from '../utils';
 import { usePackageManager } from './PackageManagerContext';
 import AudioRecorder from './AudioRecorder';
 import { useCorpus } from './CorpusContext';
 import { SentenceCard } from './SentenceCard';
 import { WordFormsModal } from './WordFormsModal';
 
-const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, userWordForms, onSaveAudio, onDeleteAudio, favorites, customLists, customListOrder, onClose, onEdit, onToggleFavorite, onToggleList, onDelete, onSearchTerm, onOpenNewListModal, onMove, personalWords, onEditSentence, onDeleteSentence, onCreateWord, onManageForms, onReadInContext, onShowSettings }) => {
+const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, userWordForms, onSaveAudio, onDeleteAudio, favorites, customLists, customListOrder, onClose, onEdit, onToggleFavorite, onToggleList, onDelete, onSearchTerm, onOpenNewListModal, onMove, personalWords, onEditSentence, onDeleteSentence, onCreateWord, onManageForms, onReadInContext, onShowSettings, onViewRoot, onViewClass }) => {
     const [showListSheet, setShowListSheet] = useState(false);
     const [showRecorder, setShowRecorder] = useState(false);
     const [recorderTarget, setRecorderTarget] = useState<'entry' | 'sentence' | string>('entry');
@@ -25,7 +25,10 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
         if (sentenceListRef.current) sentenceListRef.current.scrollLeft = 0;
     }, [entry.Index]);
 
-    const { entryToSentencesMap, sentenceMap } = useCorpus();
+    const { entryToSentencesMap, sentenceMap, rootMap } = useCorpus();
+
+    // Check if linked to a root
+    const rootEntry = rootMap.get(entry.Index);
 
     // Determine audio color based on package
     const { getPackageColor, packages, importedData } = usePackageManager();
@@ -48,7 +51,7 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
 
             // Official Audio (File-based)
             if (audio.packageId === 'official-cherokee-data' || audio.packageId?.startsWith('official')) {
-                const url = `/data/audio/${audio.id}`;
+                const url = `https://cherokeenationdictionary.net/Audio/${audio.id}`;
                 audioRef.current.src = url;
                 audioRef.current.onended = () => setPlayingAudioId(null);
                 audioRef.current.play();
@@ -215,9 +218,22 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
         <div className="fixed inset-0 z-[10000] bg-[#F9F9F7] dark:bg-slate-950 flex flex-col overflow-hidden animate-fade-in">
             {/* Header */}
             <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex items-center justify-between shadow-sm shrink-0 h-[60px]">
-                <button onClick={onClose} className="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full">
-                    <ArrowLeft size={24} className="text-slate-700 dark:text-slate-200" />
-                </button>
+                <div className="flex items-center gap-2">
+                    <button onClick={onClose} className="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full">
+                        <ArrowLeft size={24} className="text-slate-700 dark:text-slate-200" />
+                    </button>
+                    {rootEntry && (
+                        <button
+                            onClick={() => onViewRoot(rootEntry.root_slug)}
+                            className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-500 dark:text-slate-400 transition-colors"
+                        >
+                            <ArrowLeft size={14} />
+                            <span className="text-xs font-bold uppercase tracking-wider truncate max-w-[120px]">
+                                {rootEntry.root_h || rootEntry.root_g || 'Root'}
+                            </span>
+                        </button>
+                    )}
+                </div>
                 <div className="flex gap-2">
                     <button onClick={onShowSettings} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
                         <Menu size={24} strokeWidth={1.5} />
@@ -261,7 +277,7 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
                     {/* AUDIO ROW */}
                     <div className="flex items-center gap-2 flex-wrap min-h-[40px]">
                         <AudioPlayer
-                            src={e.Entry_Audio ? `/data/audio/${e.Entry_Audio}` : undefined}
+                            src={e.Entry_Audio ? `https://cherokeenationdictionary.net/Audio/${e.Entry_Audio}` : undefined}
                             label="Official"
                             icon={Mic}
                             variant="gray"
@@ -341,14 +357,49 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
                         })}
                     </div>
 
-                    {/* DEFINITION SECTION */}
                     <div className="pt-2">
                         <p className="font-noto-serif text-xl text-slate-800 dark:text-slate-100 leading-snug">
                             {renderStyledText(e.Definition)}
-                            {e.PoS && <span className="text-slate-400 dark:text-slate-500 italic ml-2 text-lg font-normal">({e.PoS})</span>}
+                            {e.PoS && (
+                                <span className="text-slate-400 dark:text-slate-500 italic ml-2 text-lg font-normal">
+                                    ({e.PoS})
+                                    {rootEntry && rootEntry.class_name && (
+                                        <button
+                                            onClick={() => onViewClass(rootEntry.class_name)}
+                                            className="ml-2 px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-xs font-mono text-slate-500 dark:text-slate-400 transition-colors not-italic align-middle"
+                                        >
+                                            {rootEntry.class_name}
+                                        </button>
+                                    )}
+                                </span>
+                            )}
                         </p>
                         {e.Definition_Long && <p className="mt-3 text-slate-600 dark:text-slate-400 text-base leading-relaxed">{renderStyledText(e.Definition_Long)}</p>}
                     </div>
+
+                    {/* Word Forms List (New) */}
+                    {importedForms.length > 0 && (
+                        <div className="pt-4">
+                            <h3 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-3">Conjugations / Forms</h3>
+                            <div className="flex flex-wrap gap-2">
+                                {importedForms.slice(0, 10).map((f, i) => (
+                                    <div key={i} className="px-3 py-2 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-100 dark:border-slate-800 flex flex-col items-start min-w-[120px]">
+                                        <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">{getFriendlyLabel(f.form_name)}</div>
+                                        <div className="font-noto-cherokee text-lg text-slate-800 dark:text-slate-200">{f.syllabary}</div>
+                                        <div className="text-xs text-amber-700 dark:text-amber-400 italic font-medium">{f.translit}</div>
+                                    </div>
+                                ))}
+                                {importedForms.length > 10 && (
+                                    <button 
+                                        onClick={() => setShowWordFormsModal(true)}
+                                        className="px-4 py-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-900/50 rounded-lg text-amber-700 dark:text-amber-500 text-xs font-bold hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors"
+                                    >
+                                        + {importedForms.length - 10} More
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    )}
 
                     {(e.Sentence_Syllabary || e.Sentence_English) && (
                         <div className="bg-amber-50/50 dark:bg-amber-900/10 p-4 rounded-2xl border border-amber-100/50 dark:border-amber-900/20">

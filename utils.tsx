@@ -48,6 +48,18 @@ export const formatToneInput = (value: string) => {
   return value.replace(/[1234?]/g, m => map[m]);
 };
 
+export const getFriendlyLabel = (key: string) => {
+    if (key === '3s|3s|present') return '3rd person present';
+    if (key === '1s|3s|present') return '1st person present';
+    if (key === '3s|3s|completive past') return '3rd person completive past';
+    if (key === '3s|3s|habitual') return '3rd person habitual';
+    if (key === '3s|3s|infinitive') return '3rd person infinitive';
+    if (key === '2s|3s|imperative') return '2nd person imperative';
+    if (key === 'noun|singular|') return 'singular';
+    if (key === 'noun|plural|') return 'plural';
+    return key;
+};
+
 export const downloadFile = (content: any, filename: string, type: string) => {
   // Add BOM to content if type is CSV, else raw content
   const finalContent = type === 'text/csv' ? new Uint8Array([0xEF, 0xBB, 0xBF, ...new TextEncoder().encode(content)]) : content;
@@ -194,7 +206,7 @@ export const getAllUserAudioKeys = async () => {
 };
 
 // --- SEARCH ALGORITHM ---
-export const performSearch = (query: string, allData: any[], sentences: any[], entryToSentencesMap: Map<string, string[]>, settings: any, customDictionaries: any, userNotes: any, posFilter: string, searchScope: string, prioritizedSources: string[] = []) => {
+export const performSearch = (query: string, allData: any[], sentences: any[], entryToSentencesMap: Map<string, string[]>, settings: any, customDictionaries: any, userNotes: any, posFilter: string, searchScope: string, prioritizedSources: string[] = [], importedData: any = {}) => {
   if (!query) return [];
   const lowerQuery = query.toLowerCase().trim();
   const queryWithTones = lowerQuery.replace(/[1234?]/g, m => ({ '1': '¹', '2': '²', '3': '³', '4': '⁴', '?': 'ʔ' }[m] || m));
@@ -272,19 +284,34 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
     }
 
     // OTHER FORMS SEARCH (Replaces Verbs/Plurals)
-    if (searchScopes.otherForms && entry.Other_Forms) {
-      const forms = entry.Other_Forms.split('|');
-      forms.forEach((form: string) => {
-        // Format: Label:Translit^Syllabary^Tone
-        const parts = form.split(':');
-        if (parts.length > 1) {
-          const values = parts[1].split('^');
-          // values[0] = Translit, values[1] = Syllabary, values[2] = Tone
-          if (searchLangs.translit && values[0]) fieldsToSearch.push(values[0]);
-          if (searchLangs.syllabary && values[1]) fieldsToSearch.push(values[1]);
-          if (searchLangs.tone && values[2]) fieldsToSearch.push(values[2]);
+    if (searchScopes.otherForms) {
+        // 1. Check Legacy Other_Forms
+        if (entry.Other_Forms) {
+          const forms = entry.Other_Forms.split('|');
+          forms.forEach((form: string) => {
+            // Format: Label:Translit^Syllabary^Tone
+            const parts = form.split(':');
+            if (parts.length > 1) {
+              const values = parts[1].split('^');
+              // values[0] = Translit, values[1] = Syllabary, values[2] = Tone
+              if (searchLangs.translit && values[0]) fieldsToSearch.push(values[0]);
+              if (searchLangs.syllabary && values[1]) fieldsToSearch.push(values[1]);
+              if (searchLangs.tone && values[2]) fieldsToSearch.push(values[2]);
+            }
+          });
         }
-      });
+        
+        // 2. Check New Imported word_forms
+        Object.values(importedData).forEach((pkgData: any) => {
+            if (pkgData?.word_forms) {
+                const entryForms = pkgData.word_forms.filter((f: any) => f.word_index === entry.id || f.word_index === entry.Index);
+                entryForms.forEach((f: any) => {
+                    if (searchLangs.translit && f.translit) fieldsToSearch.push(f.translit);
+                    if (searchLangs.syllabary && f.syllabary) fieldsToSearch.push(f.syllabary);
+                    if (searchLangs.tone && f.tone) fieldsToSearch.push(f.tone);
+                });
+            }
+        });
     }
 
     if (searchScopes.notes) {

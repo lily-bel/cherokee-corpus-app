@@ -14,7 +14,7 @@ const generateId = () => {
 };
 
 export const usePackageExport = () => {
-    const { dictionary, personalWords, userSentences, glosses, customDictionaries, userAudioMeta, userNotes, userWordForms } = useCorpus();
+    const { personalWords, userSentences, glosses, customDictionaries, userAudioMeta, userNotes, userWordForms } = useCorpus();
 
     const exportPackage = async (
         customDictionaryIds: string[],
@@ -152,73 +152,47 @@ export const usePackageExport = () => {
                 return false;
             });
 
-            // 2. Generate CSVs
-            const dictHeader = ['Index', 'Source', 'Entry', 'Syllabary', 'Part_of_Speech', 'PoS', 'PoS_Family', 'Definition', 'Cross_Reference', 'Entry_Tone', 'Other_Forms', 'Notes'];
-            const dictRows = [dictHeader.join(',')];
-            wordsToExport.forEach(w => {
-                let src = shorthandMap[w.customDictionaryId];
-                if (!src) src = packageShorthand;
-
-                dictRows.push([
-                    `"${w.id || ''}"`,
-                    `"${src}"`,
-                    `"${(w.translit || w.Entry || '').replace(/"/g, '""')}"`,
-                    `"${(w.syllabary || w.Syllabary || '').replace(/"/g, '""')}"`,
-                    `"${(w.PoS || '').replace(/"/g, '""')}"`,
-                    `"${(w.PoS || '').replace(/"/g, '""')}"`,
-                    `"${(w.PoS || '').replace(/"/g, '""')}"`,
-                    `"${(w.definition || w.Definition || '').replace(/"/g, '""')}"`,
-                    `""`, // Cross_Reference
-                    `"${(w.Entry_Tone || '').replace(/"/g, '""')}"`,
-                    `"${(w.Other_Forms || '').replace(/"/g, '""')}"`, // Other_Forms
-                    `"${(w.Notes || '').replace(/"/g, '""')}"` // Notes
-                ].join(','));
+            
+            // 2. Generate JSONs
+            const baseFormsExport = wordsToExport.map(w => {
+                return {
+                    merged_id: w.id || w.Index,
+                    sources: {
+                        "user generated": [{
+                            "Practical": w.translit || w.Entry || '',
+                            "Syllabary": w.syllabary || w.Syllabary || '',
+                            "Translations": w.definition || w.Definition || '',
+                            "Part of speech": w.PoS || '',
+                            "Tone and length 1": w.Entry_Tone || ''
+                        }]
+                    }
+                };
             });
 
-            // Sentences CSV
-            const sentHeader = ['ID', 'Source', 'Syllabary', 'Transliteration', 'English', 'Story', 'Chapter', 'Line', 'Author', 'Speaker'];
-            const sentRows = [sentHeader.join(',')];
-            sentencesToExport.forEach(s => {
-                let src = shorthandMap[s.source];
-                if (!src) src = packageShorthand;
-
-                sentRows.push([
-                    `"${s.id || ''}"`,
-                    `"${src}"`,
-                    `"${(s.syllabary || '').replace(/"/g, '""')}"`,
-                    `"${(s.translit || '').replace(/"/g, '""')}"`,
-                    `"${(s.english || '').replace(/"/g, '""')}"`,
-                    `"${((s as any).story || '').replace(/"/g, '""')}"`,
-                    `"${((s as any).chapter || '').replace(/"/g, '""')}"`,
-                    `"${(s as any).line || ''}"`,
-                    `"${((s as any).author || '').replace(/"/g, '""')}"`,
-                    `"${((s as any).speaker || '').replace(/"/g, '""')}"`
-                ].join(','));
+            const sentencesExport = sentencesToExport.map(s => {
+                return {
+                    sentence_id: s.id,
+                    syllabary: s.syllabary || '',
+                    phonetic: s.translit || '',
+                    english: s.english || '',
+                    "source file": "user generated",
+                    Story: (s as any).story || '',
+                    Chapter: (s as any).chapter || '',
+                    Line: (s as any).line || '',
+                    Author: (s as any).author || '',
+                    Speaker: (s as any).speaker || ''
+                };
             });
 
-            // Join Table CSV
-            const joinHeader = ['ID', 'Source', 'Sentence_ID', 'Entry_ID', 'Word_Index', 'Segment_Cherokee', 'Segment_English', 'Notes'];
-            const joinRows = [joinHeader.join(',')];
-            glossesToExport.forEach(g => {
-                const glossId = generateId();
-                const sentence = sentencesToExport.find(s => s.id === g.sentence_id);
-                const src = sentence ? (shorthandMap[sentence.source] || sentence.source) : packageShorthand;
-
-                joinRows.push([
-                    `"${glossId}"`,
-                    `"${src}"`,
-                    `"${g.sentence_id}"`,
-                    `"${g.entry_id}"`,
-                    `"${g.word_index}"`,
-                    `""`, // Segment_Cherokee
-                    `""`, // Segment_English
-                    `"${(g.notes || '').replace(/"/g, '""')}"`
-                ].join(','));
+            const joinsExport = glossesToExport.map(g => {
+                return {
+                    sentence_id: g.sentence_id,
+                    base_id: g.entry_id,
+                    word_index: g.word_index,
+                    notes: g.notes || '',
+                    "source file": "user generated"
+                };
             });
-
-            zip.file('dictionary.csv', dictRows.join('\n'));
-            zip.file('sentences.csv', sentRows.join('\n'));
-            zip.file('join_table.csv', joinRows.join('\n'));
 
             // --- EXPORT CUSTOM NOTES & WORD FORMS ---
             const notesExport: any[] = [];
@@ -245,34 +219,32 @@ export const usePackageExport = () => {
             // Word Forms
             Object.entries(userWordForms).forEach(([key, val]) => {
                 if (exportAllNotesAndForms || relevantTargetIds.has(key)) {
-                    const parts = (val as string).split('|');
-                    parts.forEach((raw, idx) => {
+                    const parts = val.split('|');
+                    parts.forEach((raw) => {
                         const [label, content] = raw.split(':');
                         if (label && content) {
                             const values = content.split('^');
-                            const officialEntry = dictionary.find(d => (d.id || d.Index) === key) || personalWords.find(w => (w.id || w.Index) === key);
-                            const officialCount = officialEntry?.Other_Forms ? officialEntry.Other_Forms.split('|').length : 0;
-                            const computedIndex = officialCount + idx + 1;
-
                             formsExport.push({
-                                word_index: key,
-                                order: idx,
-                                computed_index: computedIndex,
-                                form_name: label,
-                                translit: values[0] || '',
-                                syllabary: values[1] || '',
-                                tone: values[2] || '',
-                                notes: values[3] || ''
+                                merged_id: key,
+                                normalized_key: label,
+                                "user generated_Practical": values[0] || '',
+                                "user generated_Syllabary": values[1] || '',
+                                "user generated_Tone and length 1": values[2] || '',
+                                "user generated_Notes": values[3] || ''
                             });
                         }
                     });
                 }
             });
 
-            if (notesExport.length > 0 || formsExport.length > 0) {
+            zip.file('base_forms.json', JSON.stringify(baseFormsExport, null, 2));
+            zip.file('sentences.json', JSON.stringify(sentencesExport, null, 2));
+            zip.file('sentence_joins.json', JSON.stringify(joinsExport, null, 2));
+            zip.file('conjugations.json', JSON.stringify(formsExport, null, 2));
+
+            if (notesExport.length > 0) {
                 zip.file('entry_data.json', JSON.stringify({
-                    notes: notesExport,
-                    word_forms: formsExport
+                    notes: notesExport
                 }, null, 2));
             }
 
@@ -305,6 +277,7 @@ export const usePackageExport = () => {
             if (customDictionaries[id]) {
                 const short = shorthandMap[id];
                 if (short) {
+                    if (!meta.source_names) meta.source_names = {};
                     meta.source_names[short] = customDictionaries[id].name;
                 }
             }
