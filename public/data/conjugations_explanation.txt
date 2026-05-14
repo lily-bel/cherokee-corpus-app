@@ -1,0 +1,23 @@
+ {
+    "merged_id": "e30306bcea2fd4da",
+    "normalized_key": "Person and Tense info in format SUBJECT|OBJECT|TENSE - ie: 3s|3s|present",
+    "cn-app-dictionary.csv_Translations": "English Definition",
+    "cn-app-dictionary.csv_Variants": "Alternate Cherokee Spellings",
+    "cn-app-dictionary.csv_Syllabary": "Cherokee Syllabary",
+    "cn-app-dictionary.csv_Practical": "Cherokee Transliteration",
+    "cn-app-dictionary.csv_Simple phonetics": "Hyphenated Cherokee Transliteration",
+    "cn-app-dictionary.csv_Tone and length 1": "Tone without length data",
+    "cn-app-dictionary.csv_Tone and length 2": "Tone with length data",
+    "kirk-book-data.csv_Cherokee": "Cherokee Transliteration (kirk source)",
+    "kirk-book-data.csv_English": "English Translation (kirk source)",
+    "learning-to-use-the-cherokee-verb.csv_Cherokee": "Cherokee Transliteration (learning source)",
+    "learning-to-use-the-cherokee-verb.csv_English": "English Translation (learning source)",
+    "learning-to-use-the-cherokee-verb.csv_Syllabary": " Cherokee Syllabary (learning source)",
+    "learning-to-use-the-cherokee-verb.csv_Stem": "Stem",
+    "learning-to-use-the-cherokee-verb.csv_Stem Number": "Stem Number",
+    "hierarchical-dict.json_Cherokee": "Pre-phonetics cherokee transliteration",
+    "hierarchical-dict.json_practical": "Cherokee Transliteration (root source)"
+    "lily-dict.csv_Cherokee": "Cherokee Transliteration (lily source)",
+    "lily-dict.csv_Syllabary": "Cherokee Syllabary (lily source)",
+    "lily-dict.csv_Tone": "Tone (lily source)"
+  },

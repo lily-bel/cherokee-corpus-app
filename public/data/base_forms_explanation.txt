@@ -1,0 +1,70 @@
+{
+    "merged_id": "Final ID for this entry, used for matching with audio, sentences, word form/conjugations",
+    "sources": {
+      "cn-app-dictionary.csv": {
+        "Translations": "English Definition",
+        "Variants": "Alternate Cherokee Spellings",
+        "No.": "cn-app-dictionary.csv Input CSV index",
+        "Syllabary": "Cherokee Syllabary",
+        "Practical": "Cherokee Transliteration",
+        "Simple phonetics": "Hyphenated phonetics for transliteration",
+        "Tone and length 1": "Tone without length data",
+        "Tone and length 2": "Tone with length data",
+        "Part of speech": "Part of speech",
+        "Part of speech ch": "Part of speech in cherokee"
+      },
+      "lily-dict.csv": {
+        "Index": "lily-dict.csv Input CSV index",
+        "Source": "Shortform Source Name (ie: ced)",
+        "Entry": "Cherokee Transliteration",
+        "Syllabary": "Cherokee Syllabary",
+        "Part_of_Speech": "Part of speech (shortform)",
+        "PoS": "Part of speech",
+        "Definition": "English Definition",
+        "Definition_Long": "Longer English Definition (usually empty)",
+        "Cross_Reference": "Similar words",
+        "Entry_Tone": "Tone"
+      },
+      "kirk-book-data.csv": {
+        "Index": "kirk-book-data.csv Input CSV index",
+        "Cherokee": "Cherokee Transliteration",
+        "English": "English Definition",
+        "Tone": "Tone",
+        "CED Link": "Link to online dictionary site",
+        "screenshot name": "Kirk book screenshot file name (not currently used)"
+      },
+      "learning-to-use-the-cherokee-verb.csv": {
+        "Index": "learning-to-use-the-cherokee-verb.csv Input CSV index"
+      },
+      "hierarchical-dict.json": {
+        "definition": "English Definition",
+        "h_grade_root": "H Grade Root",
+        "glottal_grade_root": "Glottal Grade Root",
+        "post_root_morpheme": "Post Root Morpheme",
+        "class_name": "Class Name",
+        "config.pre.translocutive": false,
+        "config.pre.translocutiveImpOnly": false,
+        "config.pre.partitive": false,
+        "config.pre.distributive": false,
+        "config.pron.set_type": "Verb SET A/B",
+        "config.pron.stem_type": "Stem Type",
+        "config.pron.allow_h_metathesis": false,
+        "config.pron.middle_voice": "none",
+        "config.pron.middle_voice_h_metathesis": false,
+        "config.pron.plural_pronouns": false,
+        "config.pron.use_ka_variant": false,
+        "config.pron.use_aki_for_1st_set_b": false,
+        "config.pron.uwa_replaces_v": false,
+        "config.pron.use_3rd_person_object": false,
+        "config.stative": false,
+	"_is_transitive": false,
+      }
+    },
+    "internal_sources": [
+      "learning-to-use-the-cherokee-verb.csv",
+      "cn-app-dictionary.csv",
+      "lily-ced",
+      "hierarchical-dict.json",
+      "kirk-book-data.csv"
+    ]
+  },
