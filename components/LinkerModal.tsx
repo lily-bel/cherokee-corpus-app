@@ -29,7 +29,6 @@ export const LinkerModal: React.FC<LinkerModalProps> = ({ initialQuery, targetWo
     const [breakdownEnglish, setBreakdownEnglish] = useState(initialData?.breakdownEnglish || '');
 
     const { sentences, entryToSentencesMap, rootMap } = useCorpus();
-    const { importedData } = usePackageManager();
 
     const results = useMemo(() => {
         if (!query) return [];
