@@ -9,8 +9,23 @@
 </head>
 <body class="bg-white h-screen flex flex-col font-sans text-gray-900">
 
+    
     <!-- Main Content: Fills remaining space -->
     <main class="flex-1 flex flex-col p-4 gap-4 overflow-hidden">
+        <div class="flex-1 flex flex-col min-h-0 relative group">
+            <div class="flex justify-between items-center mb-1">
+                <label for="transliteration" class="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    Phonetics
+                </label>
+                <button onclick="copyText('syllabary')" class="text-gray-400 hover:text-emerald-600 text-xs flex items-center gap-1 p-1 rounded hover:bg-gray-100 transition-colors" title="Copy">
+                    <i data-lucide="copy" class="w-3 h-3"></i> Copy
+                </button>
+            </div>
+            <textarea 
+                id="transliteration" 
+                class="flex-1 w-full p-4 bg-gray-50 border border-gray-300 rounded-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none resize-none text-lg"
+                placeholder="Enter phonetics here..."></textarea>
+        </div>
         
          <div class="flex flex-col gap-3 shrink-0">
             
@@ -42,7 +57,7 @@
 
                 <button onclick="runSyllabaryToTransliteration()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-900 px-4 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 border border-gray-300 rounded-sm">
                     <i data-lucide="arrow-up" class="w-4 h-4"></i>
-                    <span>To Latin</span>
+                    <span>To Phonetics</span>
                 </button>
             </div>
 
@@ -64,7 +79,7 @@
             <textarea 
                 id="syllabary" 
                 class="flex-1 w-full p-4 bg-gray-50 border border-gray-300 rounded-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none resize-none text-lg"
-                placeholder="Syllabary output will appear here..."></textarea>
+                placeholder="Enter syllabary here..."></textarea>
         </div>
 
     </main>
@@ -101,7 +116,8 @@
             ["gwa", "Ꮖ"], ["gwe", "Ꮗ"], ["gwi", "Ꮘ"], ["gwo", "Ꮙ"], ["gwu", "Ꮚ"], ["gwv", "Ꮛ"],
             ["hla", "Ꮭ"], ["hle", "Ꮮ"], ["hli", "Ꮯ"], ["hlo", "Ꮰ"], ["hlu", "Ꮱ"], ["hlv", "Ꮲ"],
             ["ke", "Ꭸ"], ["ki", "Ꭹ"], ["ko", "Ꭺ"], ["ku", "Ꭻ"], ["kv", "Ꭼ"],
-            ["to", "Ꮩ"], ["tu", "Ꮪ"], ["tv", "Ꮫ"]
+            ["to", "Ꮩ"], ["tu", "Ꮪ"], ["tv", "Ꮫ"],
+	    ["ja", "Ꭸ"], ["je", "Ꭹ"], ["ji", "Ꭺ"], ["jo", "Ꭻ"], ["ju", "Ꭼ"], ["jv", "Ꭼ"]
         ];
 
         // Reverse map for quick Syllabary -> Classic Latin lookups
@@ -125,40 +141,80 @@
             }
         }
 
-        // aspiration mode
+        // julie mode
         function applyAspirationMode(text) {
             let s = text;
             s = s.replace(/t(?!s)/g, "th");
-
+        
             const rules = [
                 ["d", "t"], ["k", "kh"], ["g", "k"], ["j", "ts"],
                 ["ch", "tsh"], ["hn", "nh"], ["hl", "lh"], ["hy", "yh"],
-                ["hw", "wh"], ["?", "'"], ["’", "'"]
+                // Added ["qu", "kw"] at the END to prevent the "k" from being turned into "kh"
+                ["hw", "wh"], ["?", "'"], ["’", "'"], ["qu", "kw"] 
             ];
             
             rules.forEach(([oldChar, newChar]) => {
                 s = s.split(oldChar).join(newChar);
             });
-
+        
             s = s.replace(/sl(?=[aeiouv])/g, "slh");
             s = s.replace(/([^ht])s/g, "$1hs");
             return s;
         }
 
-        // reverse aspiration mode
+        // lily mode
         function applyReverseAspirationMode(text) {
             let s = text;
             s = applyAspirationMode(text);
             
             const rules = [
-                ["ts", "j"], ["k", "g"], ["t", "d"], ["t", "d"]
+                ["kw", "gw"], // Added kw -> gw conversion here
+                ["ts", "j"], ["k", "g"], ["t", "d"]
             ];
             
             rules.forEach(([oldChar, newChar]) => {
                 s = s.split(oldChar).join(newChar);
             });
-
+        
             return s;
+        }
+
+        function reverseAspirationToClassic(text) {
+            let s = text;
+            
+            s = s.replace(/hs/g, "s");
+            s = s.replace(/slh/g, "sl");
+        
+            const rules = [
+                ["kw", "qu"], // Reverts kw back to qu
+                ["wh", "hw"], ["yh", "hy"], ["lh", "hl"], ["nh", "hn"],
+                ["tsh", "ch"], ["ts", "j"], ["'", "?"]
+            ];
+            rules.forEach(([oldChar, newChar]) => {
+                s = s.split(oldChar).join(newChar);
+            });
+        
+            s = s.replace(/t(?!h)/g, "d");
+            s = s.replace(/th/g, "t");
+        
+            s = s.replace(/k(?!h)/g, "g");
+            s = s.replace(/kh/g, "k");
+        
+            return s;
+        }
+        
+        function reverseReverseAspirationToClassic(text) {
+            let s = text;
+            
+            const rules = [
+                ["gw", "kw"], // Reverts gw back to kw
+                ["j", "ts"], ["g", "k"], ["d", "t"]
+            ];
+            rules.forEach(([oldChar, newChar]) => {
+                s = s.split(oldChar).join(newChar);
+            });
+        
+            return reverseAspirationToClassic(s);
         }
 
         function runTransliterationToSyllabary() {
@@ -166,19 +222,27 @@
             const outputElement = document.getElementById('syllabary');
             const inputText = inputElement.value;
             const mode = document.getElementById('modeSelect').value;
-
+        
+            // Pre-process the input back to classic phonetics before converting to syllabary
+            let classicText = inputText.toLowerCase();
+            
+            if (mode === 'aspiration') {
+                classicText = reverseAspirationToClassic(classicText);
+            } else if (mode === 'reverse_aspiration') {
+                classicText = reverseReverseAspirationToClassic(classicText);
+            }
+        
             let result = "";
             let i = 0;
-            let lowerText = inputText.toLowerCase();
-
-            while (i < lowerText.length) {
+        
+            while (i < classicText.length) {
                 let matched = false;
-                
-                // Iterates exactly in the order defined in the array above
+        
+                // Iterates exactly in the order defined in the syllabaryMap array
                 for (let j = 0; j < syllabaryMap.length; j++) {
                     const [latinKey, syllabaryChar] = syllabaryMap[j];
                     
-                    if (lowerText.startsWith(latinKey, i)) {
+                    if (classicText.startsWith(latinKey, i)) {
                         result += syllabaryChar;
                         i += latinKey.length;
                         matched = true;
@@ -187,15 +251,19 @@
                 }
                 
                 if (!matched) {
-                    result += inputText[i];
+                    // We use classicText[i] here because the reverse mappings might have 
+                    // changed the string length (e.g. "th" becoming "t"). Using inputText[i]
+                    // would cause the index alignment to drift.
+                    result += classicText[i];
                     i++;
                 }
             }
-
+        
             outputElement.value = result;
             if (inputText) showStatus("Converted to Syllabary", "text-indigo-600");
         }
 
+            
         function runSyllabaryToTransliteration() {
             const inputElement = document.getElementById('syllabary');
             const outputElement = document.getElementById('transliteration');
@@ -219,7 +287,7 @@
             }
 
             outputElement.value = finalResult;
-            if (inputText) showStatus(`Converted to Latin (${mode.replace('_', ' ')})`, "text-emerald-600");
+            if (inputText) showStatus(`Converted to Phonetics (${mode.replace('_', ' ')})`, "text-emerald-600");
         }
 
         function clearAll() {
