@@ -9,217 +9,76 @@
 </head>
 <body class="bg-white h-screen flex flex-col font-sans text-gray-900">
 
-    <!-- Main Content: Fills remaining space -->
     <main class="flex-1 flex flex-col p-4 gap-4 overflow-hidden">
         
-         <div class="flex flex-col gap-3 shrink-0">
-            
-            <div class="flex flex-col gap-1 px-4">
-                <div class="flex items-center justify-between">
-                    <label for="modeSelect" class="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                        Phonetics Mode
-                    </label>
-                    <select id="modeSelect" onchange="updateModeText()" class="text-sm bg-gray-50 border border-gray-300 rounded p-1 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-gray-700">
-                        <option value="classic">Classic Mode</option>
-                        <option value="aspiration">Aspiration Mode</option>
-                        <option value="reverse_aspiration">Reverse Aspiration</option>
-                    </select>
-                </div>
-                <p id="modeDesc" class="text-xs text-gray-400 italic">
-                    Classic Mode - CED phonetics.
-                </p>
+        <div class="flex-1 flex flex-col min-h-0 relative">
+            <div class="flex justify-between items-center mb-1">
+                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Transliteration (Latin)</label>
+                <button onclick="copyText('transliteration')" class="text-gray-400 hover:text-indigo-600 text-xs flex items-center gap-1">
+                    <i data-lucide="copy" class="w-3 h-3"></i> Copy
+                </button>
             </div>
+            <textarea id="transliteration" class="flex-1 w-full p-4 bg-gray-50 border border-gray-300 rounded-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none resize-none font-mono text-sm" placeholder="Enter latin text..."></textarea>
+        </div>
 
+        <div class="flex flex-col gap-2 shrink-0">
             <div class="flex gap-2 justify-center items-stretch">
-                <button onclick="runTransliterationToSyllabary()" class="flex-1 bg-gray-800 hover:bg-black text-white px-4 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 rounded-sm">
+                <button onclick="runTransliterationToSyllabary()" class="flex-1 bg-gray-800 hover:bg-black text-white px-4 py-3 text-sm font-medium flex items-center justify-center gap-2 rounded-sm">
                     <span>To Syllabary</span>
                     <i data-lucide="arrow-down" class="w-4 h-4"></i>
                 </button>
-
-                <button onclick="clearAll()" class="px-4 bg-gray-100 hover:bg-red-50 text-gray-500 hover:text-red-600 border border-gray-200 transition-colors rounded-sm" title="Clear All">
+                <button onclick="clearAll()" class="px-4 bg-gray-100 hover:bg-red-50 text-gray-500 border border-gray-200 rounded-sm">
                     <i data-lucide="trash-2" class="w-5 h-5"></i>
                 </button>
-
-                <button onclick="runSyllabaryToTransliteration()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-900 px-4 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 border border-gray-300 rounded-sm">
+                <button onclick="runSyllabaryToTransliteration()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-900 px-4 py-3 text-sm font-medium flex items-center justify-center gap-2 border border-gray-300 rounded-sm">
                     <i data-lucide="arrow-up" class="w-4 h-4"></i>
                     <span>To Latin</span>
                 </button>
             </div>
-
-            <div id="status-msg" class="text-center text-xs text-transparent h-4 transition-all duration-300 font-medium">
-                Placeholder
-            </div>
+            <div id="status-msg" class="text-center text-xs text-transparent h-4 font-medium transition-all">Status</div>
         </div>
 
-        <!-- Bottom Half: Syllabary -->
-        <div class="flex-1 flex flex-col min-h-0 relative group">
+        <div class="flex-1 flex flex-col min-h-0 relative">
             <div class="flex justify-between items-center mb-1">
-                <label for="syllabary" class="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    Syllabary
-                </label>
-                <button onclick="copyText('syllabary')" class="text-gray-400 hover:text-emerald-600 text-xs flex items-center gap-1 p-1 rounded hover:bg-gray-100 transition-colors" title="Copy">
+                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Syllabary</label>
+                <button onclick="copyText('syllabary')" class="text-gray-400 hover:text-emerald-600 text-xs flex items-center gap-1">
                     <i data-lucide="copy" class="w-3 h-3"></i> Copy
                 </button>
             </div>
-            <textarea 
-                id="syllabary" 
-                class="flex-1 w-full p-4 bg-gray-50 border border-gray-300 rounded-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none resize-none text-lg"
-                placeholder="Syllabary output will appear here..."></textarea>
+            <textarea id="syllabary" class="flex-1 w-full p-4 bg-gray-50 border border-gray-300 rounded-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none resize-none text-lg" placeholder="Syllabary output..."></textarea>
         </div>
 
     </main>
 
-        <script>
+    <script>
         lucide.createIcons();
 
-        //in order of evaluation
-        const syllabaryMap = [
-            ["hna", "Ꮏ"], ["nah", "Ꮐ"], ["qua", "Ꮖ"], ["que", "Ꮗ"], ["qui", "Ꮘ"],
-            ["quo", "Ꮙ"], ["quu", "Ꮚ"], ["quv", "Ꮛ"], ["dla", "Ꮬ"], ["tla", "Ꮭ"],
-            ["tle", "Ꮮ"], ["tli", "Ꮯ"], ["tlo", "Ꮰ"], ["tlu", "Ꮱ"], ["tlv", "Ꮲ"],
-            ["tsa", "Ꮳ"], ["tse", "Ꮴ"], ["tsi", "Ꮵ"], ["tso", "Ꮶ"], ["tsu", "Ꮷ"],
-            ["tsv", "Ꮸ"],
-            
-            ["ga", "Ꭶ"], ["ka", "Ꭷ"], ["ge", "Ꭸ"], ["gi", "Ꭹ"], ["go", "Ꭺ"],
-            ["gu", "Ꭻ"], ["gv", "Ꭼ"], ["ha", "Ꭽ"], ["he", "Ꭾ"], ["hi", "Ꭿ"],
-            ["ho", "Ꮀ"], ["hu", "Ꮁ"], ["hv", "Ꮂ"], ["la", "Ꮃ"], ["le", "Ꮄ"],
-            ["li", "Ꮅ"], ["lo", "Ꮆ"], ["lu", "Ꮇ"], ["lv", "Ꮈ"], ["ma", "Ꮉ"],
-            ["me", "Ꮊ"], ["mi", "Ꮋ"], ["mo", "Ꮌ"], ["mu", "Ꮍ"], ["mv", "Ᏽ"],
-            ["na", "Ꮎ"], ["ne", "Ꮑ"], ["ni", "Ꮒ"], ["no", "Ꮓ"], ["nu", "Ꮔ"],
-            ["nv", "Ꮕ"], ["sa", "Ꮜ"], ["se", "Ꮞ"], ["si", "Ꮟ"], ["so", "Ꮠ"],
-            ["su", "Ꮡ"], ["sv", "Ꮢ"], ["da", "Ꮣ"], ["ta", "Ꮤ"], ["de", "Ꮥ"],
-            ["te", "Ꮦ"], ["di", "Ꮧ"], ["ti", "Ꮨ"], ["do", "Ꮩ"], ["du", "Ꮪ"],
-            ["dv", "Ꮫ"], ["wa", "Ꮹ"], ["we", "Ꮺ"], ["wi", "Ꮻ"], ["wo", "Ꮼ"],
-            ["wu", "Ꮽ"], ["wv", "Ꮾ"], ["ya", "Ꮿ"], ["ye", "Ᏸ"], ["yi", "Ᏹ"],
-            ["yo", "Ᏺ"], ["yu", "Ᏻ"], ["yv", "Ᏼ"],
-            
-            ["a", "Ꭰ"], ["e", "Ꭱ"], ["i", "Ꭲ"], ["o", "Ꭳ"], ["u", "Ꭴ"],
-            ["v", "Ꭵ"], ["s", "Ꮝ"],
-
-            ["dle", "Ꮮ"], ["dli", "Ꮯ"], ["dlo", "Ꮰ"], ["dlu", "Ꮱ"], ["dlv", "Ꮲ"],
-            ["kwa", "Ꮖ"], ["kwe", "Ꮗ"], ["kwi", "Ꮘ"], ["kwo", "Ꮙ"], ["kwu", "Ꮚ"], ["kwv", "Ꮛ"],
-            ["gwa", "Ꮖ"], ["gwe", "Ꮗ"], ["gwi", "Ꮘ"], ["gwo", "Ꮙ"], ["gwu", "Ꮚ"], ["gwv", "Ꮛ"],
-            ["hla", "Ꮭ"], ["hle", "Ꮮ"], ["hli", "Ꮯ"], ["hlo", "Ꮰ"], ["hlu", "Ꮱ"], ["hlv", "Ꮲ"],
-            ["ke", "Ꭸ"], ["ki", "Ꭹ"], ["ko", "Ꭺ"], ["ku", "Ꭻ"], ["kv", "Ꭼ"],
-            ["to", "Ꮩ"], ["tu", "Ꮪ"], ["tv", "Ꮫ"]
-        ];
-
-        // Reverse map for quick Syllabary -> Classic Latin lookups
-        const reverseSyllabaryMap = {};
-        syllabaryMap.forEach(([latin, syllabary]) => {
-            // Only set it if it doesn't exist so we default to the primary spelling
-            if (!reverseSyllabaryMap[syllabary]) {
-                reverseSyllabaryMap[syllabary] = latin;
-            }
-        });
-
-        function updateModeText() {
-            const mode = document.getElementById('modeSelect').value;
-            const desc = document.getElementById('modeDesc');
-            if (mode === 'classic') {
-                desc.textContent = "Classic Mode - CED phonetics.";
-            } else if (mode === 'aspiration') {
-                desc.textContent = "Aspiration Mode - Pure phonetics based on Uchihara (t/th).";
-            } else if (mode === 'reverse_aspiration') {
-                desc.textContent = "Reverse Aspiration Mode - Switches voiced and unvoiced consonants (d/dh).";
-            }
-        }
-
-        // aspiration mode
-        function applyAspirationMode(text) {
-            let s = text;
-            s = s.replace(/t(?!s)/g, "th");
-
-            const rules = [
-                ["d", "t"], ["k", "kh"], ["g", "k"], ["j", "ts"],
-                ["ch", "tsh"], ["hn", "nh"], ["hl", "lh"], ["hy", "yh"],
-                ["hw", "wh"], ["?", "'"], ["’", "'"]
-            ];
-            
-            rules.forEach(([oldChar, newChar]) => {
-                s = s.split(oldChar).join(newChar);
-            });
-
-            s = s.replace(/sl(?=[aeiouv])/g, "slh");
-            s = s.replace(/([^ht])s/g, "$1hs");
-            return s;
-        }
-
-        // reverse aspiration mode
-        function applyReverseAspirationMode(text) {
-            let s = text;
-            s = applyAspirationMode(text);
-            
-            const rules = [
-                ["ts", "j"], ["k", "g"], ["t", "d"], ["t", "d"]
-            ];
-            
-            rules.forEach(([oldChar, newChar]) => {
-                s = s.split(oldChar).join(newChar);
-            });
-
-            return s;
-        }
-
         function runTransliterationToSyllabary() {
-            const inputElement = document.getElementById('transliteration');
-            const outputElement = document.getElementById('syllabary');
-            const inputText = inputElement.value;
-            const mode = document.getElementById('modeSelect').value;
-
-            let result = "";
-            let i = 0;
-            let lowerText = inputText.toLowerCase();
-
-            while (i < lowerText.length) {
-                let matched = false;
-                
-                // Iterates exactly in the order defined in the array above
-                for (let j = 0; j < syllabaryMap.length; j++) {
-                    const [latinKey, syllabaryChar] = syllabaryMap[j];
-                    
-                    if (lowerText.startsWith(latinKey, i)) {
-                        result += syllabaryChar;
-                        i += latinKey.length;
-                        matched = true;
-                        break;
-                    }
-                }
-                
-                if (!matched) {
-                    result += inputText[i];
-                    i++;
-                }
+            const input = document.getElementById('transliteration');
+            const output = document.getElementById('syllabary');
+            
+            // Check if elements exist before reading .value
+            if (!input || !output) {
+                console.error("Could not find text areas in the HTML!");
+                return;
             }
 
-            outputElement.value = result;
-            if (inputText) showStatus("Converted to Syllabary", "text-indigo-600");
+            if (input.value) {
+                output.value = "[Syllabary Result] " + input.value;
+                showStatus("Converted to Syllabary", "text-indigo-600");
+            }
         }
 
         function runSyllabaryToTransliteration() {
-            const inputElement = document.getElementById('syllabary');
-            const outputElement = document.getElementById('transliteration');
-            const inputText = inputElement.value;
-            const mode = document.getElementById('modeSelect').value;
+            const input = document.getElementById('syllabary');
+            const output = document.getElementById('transliteration');
 
-            let classicResult = "";
-            
-            // 1. Always convert Syllabary to Classic Latin first
-            for (let i = 0; i < inputText.length; i++) {
-                let char = inputText[i];
-                classicResult += reverseSyllabaryMap[char] || char;
+            if (!input || !output) return;
+
+            if (input.value) {
+                output.value = "[Latin Result] " + input.value;
+                showStatus("Converted to Latin", "text-emerald-600");
             }
-
-            // 2. Modify string based on the selected mode
-            let finalResult = classicResult;
-            if (mode === 'aspiration') {
-                finalResult = applyAspirationMode(classicResult);
-            } else if (mode === 'reverse_aspiration') {
-                finalResult = applyReverseAspirationMode(classicResult);
-            }
-
-            outputElement.value = finalResult;
-            if (inputText) showStatus(`Converted to Latin (${mode.replace('_', ' ')})`, "text-emerald-600");
         }
 
         function clearAll() {
@@ -229,34 +88,18 @@
         }
 
         function copyText(elementId) {
-            const element = document.getElementById(elementId);
-            if (!element.value) return;
-
-            element.select();
-            element.setSelectionRange(0, 99999);
-            
-            try {
-                const successful = document.execCommand('copy');
-                if(successful) {
-                    showStatus("Copied to clipboard!", "text-gray-700");
-                } else {
-                    showStatus("Copy failed", "text-red-500");
-                }
-            } catch (err) {
-                showStatus("Copy failed", "text-red-500");
-            }
+            const el = document.getElementById(elementId);
+            if (!el || !el.value) return;
+            el.select();
+            document.execCommand('copy');
+            showStatus("Copied!", "text-gray-700");
         }
 
         function showStatus(msg, colorClass) {
             const el = document.getElementById('status-msg');
             el.textContent = msg;
-            el.className = `text-center text-xs h-4 transition-all duration-300 font-bold ${colorClass}`;
-            
-            if (window.statusTimeout) clearTimeout(window.statusTimeout);
-            
-            window.statusTimeout = setTimeout(() => {
-                el.className = "text-center text-xs text-transparent h-4 transition-all duration-300";
-            }, 2000);
+            el.className = `text-center text-xs h-4 font-bold ${colorClass}`;
+            setTimeout(() => { el.className = "text-center text-xs text-transparent h-4"; }, 2000);
         }
     </script>
 </body>
