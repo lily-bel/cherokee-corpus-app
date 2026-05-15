@@ -585,7 +585,7 @@
                 this.updateProgress('read');
             },
 
-            checkReading() {
+                        checkReading() {
                 if (this.processingFeedback) return;
                 const input = this.dom.read.input.value.trim().toLowerCase();
                 if (!input) return;
@@ -594,8 +594,18 @@
                 const item = this.queue[this.currentIdx];
                 const correct = item.rom.toLowerCase();
                 item.attempts++;
+
+                // Build a list of valid phonetic spellings based on the requested variations
+                let validAnswers = [correct];
+                if (correct.startsWith('ts')) validAnswers.push(correct.replace(/^ts/, 'j'));
+                if (correct.startsWith('tl')) validAnswers.push(correct.replace(/^tl/, 'hl'));
+                if (correct.startsWith('qu')) {
+                    validAnswers.push(correct.replace(/^qu/, 'kw'));
+                    validAnswers.push(correct.replace(/^qu/, 'gw'));
+                }
                 
-                if (input === correct) {
+                // Check if the user's input is in the list of valid answers
+                if (validAnswers.includes(input)) {
                     item.history.push('correct');
                     this.showFeedback(true, "Correct!");
                     this.results.push(item);
@@ -606,7 +616,7 @@
                     }, 800);
                 } else {
                     item.history.push('incorrect');
-                    // Updated feedback text here
+                    // We still show the primary romanization from the array as the "Correct answer"
                     this.showFeedback(false, `Correct answer: ${correct}`);
                     const remaining = this.queue.length - (this.currentIdx + 1);
                     const insertOffset = remaining <= 0 ? 0 : Math.floor(Math.random() * remaining) + 2; 
