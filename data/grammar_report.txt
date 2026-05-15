@@ -1,0 +1,92 @@
+GRAMMAR CONJUGATION REPORT
+==========================
+
+Source Abbreviations:
+  CN: cn-app-dictionary.csv
+  LT: learning-to-use-the-cherokee-verb.csv
+  KB: kirk-book-data.csv
+  LI: lily-dict.csv
+  HD: hierarchical-dict.json
+
+Subj -> Obj          | completive p | future       | future imper | habitual     | immediate pa | imperative   | infinitive   | present     
+--------------------------------------------------------------------------------------------------------------------------------------------
+1d-ex -> 2d          |              |              |              |              |              |              |              | LT          
+1d-ex -> 2p          |              |              |              |              |              |              |              | LT          
+1d-ex -> 2s          |              |              |              |              |              |              |              | LT          
+1d-ex -> 3a          |              |              |              |              |              |              |              | LT          
+1d-ex -> 3p          | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
+1d-ex -> 3pa         |              |              |              |              |              |              |              | LT          
+1d-ex -> 3s          | KBLT         | KBLT         | LT           | KBLT         | LT           | KBLT         | KBLT         | KBLT        
+1d-in -> 3a          |              |              |              |              |              |              |              | LT          
+1d-in -> 3p          | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
+1d-in -> 3pa         |              |              |              |              |              |              |              | LT          
+1d-in -> 3s          | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
+1p-ex -> 2s          |              |              |              |              |              |              |              | LT          
+1p-ex -> 3a          |              |              |              |              |              |              |              | LT          
+1p-ex -> 3p          | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
+1p-ex -> 3pa         |              |              |              |              |              |              |              | LT          
+1p-ex -> 3s          | KBLT         | KBLT         | LT           | KBLT         | LT           | KBLT         | KBLT         | KBLT        
+1p-in -> 3a          | KB           |              |              | KB           |              | KB           | KB           | KBLT        
+1p-in -> 3p          | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
+1p-in -> 3pa         |              |              |              |              |              |              |              | LT          
+1p-in -> 3s          | KBLT         | KBLT         | LT           | KBLT         | LT           | KBLT         | KBLT         | KBLT        
+1s -> 2d             |              |              |              |              |              |              |              | LT          
+1s -> 2p             |              |              |              |              |              |              |              | LT          
+1s -> 2s             |              |              |              |              |              |              |              | LT          
+1s -> 3a             | KBLT         | LT           |              | KBLT         | LT           | KB           | KBLT         | CNKBLT      
+1s -> 3p             | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
+1s -> 3pa            |              |              |              |              |              |              |              | LT          
+1s -> 3s             | KBLT         | LT           | LT           | KBLT         | LT           | KBLT         | KBLT         | CNHDKBLILT  
+2d -> 1d-ex          |              |              |              |              |              |              |              | LT          
+2d -> 1p-ex          |              |              |              |              |              |              |              | LT          
+2d -> 1s             |              |              |              |              |              |              |              | LT          
+2d -> 3a             |              |              | LT           |              |              | LT           |              | LT          
+2d -> 3p             | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
+2d -> 3pa            |              |              |              |              |              |              |              | LT          
+2d -> 3s             | KBLT         | KBLT         | LT           | KBLT         | LT           | KBLILT       | KBLT         | KBLT        
+2p -> 1d-ex          |              |              |              |              |              |              |              | LT          
+2p -> 1s             |              |              |              |              |              |              |              | LT          
+2p -> 3a             |              |              | LT           |              |              | LT           |              | LT          
+2p -> 3p             | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
+2p -> 3pa            |              |              |              |              |              |              |              | LT          
+2p -> 3s             | KBLT         | KBLT         | LT           | KBLT         | LT           | KBLT         | KBLT         | KBLT        
+2s -> 1d-ex          |              |              |              |              |              |              |              | LT          
+2s -> 1p-ex          |              |              |              |              |              |              |              | LT          
+2s -> 1s             |              |              |              |              |              |              |              | LT          
+2s -> 3a             | KB           |              | LT           | KB           |              | CNKBLT       | KB           | KBLT        
+2s -> 3p             | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
+2s -> 3pa            |              |              |              |              |              |              |              | LT          
+2s -> 3s             | KBLT         | LT           | LT           | KBLT         | LT           | CNHDKBLT     | KBLT         | KBLT        
+3p -> 1d-ex          |              |              |              |              |              |              |              | LT          
+3p -> 1d-in          |              |              |              |              |              |              |              | LT          
+3p -> 1p-ex          |              |              |              |              |              |              |              | LT          
+3p -> 1p-in          |              |              |              |              |              |              |              | LT          
+3p -> 1s             |              |              |              |              |              |              |              | LT          
+3p -> 2d             |              |              |              |              |              |              |              | LT          
+3p -> 2p             |              |              |              |              |              |              |              | LT          
+3p -> 2s             |              |              |              |              |              |              |              | LT          
+3p -> 3a             | KB           |              |              | KB           |              | KB           | KB           | KBLT        
+3p -> 3p             | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
+3p -> 3pa            |              |              |              |              |              |              |              | LT          
+3p -> 3s             | KBLILT       | KBLT         | LT           | KBLILT       | LT           | KBLT         | KBLILT       | CNKBLT      
+3s -> 1d-ex          |              |              |              |              |              |              |              | LT          
+3s -> 1d-in          |              |              |              |              |              |              |              | LT          
+3s -> 1p-ex          |              |              |              |              |              |              |              | LT          
+3s -> 1p-in          |              |              |              |              |              |              |              | LT          
+3s -> 1s             |              |              |              |              |              |              |              | LT          
+3s -> 2d             |              |              |              |              |              |              |              | LT          
+3s -> 2p             |              |              |              |              |              |              |              | LT          
+3s -> 2s             |              |              |              |              |              |              |              | LT          
+3s -> 3a             | KBLT         | LT           | LT           | KBLT         | LT           | KBLT         | CNKBLT       | CNKBLT      
+3s -> 3p             | LT           | LT           | LT           | LT           | LT           | LT           | LT           | LT          
+3s -> 3pa            |              |              |              | LT           |              |              |              | LT          
+3s -> 3s             | CNHDKBLT     | KBLT         | LT           | CNHDKBLT     | LT           | KBLT         | CNHDKBLT     | CNHDKBLILT  
+
+NON-VERB FORMS AND VARIANTS
+===========================
+noun|plural animate|           : CN
+noun|plural inanimate|         : CN
+noun|plural|                   : CN, LI
+noun|singular animate|         : CN
+noun|singular|                 : CN, LI
+noun|unknown|                  : CN

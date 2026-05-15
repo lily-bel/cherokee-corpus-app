@@ -1,0 +1,7 @@
+base_id [cn-app-dictionary.csv, learning-to-use-the-cherokee-verb.csv, lily-dict.csv]
+gloss_english [cn-app-dictionary.csv, learning-to-use-the-cherokee-verb.csv, lily-dict.csv]
+gloss_phonetic [cn-app-dictionary.csv, learning-to-use-the-cherokee-verb.csv, lily-dict.csv]
+gloss_syllabary [cn-app-dictionary.csv, learning-to-use-the-cherokee-verb.csv, lily-dict.csv]
+sentence_id [cn-app-dictionary.csv, learning-to-use-the-cherokee-verb.csv, lily-dict.csv]
+source [cn-app-dictionary.csv, learning-to-use-the-cherokee-verb.csv, lily-dict.csv]
+source file [cn-app-dictionary.csv, learning-to-use-the-cherokee-verb.csv, lily-dict.csv]

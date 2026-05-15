@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="https://glitch.com/favicon.ico" />
+    <title>Cherokee pronoun game</title>
+
+    <style>
+      /******************************************************************************
+      START Glitch hello-app default styles
+      ******************************************************************************/
+
+      /* Our default values set as CSS variables */
+      :root {
+        --color-bg: #69f7be;
+        --color-text-main: #000000;
+        --color-primary: #ffff00;
+        --wrapper-height: 87vh;
+        --image-max-width: 300px;
+        --image-margin: 3rem;
+        --font-family: "HK Grotesk";
+        --font-family-header: "HK Grotesk";
+      }
+
+      /* Basic page style resets */
+      * {
+        box-sizing: border-box;
+      }
+      [hidden] {
+        display: none !important;
+      }
+
+      /* Import fonts */
+      @font-face {
+        font-family: HK Grotesk;
+        src: url("https://cdn.glitch.me/605e2a51-d45f-4d87-a285-9410ad350515%2FHKGrotesk-Regular.otf?v=1603136326027")
+          format("opentype");
+      }
+      @font-face {
+        font-family: HK Grotesk;
+        font-weight: bold;
+        src: url("https://cdn.glitch.me/605e2a51-d45f-4d87-a285-9410ad350515%2FHKGrotesk-Bold.otf?v=1603136323437")
+          format("opentype");
+      }
+
+      /* Our remix on glitch button */
+      .btn--remix {
+        font-family: HK Grotesk;
+        padding: 0.75rem 1rem;
+        font-size: 1.1rem;
+        line-height: 1rem;
+        font-weight: 500;
+        height: 2.75rem;
+        align-items: center;
+        cursor: pointer;
+        background: #ffffff;
+        border: 1px solid #000000;
+        box-sizing: border-box;
+        border-radius: 4px;
+        text-decoration: none;
+        color: #000;
+        white-space: nowrap;
+        margin-left: auto;
+      }
+      .btn--remix img {
+        margin-right: 0.5rem;
+      }
+      .btn--remix:hover {
+        background-color: #d0fff1;
+      }
+
+      /* Navigation grid */
+      .footer {
+        display: flex;
+        justify-content: space-between;
+        margin: 1rem auto 0;
+        padding: 1rem 0 0.75rem 0;
+        width: 100%;
+        flex-wrap: wrap;
+        border-top: 4px solid #fff;
+      }
+
+      .footer a:not(.btn--remix):link,
+      a:not(.btn--remix):visited {
+        font-family: HK Grotesk;
+        font-style: normal;
+        font-weight: normal;
+        font-size: 1.1rem;
+        color: #000;
+        text-decoration: none;
+        border-style: none;
+      }
+      .footer a:hover {
+        background: var(--color-primary);
+      }
+
+      .footer .links {
+        padding: 0.5rem 1rem 1.5rem;
+        white-space: nowrap;
+      }
+
+      .divider {
+        padding: 0 1rem;
+      }
+      /******************************************************************************
+      END Glitch hello-app default styles
+      ******************************************************************************/
+
+      body {
+        font-family: HK Grotesk;
+        background-color: var(--color-bg);
+      }
+
+      .parts-of-verb {
+        margin: auto;
+      }
+
+      .parts-of-verb td {
+        border: 1px solid black;
+      }
+
+      .disclaimer {
+        margin: auto 3em;
+        text-align: center;
+        font-weight: bold;
+      }
+
+      .showOptions input {
+        display: inline-block;
+        width: min-content;
+      }
+
+      /* Page structure */
+      .wrapper {
+        min-height: var(--wrapper-height);
+        display: grid;
+        place-items: center;
+        margin: 0 1rem;
+      }
+      .content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Very light scaling for our illustration */
+      .title {
+        color: #2800ff;
+        font-family: HK Grotesk;
+        font-style: normal;
+        font-weight: bold;
+        font-size: 40px;
+        line-height: 105%;
+        margin: 0;
+      }
+
+      /* Very light scaling for our illustration */
+      .illustration {
+        max-width: 100%;
+        max-height: var(--image-max-width);
+        margin-top: var(--image-margin);
+      }
+
+      /* Instructions */
+      .instructions {
+        max-width: 400px;
+        margin: 0 auto;
+      }
+
+      .pronoun-prefix-table table td {
+        border: 1px solid black;
+        padding: 4px;
+      }
+
+      /* Button - Add it from the README instructions */
+      button,
+      select,
+      input {
+        font-family: inherit;
+        font-size: 1em;
+        background: #ffffff;
+        border: 1px solid #000000;
+        box-sizing: border-box;
+        border-radius: 4px;
+        padding: 0.5rem 1rem;
+        transition: 500ms;
+        width: 100%;
+        color: black;
+      }
+
+      #pronoun-and-verb {
+        margin-top: 10px;
+      }
+
+      #pronoun-and-verb label + div {
+        display: flex;
+        gap: 10px;
+      }
+
+      #pronoun-and-verb select {
+        flex: 1;
+      }
+
+      #pronoun-and-verb button {
+        flex: 0;
+      }
+
+      #answerLabel {
+        display: block;
+        font-size: 1.3em;
+        text-align: center;
+      }
+
+      .current-random {
+        background: #add8ef;
+        text-decoration: underline;
+      }
+
+      /* Subheading */
+      h2 {
+        color: #2800ff;
+      }
+
+      .answers {
+        text-align: center;
+        font-size: 2em;
+      }
+
+      .answers p {
+        margin: 0;
+      }
+
+      .answers #answerExplanation {
+        font-size: 0.75em;
+      }
+
+      #definition {
+        font-size: 0.75em;
+      }
+
+      .hidden {
+        display: None;
+      }
+
+      /* Interactive image */
+      .illustration:active {
+        transform: translateY(5px);
+      }
+
+      /* Button dip
+      - Toggling this class on and off will move it down and up again
+      - The button transition property above determines the speed of the translate (500ms)
+      */
+      .dipped {
+        transform: translateY(5px);
+      }
+
+      /* Links that open files in the editor */
+      .fileopener {
+        cursor: pointer;
+        font-weight: bold;
+        border-bottom: 3px solid var(--color-primary);
+        color: var(--color-secondary);
+      }
+      .fileopener:hover {
+        border-bottom: 3px solid var(--color-secondary);
+      }
+      
+      /* Closing bracket from original source */
+      }
+    </style>
+  </head>
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2VT1MMED71"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-2VT1MMED71');
+  </script>
+
+  <body>
+    <div class="wrapper">
+      <div class="content" role="main">
+        <h1 class="title">Cherokee pronoun game</h1>
+        <div class="disclaimer">
+          <p>
+            This website was made by learners. There may be mistakes. Mistakes
+            are a part of learning and can be corrected. If you see a mistake,
+            please let us know!
+          </p>
+        </div>
+        <div class="instructions">
+          <p>
+            <a href="full-list">Want more information?</a> Click the link to see
+            a list of the most common Cherokee pronouns and a brief explanation
+            of some of the grammar at play.
+          </p>
+          <button id="random">Totally random!</button>
+          <hr />
+          <form id="theform">
+            <div>
+              <label class="showOptions"
+                >Show options <input name="showOptions" type="checkbox" checked
+              /></label>
+            </div>
+            <div>
+              <div id="pronoun-and-verb">
+                <label for="pronoun">Who is doing the action?</label>
+                <div>
+                  <select name="pronoun">
+                    <option value="1sg">I am... (First person singular)</option>
+                    <option value="1dl-ex">
+                      S/he and I are... (First person dual exclusive)
+                    </option>
+                    <option value="1pl-ex">
+                      They and I are... (First person plural exclusive)
+                    </option>
+                    <option value="1dl-in">
+                      You and I are... (First person dual inclusive)
+                    </option>
+                    <option value="1pl-in">
+                      We all are... (First person plural inclusive)
+                    </option>
+                    <option value="2sg">
+                      You are... (Second person singular)
+                    </option>
+                    <option value="2dl">
+                      You two are... (Second person dual)
+                    </option>
+                    <option value="2pl">
+                      Y'all are... (Second person plural)
+                    </option>
+                    <option value="3sg">
+                      S/he/it is... (Third person singular)
+                    </option>
+                    <option value="3ns">
+                      They are... (Third person plural)
+                    </option>
+                  </select>
+                  <button id="random-pronoun" type="button">
+                    Random pronoun
+                  </button>
+                </div>
+                <div>
+                  <label for="verb">Verb</label>
+                  <div>
+                    <select name="verb">
+                      <option value="yega,A">-yega (waking up)</option>
+                      <option value="woniha,A,ga">-woni (speaking)</option>
+                      <option value="adawo'a,A">
+                        -adawo'a (bathing/swimming)
+                      </option>
+                      <option value="anhta,B">-anhta (knowing)</option>
+                      <option value="lidasdiha,B">
+                        -lidasdiha (making a mistake)
+                      </option>
+                      <option value="edoha,A,h">
+                        -edoha (walking around at)
+                      </option>
+                      <option value="eli'a,A">
+                        -eli'a (thinking it is so)
+                      </option>
+                      <option value="adanhta,B">-adanhta (feeling)</option>
+                      <option value="aduliha,B">-aduliha (wanting)</option>
+                      <option value="gowtiha,A">-gowtiha (seeing)</option>
+                    </select>
+                  <button id="random-verb" type="button">
+                    Random verb
+                  </button>
+                  </div>
+                </div>
+                <div id="obj-form">
+                  <label for="object">Object</label>
+                  <div>
+                    <select id="object-dropdown" name="object">
+                      <option class="obj 1p-obj" value="1sg">...me. (First person singular)</option>
+                      <option class="1p-obj" value="1dl-ex">
+                        ...him/her and me. (First person dual exclusive)
+                      </option>
+                      <option class="obj 1p-obj" value="1pl-ex">
+                        ...them and me. (First person plural exclusive)
+                      </option>
+                      <option class="obj 1p-obj 2p-obj" value="1dl-in">
+                        ...you and me. (First person dual inclusive)
+                      </option>
+                      <option class="obj 1p-obj 2p-obj" value="1pl-in">
+                        ...y'all and me. (First person plural inclusive)
+                      </option>
+                      <option class="obj 2p-obj" value="2sg">
+                        ...you. (Second person singular)
+                      </option>
+                      <option class="obj 2p-obj" value="2dl">
+                        ...you two. (Second person dual)
+                      </option>
+                      <option class="obj 2p-obj" value="2pl">
+                        ...y'all. (Second person plural)
+                      </option>
+                      <option class="obj" value="3sg">
+                       ...him/her. (Third person singular)
+                      </option>
+                      <option class="obj" value="3ns">
+                        ...them. (Third person plural)
+                      </option>
+                      <option class="obj" value="X">
+                        ...it. (Inanimate sigular)
+                      </option>
+                      <option class="obj" value="Xs">
+                        ...those things. (Inanimate plural)
+                      </option>
+                    </select>
+                  <button id="random-object" type="button">
+                    Random object
+                  </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <hr />
+            <div>
+              <label for="answer"
+                >How do you say:<strong><em id="answerLabel"></em></strong>
+              </label>
+              <input
+                type="text"
+                name="answer"
+                placeholder="...?"
+                spellcheck="off"
+                autocapitalize="none"
+                autocorrect="off"
+                autocomplete="off"
+              />
+            </div>
+            <br />
+            <div>
+              <button type="submit" id="submitButton">Show</button>
+            </div>
+          </form>
+          <hr />
+          <div class="answers">
+            <p id="userAnswer">&nbsp;</p>
+            <p><strong id="answer">&nbsp;</strong></p>
+            <span id="answerExplanation">&nbsp;</span>
+            <p>
+              <em id="definition">&nbsp;</em>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <footer class="footer">
+      <div class="links"></div>
+      <a
+        class="btn--remix"
+        target="_top"
+        href="https://glitch.com/edit/#!/remix/glitch-hello-website"
+      >
+        <img
+          src="https://cdn.glitch.com/605e2a51-d45f-4d87-a285-9410ad350515%2FLogo_Color.svg?v=1618199565140"
+          alt=""
+        />
+        Remix on Glitch
+      </a>
+    </footer>
+
+    <script>
+      console.log("Hello 🌎");
+
+      function selectRandomOption(selectElm) {
+        let idx = Math.floor(Math.random() * (selectElm.childElementCount - 1));
+        if (idx >= selectElm.selectedIndex) {
+          idx += 1;
+        }
+        selectElm.value = selectElm.children[idx].value;
+      }
+
+      function selectRandomObject(selectElm) {
+        var idx = Math.floor(Math.random() * 11);
+        
+        const pronoun = form.pronoun.value;
+        if (pronoun[0] == "1" && (pronoun[0] == "2" || pronoun.includes("in"))) {
+          idx = 8 + Math.floor(Math.random() * 4);
+        }
+        else if (pronoun[0] == "1") {
+          idx = 5 + Math.floor(Math.random() * 7);
+        }
+        else if (pronoun[0] == "2" || pronoun.includes("in")) {
+          idx = Math.floor(Math.random() * 7);
+          if (idx >= 3)
+            idx += 5;
+        }
+        
+        selectElm.value = selectElm.children[idx].value;
+      }
+
+      const pronouns = {
+        "1sg": { A: ["tsi", "g"], B: ["agi", "agw"] },
+        "1dl-ex": { A: ["osdi", "osd"], B: ["ogini", "ogin"] },
+        "1pl-ex": { A: ["otsi", "ots"], B: ["ogi", "og"] },
+        "1dl-in": { A: ["ini", "in"], B: ["gini", "gin"] },
+        "1pl-in": { A: ["idi", "id"], B: ["igi", "ig"] },
+        "2sg": { A: ["hi", "h"], B: ["tsa", "ts"] },
+        "2dl": { A: ["sdi", "sd"], B: ["sdi", "sd"] },
+        "2pl": { A: ["itsi", "its"], B: ["itsi", "its"] },
+        "3sg": { A: ["a", "g"], B: ["u", "uw"] },
+        "3ns": { A: ["ani", "an"], B: ["uni", "un"] },
+      };
+
+      const wantConj = {
+        "1sg,2sg": ["gvyaduli’a","gvy"],
+        "1sg,3sg": ["tsiyaduli’a","tsiy"],
+        "1sg,X": ["agwaduliha","agw"],
+        "1sg,2dl": ["sdvyaduli’a","sdvy"],
+        "1sg,2pl": ["itsvyaduli’a","itsvy"],
+        "1sg,3ns": ["gatsiyaduli’a","gatsiy"],
+        "1sg,Xs": ["dagwaduliha","dagw"],
+        
+        "2sg,1sg": ["sgwaduliha","sgw"],
+        "2sg,3sg": ["hiyaduli’a","hiy"],
+        "2sg,X": ["tsaduliha","ts"],
+        "2sg,1dl-ex": ["sginaduli’a","sgin"],
+        "2sg,1pl-ex": ["sgiyaduli’a","sgiy"],
+        "2sg,3ns": ["gahiyaduli’a","gahiy"],
+        "2sg,Xs": ["detsaduliha","dets"],
+        
+        "3sg,1sg": ["agwaduliha","agw"],
+        "3sg,2sg": ["tsaduliha","ts"],
+        "3sg,3sg": ["agaduli’a","ag"],
+        "3sg,X": ["uduliha","u"],
+        "3sg,1dl-in": ["ginaduliha","gin"],
+        "3sg,1dl-ex": ["oginaduliha","ogin"],
+        "3sg,1pl-in": ["igaduliha","ig"],
+        "3sg,1pl-ex": ["ogaduliha","og"],
+        "3sg,2dl": ["sdaduliha","sd"],
+        "3sg,2pl": ["itsaduliha","its"],
+        "3sg,3ns": ["daduliha","d"],
+        "3sg,Xs": ["daduliha","d"],
+        
+        "2dl,1sg": ["sginaduli’a","sgin"],
+        "2dl,3sg": ["esdaduli’a","esd"],
+        "2dl,X": ["sdaduliha","sd"],
+        "2dl,1dl-ex": ["desginaduli’a","desgin"],
+        "2dl,1pl-ex": ["isgiyaduli’a","isgiy"],
+        "2dl,3ns": ["gahiyaduli’a","gahiy"],
+        "2dl,Xs": ["desdaduliha","desd"],
+        
+        "2pl,1sg": ["isgiyaduli’a","isgiy"],
+        "2pl,3sg": ["etsaduli’a","ets"],
+        "2pl,X": ["itsaduliha","its"],
+        "2pl,1dl-ex": ["desgiyaduli’a","desgiy"],
+        "2pl,1pl-ex": ["",""], 
+        "2pl,3ns": ["gahiyaduli’a","gahiy"],
+        "2pl,Xs": ["detsaduliha","dets"],
+        
+        "1dl-in,3sg": ["enaduli’a","en"],
+        "1dl-in,X": ["ginaduliha","gin"],
+        "1dl-in,3ns": ["degenaduliha","degen"],
+        "1dl-in,Xs": ["deginaduliha","degin"],
+        
+        "1dl-ex,2sg": ["sdvyaduli’a","sdvy"],
+        "1dl-ex,3sg": ["osdaduli’a","osd"],
+        "1dl-ex,X": ["oginaduliha","ogin"],
+        "1dl-ex,2dl": ["sdvyaduli’a","sdvy"],
+        "1dl-ex,2pl": ["",""], 
+        "1dl-ex,3ns": ["dosdaduliha","dosd"],
+        "1dl-ex,Xs": ["doginaduliha","dogin"],
+        
+        "1pl-ex,2sg": ["itsvyaduli’a","itsvy"],
+        "1pl-ex,3sg": ["otsaduli’a","ots"],
+        "1pl-ex,X": ["oginaduliha","ogin"],
+        "1pl-ex,2dl": ["",""], 
+        "1pl-ex,2pl": ["",""], 
+        "1pl-ex,3ns": ["dotsaduli’a","dots"],
+        "1pl-ex,Xs": ["dogaduliha","dog"],
+        
+        "1pl-in,3sg": ["otsaduli’a","ots"],
+        "1pl-in,X": ["ogaduliha","og"],
+        "1pl-in,3ns": ["gedaduli’a","ged"],
+        "1pl-in,Xs": ["degaduliha","deg"],
+        
+        "3ns,1sg": ["gvgwaduliha","gvgw"],
+        "3ns,2sg": ["getsaduliha","gets"],
+        "3ns,3sg": ["anaduliha","an"],
+        "3ns,X": ["unaduliha","un"],
+        "3ns,1dl-in": ["geginaduliha","gegin"],
+        "3ns,1dl-ex": ["goginaduliha","gogin"],
+        "3ns,1pl-in": ["gegaduliha","geg"],
+        "3ns,1pl-ex": ["gogaduliha","gog"],
+        "3ns,2dl": ["gesdaduliha","gesd"],
+        "3ns,2pl": ["getsaduliha","gets"],
+        "3ns,3ns": ["danaduliha","dan"],
+        "3ns,Xs": ["dunaduliha","dun"],
+        
+        ",1sg": "",
+        ",2sg": "",
+        ",3sg": "",
+        ",X": "",
+        ",1dl-in": "",
+        ",1dl-ex": "",
+        ",1pl-in": "",
+        ",1pl-ex": "",
+        ",2dl": "",
+        ",2pl": "",
+        ",3ns": "",
+        ",Xs": "",
+      }
+
+      const seeConj = {
+        "1sg,2sg": ["gvgowtiha","gv"],
+        "1sg,3sg": ["tsigowtiha","tsi"],
+        "1sg,X": ["tsigowtiha","tsi"],
+        "1sg,2dl": ["sdvgowtiha","sdv"],
+        "1sg,2pl": ["itsvgowtiha","itsv"],
+        "1sg,3ns": ["gatsigowtiha","gatsi"],
+        "1sg,Xs": ["detsigowtiha","detsi"],
+        
+        "2sg,1sg": ["sgowtiha","s"],
+        "2sg,3sg": ["higowtiha","hi"],
+        "2sg,X": ["higowtiha","hi"],
+        "2sg,1dl-ex": ["sginigowtiha","sgini"],
+        "2sg,1pl-ex": ["isgigowtiha","isgi"],
+        "2sg,3ns": ["gahigowtiha","gahi"],
+        "2sg,Xs": ["dehigowtiha","dehi"],
+        
+        "3sg,1sg": ["agigowtiha","agi"],
+        "3sg,2sg": ["tsagowtiha","tsa"],
+        "3sg,3sg": ["agowtiha","a"],
+        "3sg,X": ["agowtiha","a"],
+        "3sg,1dl-in": ["ginigowtiha","gini"],
+        "3sg,1dl-ex": ["oginigowtiha","ogini"],
+        "3sg,1pl-in": ["igigowtiha","igi"],
+        "3sg,1pl-ex": ["ogigowtiha","ogi"],
+        "3sg,2dl": ["sdigowtiha","sdi"],
+        "3sg,2pl": ["itsigowtiha","itsi"],
+        "3sg,3ns": ["dagowtiha","da"],
+        "3sg,Xs": ["dagowtiha","da"],
+        
+        "2dl,1sg": ["sginigowtiha","sgini"],
+        "2dl,3sg": ["esdigowtiha","esdi"],
+        "2dl,X": ["sdigowtiha","sdi"],
+        "2dl,1dl-ex": ["sginigowtiha","sgini"],
+        "2dl,1pl-ex": ["isgigowtiha","isgi"],
+        "2dl,3ns": ["gesdigowtiha","gesdi"],
+        "2dl,Xs": ["desdigowtiha","desdi"],
+        
+        "2pl,1sg": ["isgigowtiha","isgi"],
+        "2pl,3sg": ["etsigowtiha","etsi"],
+        "2pl,X": ["itsigowtiha","itsi"],
+        "2pl,1dl-ex": ["isgigowtiha","isgi"],
+        "2pl,1pl-ex": ["",""], 
+        "2pl,3ns": ["getsigowtiha","getsi"],
+        "2pl,Xs": ["detsigowtiha","detsi"],
+        
+        "1dl-in,3sg": ["enigowtiha","eni"],
+        "1dl-in,X": ["inigowtiha","ini"],
+        "1dl-in,3ns": ["genigowtiha","geni"],
+        "1dl-in,Xs": ["denigowtiha","deni"],
+        
+        "1dl-ex,2sg": ["sdvgowtiha","sdv"],
+        "1dl-ex,3sg": ["osdigowtiha","osdi"],
+        "1dl-ex,X": ["osdigowtiha","osdi"],
+        "1dl-ex,2dl": ["gotsigowtiha","gotsi"], 
+        "1dl-ex,2pl": ["itsvgowtiha","itsv"],
+        "1dl-ex,3ns": ["gosdigowtiha","gosdi"],
+        "1dl-ex,Xs": ["dosdigowtiha","dosdi"],
+        
+        "1pl-ex,2sg": ["itsvgowtiha","itsv"],
+        "1pl-ex,3sg": ["otsigowtiha","otsi"],
+        "1pl-ex,X": ["otsigowtiha","otsi"],
+        "1pl-ex,2dl": ["",""], 
+        "1pl-ex,2pl": ["",""], 
+        "1pl-ex,3ns": ["gotsigowtiha","gotsi"],
+        "1pl-ex,Xs": ["dotsigowtiha","dotsi"],
+        
+        "1pl-in,3sg": ["edigowtiha","edi"],
+        "1pl-in,X": ["idigowtiha","idi"],
+        "1pl-in,3ns": ["gedigowtiha","gedi"],
+        "1pl-in,Xs": ["dedigowtiha","dedi"],
+        
+        "3ns,1sg": ["gvgigowtiha","gvgi"],
+        "3ns,2sg": ["getsagowtiha","getsa"],
+        "3ns,3sg": ["anigowtiha","ani"],
+        "3ns,X": ["anigowtiha","ani"],
+        "3ns,1dl-in": ["geginigowtiha","gegini"],
+        "3ns,1dl-ex": ["goginigowtiha","gogini"],
+        "3ns,1pl-in": ["gegigowtiha","gegi"],
+        "3ns,1pl-ex": ["gogigowtiha","gegi"],
+        "3ns,2dl": ["gesdigowtiha","gesdi"],
+        "3ns,2pl": ["getsigowtiha","getsi"],
+        "3ns,3ns": ["danigowtiha","dani"],
+        "3ns,Xs": ["danigowtiha","dani"],
+        
+        ",1sg": ["",""],
+        ",2sg": ["",""],
+        ",3sg": ["",""],
+        ",X": ["",""],
+        ",1dl-in": ["",""],
+        ",1dl-ex": ["",""],
+        ",1pl-in": ["",""],
+        ",1pl-ex": ["",""],
+        ",2dl": ["",""],
+        ",2pl": ["",""],
+        ",3ns": ["",""],
+        ",Xs": ["",""],
+      }
+
+      const form = document.querySelector("#theform");
+      const answer = document.querySelector("#answer");
+      const userAnswer = document.querySelector("#userAnswer");
+      const answerExplanation = document.querySelector("#answerExplanation");
+      const answerLabel = document.querySelector("#answerLabel");
+      const definition = document.querySelector("#definition");
+      const randomButton = document.querySelector("#random");
+      const submitButton = document.querySelector("#submitButton");
+      const dropdowns = document.querySelector("#pronoun-and-verb");
+      const randomVerbButton = document.querySelector("#random-verb");
+      const randomPronounButton = document.querySelector("#random-pronoun");
+      const randomObjectButton = document.querySelector("#random-object");
+
+      let lastButtonHit = randomButton;
+
+      if (randomPronounButton) {
+        randomPronounButton.onclick = () => {
+          lastButtonHit = randomPronounButton;
+          randomizePronoun();
+        };
+      }
+
+      if (randomVerbButton) {
+        randomVerbButton.onclick = () => {
+          lastButtonHit = randomVerbButton;
+          randomizeVerb();
+        };
+      }
+
+      if (randomObjectButton) {
+        randomObjectButton.onclick = () => {
+          lastButtonHit = randomObjectButton;
+          randomizeObject();
+        };
+      }
+
+      function generatePrompt() {
+        const pronoun = form.pronoun.children[form.pronoun.selectedIndex];
+        var pronounText = pronoun.innerHTML.split("...")[0];
+        const verb = form.verb.children[form.verb.selectedIndex];
+        const verbText = verb.innerHTML.match(/\((.*)\)/)[1];
+        
+        if (verbText == "wanting" || verbText == "seeing") {
+          const object = form.object.children[form.object.selectedIndex];
+          const objectText = object.innerHTML.split("...")[1].split(".")[0];
+          pronounText = pronounText.substring(0, pronounText.lastIndexOf(' '));
+          var verbInner = ""
+          if (verbText == "wanting")
+            verbInner = "want"
+          else if (verbText == "seeing")
+            verbInner = "see"
+          
+          if (pronounText.trim() == "S/he/it") {
+            return `${pronounText} ${verbInner}s ${objectText}`;
+          }
+          return `${pronounText} ${verbInner} ${objectText}`;
+        }
+        
+        return `${pronounText} ${verbText}`;
+      }
+
+      function updateAnswerLabel() {
+        answerLabel.innerHTML = generatePrompt();
+      }
+
+      function randomizeVerb() {
+        selectRandomOption(form.verb);
+        updateAnswerLabel();
+        updateUXAfterChange();
+      }
+
+      function randomizePronoun() {
+        selectRandomOption(form.pronoun);
+        updateUXAfterChange();
+      }
+
+      function randomizeObject() {
+        selectRandomObject(form.object);
+        updateUXAfterChange();
+      }
+
+      function randomize() {
+        selectRandomOption(form.pronoun);
+        selectRandomOption(form.verb);
+        selectRandomObject(form.object);
+        updateUXAfterChange();
+      }
+
+      function updateUXAfterChange() {
+        form.answer.value = "";
+        answer.innerHTML = "&nbsp;";
+        userAnswer.innerHTML = "&nbsp;";
+        answerExplanation.innerHTML = "&nbsp;";
+        definition.innerHTML = "&nbsp;";
+        submitButton.innerHTML = "Show";
+        updateAnswerLabel();
+        document
+          .querySelectorAll("button")
+          .forEach((e) => e.classList.remove("current-random"));
+        lastButtonHit.classList.add("current-random");
+        
+        var objForm = document.getElementById("obj-form");
+        let [verb, pronounSet, ...rest] = form.verb.value.split(",");
+        if (verb == "aduliha" || verb == "gowtiha")
+          objForm.style.display = "block";
+        else
+          objForm.style.display = "none";
+        
+        const pronoun = form.pronoun.value;
+        const object = form.object.value;
+        var dropdown = document.getElementById("object-dropdown");
+        console.log(dropdown);
+        dropdown.style.backgroundColor = "#ffffff";
+        var divsToShow = document.getElementsByClassName("obj");
+        for(var i = 0; i < divsToShow.length; i++){
+          divsToShow[i].style.display = "block";
+        }
+        if (pronoun[0] == "1") {
+          var divsToHide = document.getElementsByClassName("1p-obj");
+          for(var i = 0; i < divsToHide.length; i++){
+            divsToHide[i].style.display = "none";
+          }
+          if (object[0] == "1") {
+            dropdown.style.backgroundColor = "#f0b4b4";
+          }
+        }
+        if (pronoun[0] == "2" || pronoun.includes("in")) {
+          var divsToHide = document.getElementsByClassName("2p-obj");
+          for(var i = 0; i < divsToHide.length; i++){
+            divsToHide[i].style.display = "none";
+          }
+          if (object[0] == "2" || object.includes("in")) {
+            dropdown.style.backgroundColor = "#f0b4b4";
+          }
+        }
+      }
+
+      function figureOutAnswer() {
+        const pronoun = form.pronoun.value;
+        let [verb, pronounSet, ...rest] = form.verb.value.split(",");
+        
+        if (verb == "aduliha") {
+          const obj = form.object.value;
+          const subjobj = pronoun + "," + obj;
+          console.log(subjobj);
+          if (wantConj[subjobj] != undefined)
+            var answer = wantConj[subjobj][0];
+          else
+            return ["none","",""];
+          const prefix = wantConj[subjobj][1];
+          return [prefix, pronounSet, answer];
+        }
+        else if (verb == "gowtiha") {
+          const obj = form.object.value;
+          const subjobj = pronoun + "," + obj;
+          console.log(subjobj);
+          if (seeConj[subjobj] != undefined)
+            var answer = seeConj[subjobj][0];
+          else
+            return ["none","",""];
+          const prefix = seeConj[subjobj][1];
+          return [prefix, pronounSet, answer];
+        }
+        
+        const verbStartsWithVowel = ["a", "e", "i", "o", "u", "v"].includes(
+          verb.charAt(0)
+        );
+        if (pronoun === "3sg" && rest.includes("ga")) {
+          const prefix = "ga";
+          return [prefix, pronounSet, `${prefix}${verb}`];
+        }
+        if (verbStartsWithVowel && pronoun === "3sg") {
+          if (verb.charAt(0) === "a") {
+            const prefix = pronouns[pronoun][pronounSet][0];
+            return [prefix, pronounSet, `${prefix}${verb.slice(1)}`];
+          } else if (verb.charAt(0) === "e") {
+            return ["(nothing)", pronounSet, verb];
+          } else {
+            const prefix = "g";
+            return [prefix, pronounSet, `${prefix}${verb}`];
+          }
+        }
+
+        if (pronoun === "1sg" && rest.includes("h")) {
+          const hIdx = verb.indexOf("h");
+          if (hIdx !== -1) {
+            const replace = ["a", "e", "i", "o", "u", "v"].includes(
+              verb.charAt(hIdx + 1)
+            )
+              ? "'"
+              : "";
+            verb = verb.substring(0, hIdx) + replace + verb.substring(hIdx + 1);
+          }
+        }
+
+        const prefix = pronouns[pronoun][pronounSet][verbStartsWithVowel + 0];
+        return [prefix, pronounSet, `${prefix}${verb}`];
+      }
+
+      if (randomButton) {
+        randomButton.onclick = function (e) {
+          lastButtonHit = randomButton;
+          randomize();
+        };
+        randomize();
+      }
+
+      if (form) {
+        const showOptChange = () => {
+          if (form.showOptions.checked) {
+            dropdowns.classList.remove("hidden");
+          } else {
+            dropdowns.classList.add("hidden");
+          }
+        };
+        form.showOptions.onchange = showOptChange;
+        showOptChange();
+
+        [form.verb, form.pronoun, form.object].forEach(
+          (e) =>
+            (e.onchange = () => {
+              updateUXAfterChange();
+            })
+        );
+
+        form.onsubmit = function (e) {
+          e.preventDefault();
+          const [prefix, pronounSet, answerText] = figureOutAnswer();
+          
+          if (prefix == "none") {
+            answer.innerHTML = "Invalid pronoun / object combination.";
+            userAnswer.innerHTML = "";
+            definition.innerHTML = "";
+            answerExplanation.innerHTML = "";
+            submitButton.innerHTML = "Clear";
+          }
+          else if (answerText == "") {
+            answer.innerHTML = "Verb not found!";
+            userAnswer.innerHTML = "";
+            definition.innerHTML = "";
+            answerExplanation.innerHTML = "";
+            submitButton.innerHTML = "Clear";
+          }
+          else {
+            if (answer.innerHTML === answerText) {
+              lastButtonHit.click();
+              return;
+            } else {
+              answer.innerHTML = answerText;
+              userAnswer.innerHTML = form.answer.value
+                ? `You said: <em>${form.answer.value}</em>`
+                : "&nbsp;";
+              const pronoun = form.pronoun.children[form.pronoun.selectedIndex];
+              const pronounText = pronoun.innerHTML.split("...")[0];
+
+              definition.innerHTML = generatePrompt();
+              answerExplanation.innerHTML = `<strong>${prefix}-</strong> <em>${pronounText}</em> (Set ${pronounSet})`;
+              submitButton.innerHTML = "Clear";
+            }
+          }
+        };
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="https://glitch.com/favicon.ico" />
+
+    <title>CED Game!</title>
+
+    <style>
+      /******************************************************************************
+      START Glitch hello-app default styles
+      ******************************************************************************/
+      :root {
+        --color-bg: #69F7BE;
+        --color-text-main: #000000;
+        --color-bad: #E27396;
+        --color-primary: #FFFF00;
+        --wrapper-height: 87vh;
+        --image-max-width: 300px;
+        --image-margin: 3rem;
+        --font-family: "HK Grotesk";
+        --font-family-header: "HK Grotesk";
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      [hidden] {
+        display: none !important;
+      }
+
+      @font-face {
+        font-family: HK Grotesk;
+        src: url("https://cdn.glitch.me/605e2a51-d45f-4d87-a285-9410ad350515%2FHKGrotesk-Regular.otf?v=1603136326027")
+          format("opentype");
+      }
+      @font-face {
+        font-family: HK Grotesk;
+        font-weight: bold;
+        src: url("https://cdn.glitch.me/605e2a51-d45f-4d87-a285-9410ad350515%2FHKGrotesk-Bold.otf?v=1603136323446")
+          format("opentype");
+      }
+
+      body {
+        font-family: var(--font-family);
+        background-color: var(--color-bg);
+      }
+
+      .wrapper {
+        min-height: var(--wrapper-height);
+        display: grid;
+        place-items: center;
+        margin: 0 1rem;
+      }
+
+      .content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 2rem;
+        border-top: 1px solid #c1c1c1;
+      }
+
+      .btn--remix {
+        font-family: HK Grotesk;
+        padding: 0.75rem 1rem;
+        background-color: #fff;
+        border-radius: 4px;
+        border: 1px solid #c1c1c1;
+        text-decoration: none;
+        color: #4b4b4b;
+        font-size: 13px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        transition: background-color 200ms ease;
+      }
+
+      .btn--remix:hover {
+        background-color: #f3f3f3;
+      }
+
+      .btn--remix img {
+        margin-right: 0.5rem;
+      }
+
+      /******************************************************************************
+      END Glitch hello-app default styles
+      ******************************************************************************/
+
+      h1 {
+        font-style: normal;
+        font-weight: bold;
+        color: #2800ff;
+        font-size: 52px;
+        line-height: 68px;
+        margin-top: 0;
+        margin-bottom: 10px;
+      }
+
+      .settings {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+
+      button,
+      input {
+        font-family: inherit;
+        font-size: 100%;
+        background: #ffffff;
+        border: 1px solid #000000;
+        box-sizing: border-box;
+        border-radius: 4px;
+        padding: 0.5rem 1rem;
+        transition: 500ms;
+      }
+
+      h2 {
+        color: #2800ff;
+      }
+
+      .next {
+        margin: 10px auto 0;
+        display: block;
+      }
+
+      .example-sentence p {
+        margin: 0;
+      }
+
+      .example-sentence {
+        padding: 10px;
+        font-size: 1.5em;
+        text-align: center;
+      }
+
+      @media (max-width: 600px) {
+        .example-sentence {
+          font-size: 1.2em;
+        }
+      }
+
+      .example-sentence strong {
+        text-decoration: underline;
+      }
+
+      .example-syllabary {
+        font-size: 1.5em;
+      }
+
+      .example-english {
+        margin: 12px 0 !important;
+        font-style: italic;
+      }
+
+      .options-wrapper {
+        background: white;
+        border: 1px solid black;
+        margin: 0 auto;
+        width: 100%;
+        padding: 20px;
+        border-radius: 10px;
+      }
+
+      .options-wrapper h3 {
+        font-size: 1em;
+      }
+
+      .options {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 0;
+        list-style: none;
+      }
+
+      .options li button {
+        width: 100%;
+        text-align: left;
+      }
+
+      .options li button.correct {
+        background-color: var(--color-primary);
+      }
+
+      .options li button.wrong {
+        background-color: var(--color-bad);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrapper">
+      <div class="content" role="main">
+        <h1 class="title">CED Explorer!</h1>
+        <p>Explore the Cherokee English Dictionary!</p>
+        <form class="settings">
+          <div>
+            <label>
+              Answer with...
+              <select name="targetForm">
+                <option value="third_present">Third person present</option>
+                <option value="first_present">First person present</option>
+                <option value="second_command">Second person command</option>
+                <option value="third_completive_past">
+                  Third person completive past
+                </option>
+                <option value="third_incompletive_habitual">
+                  Third person incompletive habitual
+                </option>
+                <option value="third_infinitive">
+                  Third person infinitive
+                </option>
+                <option value="rand">Random form</option>
+              </select>
+            </label>
+          </div>
+          <div>
+            <label>
+              Only show sentences that have audio
+              <input name="requireAudio" type="checkbox" value="false" />
+            </label>
+          </div>
+          <div>
+            <button class="next">Next</button>
+          </div>
+        </form>
+        <div class="example-sentence">
+          <div id="audio-wrapper"></div>
+          <p class="example-syllabary"></p>
+          <p class="example-phonetics"></p>
+          <p class="example-english"></p>
+        </div>
+
+        <div class="options-wrapper">
+          <h3>Which word goes with the underlined word?</h3>
+          <ol class="options"></ol>
+        </div>
+      </div>
+    </div>
+    <footer class="footer">
+      <div class="links"></div>
+      <a
+        class="btn--remix"
+        target="_top"
+        href="https://glitch.com/edit/#!/remix/glitch-hello-website"
+      >
+        <img
+          src="https://cdn.glitch.com/605e2a51-d45f-4d87-a285-9410ad350515%2FLogo_Color.svg?v=1602164859322"
+          alt=""
+        />
+        Remix on Glitch
+      </a>
+    </footer>
+
+    <script>
+      /**
+       * Dictionary Data (from dict_verbs.js)
+       **/
+      const dict = {
+        "207": {
+          index: "207",
+          source: "ced",
+          definition: "he's limping",
+          third_present: "a1da.2de3ga",
+          third_present_simple: "adadega",
+          third_present_syllabary: "ᎠᏓᏕᎦ",
+          first_present: "ga.2da.2de3ga",
+          first_present_simple: "gadadega",
+          first_present_syllabary: "ᎦᏓᏕᎦ",
+          second_command: "ha.2da.2du1ga",
+          second_command_simple: "hadaduga",
+          second_command_syllabary: "ᎭᏓᏚᎦ",
+          third_completive_past: "u1da.2de3sv23?i",
+          third_completive_past_simple: "udadesvi",
+          third_completive_past_syllabary: "ᎤᏓᏕᏒᎢ",
+          third_incompletive_habitual: "a1da2de3go3?i",
+          third_incompletive_habitual_simple: "adadegoi",
+          third_incompletive_habitual_syllabary: "ᎠᏓᏕᎪᎢ",
+          third_infinitive: "u2da.2di23nv32di",
+          third_infinitive_simple: "udadinvdi",
+          third_infinitive_syllabary: "ᎤᏓᏗᏅᏗ",
+          sentence: {
+            syllabary: "ᎠᏲᎤᏟᎠ ᎠᏍᎦᏯ *ᎠᏓᏕᎬ* ᏥᎪᏮᏘᎭ.",
+            phonetics: "ayouhlia asgaya *adadegv* jigowhtiha.",
+            english: "I see a lame man *limping*.",
+          },
+        },
+        "208": {
+          index: "208",
+          source: "ced",
+          definition: "it's bouncing",
+          third_present: "a1da.2de3ga",
+          third_present_simple: "adadega",
+          third_present_syllabary: "ᎠᏓᏕᎦ",
+          first_present: "ga.2da.2de3ga",
+          first_present_simple: "gadadega",
+          first_present_syllabary: "ᎦᏓᏕᎦ",
+          second_command: "ha.2da.2du1ga",
+          second_command_simple: "hadaduga",
+          second_command_syllabary: "ᎭᏓᏚᎦ",
+          third_completive_past: "u1da.2di23nv32sv23?i",
+          third_completive_past_simple: "udadinvsvi",
+          third_completive_past_syllabary: "ᎤᏓᏗᏅᏒᎢ",
+          third_incompletive_habitual: "a1da.2de3go3?i",
+          third_incompletive_habitual_simple: "adadegoi",
+          third_incompletive_habitual_syllabary: "ᎠᏓᏕᎪᎢ",
+          third_infinitive: "u2da.2di23nv32di",
+          third_infinitive_simple: "udadinvdi",
+          third_infinitive_syllabary: "ᎤᏓᏗᏅᏗ",
+          sentence: {
+            syllabary: "ᎡᎳᏗ ᏭᏗᎾ ᏍᏆᏞᏍᏗ *ᎤᏓᏗᏅᏒᎢ*.",
+            phonetics: "eladi wudina sgwahlesdi *udadinvsvi*.",
+            english: "When he threw the ball down, *it bounced*.",
+            audio:
+              "https://cherokeenationdictionary.net/Audio/Sentence_for_entry_0008.m4a",
+          },
+        },
+        /* ... remaining dictionary entries from dict_verbs.js.txt ... */
+        "32302": {
+          index: "32302",
+          source: "VRB",
+          definition: "He's telling him",
+          third_present: "ganoseɂa",
+          third_present_simple: "ganosea",
+          third_present_syllabary: "ᎦᏃᏎᎠ",
+          first_present: "jinoseɂa",
+          first_present_simple: "jinosea",
+          first_present_syllabary: "ᏥᏃᏎᎠ",
+          third_completive_past: "unoseɂlvɂi",
+          third_completive_past_simple: "unoselvi",
+          third_completive_past_syllabary: "ᎤᏃᏎᎸᎢ",
+          third_incompletive_habitual: "ganosehoɂi",
+          third_incompletive_habitual_simple: "ganosehoi",
+          third_incompletive_habitual_syllabary: "ᎦᏃᏎᎰᎢ",
+          third_infinitive: "udatlohisdi",
+          third_infinitive_simple: "udatlohisdi",
+          third_infinitive_syllabary: "ᎤᏓᏠᎯᏍᏗ",
+          sentence: {
+            syllabary: "",
+            phonetics: "",
+            english: "",
+          },
+        },
+      };
+
+      /**
+       * Game Logic (from script.js)
+       **/
+      function hasFields(word) {
+        return (
+          word.sentence.phonetics.length > 0 &&
+          word.sentence.syllabary.length > 0 &&
+          word.sentence.phonetics.includes("*") &&
+          word.sentence.syllabary.includes("*") &&
+          !word.sentence.phonetics.startsWith("[") &&
+          (!requireAudio || word.sentence.audio)
+        );
+      }
+
+      function validWordsForForm(form) {
+        return Object.keys(dict).filter(
+          (id) =>
+            hasFields(dict[id]) &&
+            dict[id][form].trim().replaceAll("-", "").length > 0
+        );
+      }
+
+      function pickNRandom(options, n) {
+        const randomNumbers = new Array(n)
+          .fill(0)
+          .map((_, idx) => Math.floor(Math.random() * (options.length - idx)));
+
+        const [picked] = randomNumbers.reduce(
+          ([pickedOptions, pickedIdc], nextRandomNumber) => {
+            const nextIdx = pickedIdc.reduce(
+              (adjustedIdx, alreadyPickedIdx) =>
+                adjustedIdx + Number(adjustedIdx >= alreadyPickedIdx),
+              nextRandomNumber
+            );
+            return [
+              [...pickedOptions, options[nextIdx]],
+              [...pickedIdc, nextIdx].sort((a, b) => a - b),
+            ];
+          },
+          [[], []]
+        );
+
+        return picked;
+      }
+
+      const settingsForm = document.querySelector(".settings");
+
+      function nextWord() {
+        optionsElm.innerHTML = "";
+        audioWrapper.innerHTML = "";
+
+        let activeForm = targetForm;
+        if (targetForm === "rand") {
+          activeForm =
+            possibleForms[Math.floor(Math.random() * possibleForms.length)];
+        }
+
+        if (wordIds === null) {
+          wordIds = validWordsForForm(activeForm);
+        }
+
+        const currentWordId = pickNRandom(wordIds, 1)[0];
+        const currentWord = dict[currentWordId];
+
+        const otherWordIds = Object.keys(dict).filter(
+          (id) => id !== currentWordId && dict[id][activeForm].length > 0
+        );
+        const wrongOptions = pickNRandom(otherWordIds, 3);
+        const allOptions = [currentWordId, ...wrongOptions].sort(
+          () => Math.random() - 0.5
+        );
+
+        sentenceSyllabary.innerHTML = currentWord.sentence.syllabary.replace(
+          /\*(.*?)\*/g,
+          "<strong>$1</strong>"
+        );
+        sentencePhonetics.innerHTML = currentWord.sentence.phonetics.replace(
+          /\*(.*?)\*/g,
+          "<strong>$1</strong>"
+        );
+        sentenceEnglish.innerHTML = currentWord.sentence.english.replace(
+          /\*(.*?)\*/g,
+          "<strong>$1</strong>"
+        );
+
+        if (currentWord.sentence.audio) {
+          const audio = document.createElement("audio");
+          audio.src = currentWord.sentence.audio;
+          audio.controls = true;
+          audioWrapper.append(audio);
+        }
+
+        allOptions.forEach((id) => {
+          const li = document.createElement("li");
+          const button = document.createElement("button");
+          button.innerText = dict[id][activeForm];
+          button.addEventListener("click", (e) => {
+            e.preventDefault();
+            if (id === currentWordId) {
+              button.classList.add("correct");
+              cedLinkForWord(currentWord).then((link) => {
+                const a = document.createElement("a");
+                a.href = link;
+                a.innerText = " (view in dictionary)";
+                a.target = "_blank";
+                sentenceEnglish.append(a);
+              });
+            } else {
+              button.classList.add("wrong");
+            }
+          });
+          li.append(button);
+          optionsElm.append(li);
+        });
+      }
+
+      settingsForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        nextWord();
+      });
+
+      let targetForm = settingsForm.elements["targetForm"].value;
+      let requireAudio = settingsForm.elements["requireAudio"].checked;
+      let wordIds = null;
+
+      settingsForm.elements["targetForm"].addEventListener("change", (e) => {
+        e.preventDefault();
+        if (targetForm !== e.target.value) {
+          targetForm = e.target.value;
+          wordIds = null;
+        }
+      });
+
+      settingsForm.elements["requireAudio"].addEventListener("change", (e) => {
+        e.preventDefault();
+        if (requireAudio !== e.target.checked) {
+          requireAudio = e.target.checked;
+          wordIds = null;
+        }
+      });
+
+      const possibleForms = [...settingsForm.elements["targetForm"].children]
+        .map((e) => e.value)
+        .filter((f) => f !== "rand");
+
+      const audioWrapper = document.querySelector("#audio-wrapper");
+      const sentenceSyllabary = document.querySelector(".example-syllabary");
+      const sentencePhonetics = document.querySelector(".example-phonetics");
+      const sentenceEnglish = document.querySelector(".example-english");
+      const optionsElm = document.querySelector(".options");
+
+      nextWord();
+
+      async function cedLinkForWord(word) {
+        const resp = await fetch(
+          `https://cherokeedictionary.net/jsonsearch/en/${encodeURIComponent(
+            word.definition
+          )}`
+        );
+        const json = await resp.json();
+        const [result] = json.filter(
+          (r) =>
+            r.definition === word.definition ||
+            r.syllabary === word.third_present_syllabary
+        );
+        return result
+          ? `https://cherokeedictionary.net/entry/${result.id}`
+          : "#";
+      }
+    </script>
+  </body>
+</html>
