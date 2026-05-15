@@ -28,20 +28,22 @@ export const LinkerModal: React.FC<LinkerModalProps> = ({ initialQuery, targetWo
     const [breakdownCherokee, setBreakdownCherokee] = useState(initialData?.breakdownCherokee || '');
     const [breakdownEnglish, setBreakdownEnglish] = useState(initialData?.breakdownEnglish || '');
 
-    const { sentences, entryToSentencesMap } = useCorpus();
+    const { sentences, entryToSentencesMap, rootMap } = useCorpus();
     const { importedData } = usePackageManager();
 
     const results = useMemo(() => {
         if (!query) return [];
         const settings = {
             searchLangs: { syllabary: true, translit: true, english: true, tone: false },
-            searchScopes: { main: true, otherForms: true, sentences: false, notes: false },
+            searchScopes: { main: true, otherForms: true, sentences: false, notes: false, roots: false },
+            showRootHeaders: false,
             enableRegex: false
         };
         const mappedPersonal = personalWords ? personalWords.map(w => ({ ...w, id: w.Index, Source: (w as any).customDictionaryId })) : [];
         const searchDict = [...dictionary, ...mappedPersonal];
-        return performSearch(query, searchDict, sentences, entryToSentencesMap, settings, customDictionaries || {}, {}, "All", 'dictionary', [], importedData).slice(0, 20);
-    }, [query, dictionary, personalWords, sentences, entryToSentencesMap, customDictionaries, importedData]);
+        // Note: LinkerModal doesn't currently need the full wordFormsLookupMap for its simple search, passing empty Map as placeholder to satisfy signature
+        return performSearch(query, searchDict, sentences, entryToSentencesMap, settings, customDictionaries || {}, {}, "All", 'dictionary', [], rootMap, new Map()).slice(0, 20);
+    }, [query, dictionary, personalWords, sentences, entryToSentencesMap, customDictionaries, rootMap]);
 
     const handleEntrySelect = (entry: DictionaryEntry) => {
         setSelectedEntry(entry);

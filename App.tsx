@@ -7,7 +7,7 @@ import EntryDetail from './components/EntryDetail';
 
 import PackageManagerTab from './components/PackageManagerTab';
 import { useCorpus } from './components/CorpusContext';
-import { downloadFile, exportDictionaryToCSV, importDictionaryFromCSV, performSearch } from './utils';
+import { downloadFile, exportDictionaryToCSV, performSearch } from './utils';
 import { SentenceCard } from './components/SentenceCard';
 import WidgetsTab from './components/WidgetsTab';
 
@@ -1314,7 +1314,7 @@ function App() {
         // Include user sentences in search if scope is sentences AND user library is active
         const combinedSentences = [...sentences, ...(isUserLibraryActive ? userSentences : [])];
         return performSearch(query, allData, combinedSentences, entryToSentencesMap, settings, customDictionaries, userNotes, posFilter, searchScope, prioritizedSources, rootMap, wordFormsLookupMap);
-    }, [query, allData, customDictionaries, settings, userNotes, posFilter, searchScope, sentences, userSentences, entryToSentencesMap, prioritizedSources, packages, importedData, rootMap, wordFormsLookupMap]);
+    }, [query, allData, customDictionaries, settings, userNotes, posFilter, searchScope, sentences, userSentences, entryToSentencesMap, prioritizedSources, packages, rootMap, wordFormsLookupMap]);
 
     const filteredResults = useMemo(() => {
         if (!query && activeTab === 'search') return { active: [], inactive: [] };
