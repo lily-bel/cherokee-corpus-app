@@ -3,7 +3,6 @@ import { DictionaryEntry, useCorpus } from './CorpusContext';
 import { Search, Check, Trash2 } from './Icons';
 import { Modal, SourceBadge } from './UI';
 import { performSearch } from '../utils';
-import { usePackageManager } from './PackageManagerContext';
 
 interface LinkerModalProps {
     initialQuery: string;
