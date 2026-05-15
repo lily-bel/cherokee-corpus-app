@@ -283,7 +283,7 @@ export const getAllUserAudioKeys = async () => {
 };
 
 // --- SEARCH ALGORITHM ---
-export const performSearch = (query: string, allData: any[], sentences: any[], entryToSentencesMap: Map<string, string[]>, settings: any, customDictionaries: any, userNotes: any, posFilter: string, searchScope: string, prioritizedSources: string[] = [], importedData: any = {}) => {
+export const performSearch = (query: string, allData: any[], sentences: any[], entryToSentencesMap: Map<string, string[]>, settings: any, customDictionaries: any, userNotes: any, posFilter: string, searchScope: string, prioritizedSources: string[] = [], importedData: any = {}, rootMap: Map<string, any> = new Map()) => {
   if (!query) return [];
   const lowerQuery = query.toLowerCase().trim();
   const queryWithTones = lowerQuery.replace(/[1234?]/g, m => ({ '1': '¹', '2': '²', '3': '³', '4': '⁴', '?': 'ʔ' }[m] || m));
@@ -311,7 +311,8 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
       main: searchScopes.main !== false,
       otherForms: searchScopes.otherForms !== false,
       notes: !!searchScopes.notes,
-      sentences: !!searchScopes.sentences
+      sentences: !!searchScopes.sentences,
+      roots: !!searchScopes.roots
   };
 
 
@@ -449,6 +450,21 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
     if (activeScopes.notes) {
       const note = isPersonal ? entry.Notes : userNotes[entry.Index];
       if (note) fieldsToSearch.push(note);
+    }
+
+    if (activeScopes.roots) {
+        const id = entry.id || entry.Index;
+        const rootEntry = rootMap.get(id);
+        if (rootEntry) {
+            if (activeLangs.translit) {
+                if (rootEntry.root_h) fieldsToSearch.push(rootEntry.root_h);
+                if (rootEntry.root_g) fieldsToSearch.push(rootEntry.root_g);
+                if (rootEntry.root_slug) fieldsToSearch.push(rootEntry.root_slug);
+            }
+            if (activeLangs.english && rootEntry.definition) {
+                fieldsToSearch.push(rootEntry.definition);
+            }
+        }
     }
 
     if (settings?.enableRegex && regex) {
