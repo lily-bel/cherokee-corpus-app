@@ -3,10 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tsalagi Learner</title>
-    <!-- Tailwind CSS -->
+    <title>Learn ᏣᎳᎩ Syllabary</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Cherokee&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -54,7 +52,6 @@
 </head>
 <body class="bg-earth-bg text-earth-text transition-colors duration-300 antialiased h-screen flex flex-col overflow-hidden select-none">
 
-    <!-- Header -->
     <header class="h-16 shrink-0 flex items-center justify-between px-4 border-b border-earth-secondary dark:border-midnight-border bg-earth-card dark:bg-midnight-card shadow-sm z-10 transition-colors duration-300">
         <div class="flex items-center gap-2">
             <button id="nav-back" class="hidden p-2 rounded-full hover:bg-earth-secondary/20 dark:hover:bg-white/10 transition-colors">
@@ -62,7 +59,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
                 </svg>
             </button>
-            <h1 class="text-xl font-bold tracking-tight">Tsalagi Learner</h1>
+            <h1 class="text-xl font-bold tracking-tight">Learn ᏣᎳᎩ Syllabary</h1>
         </div>
         <button id="theme-toggle" class="p-2 rounded-full bg-earth-secondary/30 dark:bg-midnight-secondary border border-transparent hover:border-earth-primary dark:hover:border-midnight-primary transition-all">
             <svg id="icon-sun" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-earth-primary dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
@@ -70,15 +67,9 @@
         </button>
     </header>
 
-    <!-- Main Content Area -->
     <main id="app-container" class="flex-1 relative overflow-hidden">
         
-        <!-- View: Home -->
         <div id="view-home" class="absolute inset-0 flex flex-col items-center justify-center p-6 space-y-8 fade-in overflow-y-auto">
-            <div class="text-center space-y-2">
-                <h2 class="text-4xl font-extrabold text-earth-primary dark:text-midnight-primary">ᏏᏲ! (Siyo!)</h2>
-                <p class="text-lg opacity-80">Choose a mode to begin practice.</p>
-            </div>
             <div class="w-full max-w-sm space-y-4">
                 <button onclick="App.startSelection('write')" class="w-full group relative flex flex-col items-center p-6 bg-white dark:bg-midnight-secondary border-2 border-earth-secondary dark:border-midnight-border rounded-2xl shadow-md hover:border-earth-primary dark:hover:border-midnight-primary transition-all active:scale-95">
                     <div class="h-16 w-16 bg-earth-bg dark:bg-slate-700 rounded-full flex items-center justify-center mb-3 group-hover:bg-earth-primary/10 dark:group-hover:bg-midnight-primary/20 transition-colors">
@@ -97,14 +88,12 @@
             </div>
         </div>
 
-        <!-- View: Selection -->
         <div id="view-selection" class="absolute inset-0 hidden flex flex-col bg-earth-bg dark:bg-midnight-bg fade-in">
-            <!-- Selection Header -->
             <div class="bg-earth-card dark:bg-midnight-card shadow-sm z-10 border-b border-earth-secondary dark:border-slate-700">
                 <div class="p-4 pb-2">
-                    <h2 class="text-xl font-bold mb-1">Select Characters</h2>
+                    <h2 class="text-xl font-bold mb-1">Select Syllabary</h2>
                     <div class="flex items-center justify-between">
-                        <p class="text-sm opacity-70">Tap characters to toggle.</p>
+                        <p class="text-sm opacity-70">Tap syllables to toggle.</p>
                         <label class="flex items-center space-x-2 font-bold text-earth-primary dark:text-midnight-primary cursor-pointer select-none">
                             <input type="checkbox" id="check-all" class="w-5 h-5 rounded border-gray-300 text-earth-primary focus:ring-earth-primary">
                             <span>Select All</span>
@@ -112,7 +101,6 @@
                     </div>
                 </div>
                 
-                <!-- Tracing Toggle -->
                 <div id="tracing-toggle-container" class="hidden flex items-center justify-between px-4 py-3 bg-earth-secondary/10 dark:bg-slate-800/50 border-t border-earth-secondary/20 dark:border-slate-700">
                     <div class="flex flex-col">
                         <span class="font-bold text-sm">Tracing Mode</span>
@@ -126,8 +114,7 @@
             </div>
             
             <div class="flex-1 overflow-y-auto p-4 space-y-4 pb-24" id="rows-container">
-                <!-- Rows injected here via JS -->
-            </div>
+                </div>
 
             <div class="absolute bottom-0 left-0 w-full p-4 bg-gradient-to-t from-earth-bg via-earth-bg to-transparent dark:from-midnight-bg dark:via-midnight-bg">
                 <button onclick="App.startSession()" class="w-full py-4 rounded-xl font-bold text-lg text-white bg-earth-primary dark:bg-midnight-primary shadow-lg hover:brightness-110 active:scale-95 transition-all">
@@ -136,23 +123,20 @@
             </div>
         </div>
 
-        <!-- View: Writing Mode -->
-        <div id="view-writing" class="absolute inset-0 hidden flex flex-col p-4">
+        <div id="view-writing" class="absolute inset-0 hidden flex flex-col p-4 overflow-y-auto">
             <div class="w-full bg-earth-secondary/30 dark:bg-slate-700 rounded-full h-2 mb-4 shrink-0">
                 <div id="write-progress" class="h-2 rounded-full bg-earth-primary dark:bg-midnight-primary transition-all duration-300 w-0"></div>
             </div>
 
-            <div class="flex-1 flex flex-col items-center justify-center min-h-0">
-                <div class="text-center mb-4 shrink-0">
+            <div class="flex-1 flex flex-col items-center justify-start w-full min-h-0">
+                <div class="text-center mb-4 shrink-0 mt-2">
                     <p class="text-sm uppercase tracking-widest opacity-60 font-bold">Write the character for</p>
                     <h2 id="write-prompt" class="text-6xl font-extrabold mt-1 text-earth-text dark:text-white"></h2>
                 </div>
 
-                <!-- Canvas Container -->
                 <div id="canvas-container" class="relative w-full max-w-[400px] aspect-square bg-white dark:bg-slate-800 rounded-2xl shadow-inner border-2 border-earth-secondary dark:border-slate-600 overflow-hidden mb-4 shrink-0 bg-grid-pattern touch-none">
                     <canvas id="drawing-canvas" class="absolute inset-0 w-full h-full cursor-crosshair touch-none"></canvas>
                     
-                    <!-- Overlay for Answer -->
                     <div id="write-overlay" class="absolute inset-0 flex items-center justify-center pointer-events-none instant-hidden z-10">
                         <span id="write-answer" class="text-[13rem] leading-none font-cherokee text-earth-primary dark:text-midnight-primary"></span>
                     </div>
@@ -164,7 +148,7 @@
                     </div>
                 </div>
 
-                <div class="w-full max-w-[400px] mt-auto">
+                <div class="w-full max-w-[400px] mt-auto mb-4 shrink-0">
                     <button id="btn-write-submit" onclick="App.checkWriting()" class="w-full py-4 rounded-xl font-bold text-lg text-white bg-earth-primary dark:bg-midnight-primary shadow-md hover:brightness-110 active:scale-95 transition-all">
                         Show Answer
                     </button>
@@ -181,20 +165,18 @@
             </div>
         </div>
 
-        <!-- View: Reading Mode -->
-        <div id="view-reading" class="absolute inset-0 hidden flex flex-col p-4">
+        <div id="view-reading" class="absolute inset-0 hidden flex flex-col p-4 overflow-y-auto">
             <div class="w-full bg-earth-secondary/30 dark:bg-slate-700 rounded-full h-2 mb-4 shrink-0">
                 <div id="read-progress" class="h-2 rounded-full bg-earth-primary dark:bg-midnight-primary transition-all duration-300 w-0"></div>
             </div>
             
-            <!-- Compact Layout for Reading -->
             <div class="flex-1 flex flex-col items-center justify-start mt-4 min-h-0">
                 <div class="text-center w-full">
                     <p class="text-sm uppercase tracking-widest opacity-60 font-bold mb-4 keyboard-hide">What sound is this?</p>
                     <div class="relative flex items-center justify-center mb-8 keyboard-compact">
                         <h2 id="read-prompt" class="text-9xl compact-text font-bold font-cherokee text-earth-text dark:text-white transition-transform duration-300 leading-none"></h2>
                     </div>
-                    <div class="w-full max-w-xs mx-auto relative group">
+                    <div class="w-full max-w-xs mx-auto relative group mb-8">
                         <input type="text" id="read-input" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" 
                             class="w-full bg-transparent border-b-4 border-earth-secondary dark:border-slate-600 text-center text-5xl font-bold py-2 focus:outline-none focus:border-earth-primary dark:focus:border-midnight-primary text-earth-text dark:text-white transition-colors" placeholder="?">
                     </div>
@@ -203,31 +185,24 @@
             </div>
         </div>
 
-        <!-- View: Results -->
         <div id="view-results" class="absolute inset-0 hidden flex flex-col p-6 overflow-hidden fade-in bg-earth-bg dark:bg-midnight-bg">
-            <div class="text-center mb-6 shrink-0">
-                <div class="w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-4 text-4xl shadow-sm">🎉</div>
-                <h2 class="text-3xl font-bold mb-2">Results</h2>
-                <p class="opacity-70">Session Complete</p>
+            <div class="text-center mb-4 shrink-0">
+                <h2 class="text-xl font-bold">Results</h2>
             </div>
             <div class="flex-1 overflow-y-auto -mx-6 px-6 pb-4" id="results-scroll-container">
-                <div class="flex items-center justify-between mb-2">
-                    <h3 class="text-xs font-bold uppercase tracking-wide opacity-50">Review List (Hardest First)</h3>
-                </div>
-                <div id="results-list" class="space-y-3"></div>
+                <div id="results-list" class="space-y-6"></div>
             </div>
             <div class="mt-4 pt-4 border-t border-earth-secondary dark:border-slate-700 shrink-0 space-y-3">
                 <button onclick="App.retrySession()" class="w-full py-4 rounded-xl font-bold text-lg text-white bg-earth-primary dark:bg-midnight-primary shadow-lg hover:brightness-110 active:scale-95 transition-all">
                     Practice Again
                 </button>
-                <button onclick="App.goHome()" class="w-full py-3 rounded-xl font-bold text-earth-text dark:text-slate-300 bg-earth-secondary/20 dark:bg-slate-800 hover:bg-earth-secondary/40 transition-all">
-                    Back to Menu
+                <button onclick="App.showView('selection')" class="w-full py-3 rounded-xl font-bold text-earth-text dark:text-slate-300 bg-earth-secondary/20 dark:bg-slate-800 hover:bg-earth-secondary/40 transition-all">
+                    Back to Selection
                 </button>
             </div>
         </div>
     </main>
 
-    <!-- App Logic -->
     <script>
         const SYLLABARY = [
             { id: 'vowels', chars: [{ s: 'Ꭰ', r: 'a' }, { s: 'Ꭱ', r: 'e' }, { s: 'Ꭲ', r: 'i' }, { s: 'Ꭳ', r: 'o' }, { s: 'Ꭴ', r: 'u' }, { s: 'Ꭵ', r: 'v' }]},
@@ -255,6 +230,7 @@
                 this.bindEvents();
                 this.setupTheme();
                 this.setupCanvas();
+                this.renderRows(); // Render rows on init to preserve state naturally
             },
 
             cacheDOM() {
@@ -292,7 +268,18 @@
 
             bindEvents() {
                 document.getElementById('theme-toggle').addEventListener('click', () => this.toggleTheme());
-                this.dom.navBack.addEventListener('click', () => this.goHome());
+                
+                // Navigation Logic
+                this.dom.navBack.addEventListener('click', () => {
+                    if (!this.dom.views.selection.classList.contains('hidden')) {
+                        this.showView('home');
+                    } else if (!this.dom.views.writing.classList.contains('hidden') || 
+                               !this.dom.views.reading.classList.contains('hidden') || 
+                               !this.dom.views.results.classList.contains('hidden')) {
+                        this.showView('selection');
+                    }
+                });
+
                 this.dom.checkAll.addEventListener('change', (e) => this.toggleAllGlobal(e.target.checked));
                 this.dom.read.input.addEventListener('keyup', (e) => { 
                     if (e.key === 'Enter') this.checkReading(); 
@@ -331,18 +318,6 @@
                 this.dom.navBack.classList.toggle('hidden', viewId === 'home');
             },
 
-            goHome() {
-                this.showView('home');
-                this.resetState();
-            },
-
-            resetState() {
-                this.queue = [];
-                this.results = [];
-                this.currentIdx = 0;
-                this.processingFeedback = false;
-            },
-
             // --- SELECTION LOGIC ---
             startSelection(mode) {
                 this.mode = mode;
@@ -353,7 +328,6 @@
                 } else {
                     this.dom.tracingContainer.classList.add('hidden');
                 }
-                this.renderRows();
                 this.showView('selection');
                 this.dom.rowsContainer.scrollTop = 0;
             },
@@ -660,27 +634,37 @@
                 const container = this.dom.resultsList;
                 container.innerHTML = '';
                 const uniqueResults = [...new Set(this.results)];
-                uniqueResults.sort((a, b) => b.attempts - a.attempts);
 
+                // Group by number of mistakes
+                const grouped = {};
                 uniqueResults.forEach(item => {
-                    const isPerfect = item.attempts === 1;
-                    const isOk = item.attempts <= 2;
-                    let colorClass = isPerfect ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' 
-                                   : isOk ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300'
-                                   : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300';
-                    const div = document.createElement('div');
-                    div.className = "flex items-center p-3 bg-white dark:bg-midnight-secondary rounded-lg shadow-sm border border-earth-secondary/20 dark:border-slate-700";
-                    div.innerHTML = `
-                        <div class="h-12 w-12 rounded-full ${colorClass} flex items-center justify-center mr-4 font-bold font-cherokee text-xl">${item.char}</div>
-                        <div class="flex-1">
-                            <div class="font-bold text-lg dark:text-white">${item.rom}</div>
-                            <div class="text-xs opacity-60 dark:text-slate-400">${item.attempts} attempts</div>
-                        </div>
-                        <div class="text-sm font-bold ${isPerfect ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}">
-                            ${isPerfect ? 'Perfect' : (item.attempts - 1) + ' mistakes'}
+                    const mistakes = item.attempts - 1;
+                    if (!grouped[mistakes]) grouped[mistakes] = [];
+                    grouped[mistakes].push(item);
+                });
+
+                // Sort mistake counts descending (worst first)
+                const mistakeCounts = Object.keys(grouped).map(Number).sort((a, b) => b - a);
+
+                mistakeCounts.forEach(mistakeCount => {
+                    const group = grouped[mistakeCount];
+                    const groupDiv = document.createElement('div');
+                    
+                    const title = mistakeCount === 0 ? 'Perfect (0 Mistakes)' : `${mistakeCount} Mistake${mistakeCount > 1 ? 's' : ''}`;
+                    const colorClass = mistakeCount === 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400';
+
+                    groupDiv.innerHTML = `
+                        <h3 class="text-sm font-bold uppercase tracking-wide opacity-80 mb-3 ${colorClass}">${title}</h3>
+                        <div class="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                            ${group.map(item => `
+                                <div class="flex flex-col items-center justify-center p-4 bg-white dark:bg-midnight-secondary rounded-xl shadow-sm border border-earth-secondary/20 dark:border-slate-700">
+                                    <span class="text-4xl font-cherokee font-bold dark:text-white mb-1">${item.char}</span>
+                                    <span class="text-sm font-bold opacity-60 dark:text-slate-400 uppercase">${item.rom}</span>
+                                </div>
+                            `).join('')}
                         </div>
                     `;
-                    container.appendChild(div);
+                    container.appendChild(groupDiv);
                 });
             },
             retrySession() { this.startSession(); }
