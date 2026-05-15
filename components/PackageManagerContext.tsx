@@ -75,17 +75,18 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
         const loadOfficialData = async () => {
             try {
                 // Fetch Metadata
-                const metaRes = await fetch('/data/metadata.json');
+                const metaRes = await fetch(`${import.meta.env.BASE_URL}data/metadata.json`);
                 if (!metaRes.ok) throw new Error('Failed to load official metadata');
                 const metadata: PackageMetadata = await metaRes.json();
 
                 // Fetch Data Files
+                const base = import.meta.env.BASE_URL;
                 const [dictRes, sentRes, joinRes, conjRes, audioMapRes] = await Promise.all([
-                    fetch('/data/base_forms.json').then(r => r.json()),
-                    fetch('/data/sentences.json').then(r => r.json()),
-                    fetch('/data/sentence_joins.json').then(r => r.json()),
-                    fetch('/data/conjugations.json').then(r => r.json()),
-                    fetch('/data/audio_mapping.json').then(r => r.json())
+                    fetch(`${base}data/base_forms.json`).then(r => r.json()),
+                    fetch(`${base}data/sentences.json`).then(r => r.json()),
+                    fetch(`${base}data/sentence_joins.json`).then(r => r.json()),
+                    fetch(`${base}data/conjugations.json`).then(r => r.json()),
+                    fetch(`${base}data/audio_mapping.json`).then(r => r.json())
                 ]);
 
                 const dictionary = dictRes;
