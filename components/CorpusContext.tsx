@@ -55,6 +55,9 @@ export interface Gloss {
     breakdown_english?: string;
     source: string; // "ced", "user", etc.
     id?: string; // Unique ID for deletion
+    gloss_syllabary?: string;
+    gloss_phonetic?: string;
+    gloss_english?: string;
 }
 
 export interface CustomDictionary {
@@ -101,6 +104,15 @@ export interface RootEntry {
         perfective: string;
         imperative: string;
         infinitive: string;
+    };
+    config?: {
+        pre?: {
+            distributive?: boolean;
+            translocutive?: boolean;
+        };
+        pron?: {
+            set_type?: string;
+        };
     };
     [key: string]: any;
 }
@@ -171,7 +183,7 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const [userWordForms, setUserWordForms] = useState<Record<string, string>>({}); // EntryID -> pipe-separated forms
     const [userNotes, setUserNotes] = useState<Record<string, string>>({});
 
-    const [roots, setRoots] = useState<RootEntry[]>([]);
+
 
     const [customDictionaries, setCustomDictionaries] = useState<Record<string, CustomDictionary>>({});
     const [personalWords, setPersonalWords] = useState<PersonalWord[]>([]);
@@ -267,58 +279,16 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     // Load Audio Manifest
     useEffect(() => {
         setLoading(false);
-        // Load Audio Mapping and Parse Dynamically
-        fetch('/data/audio_mapping.json')
-            .then(r => r.ok ? r.json() : [])
-            .then((mappings: any[]) => {
-                const newMeta: Record<string, any[]> = {};
-                mappings.forEach(map => {
-                    let targetId = '';
-                    let isSentence = map.type === 'sentence';
-                    if (map.type === 'base_form' || map.type === 'conjugation') {
-                        targetId = map.merged_id;
-                    } else if (map.type === 'sentence') {
-                        targetId = map.sentence_id;
-                    }
-                    if (!targetId) return;
 
-                    const key = isSentence ? `${targetId}_sentence` : targetId;
-                    
-                    let speaker = "Official Audio";
-                    const speakerMatch = map.audio_file.match(/^([^_]+)_/);
-                    if (speakerMatch && speakerMatch[1] !== "Word" && speakerMatch[1] !== "Sentence") {
-                        speaker = speakerMatch[1].replace(/([A-Z])/g, ' $1').trim();
-                    }
-
-                    if (!newMeta[key]) newMeta[key] = [];
-                    newMeta[key].push({
-                        id: map.audio_file,
-                        speaker: speaker,
-                        packageId: 'official-cherokee-data'
-                    });
-                });
-
-                if (Object.keys(newMeta).length > 0) {
-                    importAudioMeta(newMeta);
-                }
-            })
-            .catch(e => console.error("Failed to load audio mapping", e));
-
-        // Load Roots Data
-        fetch('/data/roots.json')
-            .then(r => r.ok ? r.json() : [])
-            .then(setRoots)
-            .catch(e => console.error("Failed to load roots data", e));
     }, []);
 
     // Combine Base Data with Active Packages
-    const { dictionary, sentences, combinedGlosses, combinedWordForms } = useMemo(() => {
+    const { dictionary, sentences, combinedGlosses } = useMemo(() => {
         const activeIds = packages.filter(p => p.status === 'active' && (p.type === 'imported' || p.type === 'official')).map(p => p.id);
 
         let d: DictionaryEntry[] = [];
         let s: Sentence[] = [];
         let g: Gloss[] = [];
-        let wf: any[] = [];
 
         activeIds.forEach(id => {
             const data = importedData[id];
@@ -326,15 +296,14 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 if (data.dictionary) d = [...d, ...data.dictionary];
                 if (data.sentences) s = [...s, ...data.sentences];
                 if (data.glosses) g = [...g, ...data.glosses];
-                if (data.word_forms) wf = [...wf, ...data.word_forms];
             }
         });
 
-        return { dictionary: d, sentences: s, combinedGlosses: g, combinedWordForms: wf };
+        return { dictionary: d, sentences: s, combinedGlosses: g };
     }, [packages, importedData]);
 
     // Derived State: Maps
-    const { glossMap, entryToSentencesMap, dictionaryMap, sentenceMap, allGlosses, rootMap, groupedRootsMap, wordFormsMap } = useMemo(() => {
+    const { glossMap, entryToSentencesMap, dictionaryMap, sentenceMap, allGlosses, rootMap, groupedRootsMap, derivedRoots } = useMemo(() => {
         const allGlosses = [...combinedGlosses, ...userGlosses];
 
         const gMap = new Map<string, Gloss[]>();
@@ -343,9 +312,9 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const sMap = new Map<string, Sentence>();
         const rMap = new Map<string, RootEntry>();
         const grMap = new Map<string, RootEntry[]>();
-        const wfMap = new Map<string, any[]>();
+        const rootsArr: RootEntry[] = [];
 
-        // Index Dictionary
+        // Index Dictionary & Extract Roots
         dictionary.forEach(d => {
             const id = d.id || d.Index;
             if (id) dMap.set(id, d);
@@ -353,26 +322,54 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             // Also index by lily-dict Index for root mapping
             const lilyIndex = (d as any).sources?.['lily-dict.csv']?.Index;
             if (lilyIndex) dMap.set(lilyIndex, d);
-        });
 
-        // Index Word Forms
-        combinedWordForms.forEach(f => {
-            if (!wfMap.has(f.word_index)) wfMap.set(f.word_index, []);
-            wfMap.get(f.word_index)!.push(f);
+            // Extract Root Info from hierarchical-dict
+            const hd = (d as any).sources?.['hierarchical-dict.json'];
+            if (hd && (hd.class_name || hd.h_grade_root || hd.glottal_grade_root)) {
+                const rootSlug = hd.h_grade_root || hd.glottal_grade_root || hd.class_name;
+                
+                const rootEntry: RootEntry = {
+                    entry_id: id || lilyIndex || '',
+                    root_h: hd.h_grade_root || '',
+                    root_g: hd.glottal_grade_root || '',
+                    root_slug: rootSlug,
+                    definition: hd.definition || d.Definition || '',
+                    class_name: hd.class_name || '',
+                    segmented_forms: {
+                        present: hd['segmented_forms.present'] || '',
+                        present_1sg: hd['segmented_forms.present_1sg'] || '',
+                        imperfective: hd['segmented_forms.imperfective'] || '',
+                        perfective: hd['segmented_forms.perfective'] || '',
+                        imperative: hd['segmented_forms.imperative'] || '',
+                        infinitive: hd['segmented_forms.infinitive'] || ''
+                    },
+                    config: {
+                        pre: {
+                            distributive: hd['config.pre.distributive'] === true || hd['config.pre.distributive'] === 'true',
+                            translocutive: hd['config.pre.translocutive'] === true || hd['config.pre.translocutive'] === 'true'
+                        },
+                        pron: {
+                            set_type: hd['config.pron.set_type'] || ''
+                        }
+                    }
+                };
+                
+                rootsArr.push(rootEntry);
+                rMap.set(rootEntry.entry_id, rootEntry);
+                if (lilyIndex && lilyIndex !== id) {
+                    rMap.set(lilyIndex, rootEntry);
+                }
+                
+                if (!grMap.has(rootSlug)) {
+                    grMap.set(rootSlug, []);
+                }
+                grMap.get(rootSlug)!.push(rootEntry);
+            }
         });
 
         // Index Sentences
         [...sentences, ...userSentences].forEach(s => {
             if (s.id) sMap.set(s.id, s);
-        });
-
-        // Index Roots
-        roots.forEach(r => {
-            rMap.set(r.entry_id, r);
-            if (!grMap.has(r.root_slug)) {
-                grMap.set(r.root_slug, []);
-            }
-            grMap.get(r.root_slug)!.push(r);
         });
 
         // Process Glosses
@@ -405,10 +402,10 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             sentenceMap: sMap,
             allGlosses,
             rootMap: rMap,
-            groupedRootsMap: grMap
+            groupedRootsMap: grMap,
+            derivedRoots: rootsArr
         };
-    }, [dictionary, sentences, combinedGlosses, userGlosses, userSentences, roots]);
-
+    }, [dictionary, sentences, combinedGlosses, userGlosses, userSentences]);
 
     // Actions
     const addUserGloss = (gloss: Gloss) => {
@@ -553,7 +550,7 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             sentences,
             userSentences,
             glosses: allGlosses,
-            roots,
+            roots: derivedRoots,
             loading,
             glossMap,
             entryToSentencesMap,

@@ -36,10 +36,8 @@ const ClassView: React.FC<ClassViewProps> = ({ className, onClose, onViewClass, 
 
         const parseForm = (formStr: string) => {
             if (!formStr) return '';
-            const parts = formStr.split('--');
-            const rest = parts[1] || '';
-            const restParts = rest.split('-');
-            return restParts.length > 1 ? restParts[restParts.length - 1] : '';
+            const parts = formStr.replace(/-+/g, '-').split('-');
+            return parts.length > 1 ? parts[parts.length - 1] : '';
         };
 
         return {
@@ -54,9 +52,9 @@ const ClassView: React.FC<ClassViewProps> = ({ className, onClose, onViewClass, 
     const parentEndings = useMemo(() => getEndings(mainClassName), [mainClassName, roots]);
 
     return (
-        <div className="fixed inset-0 z-[10002] bg-[#F4EFE6] dark:bg-slate-950 flex flex-col overflow-hidden animate-fade-in font-serif">
+        <div className="fixed inset-0 z-[10002] bg-[#F9F9F7] dark:bg-slate-950 flex flex-col overflow-hidden animate-fade-in font-sans">
             {/* Standard Header */}
-            <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex items-center justify-between shadow-sm shrink-0 h-[60px] font-sans">
+            <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex items-center justify-between shadow-sm shrink-0 h-[60px]">
                 <div className="flex items-center gap-2">
                     <button onClick={onClose} className="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full flex items-center gap-2 text-slate-700 dark:text-slate-200 transition-colors">
                         <ArrowLeft size={24} />
@@ -76,11 +74,11 @@ const ClassView: React.FC<ClassViewProps> = ({ className, onClose, onViewClass, 
             <div className="flex-1 overflow-y-auto px-6 pb-24">
                 {/* Superclass Display */}
                 <div className="mb-8 relative pl-6 mt-6">
-                    <div className="absolute left-0 top-1 bottom-1 w-1 bg-[#8C7355] rounded-full"></div>
+                    <div className="absolute left-0 top-1 bottom-1 w-1 bg-amber-500 dark:bg-amber-400 rounded-full"></div>
                     <div>
-                        <div className="text-[10px] font-bold text-[#B5A994] uppercase tracking-[0.2em] mb-1">Verb Superclass</div>
-                        <div className="text-2xl font-bold text-[#4A3F35] font-mono">{mainClassName}</div>
-                        <div className="mt-2 text-[#8C7355] italic text-xs">
+                        <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-1">Verb Superclass</div>
+                        <div className="text-2xl font-bold text-slate-800 dark:text-slate-200 font-mono">[{mainClassName}]</div>
+                        <div className="mt-2 text-slate-500 dark:text-slate-400 italic text-xs">
                             {allVerbsInSuperclass.length} verbs across {variations.length + 1} variations
                         </div>
                     </div>
@@ -90,7 +88,7 @@ const ClassView: React.FC<ClassViewProps> = ({ className, onClose, onViewClass, 
                 <div className="mb-10 overflow-x-auto">
                     <table className="w-full text-left border-collapse min-w-[400px]">
                         <thead>
-                            <tr className="text-[8px] font-bold text-[#B5A994] uppercase tracking-[0.2em] border-b border-[#E8E1D5]">
+                            <tr className="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] border-b border-slate-200 dark:border-slate-800">
                                 <th className="py-2 pr-1">Variation</th>
                                 <th className="py-2 px-1 text-center">Pres</th>
                                 <th className="py-2 px-1 text-center">Impf</th>
@@ -99,37 +97,36 @@ const ClassView: React.FC<ClassViewProps> = ({ className, onClose, onViewClass, 
                                 <th className="py-2 px-1 text-center">Inf</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-[#E8E1D5]">
-                            {/* Table with variations ONLY as requested, but keeping compact layout */}
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
                             {variations.length > 0 ? variations.map(v => {
                                 const endings = getEndings(v);
                                 if (!endings) return null;
 
                                 return (
-                                    <tr key={v} className={`group cursor-pointer hover:bg-[#EBE5D9] transition-colors ${v === className ? 'bg-[#EBE5D9]' : ''}`} onClick={() => onViewClass(v)}>
-                                        <td className="py-2.5 font-medium text-[#4A3F35] text-[10px] truncate pr-1" title={v}>
+                                    <tr key={v} className={`group cursor-pointer hover:bg-amber-50/40 dark:hover:bg-slate-800/40 transition-colors ${v === className ? 'bg-amber-50 dark:bg-slate-900/60' : ''}`} onClick={() => onViewClass(v)}>
+                                        <td className="py-2.5 font-medium text-slate-800 dark:text-slate-200 text-[10px] truncate pr-1 font-mono" title={v}>
                                             {v}
                                         </td>
-                                        <td className="py-2.5 px-1 font-mono text-[10px] text-[#8C7355] text-center">
+                                        <td className="py-2.5 px-1 font-mono text-[10px] text-slate-500 dark:text-slate-400 text-center">
                                             {(endings.present !== parentEndings?.present) ? endings.present : ''}
                                         </td>
-                                        <td className="py-2.5 px-1 font-mono text-[10px] text-[#8C7355] text-center">
+                                        <td className="py-2.5 px-1 font-mono text-[10px] text-slate-500 dark:text-slate-400 text-center">
                                             {(endings.imperfective !== parentEndings?.imperfective) ? endings.imperfective : ''}
                                         </td>
-                                        <td className="py-2.5 px-1 font-mono text-[10px] text-[#8C7355] text-center">
+                                        <td className="py-2.5 px-1 font-mono text-[10px] text-slate-500 dark:text-slate-400 text-center">
                                             {(endings.perfective !== parentEndings?.perfective) ? endings.perfective : ''}
                                         </td>
-                                        <td className="py-2.5 px-1 font-mono text-[10px] text-[#8C7355] text-center">
+                                        <td className="py-2.5 px-1 font-mono text-[10px] text-slate-500 dark:text-slate-400 text-center">
                                             {(endings.imperative !== parentEndings?.imperative) ? endings.imperative : ''}
                                         </td>
-                                        <td className="py-2.5 px-1 font-mono text-[10px] text-[#8C7355] text-center">
+                                        <td className="py-2.5 px-1 font-mono text-[10px] text-slate-500 dark:text-slate-400 text-center">
                                             {(endings.infinitive !== parentEndings?.infinitive) ? endings.infinitive : ''}
                                         </td>
                                     </tr>
                                 );
                             }) : (
                                 <tr>
-                                    <td colSpan={6} className="py-4 text-center text-[10px] text-[#B5A994] italic">No variations documented</td>
+                                    <td colSpan={6} className="py-4 text-center text-[10px] text-slate-400 dark:text-slate-500 italic">No variations documented</td>
                                 </tr>
                             )}
                         </tbody>
@@ -138,7 +135,7 @@ const ClassView: React.FC<ClassViewProps> = ({ className, onClose, onViewClass, 
 
                 {/* All Verbs Section */}
                 <div>
-                    <h3 className="text-[10px] font-bold text-[#B5A994] uppercase tracking-[0.2em] mb-6">All Verbs</h3>
+                    <h3 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-6">All Verbs</h3>
                     <div className="space-y-5">
                         {allVerbsInSuperclass.map((r, i) => {
                             const entry = dictionaryMap.get(r.entry_id);
@@ -147,19 +144,19 @@ const ClassView: React.FC<ClassViewProps> = ({ className, onClose, onViewClass, 
                                 <div 
                                     key={i} 
                                     onClick={() => onViewEntry(entry)}
-                                    className="flex items-start justify-between gap-4 group cursor-pointer border-b border-[#E8E1D5]/50 pb-4 hover:bg-[#EBE5D9]/30 -mx-2 px-2 rounded-lg transition-colors"
+                                    className="flex items-start justify-between gap-4 group cursor-pointer border-b border-slate-100 dark:border-slate-800 pb-4 hover:bg-white dark:hover:bg-slate-900 -mx-2 px-2 rounded-lg transition-colors"
                                 >
                                     <div className="flex-1 min-w-0">
-                                        <h4 className="text-base font-bold text-[#4A3F35] mb-0.5 group-hover:text-amber-800 transition-colors leading-tight">
+                                        <h4 className="text-base font-bold text-slate-800 dark:text-slate-200 mb-0.5 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors leading-tight">
                                             {renderStyledText(entry.Definition || '')}
                                         </h4>
                                         <div className="flex items-baseline gap-2">
-                                            <span className="font-noto-cherokee text-sm text-[#8C7355]">{entry.Syllabary}</span>
-                                            <span className="text-[11px] text-[#B5A994] italic">({entry.Entry})</span>
+                                            <span className="font-noto-cherokee text-sm text-slate-500 dark:text-slate-400">{entry.Syllabary}</span>
+                                            <span className="text-[11px] text-slate-400 dark:text-slate-500 italic">({entry.Entry})</span>
                                         </div>
                                     </div>
                                     {r.class_name !== mainClassName && (
-                                        <div className="bg-[#EBE5D9] px-1.5 py-0.5 rounded text-[8px] font-mono font-bold text-[#8C7355] mt-1 shrink-0 uppercase tracking-wider">
+                                        <div className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 rounded text-[8px] font-mono font-bold text-slate-600 dark:text-slate-300 mt-1 shrink-0 uppercase tracking-wider">
                                             {r.class_name}
                                         </div>
                                     )}

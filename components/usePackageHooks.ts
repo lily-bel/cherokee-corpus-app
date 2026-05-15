@@ -190,7 +190,10 @@ export const usePackageExport = () => {
                     base_id: g.entry_id,
                     word_index: g.word_index,
                     notes: g.notes || '',
-                    "source file": "user generated"
+                    "source file": "user generated",
+                    gloss_syllabary: g.gloss_syllabary || '',
+                    gloss_phonetic: g.gloss_phonetic || '',
+                    gloss_english: g.gloss_english || ''
                 };
             });
 
@@ -519,15 +522,19 @@ export const usePackageImport = () => {
         }));
 
         const glosses = rawGlosses.map((d: any) => ({
-            sentence_id: d.Sentence_ID,
-            word_index: d.Word_Index,
-            entry_id: d.Entry_ID,
-            notes: d.Notes,
+            sentence_id: d.Sentence_ID || d.sentence_id,
+            word_index: d.Word_Index || d.word_index,
+            entry_id: d.Entry_ID || d.entry_id,
+            notes: d.Notes || d.notes,
             source: d.Source === 'user' ? meta.id : d.Source,
-            Sentence_ID: d.Sentence_ID,
-            Word_Index: d.Word_Index,
-            Entry_ID: d.Entry_ID,
-            Notes: d.Notes,
+            gloss_syllabary: d.Gloss_Syllabary || d.gloss_syllabary,
+            gloss_phonetic: d.Gloss_Phonetic || d.gloss_phonetic,
+            gloss_english: d.Gloss_English || d.gloss_english,
+            // Legacy
+            Sentence_ID: d.Sentence_ID || d.sentence_id,
+            Word_Index: d.Word_Index || d.word_index,
+            Entry_ID: d.Entry_ID || d.entry_id,
+            Notes: d.Notes || d.notes,
             Source: d.Source === 'user' ? meta.id : d.Source
         }));
 

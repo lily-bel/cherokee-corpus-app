@@ -102,35 +102,26 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({
 
     // --- DATA GATHERING ---
     const data = useMemo(() => {
-        const findAnywhere = (id: string, type: 'W' | 'S') => {
-            const cleanId = String(id).replace('_sentence', '').replace(/^s_/, '');
+        const allWordsMap = new Map<string, any>();
+        const allSentencesMap = new Map<string, any>();
 
-            if (type === 'W') {
-                // 1. Check personal words
-                let found: any = personalWords.find(w => w.Index === cleanId || w.id === cleanId);
-                if (found) return found;
-                // 2. Check base dictionary
-                found = dictionary.find(w => w.id === cleanId || w.Index === cleanId);
-                if (found) return found;
-                // 3. Check all packages
-                for (const pId in importedData) {
-                    found = importedData[pId].dictionary?.find((w: any) => w.id === cleanId || w.Index === cleanId);
-                    if (found) return found;
-                }
-            } else {
-                // 1. Check user sentences
-                let found = userSentences.find(s => s.id === cleanId);
-                if (found) return found;
-                // 2. Check base sentences
-                found = sentences.find(s => s.id === cleanId);
-                if (found) return found;
-                // 3. Check all packages
-                for (const pId in importedData) {
-                    found = importedData[pId].sentences?.find((s: any) => s.id === cleanId);
-                    if (found) return found;
-                }
-            }
-            return null;
+        personalWords.forEach(w => allWordsMap.set(w.Index || w.id, w));
+        dictionary.forEach(w => allWordsMap.set(w.Index || w.id, w));
+        Object.values(importedData).forEach(p => {
+            p.dictionary?.forEach((w: any) => allWordsMap.set(w.Index || w.id, w));
+        });
+
+        userSentences.forEach(s => allSentencesMap.set(s.id, s));
+        sentences.forEach(s => allSentencesMap.set(s.id, s));
+        Object.values(importedData).forEach(p => {
+            p.sentences?.forEach((s: any) => allSentencesMap.set(s.id || s.ID, s));
+        });
+
+        const findAnywhere = (id: string, type: 'W' | 'S') => {
+            if (!id) return null;
+            const cleanId = String(id).replace('_sentence', '').replace(/^s_/, '');
+            if (type === 'W') return allWordsMap.get(cleanId);
+            return allSentencesMap.get(cleanId);
         };
 
         const getParent = (targetId: string, audioId?: string, forcePkg?: any) => {

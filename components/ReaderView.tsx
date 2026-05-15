@@ -234,7 +234,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
     const getGlossColor = (sentenceId: string, wordIndex: number): string | null => {
         const glosses = glossMap.get(sentenceId) || [];
         const wordGlosses = glosses.filter(g =>
-            g.word_index.split(',').map(Number).includes(wordIndex)
+            g.word_index ? g.word_index.split(',').map(Number).includes(wordIndex) : false
         );
         if (wordGlosses.length === 0) return null;
 
@@ -443,7 +443,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                 const targetToken = tokens[activePopover.wordIndex];
                 const glosses = glossMap.get(sentence.id) || [];
                 const wordGlosses = glosses.filter(g =>
-                    g.word_index.split(',').map(Number).includes(activePopover.wordIndex)
+                    g.word_index ? g.word_index.split(',').map(Number).includes(activePopover.wordIndex) : false
                 );
 
                 return (
@@ -515,7 +515,10 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                             breakdown_cherokee: breakdownCherokee,
                             breakdown_english: breakdownEnglish,
                             source: 'user',
-                            id: showLinker.glossId
+                            id: showLinker.glossId,
+                            gloss_syllabary: showLinker.targetWord.syllabary,
+                            gloss_phonetic: showLinker.targetWord.translit,
+                            gloss_english: entry.definition || entry.Definition
                         });
                         setShowLinker(null);
                     }}

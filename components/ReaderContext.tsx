@@ -96,11 +96,24 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const { books, storiesByBook, chaptersByStory, sentencesByChapter } = useMemo(() => {
         const sourceMap = new Map<string, Sentence[]>();
 
+        const officialPkg = packages.find(p => p.id === 'official-cherokee-data');
+        const officialSources = officialPkg?.metadata?.source_names 
+            ? Object.keys(officialPkg.metadata.source_names).map(s => s.toLowerCase()) 
+            : [];
+
         allSentences.forEach(sentence => {
-            if (!sourceMap.has(sentence.source)) {
-                sourceMap.set(sentence.source, []);
+            let mappedSource = sentence.source;
+            const lowerSource = mappedSource ? mappedSource.toLowerCase() : '';
+            if (officialSources.includes(lowerSource)) {
+                if (!['ced', 'rrd', 'bible'].includes(lowerSource)) {
+                    mappedSource = 'other_official';
+                }
             }
-            sourceMap.get(sentence.source)!.push(sentence);
+
+            if (!sourceMap.has(mappedSource)) {
+                sourceMap.set(mappedSource, []);
+            }
+            sourceMap.get(mappedSource)!.push(sentence);
         });
 
         // Ensure all user-created BOOKS are represented, even if empty
@@ -122,7 +135,9 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             let title = source;
             let author = sourceSentences.length > 0 ? sourceSentences[0].author : undefined;
 
-            if (userDictionaries[source]) {
+            if (source === 'other_official') {
+                title = 'Other Official Sentences';
+            } else if (userDictionaries[source]) {
                 title = userDictionaries[source].name;
             } else {
                 for (const p of packages) {

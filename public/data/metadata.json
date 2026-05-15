@@ -14,11 +14,13 @@
     "locked": "yes",
     "source_names": {
         "ced": "Dr Durbin Feeling Cherokee English Dictionary 1975",
+        "kirk": "Kirk Book Data",
+        "ltu": "Learning to Use the Cherokee Verb",
         "bible": "Cherokee New Testament Full Text",
-        "rrd": "Raven Rock Dictionary",
         "cn": "Cherokee Nation",
         "cwl": "Consortium Word List",
         "noq": "Noquisi Word List",
+        "rrd": "Raven Rock Dictionary",
         "mds": "Moondove's Spiral",
         "msct": "Microsoft Computer Terms",
         "cnmed": "Medical terms provided by Cherokee Nation (western dialect)",
@@ -36,6 +38,8 @@
     },
     "source_meta": {
         "ced": "prioritize",
+        "kirk": "other",
+        "ltu": "other",
         "mds": "filter",
         "msct": "filter",
         "cnmed": "other",

@@ -13,7 +13,7 @@ export const Toast = ({ show, message, type = 'error' }) => {
   );
 };
 
-export const AudioPlayer = ({ src, label = "Audio", icon: Icon = Volume2, variant = "gray", showNoAudioMessage = true, onDelete = undefined, customColor = undefined }: any) => {
+export const AudioPlayer = ({ src, label = "Audio", icon: Icon = Volume2, variant = "gray", showNoAudioMessage = false, onDelete = undefined, customColor = undefined }: any) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [error, setError] = useState(false);
   const playAudio = () => {

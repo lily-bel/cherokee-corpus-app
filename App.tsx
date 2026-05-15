@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Search, Book, Menu, X, Filter, Clock, ListIcon, Folder, BookOpen, Download, ArrowLeft, Pencil, ChevronDown, Share, Trash2, Plus, ChevronUp, Minus, Check, ToggleLeft, ToggleRight, Box, Layout } from './components/Icons';
 import { Toast, Modal } from './components/UI';
 import EntryCard from './components/EntryCard';
@@ -33,7 +33,7 @@ const DEFAULT_SETTINGS = {
 
 function App() {
     const { packages, importedData } = usePackageManager();
-    const { dictionary, sentences, userSentences, glosses, loading, entryToSentencesMap, addUserSentence, removeUserSentence, removeUserSentences, removeUserGloss, customDictionaries, personalWords, setCustomDictionaries, setPersonalWords, userAudioMeta, saveAudio, deleteAudio, sentenceMap, userWordForms, setUserWordForms, userNotes, setUserNotes } = useCorpus();
+    const { dictionary, sentences, userSentences, glosses, loading, entryToSentencesMap, addUserSentence, removeUserSentence, removeUserSentences, removeUserGloss, customDictionaries, personalWords, setCustomDictionaries, setPersonalWords, userAudioMeta, saveAudio, deleteAudio, sentenceMap, userWordForms, setUserWordForms, userNotes, setUserNotes, rootMap } = useCorpus();
     const { findBookAndChapterForSentence } = useReader();
 
     // Legacy state replacements
@@ -108,6 +108,8 @@ function App() {
     const [showAdditionalFormsModal, setShowAdditionalFormsModal] = useState(false);
     const [additionalFormsTargetId, setAdditionalFormsTargetId] = useState<string | null>(null);
     const [currentAdditionalForms, setCurrentAdditionalForms] = useState('');
+    
+    const [activeWidgetName, setActiveWidgetName] = useState<string | null>(() => new URLSearchParams(window.location.search).get('widget'));
 
     console.log("⚡ APP RENDER. Current Selected Entry:", selectedEntry);
 
@@ -139,12 +141,24 @@ function App() {
                 if (savedHistory) setSearchHistory(JSON.parse(savedHistory));
                 if (savedSettings) {
                     const parsed = JSON.parse(savedSettings);
+                    
+                    // Self-Healing Check: if persisted searchLangs disabled all 3 main langs,
+                    // we reset them to active defaults right during load.
+                    const combinedLangs = { ...DEFAULT_SETTINGS.searchLangs, ...parsed.searchLangs };
+                    if (!combinedLangs.syllabary && !combinedLangs.translit && !combinedLangs.english) {
+                        combinedLangs.syllabary = true;
+                        combinedLangs.translit = true;
+                        combinedLangs.english = true;
+                        console.warn("[SELF-HEAL] Automatically restored primary search languages from a corrupted null state.");
+                    }
+
                     setSettings(prev => ({
                         ...prev, ...parsed,
-                        searchLangs: { ...prev.searchLangs, ...parsed.searchLangs },
+                        searchLangs: combinedLangs,
                         searchScopes: { ...prev.searchScopes, ...parsed.searchScopes }
                     }));
                 }
+
 
 
                 const savedFavs = localStorage.getItem('cherokee_app_favorites'); if (savedFavs) setFavorites(JSON.parse(savedFavs));
@@ -249,7 +263,7 @@ function App() {
                     if (!src) return;
                     if (newFilters[src] === undefined) {
                         // Default to true unless metadata says "filter"
-                        newFilters[src] = sourceMeta[src] !== 'filter';
+                        newFilters[src] = sourceMeta[src.toLowerCase()] !== 'filter';
                     }
                 });
                 return newFilters;
@@ -306,25 +320,61 @@ function App() {
         return [...dictionaryEntries, ...csvData];
     }, [csvData, personalWords, customDictionaries, packages]);
 
-    const updateUrl = (entry) => {
+    const updateUrl = (params: { entry?: any, root?: string | null, cls?: string | null } | any = null) => {
         try {
             const url = new URL(window.location.href);
-            if (entry) {
+            url.searchParams.delete('word');
+            url.searchParams.delete('sentence');
+            url.searchParams.delete('root');
+            url.searchParams.delete('class');
+
+            let entry: any = null;
+            let root: any = null;
+            let cls: any = null;
+
+            if (params && (params.entry !== undefined || params.root !== undefined || params.cls !== undefined)) {
+                entry = params.entry;
+                root = params.root;
+                cls = params.cls;
+            } else {
+                entry = params;
+            }
+
+            if (cls) {
+                url.searchParams.set('class', cls);
+            } else if (root) {
+                url.searchParams.set('root', root);
+            } else if (entry) {
                 if (entry.Index) url.searchParams.set('word', entry.Index);
                 else if (entry.id) url.searchParams.set('sentence', entry.id);
-            } else {
-                url.searchParams.delete('word');
-                url.searchParams.delete('sentence');
             }
+
             window.history.pushState({}, '', url.toString());
         } catch (e) {
             console.log("Navigation update skipped (SecurityRestriction)");
         }
     };
 
+    const handleViewRoot = (slug: string | null) => {
+        setSelectedRoot(slug);
+        updateUrl({ entry: selectedEntry, root: slug, cls: selectedClass });
+    };
+
+    const handleViewClass = (className: string | null) => {
+        setSelectedClass(className);
+        updateUrl({ entry: selectedEntry, root: selectedRoot, cls: className });
+    };
+
     useEffect(() => {
         const handlePopState = () => {
             const params = new URLSearchParams(window.location.search);
+            setActiveWidgetName(params.get('widget'));
+            
+            const rootSlug = params.get('root');
+            const className = params.get('class');
+            setSelectedRoot(rootSlug);
+            setSelectedClass(className);
+
             const idx = params.get('word');
             const sId = params.get('sentence');
             if (idx) {
@@ -344,6 +394,12 @@ function App() {
     useEffect(() => {
         if (!loading && allData.length > 0) {
             const params = new URLSearchParams(window.location.search);
+            
+            const rootSlug = params.get('root');
+            const className = params.get('class');
+            if (rootSlug && !selectedRoot) setSelectedRoot(rootSlug);
+            if (className && !selectedClass) setSelectedClass(className);
+
             const idx = params.get('word');
             const sId = params.get('sentence');
             if (idx && !selectedEntry) {
@@ -378,7 +434,7 @@ function App() {
         Object.keys(counts).forEach(src => {
             if (src.startsWith('nb_') || src === 'pd') return; // Always main
 
-            const meta = sourceMeta[src];
+            const meta = sourceMeta[src.toLowerCase()];
             if (meta === 'other') {
                 smallSourceCodes.push(src);
             }
@@ -387,17 +443,19 @@ function App() {
         return { counts, smallSourceCodes };
     }, [allData, packages]);
 
+    const sourceNames = useMemo(() => {
+        const names: Record<string, string> = {};
+        packages.forEach(p => {
+            if (p.status === 'active' && p.metadata.source_names) {
+                Object.assign(names, p.metadata.source_names);
+            }
+        });
+        return names;
+    }, [packages]);
+
     const availableSources = useMemo(() => {
         const unique = new Map();
         const sources: { code: string; name: string; badge: string; count: number; packageId?: string; packageDate?: number }[] = [];
-
-        // Build Source Name Map from all active packages
-        const sourceNames: Record<string, string> = {};
-        packages.forEach(p => {
-            if (p.status === 'active' && p.metadata.source_names) {
-                Object.assign(sourceNames, p.metadata.source_names);
-            }
-        });
 
         allData.forEach(d => {
             if (d.Source && !unique.has(d.Source)) {
@@ -406,7 +464,7 @@ function App() {
                 if (sourceStats.smallSourceCodes.includes(d.Source)) return;
 
                 let code = d.Source;
-                let name = d.Source_Long || sourceNames[code] || d.Source.toUpperCase();
+                let name = sourceNames[code.toLowerCase()] || sourceNames[code] || d.Source_Long || d.Source.toUpperCase();
                 let badge = code.substring(0, 3).toUpperCase();
                 let packageId: string | undefined = undefined;
                 let packageDate = 0;
@@ -452,8 +510,8 @@ function App() {
                 }
             });
 
-            const idxA = sourceOrder.indexOf(a.code);
-            const idxB = sourceOrder.indexOf(b.code);
+            const idxA = sourceOrder.indexOf(a.code.toLowerCase());
+            const idxB = sourceOrder.indexOf(b.code.toLowerCase());
 
             if (idxA !== -1 && idxB !== -1) return idxA - idxB;
             if (idxA !== -1) return 1; // If A is not in order, put it after B (if B is in order)
@@ -470,7 +528,7 @@ function App() {
         }
 
         return sources;
-    }, [allData, customDictionaries, sourceStats, packages]);
+    }, [allData, customDictionaries, sourceStats, packages, sourceNames]);
 
     // SENTENCE SOURCES
     const availableSentenceSources = useMemo(() => {
@@ -560,7 +618,7 @@ function App() {
                 return;
             }
 
-            const meta = sourceMeta[s.code];
+            const meta = sourceMeta[s.code.toLowerCase()];
             if (meta === 'other') {
                 s.name = `[${s.code}] ${s.name}`;
                 otherSources.push(s);
@@ -617,17 +675,17 @@ function App() {
 
         return sourceStats.smallSourceCodes.map(code => {
             const sample = allData.find(d => d.Source === code);
-            const name = sample?.Source_Long || code;
+            const name = sourceNames[code.toLowerCase()] || sourceNames[code] || sample?.Source_Long || code;
             return { code, name, count: sourceStats.counts[code] };
         }).sort((a, b) => {
-            const idxA = sourceOrder.indexOf(a.code);
-            const idxB = sourceOrder.indexOf(b.code);
+            const idxA = sourceOrder.indexOf(a.code.toLowerCase());
+            const idxB = sourceOrder.indexOf(b.code.toLowerCase());
             if (idxA !== -1 && idxB !== -1) return idxA - idxB;
             if (idxA !== -1) return -1;
             if (idxB !== -1) return 1;
             return b.count - a.count; // Fallback to count
         });
-    }, [sourceStats, allData, packages]);
+    }, [sourceStats, allData, packages, sourceNames]);
 
     const otherGroupState = useMemo(() => {
         const smallCodes = sourceStats.smallSourceCodes;
@@ -1298,7 +1356,7 @@ function App() {
     return (
         <div className="h-screen w-full bg-[#F9F9F7] dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans flex flex-col overflow-hidden relative">
             <RainbowGradient />
-            {!selectedEntry && (
+            {!selectedEntry && !activeWidgetName && (
                 <header className="bg-white dark:bg-slate-900 px-4 py-3 shadow-sm z-10 flex items-center justify-between shrink-0 h-[60px]">
                     <h1 className="font-noto-serif text-xl text-slate-800 dark:text-slate-100">ᏣᎳᎩ-English Dictionary</h1>
                     <button onClick={() => setShowSettingsModal(true)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
@@ -1306,13 +1364,13 @@ function App() {
                     </button>
                 </header>
             )}
-            <main className={`flex-1 overflow-hidden relative flex flex-col ${selectedEntry ? 'z-50' : 'z-0'}`}>
+            <main className={`flex-1 overflow-hidden relative flex flex-col ${(selectedEntry || activeWidgetName) ? 'z-50' : 'z-0'}`}>
                 {selectedEntry ? (
                     <EntryDetail
                         entry={selectedEntry}
                         onClose={() => { setSelectedEntry(null); updateUrl(null); }}
-                        onViewRoot={(slug: string) => setSelectedRoot(slug)}
-                        onViewClass={(cls: string) => setSelectedClass(cls)}
+                        onViewRoot={(slug: string) => handleViewRoot(slug)}
+                        onViewClass={(cls: string) => handleViewClass(cls)}
                         customDictionaries={customDictionaries}
                         userNotes={userNotes}
                         userAudioMeta={userAudioMeta}
@@ -1488,28 +1546,65 @@ function App() {
                                         </div>
                                     )}
                                 </div>
-                                <div className="flex-1 overflow-y-auto">{query ? (<>{paginatedResults.active.length === 0 && paginatedResults.inactive.length === 0 && <div className="text-center mt-12 text-slate-400">No results found</div>}{paginatedResults.active.map(item => {
+                                <div className="flex-1 overflow-y-auto">{query ? (<>{paginatedResults.active.length === 0 && paginatedResults.inactive.length === 0 && <div className="text-center mt-12 text-slate-400">No results found</div>}{paginatedResults.active.map((item, index, array) => {
                                     // Check if it's a Sentence (either wrapped in .item or direct with .id but no .Index)
                                     const isSentence = item.item || (item.id && !item.Index);
                                     const data = item.item || item;
 
-                                    return isSentence ? (
-                                        <SentenceCard key={data.id} sentence={data} onClick={() => handleEntryClick(data)} customDictionaries={customDictionaries} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} personalWords={personalWords} onCreateWord={() => openWordModal(null)}
-                                            favorites={favorites}
-                                            customLists={customLists}
-                                            onToggleFavorite={toggleFavorite}
-                                            onToggleList={toggleInList}
-                                            onOpenNewListModal={() => setShowNewListModal(true)}
-                                            onReadInContext={handleReadInContext}
-                                        />
-                                    ) : (
-                                        <EntryCard key={item.Index} entry={item} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} />
-                                    );
+                                    if (isSentence) {
+                                        return (
+                                            <SentenceCard key={data.id} sentence={data} onClick={() => handleEntryClick(data)} customDictionaries={customDictionaries} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} personalWords={personalWords} onCreateWord={() => openWordModal(null)}
+                                                favorites={favorites}
+                                                customLists={customLists}
+                                                onToggleFavorite={toggleFavorite}
+                                                onToggleList={toggleInList}
+                                                onOpenNewListModal={() => setShowNewListModal(true)}
+                                                onReadInContext={handleReadInContext}
+                                            />
+                                        );
+                                    } else {
+                                        const rootEntry = item.Index ? rootMap?.get(item.Index) : null;
+                                        
+                                        // Look back to see if same root was rendered
+                                        let showRootHeader = false;
+                                        if (rootEntry) {
+                                            const prevItem = index > 0 ? array[index - 1] : null;
+                                            const prevIsSentence = prevItem ? (prevItem.item || (prevItem.id && !prevItem.Index)) : true;
+                                            const prevEntry = prevIsSentence ? null : prevItem;
+                                            const prevRootEntry = prevEntry?.Index ? rootMap?.get(prevEntry.Index) : null;
+                                            
+                                            if (!prevRootEntry || prevRootEntry.root_slug !== rootEntry.root_slug) {
+                                                showRootHeader = true;
+                                            }
+                                        }
+
+                                        return (
+                                            <React.Fragment key={item.Index}>
+                                                {showRootHeader && rootEntry && (
+                                                    <div className="flex items-center gap-2.5 px-4 py-2 mt-4 mb-1">
+                                                        <div className="w-1.5 h-5 bg-amber-500 dark:bg-amber-400 rounded-full shrink-0" />
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em]">Root:</span>
+                                                            <button 
+                                                                onClick={() => handleViewRoot(rootEntry.root_slug)}
+                                                                className="text-sm font-bold font-noto-cherokee text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1 bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 rounded shadow-sm border border-amber-100/40 dark:border-amber-900/40"
+                                                            >
+                                                                -{rootEntry.root_h || rootEntry.root_g}-
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                <div className={rootEntry ? "ml-4 pl-2 border-l-2 border-amber-500/20 dark:border-amber-400/20" : ""}>
+                                                    <EntryCard entry={item} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} />
+                                                </div>
+                                            </React.Fragment>
+                                        );
+                                    }
                                 })}
 
 
 
-                                    {paginatedResults.inactive.length > 0 && <><div className="px-4 py-2 bg-slate-50 dark:bg-slate-900/50 text-xs font-bold text-slate-400 uppercase tracking-widest border-y border-slate-100 dark:border-slate-800 mt-4">Filtered</div>{paginatedResults.inactive.map(entry => {
+                                    {paginatedResults.inactive.length > 0 && <><div className="px-4 py-2 bg-slate-50 dark:bg-slate-900/50 text-xs font-bold text-slate-400 uppercase tracking-widest border-y border-slate-100 dark:border-slate-800 mt-4">Filtered</div>{paginatedResults.inactive.map((entry, index, array) => {
                                         if (entry.item && (entry.type === 'text' || entry.type === 'deep')) {
                                             return <SentenceCard key={entry.item.id} sentence={entry.item} onClick={() => handleEntryClick(entry.item)} isDimmed={true} customDictionaries={customDictionaries} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} personalWords={personalWords} onCreateWord={() => openWordModal(null)}
                                                 favorites={favorites}
@@ -1520,7 +1615,41 @@ function App() {
                                                 onReadInContext={handleReadInContext}
                                             />;
                                         }
-                                        return <EntryCard key={entry.Index} entry={entry} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} isDimmed={true} />;
+                                        
+                                        const rootEntry = entry.Index ? rootMap?.get(entry.Index) : null;
+                                        let showRootHeader = false;
+                                        if (rootEntry) {
+                                            const prevItem = index > 0 ? array[index - 1] : null;
+                                            const prevIsSentence = prevItem ? (prevItem.item && (prevItem.type === 'text' || prevItem.type === 'deep')) : true;
+                                            const prevEntry = prevIsSentence ? null : prevItem;
+                                            const prevRootEntry = prevEntry?.Index ? rootMap?.get(prevEntry.Index) : null;
+                                            
+                                            if (!prevRootEntry || prevRootEntry.root_slug !== rootEntry.root_slug) {
+                                                showRootHeader = true;
+                                            }
+                                        }
+
+                                        return (
+                                            <React.Fragment key={entry.Index}>
+                                                {showRootHeader && rootEntry && (
+                                                    <div className="flex items-center gap-2.5 px-4 py-2 mt-4 mb-1 opacity-60">
+                                                        <div className="w-1.5 h-5 bg-amber-500/60 dark:bg-amber-400/60 rounded-full shrink-0" />
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em]">Root:</span>
+                                                            <button 
+                                                                onClick={() => handleViewRoot(rootEntry.root_slug)}
+                                                                className="text-sm font-bold font-noto-cherokee text-amber-600/80 dark:text-amber-400/80 hover:underline flex items-center gap-1 bg-amber-50/50 dark:bg-amber-950/30 px-2 py-0.5 rounded border border-amber-100/20 dark:border-amber-900/20"
+                                                            >
+                                                                -{rootEntry.root_h || rootEntry.root_g}-
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                <div className={rootEntry ? "ml-4 pl-2 border-l-2 border-amber-500/10 dark:border-amber-400/10" : ""}>
+                                                    <EntryCard entry={entry} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} isDimmed={true} />
+                                                </div>
+                                            </React.Fragment>
+                                        );
                                     })}</>}
                                     {paginatedResults.hasMore && (
                                         <div className="p-4">
@@ -1842,12 +1971,13 @@ function App() {
             {selectedRoot && (
                 <RootView
                     slug={selectedRoot}
-                    onClose={() => setSelectedRoot(null)}
+                    onClose={() => handleViewRoot(null)}
                     onViewEntry={(entry) => {
                         setSelectedRoot(null);
                         setSelectedEntry(entry);
+                        updateUrl(entry);
                     }}
-                    onViewClass={(cls) => setSelectedClass(cls)}
+                    onViewClass={(cls) => handleViewClass(cls)}
                     onShowSettings={() => setShowSettingsModal(true)}
                 />
             )}
@@ -1855,11 +1985,12 @@ function App() {
             {selectedClass && (
                 <ClassView
                     className={selectedClass}
-                    onClose={() => setSelectedClass(null)}
-                    onViewClass={(cls) => setSelectedClass(cls)}
+                    onClose={() => handleViewClass(null)}
+                    onViewClass={(cls) => handleViewClass(cls)}
                     onViewEntry={(entry) => {
                         setSelectedClass(null);
                         setSelectedEntry(entry);
+                        updateUrl(entry);
                     }}
                     onShowSettings={() => setShowSettingsModal(true)}
                 />

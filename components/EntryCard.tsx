@@ -109,7 +109,7 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
     }
 
     packages.forEach(p => {
-      if (p.status === 'active' && importedData[p.id]?.word_forms) {
+      if (p.type !== 'official' && p.status === 'active' && importedData[p.id]?.word_forms) {
         const hasForms = importedData[p.id].word_forms!.some((f: any) => f.word_index === entry.Index);
         if (hasForms) cols.add(getHexColor(p.color));
       }

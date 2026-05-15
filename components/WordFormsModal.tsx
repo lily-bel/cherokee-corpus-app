@@ -2,7 +2,8 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { X, Mic, Trash2, Pause, Volume2, Plus } from './Icons';
-import { getFriendlyLabel } from '../utils';
+import { getFriendlyLabel, processFormsContextually } from '../utils';
+import { useCorpus } from './CorpusContext';
 
 interface WordFormsModalProps {
     isOpen: boolean;
@@ -18,6 +19,7 @@ interface WordFormsModalProps {
     onDeleteAudio: (entryIndex: string, audioId: string) => void;
     getPackageColor: (id: string) => string | undefined | any;
     packages: any[];
+    onReadInContext?: (sentenceId: string) => void;
 }
 
 const MiniAudioButton = ({ audio, isOfficial = false, color, isPlaying, onPlay, onDelete }: { audio: any, isOfficial?: boolean, color?: string, isPlaying: boolean, onPlay: () => void, onDelete?: () => void }) => {
@@ -81,9 +83,25 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
     onDeleteAudio,
     getPackageColor,
     packages,
-    importedData
+    importedData,
+    onReadInContext
 }) => {
     if (!isOpen || !entry) return null;
+
+    const { glosses, sentenceMap } = useCorpus();
+    const entryGlosses = glosses.filter((g: any) => g.entry_id === entry.Index && (g.gloss_syllabary || g.gloss_phonetic));
+
+    // Helper to tokenize sentence for context view
+    const tokenizeSentence = (syllabary: string, translit: string) => {
+        const syl = syllabary ? syllabary.split(' ') : [];
+        const tr = translit ? translit.split(' ') : [];
+        const max = Math.max(syl.length, tr.length);
+        const tokens: { syl: string; tr: string; index: number }[] = [];
+        for (let i = 0; i < max; i++) {
+            tokens.push({ syl: (syl[i] || '').replace(/\*/g, ''), tr: (tr[i] || '').replace(/\*/g, ''), index: i });
+        }
+        return tokens;
+    };
 
     // Compile all forms
     const allForms: any[] = [];
@@ -120,16 +138,20 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
         }
     });
 
-    importedFormsForThisEntry.sort((a, b) => (a.order || 0) - (b.order || 0)).forEach(f => {
+    const processedImportedForms = processFormsContextually(importedFormsForThisEntry);
+
+    processedImportedForms.sort((a, b) => (a.order || 0) - (b.order || 0)).forEach(f => {
         allForms.push({
             type: 'imported',
-            label: getFriendlyLabel(f.form_name),
+            label: f.displayLabel || getFriendlyLabel(f.form_name),
             translit: f.translit,
             syllabary: f.syllabary,
             tone: f.tone,
             notes: f.notes,
             index: f.computed_index,
-            color: f.color
+            color: f.color,
+            source: f.source,
+            audio: f.audio
         });
     });
 
@@ -164,7 +186,7 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
                     <div>
                         <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 leading-tight">Word Forms</h3>
                         <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">
-                            {allForms.length} form{allForms.length !== 1 ? 's' : ''} available
+                            {allForms.length} form{allForms.length !== 1 ? 's' : ''} available{entryGlosses.length > 0 ? ` (+${entryGlosses.length} contextual)` : ''}
                         </p>
                     </div>
                     <button
@@ -223,6 +245,16 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
                                                 style={{ backgroundColor: borderStyle.borderLeftColor }}
                                             />
                                             <div className="font-bold text-slate-700 dark:text-slate-200 text-sm break-words">{form.label}</div>
+                                            {form.source && (
+                                                <div className="mt-1.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                                                    {form.source}
+                                                </div>
+                                            )}
+                                            {form.type === 'custom' && (
+                                                <div className="mt-1.5 text-[10px] font-bold text-amber-500 uppercase tracking-widest">
+                                                    User Added
+                                                </div>
+                                            )}
                                         </td>
                                         <td className="p-4 align-top">
                                             <div className="flex flex-col gap-0.5 overflow-hidden">
@@ -234,6 +266,15 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
                                         </td>
                                         <td className="p-4 align-top">
                                             <div className="flex flex-col items-center gap-2">
+                                                {form.audio && (
+                                                    <MiniAudioButton
+                                                        key={`official-${form.audio}`}
+                                                        audio={{ id: form.audio, packageId: 'official-cherokee-data' }}
+                                                        isOfficial={true}
+                                                        isPlaying={playingAudioId === form.audio}
+                                                        onPlay={() => onPlayAudio({ id: form.audio, packageId: 'official-cherokee-data' })}
+                                                    />
+                                                )}
                                                 {formAudios.map((audio: any) => {
                                                     const audioPkg = packages.find(p => p.id === audio.packageId);
                                                     const isOfficial = audioPkg ? audioPkg.type === 'official' : false;
@@ -261,6 +302,117 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
                                     </tr>
                                 );
                             })}
+
+                            {entryGlosses.length > 0 && (
+                                <>
+                                    {/* Small space separator */}
+                                    <tr className="bg-slate-50/50 dark:bg-slate-800/20">
+                                        <td colSpan={3} className="py-3.5 px-6 border-y border-slate-100 dark:border-slate-800/60">
+                                            <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em]">
+                                                Seen in context
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {entryGlosses.map((g: any, gIdx: number) => {
+                                        const sentence = sentenceMap.get(g.sentence_id);
+                                        if (!sentence) return null;
+
+                                        const tokens = tokenizeSentence(sentence.syllabary, sentence.translit);
+                                        const targetIndices = g.word_index ? g.word_index.split(',').map(Number) : [];
+
+                                        const pkgColor = getPackageColor(g.source || 'slate') || 'slate';
+                                        let pkgHex = '#64748b'; // Default Slate
+                                        if (pkgColor.startsWith('#')) {
+                                            pkgHex = pkgColor;
+                                        } else {
+                                            const colors: Record<string, string> = {
+                                                'amber': '#f59e0b',
+                                                'blue': '#3b82f6',
+                                                'green': '#22c55e',
+                                                'red': '#ef4444',
+                                                'purple': '#a855f7',
+                                                'sky': '#0ea5e9',
+                                                'pink': '#ec4899',
+                                                'orange': '#f97316',
+                                                'slate': '#64748b'
+                                            };
+                                            pkgHex = colors[pkgColor] || '#64748b';
+                                        }
+
+                                        return (
+                                            <tr key={`gloss-${gIdx}`} className="border-b border-slate-100 dark:border-slate-800/50">
+                                                <td colSpan={3} className="p-4">
+                                                    <div 
+                                                        className="border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm bg-white dark:bg-slate-900/40 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all group relative pl-6 cursor-pointer overflow-hidden"
+                                                        onClick={() => {
+                                                            if (onReadInContext) {
+                                                                onReadInContext(g.sentence_id);
+                                                                onClose();
+                                                            }
+                                                        }}
+                                                    >
+                                                        {/* Color Bar Rim */}
+                                                        <div
+                                                            className="absolute left-0 top-0 bottom-0 w-1.5"
+                                                            style={{ backgroundColor: pkgHex }}
+                                                        />
+
+                                                        {/* Card Header / Meta */}
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <div className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                                                                Source: {g.source || 'N/A'}
+                                                            </div>
+                                                            <div className="text-sky-600 dark:text-sky-400 font-extrabold text-xs uppercase tracking-wider group-hover:underline">
+                                                                See in context
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Tokens (Spotlight highlight like investigation queue) */}
+                                                        <div className="flex flex-wrap gap-x-3 gap-y-2 mb-3">
+                                                            {tokens.map((token, i) => {
+                                                                const isTarget = targetIndices.includes(i);
+                                                                return (
+                                                                    <div
+                                                                        key={i}
+                                                                        className={`flex flex-col items-center transition-opacity ${isTarget ? 'opacity-100 scale-[1.02]' : 'opacity-30'}`}
+                                                                    >
+                                                                        <span className={`font-serif text-lg ${isTarget
+                                                                            ? 'text-amber-600 dark:text-amber-400 font-bold'
+                                                                            : 'text-slate-700 dark:text-slate-300'
+                                                                        }`}>
+                                                                            {token.syl}
+                                                                        </span>
+                                                                        <span className={`text-sm ${isTarget
+                                                                            ? 'text-amber-600 dark:text-amber-400 font-semibold italic'
+                                                                            : 'text-slate-500 dark:text-slate-500'
+                                                                        }`}>
+                                                                            {token.tr}
+                                                                        </span>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+
+                                                        {/* English translation */}
+                                                        {sentence.english && (
+                                                            <div className="text-sm text-slate-500 dark:text-slate-400 italic border-t border-slate-100 dark:border-slate-800/60 pt-2.5 mt-2">
+                                                                {sentence.english}
+                                                            </div>
+                                                        )}
+
+                                                        {/* Breakdown or Gloss specific info */}
+                                                        {g.notes && (
+                                                            <div className="text-xs text-slate-400 dark:text-slate-500 mt-2 bg-slate-100/50 dark:bg-slate-800/50 rounded-lg p-2">
+                                                                Note: {g.notes}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </>
+                            )}
 
                             {/* Add Form Row */}
                             <tr

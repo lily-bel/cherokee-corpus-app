@@ -56,7 +56,7 @@ export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord,
         >
             {/* Header with Target Word */}
             {targetWord && (
-                <div className="bg-slate-50 dark:bg-slate-950/50 px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center sticky top-0 backdrop-blur-sm">
+                <div className="bg-white/95 dark:bg-slate-950/90 px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center sticky top-0 backdrop-blur-sm z-20">
                     <div>
                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Glossing</div>
                         <div className="flex items-baseline gap-2">

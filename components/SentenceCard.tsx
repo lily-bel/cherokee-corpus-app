@@ -60,7 +60,11 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
         const max = Math.max(syl.length, tr.length);
         const res: { syl: string, tr: string, index: number }[] = [];
         for (let i = 0; i < max; i++) {
-            res.push({ syl: syl[i] || '', tr: tr[i] || '', index: i });
+            res.push({
+                syl: (syl[i] || '').replace(/\*/g, ''),
+                tr: (tr[i] || '').replace(/\*/g, ''),
+                index: i
+            });
         }
         return res;
     }, [sentence]);
@@ -408,11 +412,17 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
             {sentence.audio && (() => {
                 const sColor = getPackageColor(sentence.source);
                 const isOfficial = packages.find(p => (p.id === sentence.source || p.metadata.source_names?.[sentence.source]) && p.type === 'official');
+                const isOfficialFile = isOfficial || sentence.audio.endsWith('.m4a') || sentence.audio.startsWith('Word_') || sentence.audio.match(/^\d{4}\./);
+                
+                // If this is a packaged custom audio, it's handled by userAudioMeta. Don't show duplicate here.
+                if (!isOfficialFile) return null;
+
                 const customColor = isOfficial ? undefined : sColor;
-                const audioUrl = isOfficial ? `https://cherokeenationdictionary.net/Audio/${sentence.audio}` : `/data/audio/${sentence.audio}`;
+                const audioUrl = `https://cherokeenationdictionary.net/Audio/${sentence.audio}`;
+                
                 return (
                     <div className="mt-3" onClick={e => e.stopPropagation()}>
-                        <AudioPlayer src={audioUrl} label="Play Sentence" icon={Mic} variant="gray" customColor={customColor} />
+                        <AudioPlayer src={audioUrl} label={sentence.speaker || "Official"} icon={Mic} variant="gray" customColor={customColor} />
                     </div>
                 );
             })()}
@@ -421,6 +431,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                 <div className="mt-2 flex flex-wrap gap-2" onClick={e => e.stopPropagation()}>
                     {userAudioMeta[sentence.id + '_sentence']
                         .filter(audio => {
+                            if (audio.packageId === 'official-cherokee-data' || audio.id.endsWith('.m4a')) return false;
                             if (!audio.packageId) {
                                 const userPkg = packages.find(p => p.id === 'user');
                                 return userPkg ? userPkg.status === 'active' : true;
@@ -586,6 +597,13 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                     personalWords={personalWords}
                     onClose={() => setShowLinker(null)}
                     onSelect={(entry, notes, breakdownCherokee, breakdownEnglish) => {
+                        const targetWords = Array.isArray(showLinker.targetWord) 
+                            ? showLinker.targetWord 
+                            : (showLinker.targetWord ? [showLinker.targetWord] : []);
+                        const glossSyl = targetWords.map(tw => tw.syllabary || '').join(' ').trim();
+                        const glossPhon = targetWords.map(tw => tw.translit || '').join(' ').trim();
+                        const glossDef = entry.definition || entry.Definition;
+
                         // If editing existing gloss (glossId present), update it.
                         if (showLinker.glossId) {
                             addUserGloss({
@@ -596,7 +614,10 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                                 breakdown_cherokee: breakdownCherokee,
                                 breakdown_english: breakdownEnglish,
                                 source: 'user',
-                                id: showLinker.glossId
+                                id: showLinker.glossId,
+                                gloss_syllabary: glossSyl,
+                                gloss_phonetic: glossPhon,
+                                gloss_english: glossDef
                             });
                         } else {
                             // Creating new gloss - Single entry for multiple words
@@ -607,7 +628,10 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                                 notes,
                                 breakdown_cherokee: breakdownCherokee,
                                 breakdown_english: breakdownEnglish,
-                                source: 'user'
+                                source: 'user',
+                                gloss_syllabary: glossSyl,
+                                gloss_phonetic: glossPhon,
+                                gloss_english: glossDef
                             });
                         }
                         setShowLinker(null);

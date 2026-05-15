@@ -1,39 +1,20 @@
 TODO (immersion reader):
-- add read in context button to all sentence cards (such as in the entry view)
-- All sentences of a story load at once, which can get laggy if the story is very long
-- please remove the gradient from the investigation queue button - make it a little more pastel also
 - creating a story - need options to add chapters to existing story, also need a place to input the english + transliteration as well as the syllabary. You need to be able to separate all 3 by sentence at once.
 - splitting the sentences doesn't seem to work right now.
-
-- personal stories go into notebooks, but they should be visible by default? I suppose we need one more column for Book name in the csvs
- - name of the book comes from this
-
-
+- add other root dictionary info to entry page (set, de-, etc)
 
 Other dynamic / default lists (CED Verbs / non-verbs)
 
 show error when importing zip that's not formatted correctly
-importing/exporting audio with word form numbers - how will this work idk
+check new format with packages
 
 More:
 "editable" packages - make sure they're editable in all circumstances
-Rename notebooks to custom dictionaries
-Add rest of official audio + other sources back (+ other data in note)
 part of speech stuff
 Tone regex / tone conversion, tone options: tone dot under letter, syllabary tone?
 folders for lists (expandable)
 dialect info for sources
-remove notebook export, fix backup
-
-BUGS:
-complex issue with importing packages that you made and still have the words from... needs to merge somehow
-
-DATA:
-change index to ID in dictionary sheet
-rename word forms from cn app
-keep spaces in official audio speaker names
-check for offset syllabary / translit word numbers in app data
-also add punctuation back sometimes (?, !)
+fix backup
 
 MVP:
 All importing / exporting

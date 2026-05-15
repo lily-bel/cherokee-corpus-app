@@ -96,12 +96,15 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
 
                 const audioByBaseForm: Record<string, string> = {};
                 const audioBySentence: Record<string, string> = {};
+                const audioByConjugation: Record<string, string> = {};
 
                 Object.values(audioMapping).forEach((mapping: any) => {
                     if (mapping.type === 'base_form' && mapping.merged_id) {
                         audioByBaseForm[mapping.merged_id] = mapping.audio_file;
                     } else if (mapping.type === 'sentence' && mapping.sentence_id) {
                         audioBySentence[mapping.sentence_id] = mapping.audio_file;
+                    } else if (mapping.type === 'conjugation' && mapping.merged_id && mapping.normalized_key) {
+                        audioByConjugation[`${mapping.merged_id}_${mapping.normalized_key}`] = mapping.audio_file;
                     }
                 });
 
@@ -124,16 +127,16 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                     const sources = d.sources || {};
                     let sourceKeys = Object.keys(sources);
 
-                    let sourceSet = new Set<string>();
-                    if (sources['cn-app-dictionary.csv']) sourceSet.add('ced');
-                    if (sources['lily-dict.csv']) {
+                    let sourceStr = '';
+                    if (sources['cn-app-dictionary.csv']) sourceStr = 'ced';
+                    else if (sources['lily-dict.csv']) {
                         const s = sources['lily-dict.csv'];
-                        if (s['Source']) sourceSet.add(s['Source']);
+                        sourceStr = s['Source'] || 'lily';
                     }
-                    if (sources['kirk-book-data.csv']) sourceSet.add('kirk');
-                    if (sources['learning-to-use-the-cherokee-verb.csv']) sourceSet.add('ltu');
-                    if (sourceSet.size === 0 && sourceKeys.length > 0) sourceSet.add(sourceKeys[0]); // fallback
-                    let sourceStr = Array.from(sourceSet).join(', ');
+                    else if (sources['kirk-book-data.csv']) sourceStr = 'kirk';
+                    else if (sources['learning-to-use-the-cherokee-verb.csv']) sourceStr = 'ltu';
+                    else if (sources['hierarchical-dict.json']) sourceStr = 'ced';
+                    else if (sourceKeys.length > 0) sourceStr = sourceKeys[0];
 
                     if (sources['cn-app-dictionary.csv']) {
                         const s = sources['cn-app-dictionary.csv'];
@@ -216,22 +219,68 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                     };
                 });
 
-                const normalizedGlosses = glosses.map((d: any) => ({
-                    sentence_id: d.sentence_id,
-                    word_index: undefined,
-                    entry_id: d.base_id,
-                    notes: d.gloss_english,
-                    source: d.source
-                }));
+                const sentLookup = new Map<string, any>();
+                sentences.forEach((s: any) => {
+                    if (s.sentence_id) sentLookup.set(s.sentence_id, s);
+                });
 
-                const normalizedWordForms = conjugations.map((c: any) => ({
-                    word_index: c.merged_id,
-                    form_name: c.normalized_key,
-                    syllabary: c['cn-app-dictionary.csv_Syllabary'] || c['lily-dict.csv_Syllabary'] || c['learning-to-use-the-cherokee-verb.csv_Syllabary'] || '',
-                    translit: c['cn-app-dictionary.csv_Practical'] || c['lily-dict.csv_Cherokee'] || c['kirk-book-data.csv_Cherokee'] || c['learning-to-use-the-cherokee-verb.csv_Cherokee'] || '',
-                    tone: c['cn-app-dictionary.csv_Tone and length 1'] || c['lily-dict.csv_Tone'] || c['kirk-book-data.csv_Tone'] || '',
-                    notes: c['cn-app-dictionary.csv_Translations'] || c['learning-to-use-the-cherokee-verb.csv_English'] || c['kirk-book-data.csv_English'] || ''
-                }));
+                const mergedGlossesMap = new Map<string, any>();
+                glosses.forEach((d: any) => {
+                    const key = `${d.sentence_id}_${d.base_id}`;
+                    if (!mergedGlossesMap.has(key)) {
+                        let wordIndex: string | undefined = undefined;
+                        const matchSent = sentLookup.get(d.sentence_id);
+                        if (matchSent) {
+                            const txt = matchSent.phonetic || matchSent.syllabary || '';
+                            const parts = txt.split(' ');
+                            const idx = parts.findIndex((p: string) => p.includes('*'));
+                            if (idx !== -1) {
+                                wordIndex = idx.toString();
+                            }
+                        }
+
+                        let source = d.source;
+                        if (source === 'Cherokee Dictionary 1975 Durbin Feeling') {
+                            source = 'ced';
+                        } else if (!source || source.trim() === '') {
+                            if (d['source file'] === 'cn-app-dictionary.csv') {
+                                source = 'ced';
+                            } else if (d['source file'] === 'learning-to-use-the-cherokee-verb.csv') {
+                                source = 'ltu';
+                            }
+                        }
+
+                        mergedGlossesMap.set(key, {
+                            sentence_id: d.sentence_id,
+                            word_index: wordIndex,
+                            entry_id: d.base_id,
+                            source: source,
+                            gloss_syllabary: d.gloss_syllabary,
+                            gloss_phonetic: d.gloss_phonetic,
+                            gloss_english: d.gloss_english
+                        });
+                    }
+                });
+                const normalizedGlosses = Array.from(mergedGlossesMap.values());
+
+                const normalizedWordForms = conjugations.map((c: any) => {
+                    let source = '';
+                    if (c['cn-app-dictionary.csv_Practical'] || c['cn-app-dictionary.csv_Syllabary']) source = 'ced';
+                    else if (c['learning-to-use-the-cherokee-verb.csv_Cherokee']) source = 'ltu';
+                    else if (c['kirk-book-data.csv_Cherokee']) source = 'kirk';
+                    else if (c['lily-dict.csv_Cherokee'] || c['lily-dict.csv_Syllabary']) source = 'lily';
+
+                    return {
+                        word_index: c.merged_id,
+                        form_name: c.normalized_key,
+                        syllabary: c['cn-app-dictionary.csv_Syllabary'] || c['lily-dict.csv_Syllabary'] || c['learning-to-use-the-cherokee-verb.csv_Syllabary'] || '',
+                        translit: c['cn-app-dictionary.csv_Practical'] || c['lily-dict.csv_Cherokee'] || c['kirk-book-data.csv_Cherokee'] || c['learning-to-use-the-cherokee-verb.csv_Cherokee'] || '',
+                        tone: c['cn-app-dictionary.csv_Tone and length 1'] || c['lily-dict.csv_Tone'] || c['kirk-book-data.csv_Tone'] || '',
+                        notes: c['cn-app-dictionary.csv_Translations'] || c['learning-to-use-the-cherokee-verb.csv_English'] || c['kirk-book-data.csv_English'] || '',
+                        source: source,
+                        audio: audioByConjugation[`${c.merged_id}_${c.normalized_key}`] || ''
+                    };
+                });
 
                 const officialPackage: Package = {
                     id: 'official-cherokee-data',

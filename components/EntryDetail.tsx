@@ -1,12 +1,31 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Pencil, ListPlus, Star, ListIcon, X, Plus, Folder, Pause, MicPlus, Trash2, Mic, Menu } from './Icons';
 import { AudioPlayer, SourceBadge } from './UI';
-import { renderStyledText, getAudioFromDB, getFriendlyLabel } from '../utils';
+import { renderStyledText, getAudioFromDB, processFormsContextually } from '../utils';
 import { usePackageManager } from './PackageManagerContext';
 import AudioRecorder from './AudioRecorder';
 import { useCorpus } from './CorpusContext';
 import { SentenceCard } from './SentenceCard';
 import { WordFormsModal } from './WordFormsModal';
+
+const getHexColor = (col: string) => {
+  const COLORS: Record<string, string> = {
+    slate: '#94a3b8',
+    amber: '#f59e0b',
+    red: '#ef4444',
+    blue: '#3b82f6',
+    green: '#10b981',
+    purple: '#8b5cf6',
+    pink: '#ec4899',
+    orange: '#f97316',
+    indigo: '#6366f1',
+    teal: '#14b8a6',
+    rose: '#f43f5e'
+  };
+  if (!col) return COLORS.slate;
+  if (col.startsWith('#')) return col;
+  return COLORS[col] || COLORS.slate;
+};
 
 const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, userWordForms, onSaveAudio, onDeleteAudio, favorites, customLists, customListOrder, onClose, onEdit, onToggleFavorite, onToggleList, onDelete, onSearchTerm, onOpenNewListModal, onMove, personalWords, onEditSentence, onDeleteSentence, onCreateWord, onManageForms, onReadInContext, onShowSettings, onViewRoot, onViewClass }) => {
     const [showListSheet, setShowListSheet] = useState(false);
@@ -51,7 +70,7 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
 
             // Official Audio (File-based)
             if (audio.packageId === 'official-cherokee-data' || audio.packageId?.startsWith('official')) {
-                const url = `https://cherokeenationdictionary.net/Audio/${audio.id}`;
+                const url = `https://cherokeenationdictionary.net/Audio/word/${audio.id}`;
                 audioRef.current.src = url;
                 audioRef.current.onended = () => setPlayingAudioId(null);
                 audioRef.current.play();
@@ -132,18 +151,37 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
         return list;
     }, [packages, importedData, e.Index]);
 
-    const importedForms = React.useMemo(() => {
+    const rawImportedForms = React.useMemo(() => {
         const list: any[] = [];
         packages.forEach(p => {
             if (p.status === 'active' && importedData[p.id]?.word_forms) {
                 const forms = importedData[p.id].word_forms!.filter((f: any) => f.word_index === e.Index);
                 if (forms.length > 0) {
-                    forms.forEach(f => list.push({ ...f, color: p.color, pkgName: p.name }));
+                    forms.forEach(f => list.push({ ...f, color: p.color, pkgName: p.name, pkgType: p.type }));
                 }
             }
         });
         return list.sort((a, b) => (a.order || 0) - (b.order || 0));
     }, [packages, importedData, e.Index]);
+
+    // For standard uses and counting (preserves full global overlap context)
+    const importedForms = React.useMemo(() => {
+        return processFormsContextually(rawImportedForms);
+    }, [rawImportedForms]);
+
+    // For the CED mini table: compute context ONLY among CED forms to hide unnecessary objects!
+    const cedForms = React.useMemo(() => {
+        const rawCed = rawImportedForms.filter(f => f.source === 'ced');
+        return processFormsContextually(rawCed);
+    }, [rawImportedForms]);
+
+    const otherImportedForms = importedForms.filter(f => f.source !== 'ced' && f.pkgType !== 'official');
+    const extraOfficialForms = importedForms.filter(f => f.source !== 'ced' && f.pkgType === 'official');
+    
+    // User created forms count
+    const userFormsCount = userWordForms && userWordForms[e.Index] ? userWordForms[e.Index].split('|').length : 0;
+    const legacyOfficialFormsCount = e.Other_Forms ? e.Other_Forms.split('|').length : 0;
+    const totalMoreForms = extraOfficialForms.length + otherImportedForms.length + userFormsCount + legacyOfficialFormsCount;
 
 
 
@@ -212,7 +250,6 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
         return null;
     }, [recorderTarget, e, importedForms, userWordForms]);
 
-    const hasForms = e.Other_Forms || (userWordForms && userWordForms[e.Index]) || importedForms.length > 0;
 
     return (
         <div className="fixed inset-0 z-[10000] bg-[#F9F9F7] dark:bg-slate-950 flex flex-col overflow-hidden animate-fade-in">
@@ -222,20 +259,15 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
                     <button onClick={onClose} className="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full">
                         <ArrowLeft size={24} className="text-slate-700 dark:text-slate-200" />
                     </button>
-                    {rootEntry && (
-                        <button
-                            onClick={() => onViewRoot(rootEntry.root_slug)}
-                            className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg text-slate-500 dark:text-slate-400 transition-colors"
-                        >
-                            <ArrowLeft size={14} />
-                            <span className="text-xs font-bold uppercase tracking-wider truncate max-w-[120px]">
-                                {rootEntry.root_h || rootEntry.root_g || 'Root'}
-                            </span>
-                        </button>
-                    )}
                 </div>
-                <div className="flex gap-2">
-                    <button onClick={onShowSettings} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                <div className="flex items-center gap-1">
+                    <button onClick={() => onToggleFavorite(e.Index)} className="p-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-full transition-colors" title="Toggle Favorite">
+                        <Star size={20} className={isFav ? "fill-amber-400 text-amber-400" : "text-slate-400 dark:text-slate-500"} />
+                    </button>
+                    <button onClick={() => setShowListSheet(true)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400 dark:text-slate-500" title="Add to List">
+                        <ListPlus size={20} />
+                    </button>
+                    <button onClick={onShowSettings} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors ml-1">
                         <Menu size={24} strokeWidth={1.5} />
                     </button>
                 </div>
@@ -257,14 +289,6 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
                             <div className="flex items-baseline gap-3 flex-wrap">
                                 <h2 className="font-noto-serif text-2xl text-amber-800 dark:text-amber-400 font-medium">{e.Entry}</h2>
                                 {e.Entry_Tone && <span className="font-sans text-base text-slate-400 dark:text-slate-500 italic">{e.Entry_Tone}</span>}
-                                {hasForms && (
-                                    <button 
-                                        onClick={() => setShowWordFormsModal(true)} 
-                                        className="text-[10px] font-bold text-amber-600/80 dark:text-amber-500/80 hover:bg-amber-100 dark:hover:bg-amber-900/40 uppercase tracking-widest bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full border border-amber-200/50 dark:border-amber-900/50 transition-colors"
-                                    >
-                                        Forms
-                                    </button>
-                                )}
                             </div>
                         </div>
                         <div className="shrink-0 pt-1">
@@ -273,21 +297,23 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
                     </div>
                 </div>
 
-                <div className="space-y-8">
+                <div className="space-y-4">
                     {/* AUDIO ROW */}
                     <div className="flex items-center gap-2 flex-wrap min-h-[40px]">
-                        <AudioPlayer
-                            src={e.Entry_Audio ? `https://cherokeenationdictionary.net/Audio/${e.Entry_Audio}` : undefined}
-                            label="Official"
-                            icon={Mic}
-                            variant="gray"
-                            customColor={pkg?.type !== 'official' ? pkg?.color : undefined}
-                            showNoAudioMessage={!((userAudioMeta && userAudioMeta[e.Index] && userAudioMeta[e.Index].length > 0) || e.Entry_Audio)}
-                        />
+                        {(!userAudioMeta?.[e.Index]?.some(a => !a.id.includes(`${e.Index}.`)) || (e.audio && (pkg?.type === 'official' || e.audio.startsWith('Word_') || e.audio.match(/^\d{4}\./) || e.audio.endsWith('.m4a')))) && (
+                            <AudioPlayer
+                                src={e.audio && (pkg?.type === 'official' || e.audio.startsWith('Word_') || e.audio.match(/^\d{4}\./) || e.audio.endsWith('.m4a')) ? `https://cherokeenationdictionary.net/Audio/word/${e.audio}` : undefined}
+                                label="Official"
+                                icon={Mic}
+                                variant="gray"
+                                customColor={pkg?.type !== 'official' ? pkg?.color : undefined}
+                            />
+                        )}
                         {/* USER AUDIO LIST */}
                         {userAudioMeta && userAudioMeta[e.Index] && userAudioMeta[e.Index]
                             .filter(audio => {
-                                if (audio.id.includes(`-${e.Index}.`)) return false;
+                                if (audio.packageId === 'official-cherokee-data' || audio.id.endsWith('.m4a')) return false;
+                                if (audio.id.includes(`${e.Index}.`)) return false;
                                 if (!audio.packageId) {
                                     const userPkg = packages.find(p => p.id === 'user');
                                     return userPkg ? userPkg.status === 'active' : true;
@@ -330,32 +356,70 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
                         </button>
                     </div>
 
-                    {/* TAGS & ACTIONS (Subtle) */}
-                    <div className="flex flex-wrap items-center gap-1.5 min-h-[30px]">
-                        <div className="flex gap-0.5 mr-1">
-                            <button onClick={() => onToggleFavorite(e.Index)} className="p-1.5 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-full transition-colors">
-                                <Star size={18} className={isFav ? "fill-amber-400 text-amber-400" : "text-slate-300 dark:text-slate-600"} />
-                            </button>
-                            <button onClick={() => setShowListSheet(true)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-300 dark:text-slate-600">
-                                <ListPlus size={18} />
-                            </button>
-                        </div>
-
-                        {isFav && <span className="bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-500 px-2 py-0.5 rounded border border-amber-100 dark:border-amber-900/30 font-bold text-[10px] uppercase tracking-wider flex items-center gap-1">Favorite</span>}
-                        {Object.keys(customLists).filter(k => {
-                            const list = customLists[k];
-                            if (Array.isArray(list)) return list.includes(e.Index);
-                            return list?.items?.includes(e.Index);
-                        }).map(id => {
-                            const list = customLists[id];
-                            const name = Array.isArray(list) ? id : list.name;
-                            return (
-                                <span key={id} className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 font-bold text-[10px] uppercase tracking-wider flex items-center gap-1">
-                                    {name}
+                    {/* ROOT & CLASS INFO */}
+                    {rootEntry && (
+                        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-slate-500 dark:text-slate-400 font-medium pb-2">
+                            <div className="flex items-center gap-2">
+                                <span className="uppercase text-[10px] tracking-wider text-slate-400">Root:</span>
+                                <button
+                                    onClick={() => onViewRoot(rootEntry.root_slug)}
+                                    className="hover:text-amber-600 dark:hover:text-amber-400 transition-colors font-noto-cherokee text-base"
+                                >
+                                    -{rootEntry.root_h || rootEntry.root_g || 'Root'}-
+                                </button>
+                            </div>
+                            {rootEntry.class_name && (
+                                <div className="flex items-center gap-2">
+                                    <span className="uppercase text-[10px] tracking-wider text-slate-400">Class:</span>
+                                    <button
+                                        onClick={() => onViewClass(rootEntry.class_name)}
+                                        className="hover:text-amber-600 dark:hover:text-amber-400 transition-colors font-mono"
+                                    >
+                                        [{rootEntry.class_name}]
+                                    </button>
+                                </div>
+                            )}
+                            {rootEntry.config?.pron?.set_type && (
+                                <span className="font-bold text-[11px] bg-slate-100 dark:bg-slate-800/60 px-2 py-0.5 rounded text-slate-600 dark:text-slate-300 border border-slate-200/30 dark:border-slate-700/30 tracking-wide">
+                                    Set {rootEntry.config.pron.set_type.toUpperCase()}
                                 </span>
-                            );
-                        })}
-                    </div>
+                            )}
+                            {rootEntry.config?.pre?.distributive && (
+                                <span className="font-mono font-bold text-[11px] text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/30 px-2 py-0.5 rounded border border-sky-100/30 dark:border-sky-900/30" title="Distributive prefix active">
+                                    de-/d-
+                                </span>
+                            )}
+                            {rootEntry.config?.pre?.translocutive && (
+                                <span className="font-mono font-bold text-[11px] text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded border border-emerald-100/30 dark:border-emerald-900/30" title="Translocutive prefix active">
+                                    wi-/w-
+                                </span>
+                            )}
+                        </div>
+                    )}
+
+                    {/* TAGS & ACTIONS (Subtle) */}
+                    {(isFav || Object.keys(customLists).some(k => {
+                        const list = customLists[k];
+                        if (Array.isArray(list)) return list.includes(e.Index);
+                        return list?.items?.includes(e.Index);
+                    })) && (
+                        <div className="flex flex-wrap items-center gap-1.5 min-h-[30px]">
+                            {isFav && <span className="bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-500 px-2 py-0.5 rounded border border-amber-100 dark:border-amber-900/30 font-bold text-[10px] uppercase tracking-wider flex items-center gap-1">Favorite</span>}
+                            {Object.keys(customLists).filter(k => {
+                                const list = customLists[k];
+                                if (Array.isArray(list)) return list.includes(e.Index);
+                                return list?.items?.includes(e.Index);
+                            }).map(id => {
+                                const list = customLists[id];
+                                const name = Array.isArray(list) ? id : list.name;
+                                return (
+                                    <span key={id} className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 font-bold text-[10px] uppercase tracking-wider flex items-center gap-1">
+                                        {name}
+                                    </span>
+                                );
+                            })}
+                        </div>
+                    )}
 
                     <div className="pt-2">
                         <p className="font-noto-serif text-xl text-slate-800 dark:text-slate-100 leading-snug">
@@ -363,14 +427,6 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
                             {e.PoS && (
                                 <span className="text-slate-400 dark:text-slate-500 italic ml-2 text-lg font-normal">
                                     ({e.PoS})
-                                    {rootEntry && rootEntry.class_name && (
-                                        <button
-                                            onClick={() => onViewClass(rootEntry.class_name)}
-                                            className="ml-2 px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-xs font-mono text-slate-500 dark:text-slate-400 transition-colors not-italic align-middle"
-                                        >
-                                            {rootEntry.class_name}
-                                        </button>
-                                    )}
                                 </span>
                             )}
                         </p>
@@ -378,26 +434,50 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
                     </div>
 
                     {/* Word Forms List (New) */}
-                    {importedForms.length > 0 && (
+                    {(cedForms.length > 0 || otherImportedForms.length > 0 || userFormsCount > 0 || legacyOfficialFormsCount > 0) && (
                         <div className="pt-4">
                             <h3 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-3">Conjugations / Forms</h3>
-                            <div className="flex flex-wrap gap-2">
-                                {importedForms.slice(0, 10).map((f, i) => (
-                                    <div key={i} className="px-3 py-2 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-100 dark:border-slate-800 flex flex-col items-start min-w-[120px]">
-                                        <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">{getFriendlyLabel(f.form_name)}</div>
-                                        <div className="font-noto-cherokee text-lg text-slate-800 dark:text-slate-200">{f.syllabary}</div>
-                                        <div className="text-xs text-amber-700 dark:text-amber-400 italic font-medium">{f.translit}</div>
-                                    </div>
-                                ))}
-                                {importedForms.length > 10 && (
-                                    <button 
-                                        onClick={() => setShowWordFormsModal(true)}
-                                        className="px-4 py-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-900/50 rounded-lg text-amber-700 dark:text-amber-500 text-xs font-bold hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors"
-                                    >
-                                        + {importedForms.length - 10} More
-                                    </button>
+                            
+                            {cedForms.length > 0 && (
+                                <div className="grid grid-cols-[auto_auto_1fr] gap-x-6 gap-y-2 mb-3 bg-slate-50 dark:bg-slate-900 p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 items-center">
+                                    {cedForms.map(f => (
+                                        <React.Fragment key={f.form_name}>
+                                             <div className="text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider pr-2">
+                                                 {f.displayLabel}:
+                                             </div>
+                                             <div className="font-noto-cherokee text-base text-slate-800 dark:text-slate-200 font-medium">
+                                                 {f.syllabary}
+                                             </div>
+                                             <div className="text-[15px] text-amber-800 dark:text-amber-400 italic font-semibold">
+                                                 {f.translit}
+                                             </div>
+                                        </React.Fragment>
+                                    ))}
+                                </div>
+                            )}
+
+                            <button 
+                                onClick={() => setShowWordFormsModal(true)}
+                                className="px-4 py-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-900/50 rounded-lg text-amber-700 dark:text-amber-500 text-xs font-bold hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors flex items-center gap-2 flex-wrap mt-2"
+                            >
+                                <span>{totalMoreForms > 0 ? `+ View ${totalMoreForms} More` : 'View all forms'}</span>
+                                {userFormsCount > 0 && (
+                                    <span className="bg-amber-400 text-amber-900 px-1.5 py-0.5 rounded text-[10px]">{userFormsCount} Custom</span>
                                 )}
-                            </div>
+                                    {/* Aggregate remaining imported forms by color */}
+                                    {Object.values(
+                                        otherImportedForms.reduce((acc: any, f) => {
+                                            const c = f.color || 'slate';
+                                            if (!acc[c]) acc[c] = { count: 0, color: c };
+                                            acc[c].count++;
+                                            return acc;
+                                        }, {})
+                                    ).map((pkg: any, idx) => (
+                                        <span key={idx} style={{ backgroundColor: getHexColor(pkg.color) }} className="px-1.5 py-0.5 rounded text-[10px] text-white font-medium">
+                                            {pkg.count} Imported
+                                        </span>
+                                    ))}
+                                </button>
                         </div>
                     )}
 
@@ -553,6 +633,7 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
                 getPackageColor={getPackageColor}
                 packages={packages}
                 importedData={importedData}
+                onReadInContext={onReadInContext}
             />
         </div>
     );

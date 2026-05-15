@@ -3,7 +3,7 @@ import { ArrowLeft, ChevronUp, ChevronDown, Menu, BookOpen } from './Icons';
 import { useCorpus } from './CorpusContext';
 import { usePackageManager } from './PackageManagerContext';
 
-import { renderStyledText, getFriendlyLabel } from '../utils';
+import { renderStyledText, processFormsContextually } from '../utils';
 
 interface RootViewProps {
     slug: string;
@@ -27,18 +27,12 @@ const RootView: React.FC<RootViewProps> = ({ slug, onClose, onViewEntry, onViewC
         setExpandedEntries(prev => ({ ...prev, [entryId]: !prev[entryId] }));
     };
 
-    const getEnding = (formStr: string) => {
-        if (!formStr) return '';
-        const parts = formStr.split('--');
-        const rest = parts[1] || '';
-        const restParts = rest.split('-');
-        return restParts.length > 1 ? restParts[restParts.length - 1] : '';
-    };
+
 
     return (
-        <div className="fixed inset-0 z-[10001] bg-[#F4EFE6] dark:bg-slate-950 flex flex-col overflow-hidden animate-fade-in font-serif">
+        <div className="fixed inset-0 z-[10001] bg-[#F9F9F7] dark:bg-slate-950 flex flex-col overflow-hidden animate-fade-in font-sans">
             {/* Standard Header */}
-            <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex items-center justify-between shadow-sm shrink-0 h-[60px] font-sans">
+            <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex items-center justify-between shadow-sm shrink-0 h-[60px]">
                 <div className="flex items-center gap-2">
                     <button onClick={onClose} className="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full flex items-center gap-2 text-slate-700 dark:text-slate-200 transition-colors">
                         <ArrowLeft size={24} />
@@ -58,15 +52,15 @@ const RootView: React.FC<RootViewProps> = ({ slug, onClose, onViewEntry, onViewC
             <div className="flex-1 overflow-y-auto px-6 pb-24">
                 {/* Root Display */}
                 <div className="mb-8 relative pl-6 mt-6">
-                    <div className="absolute left-0 top-1 bottom-1 w-1 bg-[#8C7355] rounded-full"></div>
+                    <div className="absolute left-0 top-1 bottom-1 w-1 bg-amber-500 dark:bg-amber-400 rounded-full"></div>
                     <div className="grid grid-cols-2 gap-6">
                         <div>
-                            <div className="text-[10px] font-bold text-[#B5A994] uppercase tracking-[0.2em] mb-1">H-Grade Root</div>
-                            <div className="text-2xl font-bold text-[#4A3F35] font-noto-cherokee">{rootInfo.root_h || '-'}</div>
+                            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-1">H-Grade Root</div>
+                            <div className="text-2xl font-bold text-slate-800 dark:text-slate-200 font-noto-cherokee">-{rootInfo.root_h || '-'}-</div>
                         </div>
                         <div>
-                            <div className="text-[10px] font-bold text-[#B5A994] uppercase tracking-[0.2em] mb-1">Glottal Root</div>
-                            <div className="text-2xl font-bold text-[#4A3F35] font-noto-cherokee">{rootInfo.root_g || '-'}</div>
+                            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-1">Glottal Root</div>
+                            <div className="text-2xl font-bold text-slate-800 dark:text-slate-200 font-noto-cherokee">-{rootInfo.root_g || '-'}-</div>
                         </div>
                     </div>
                 </div>
@@ -78,40 +72,23 @@ const RootView: React.FC<RootViewProps> = ({ slug, onClose, onViewEntry, onViewC
                         
                         const isExpanded = expandedEntries[r.entry_id];
                         
-                        const conjugations: any[] = [];
-                        
-                        // 1. Official/Imported Forms
-                        const importedForms: any[] = [];
+                        // 1. Get CED Forms from Word Forms
+                        const list: any[] = [];
                         packages.forEach(p => {
                             if (p.status === 'active' && importedData[p.id]?.word_forms) {
                                 const forms = importedData[p.id].word_forms!.filter((f: any) => f.word_index === entry.id || f.word_index === entry.Index);
-                                forms.forEach(f => importedForms.push(f));
+                                forms.forEach(f => list.push({ ...f, color: p.color, pkgName: p.name, pkgType: p.type }));
                             }
                         });
+                        const sortedRawList = list.sort((a, b) => (a.order || 0) - (b.order || 0));
+                        
+                        // Compute context ONLY among CED forms for the mini table view
+                        const rawCedList = sortedRawList.filter(f => f.source === 'ced');
+                        let finalCedForms = processFormsContextually(rawCedList);
 
-                        importedForms.forEach((f: any) => {
-                            let displayLabel = getFriendlyLabel(f.form_name);
-                            let badge = "";
-                            
-                            if (f.form_name === '3s|3s|present') {
-                                badge = "PRES: -" + (r.segmented_forms ? getEnding(r.segmented_forms.present) : "");
-                            } else if (f.form_name === '3s|3s|completive past') {
-                                badge = "PERF: -" + (r.segmented_forms ? getEnding(r.segmented_forms.perfective) : "");
-                            } else if (f.form_name === '3s|3s|habitual') {
-                                badge = "HAB: -" + (r.segmented_forms ? getEnding(r.segmented_forms.imperfective) : "");
-                            }
-
-                            conjugations.push({
-                                label: displayLabel,
-                                badge: badge,
-                                syllabary: f.syllabary,
-                                translit: f.translit,
-                                tone: f.tone
-                            });
-                        });
-
-                        // 2. Legacy/Custom Forms fallback
-                        if (conjugations.length === 0 && entry.Other_Forms) {
+                        // 2. Fallback to parsed legacy forms if empty
+                        if (finalCedForms.length === 0 && entry.Other_Forms) {
+                            const fallback: any[] = [];
                             entry.Other_Forms.split('|').forEach((form: string) => {
                                 const parts = form.split(':');
                                 if (parts.length >= 2) {
@@ -119,80 +96,77 @@ const RootView: React.FC<RootViewProps> = ({ slug, onClose, onViewEntry, onViewC
                                     const values = parts[1].split('^');
                                     
                                     let displayLabel = label;
-                                    let badge = "";
-                                    
                                     if (label.includes('3rd person singular present habitual')) {
-                                        displayLabel = "3rd person present";
-                                        badge = "PRES: -" + (r.segmented_forms ? getEnding(r.segmented_forms.present) : "");
+                                        displayLabel = "3rd person singular present";
                                     } else if (label.includes('1st person singular with animate object')) {
-                                        displayLabel = "1st person present (animate object)";
-                                        badge = "PRES: -" + (r.segmented_forms ? getEnding(r.segmented_forms.present) : "");
+                                        displayLabel = "1st person singular present (animate)";
                                     } else if (label.includes('1st person singular with inanimate object')) {
-                                        displayLabel = "1st person present (inanimate object)";
-                                        badge = "PRES: -" + (r.segmented_forms ? getEnding(r.segmented_forms.present) : "");
+                                        displayLabel = "1st person singular present (inanimate)";
                                     } else if (label.includes('non-progressive remote past')) {
-                                        displayLabel = "3rd person completive past";
-                                        badge = "PERF: -" + (r.segmented_forms ? getEnding(r.segmented_forms.perfective) : "");
+                                        displayLabel = "3rd person singular completive past";
+                                    } else if (label.includes('habitual past')) {
+                                        displayLabel = "3rd person singular habitual past";
                                     }
-
-                                    conjugations.push({
-                                        label: displayLabel,
-                                        badge: badge,
+                                    
+                                    fallback.push({
+                                        displayLabel: displayLabel,
                                         syllabary: values[1],
-                                        translit: values[0],
-                                        tone: values[2]
+                                        translit: values[0]
                                     });
                                 }
                             });
+                            finalCedForms = fallback;
                         }
 
                         return (
-                            <div key={r.entry_id} className="border-t border-[#E8E1D5] pt-6">
+                            <div key={r.entry_id} className="border-t border-slate-200 dark:border-slate-800 pt-6">
                                 <div className="mb-2 flex justify-between items-start gap-4">
                                     <div 
                                         className="flex-1 cursor-pointer group/item"
                                         onClick={() => onViewEntry(entry)}
                                     >
-                                        <h2 className="text-lg font-bold text-[#4A3F35] leading-snug mb-0.5 group-hover/item:text-amber-800 transition-colors">{renderStyledText(entry.Definition || '')}</h2>
-                                        <div className="text-sm text-[#8C7355] italic font-medium">{entry.Entry}</div>
+                                        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200 leading-snug mb-0.5 group-hover/item:text-amber-600 dark:group-hover/item:text-amber-400 transition-colors">{renderStyledText(entry.Definition || '')}</h2>
+                                        <div className="text-sm text-slate-500 dark:text-slate-400 italic font-medium">{entry.Entry}</div>
                                     </div>
                                     <button 
                                         onClick={() => onViewEntry(entry)}
-                                        className="text-[11px] font-bold text-sky-600 dark:text-sky-400 hover:underline flex items-center gap-1 mt-1 shrink-0 font-sans uppercase tracking-wider"
+                                        className="text-[11px] font-bold text-sky-600 dark:text-sky-400 hover:underline flex items-center gap-1 mt-1 shrink-0 uppercase tracking-wider"
                                     >
                                         <BookOpen size={12} />
                                         Full Entry
                                     </button>
                                 </div>
 
-                                <div className="flex items-center gap-4 text-[9px] font-bold text-[#B5A994] uppercase tracking-[0.2em] mb-6">
-                                    <button onClick={() => onViewClass(r.class_name)} className="hover:text-[#8C7355] transition-colors">cl. [{r.class_name}]</button>
+                                <div className="flex items-center gap-4 text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-6">
+                                    <button onClick={() => onViewClass(r.class_name)} className="hover:text-amber-600 dark:hover:text-amber-400 transition-colors">cl. [{r.class_name}]</button>
                                     <span>Set {r.config?.pron?.set_type?.toUpperCase() || 'A'}</span>
-                                    <button onClick={() => toggleExpand(r.entry_id)} className="ml-auto flex items-center gap-1 hover:text-[#8C7355] transition-colors">
+                                    <button onClick={() => toggleExpand(r.entry_id)} className="ml-auto flex items-center gap-1 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
                                         {isExpanded ? 'Hide' : 'Show'} {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                                     </button>
                                 </div>
 
                                 {isExpanded && (
-                                    <div className="space-y-6 animate-fade-in">
-                                        <div className="text-[9px] font-bold text-[#B5A994] uppercase tracking-[0.2em]">CED Conjugations</div>
-                                        
-                                        <div className="space-y-4">
-                                            {conjugations.map((conj, i) => (
-                                                <div key={i} className="bg-[#EBE5D9] dark:bg-slate-900/40 p-4 rounded-xl relative">
-                                                    <div className="flex items-center gap-3 mb-2">
-                                                        <div className="text-[11px] font-medium text-[#8C7355]">{conj.label}</div>
-                                                        {conj.badge && (
-                                                            <div className="bg-[#DED5C5] dark:bg-slate-800 px-1.5 py-0.5 rounded text-[8px] font-mono text-[#4A3F35] uppercase tracking-wider font-bold">
-                                                                {conj.badge}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <div className="font-noto-cherokee text-xl text-[#4A3F35] mb-0.5">{conj.syllabary}</div>
-                                                    <div className="text-sm text-[#8C7355] italic font-medium">{conj.translit}</div>
-                                                </div>
-                                            ))}
-                                        </div>
+                                    <div className="animate-fade-in">
+                                        <div className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-3">CED Conjugations</div>
+                                        {finalCedForms.length > 0 ? (
+                                            <div className="grid grid-cols-[auto_auto_1fr] gap-x-6 gap-y-2.5 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800 items-center shadow-sm">
+                                                {finalCedForms.map((f, i) => (
+                                                    <React.Fragment key={i}>
+                                                         <div className="text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider pr-2">
+                                                             {f.displayLabel}:
+                                                         </div>
+                                                         <div className="font-noto-cherokee text-base text-slate-800 dark:text-slate-200 font-medium">
+                                                             {f.syllabary}
+                                                         </div>
+                                                         <div className="text-[15px] text-amber-800 dark:text-amber-400 italic font-semibold">
+                                                             {f.translit}
+                                                         </div>
+                                                    </React.Fragment>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="text-xs text-slate-400 italic">No CED conjugations available</div>
+                                        )}
                                     </div>
                                 )}
                             </div>

@@ -13,7 +13,10 @@ export interface Widget {
 
 export const BUILT_IN_WIDGETS: Widget[] = [
     { name: 'Syllabary Learner', content: '', isBuiltIn: true, path: '/data/widgets/Syllabary Learner.html' },
-    { name: 'Transliteration Converter', content: '', isBuiltIn: true, path: '/data/widgets/Transliteration Converter.html' }
+    { name: 'Transliteration Converter', content: '', isBuiltIn: true, path: '/data/widgets/Transliteration Converter.html' },
+    { name: 'CED Explorer', content: '', isBuiltIn: true, path: '/data/widgets/ced explorer.html' },
+    { name: 'Pronoun Game', content: '', isBuiltIn: true, path: '/data/widgets/pronoun_game.html' },
+    { name: 'Grammar Guide', content: '', isBuiltIn: true, path: 'https://www.cherokeedictionary.net/grammar' }
 ];
 
 export const initWidgetDB = async () => {

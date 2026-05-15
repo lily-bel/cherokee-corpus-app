@@ -66,8 +66,8 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
             // If it's just individual sentences and only one "chapter", go straight to reader
             onNavigateToReader(story.bookId, chapters[0].id);
         } else if (chapters.length === 1 && story.isSequential) {
-             // Even if sequential, if only one chapter, skip chapter view
-             onNavigateToReader(story.bookId, chapters[0].id);
+            // Even if sequential, if only one chapter, skip chapter view
+            onNavigateToReader(story.bookId, chapters[0].id);
         } else {
             setSelectedStory(story);
             setView('chapters');
@@ -99,7 +99,7 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
         if (source === 'user' || source.startsWith('nb_')) {
             return '#f59e0b'; // Gold
         }
-        
+
         const color = getPackageColor(source);
         if (!color) return '#64748b'; // Default Grey
         if (color.startsWith('#')) return color;
@@ -176,11 +176,10 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                             <button
                                 key={story.id}
                                 onClick={() => handleStoryClick(story)}
-                                className={`w-full rounded-xl border p-4 text-left transition-colors flex items-center justify-between group ${
-                                    story.isSequential 
-                                    ? "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700" 
-                                    : "bg-slate-50 dark:bg-slate-900/40 border-dashed border-slate-300 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-900"
-                                }`}
+                                className={`w-full rounded-xl border p-4 text-left transition-colors flex items-center justify-between group ${story.isSequential
+                                        ? "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700"
+                                        : "bg-slate-50 dark:bg-slate-900/40 border-dashed border-slate-300 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-900"
+                                    }`}
                             >
                                 <div className="flex items-center gap-4">
                                     <div className={`p-2 rounded-lg ${story.isSequential ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600" : "bg-slate-200 dark:bg-slate-800 text-slate-500"}`}>
@@ -207,7 +206,7 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                                     onClick={() => onOpenImporter(selectedBook.source)}
                                     className="w-full py-3 border-2 border-dashed border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-bold rounded-xl hover:border-amber-400 hover:text-amber-600 dark:hover:border-amber-700 dark:hover:text-amber-500 transition-colors flex items-center justify-center gap-2"
                                 >
-                                    <Plus size={20} /> 
+                                    <Plus size={20} />
                                     <span>Create New Story</span>
                                 </button>
                             </div>
@@ -349,7 +348,7 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                                 onClick={() => setShowNewBookModal(true)}
                                 className="w-full py-3 border-2 border-dashed border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-bold rounded-xl hover:border-amber-400 hover:text-amber-600 dark:hover:border-amber-700 dark:hover:text-amber-500 transition-colors flex items-center justify-center gap-2"
                             >
-                                <Plus size={20} /> 
+                                <Plus size={20} />
                                 <span>Create New Book</span>
                             </button>
                         </div>
@@ -387,7 +386,7 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                                 autoFocus
                                 value={newBookName}
                                 onChange={e => setNewBookName(e.target.value)}
-                                placeholder="e.g. Traditional Tales"
+                                placeholder="Title"
                                 className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
                                 onKeyDown={e => e.key === 'Enter' && handleCreateBook()}
                             />
@@ -414,15 +413,14 @@ const BookCard: React.FC<{
     onClick: () => void;
 }> = ({ book, title, color, onClick }) => {
     const Icon = book.isCollection ? Folder : BookOpen;
-    
+
     return (
         <button
             onClick={onClick}
-            className={`w-full rounded-xl border p-4 text-left transition-colors flex items-center gap-4 group ${
-                book.isCollection 
-                ? "bg-slate-50/50 dark:bg-slate-900/30 border-dashed border-slate-200 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-900" 
-                : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700"
-            }`}
+            className={`w-full rounded-xl border p-4 text-left transition-colors flex items-center gap-4 group ${book.isCollection
+                    ? "bg-slate-50/50 dark:bg-slate-900/30 border-dashed border-slate-200 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-900"
+                    : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700"
+                }`}
         >
             {/* Book Icon/Badge */}
             <div

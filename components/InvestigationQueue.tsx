@@ -71,7 +71,10 @@ export const InvestigationQueue: React.FC<InvestigationQueueProps> = ({
             notes,
             breakdown_cherokee: breakdownCherokee,
             breakdown_english: breakdownEnglish,
-            source: 'user'
+            source: 'user',
+            gloss_syllabary: showLinker.targetWord.syllabary,
+            gloss_phonetic: showLinker.targetWord.translit,
+            gloss_english: entry.definition || entry.Definition
         });
 
         // Remove from investigation queue

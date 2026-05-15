@@ -46,6 +46,14 @@ const WidgetsTab = () => {
         try {
             const all = await getAllWidgets();
             setWidgets(all);
+
+            // Initial sync from URL parameter
+            const params = new URLSearchParams(window.location.search);
+            const widgetName = params.get('widget');
+            if (widgetName) {
+                const found = all.find(w => w.name === widgetName);
+                if (found) setSelectedWidget(found);
+            }
         } catch (e) {
             console.error("Failed to load widgets", e);
         } finally {
@@ -56,6 +64,44 @@ const WidgetsTab = () => {
     useEffect(() => {
         loadWidgets();
     }, []);
+
+    // Listen for browser back/forward navigation
+    useEffect(() => {
+        const handleUrlChange = () => {
+            const params = new URLSearchParams(window.location.search);
+            const widgetName = params.get('widget');
+            if (widgetName) {
+                setWidgets(prev => {
+                    const found = prev.find(w => w.name === widgetName);
+                    if (found) setSelectedWidget(found);
+                    return prev;
+                });
+            } else {
+                setSelectedWidget(null);
+            }
+        };
+
+        window.addEventListener('popstate', handleUrlChange);
+        return () => window.removeEventListener('popstate', handleUrlChange);
+    }, []);
+
+    const handleSelectWidget = (w: Widget) => {
+        const url = new URL(window.location.href);
+        url.searchParams.set('widget', w.name);
+        window.history.pushState({}, '', url.toString());
+        window.dispatchEvent(new PopStateEvent('popstate'));
+        setSelectedWidget(w);
+    };
+
+    const handleCloseWidget = () => {
+        const url = new URL(window.location.href);
+        if (url.searchParams.has('widget')) {
+            url.searchParams.delete('widget');
+            window.history.pushState({}, '', url.toString());
+            window.dispatchEvent(new PopStateEvent('popstate'));
+        }
+        setSelectedWidget(null);
+    };
 
     const handleImport = async () => {
         if (!importFile) return;
@@ -83,7 +129,7 @@ const WidgetsTab = () => {
     };
 
     if (selectedWidget) {
-        return <WidgetViewer widget={selectedWidget} onClose={() => setSelectedWidget(null)} />;
+        return <WidgetViewer widget={selectedWidget} onClose={handleCloseWidget} />;
     }
 
     return (
@@ -108,7 +154,7 @@ const WidgetsTab = () => {
                             return (
                                 <div
                                     key={w.name}
-                                    onClick={() => setSelectedWidget(w)}
+                                    onClick={() => handleSelectWidget(w)}
                                     className={`
                                         rounded-xl border border-slate-200 dark:border-slate-800 p-3 flex items-center gap-4 shadow-sm hover:shadow-md transition-all active:scale-[0.99] cursor-pointer h-16 relative group bg-white dark:bg-slate-900
                                     `}

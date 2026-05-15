@@ -700,6 +700,18 @@ const ListsTab: React.FC<ListsTabProps> = ({
             pointerId: e.pointerId
         };
 
+        const isDragHandle = !!(e.target as HTMLElement).closest('.drag-handle');
+
+        if (isDragHandle) {
+            const { id, startY, target, pointerId } = pendingDragRef.current;
+            dragItemRef.current = row;
+            lastPointerEvent.current = { clientX: e.clientX, clientY: e.clientY };
+            startDrag(id, row, startY);
+            if (navigator.vibrate) navigator.vibrate(50);
+            try { target.setPointerCapture(pointerId); } catch (err) { console.warn("Failed to capture pointer", err); }
+            return;
+        }
+
         // Start Timer
         longPressTimer.current = setTimeout(() => {
             if (pendingDragRef.current) {
@@ -1115,7 +1127,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                 <div className="flex items-center gap-3 pointer-events-none">
                     {!isHidden && (
                         <div
-                            className="text-slate-300 dark:text-slate-700 shrink-0"
+                            className="text-slate-300 dark:text-slate-700 shrink-0 drag-handle pointer-events-auto cursor-grab active:cursor-grabbing"
                         >
                             <GripVertical size={18} />
                         </div>
