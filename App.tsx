@@ -1993,6 +1993,7 @@ function App() {
                     onViewClass={(cls) => handleViewClass(cls)}
                     onViewEntry={(entry) => {
                         setSelectedClass(null);
+                        setSelectedRoot(null);
                         setSelectedEntry(entry);
                         updateUrl(entry);
                     }}
