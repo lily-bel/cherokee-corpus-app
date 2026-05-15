@@ -289,9 +289,8 @@ export const usePackageExport = () => {
 
             zip.file('metadata.json', JSON.stringify(meta, null, 2));
 
-            // 4. README
             try {
-                const res = await fetch('/src/data/DEFAULT_README.txt');
+                const res = await fetch('/data/DEFAULT_README.txt');
                 if (res.ok) {
                     const text = await res.text();
                     zip.file('README.txt', text);
