@@ -4,18 +4,20 @@ import { openDB } from 'idb';
 const DB_NAME = 'cherokee_widgets_db';
 const STORE_NAME = 'widgets';
 
+const BASE_URL = import.meta.env.BASE_URL || '/';
+
 export interface Widget {
     name: string;
     content: string; // HTML content
     isBuiltIn: boolean;
-    path?: string; // For built-in widgets
+    path?: string; // For built-in or URL-based widgets
 }
 
 export const BUILT_IN_WIDGETS: Widget[] = [
-    //{ name: 'Syllabary Learner', content: '', isBuiltIn: true, path: '/data/widgets/Syllabary Learner.html' },
-    //{ name: 'Transliteration Converter', content: '', isBuiltIn: true, path: '/data/widgets/Transliteration Converter.html' },
-    //{ name: 'CED Explorer', content: '', isBuiltIn: true, path: '/data/widgets/ced explorer.html' },
-    //{ name: 'Pronoun Game', content: '', isBuiltIn: true, path: '/data/widgets/pronoun_game.html' },
+    { name: 'Syllabary Learner', content: '', isBuiltIn: true, path: `${BASE_URL}data/widgets/Syllabary Learner.html` },
+    { name: 'Transliteration Converter', content: '', isBuiltIn: true, path: `${BASE_URL}data/widgets/Transliteration Converter.html` },
+    { name: 'CED Explorer', content: '', isBuiltIn: true, path: `${BASE_URL}data/widgets/ced explorer.html` },
+    { name: 'Pronoun Game', content: '', isBuiltIn: true, path: `${BASE_URL}data/widgets/pronoun_game.html` },
     { name: 'Grammar Guide', content: '', isBuiltIn: true, path: 'https://www.cherokeedictionary.net/grammar' }
 ];
 
@@ -29,9 +31,9 @@ export const initWidgetDB = async () => {
     });
 };
 
-export const saveWidget = async (name: string, content: string) => {
+export const saveWidget = async (name: string, content: string, path?: string) => {
     const db = await initWidgetDB();
-    await db.put(STORE_NAME, { name, content, isBuiltIn: false });
+    await db.put(STORE_NAME, { name, content, path, isBuiltIn: false });
 };
 
 export const deleteWidget = async (name: string) => {

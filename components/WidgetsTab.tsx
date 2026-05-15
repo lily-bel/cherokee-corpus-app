@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Box, Menu } from './Icons';
+import { Plus, Trash2, Box, Menu, Globe, FileCode } from './Icons';
 import { getAllWidgets, saveWidget, deleteWidget, Widget } from '../widgetUtils';
 import WidgetViewer from './WidgetViewer';
 import { Modal } from './UI';
@@ -39,6 +39,9 @@ const WidgetsTab = ({ onShowSettings }: { onShowSettings?: () => void }) => {
     const [selectedWidget, setSelectedWidget] = useState<Widget | null>(null);
     const [showImportModal, setShowImportModal] = useState(false);
     const [importFile, setImportFile] = useState<File | null>(null);
+    const [importMode, setImportMode] = useState<'file' | 'url'>('file');
+    const [widgetName, setWidgetName] = useState('');
+    const [widgetUrl, setWidgetUrl] = useState('');
     const [loading, setLoading] = useState(true);
 
     const loadWidgets = async () => {
@@ -49,9 +52,9 @@ const WidgetsTab = ({ onShowSettings }: { onShowSettings?: () => void }) => {
 
             // Initial sync from URL parameter
             const params = new URLSearchParams(window.location.search);
-            const widgetName = params.get('widget');
-            if (widgetName) {
-                const found = all.find(w => w.name === widgetName);
+            const widgetNameParam = params.get('widget');
+            if (widgetNameParam) {
+                const found = all.find(w => w.name === widgetNameParam);
                 if (found) setSelectedWidget(found);
             }
         } catch (e) {
@@ -69,10 +72,10 @@ const WidgetsTab = ({ onShowSettings }: { onShowSettings?: () => void }) => {
     useEffect(() => {
         const handleUrlChange = () => {
             const params = new URLSearchParams(window.location.search);
-            const widgetName = params.get('widget');
-            if (widgetName) {
+            const widgetNameParam = params.get('widget');
+            if (widgetNameParam) {
                 setWidgets(prev => {
-                    const found = prev.find(w => w.name === widgetName);
+                    const found = prev.find(w => w.name === widgetNameParam);
                     if (found) setSelectedWidget(found);
                     return prev;
                 });
@@ -86,38 +89,57 @@ const WidgetsTab = ({ onShowSettings }: { onShowSettings?: () => void }) => {
     }, []);
 
     const handleSelectWidget = (w: Widget) => {
-        const url = new URL(window.location.href);
-        url.searchParams.set('widget', w.name);
-        window.history.pushState({}, '', url.toString());
+        const params = new URLSearchParams(window.location.search);
+        params.set('widget', w.name);
+        window.history.pushState({}, '', '?' + params.toString());
         window.dispatchEvent(new PopStateEvent('popstate'));
         setSelectedWidget(w);
     };
 
     const handleCloseWidget = () => {
-        const url = new URL(window.location.href);
-        if (url.searchParams.has('widget')) {
-            url.searchParams.delete('widget');
-            window.history.pushState({}, '', url.toString());
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('widget')) {
+            params.delete('widget');
+            const search = params.toString();
+            window.history.pushState({}, '', search ? '?' + search : window.location.pathname);
             window.dispatchEvent(new PopStateEvent('popstate'));
         }
         setSelectedWidget(null);
     };
 
     const handleImport = async () => {
-        if (!importFile) return;
-
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            if (e.target?.result) {
-                const content = e.target.result as string;
-                const name = importFile.name.replace('.html', '');
-                await saveWidget(name, content);
-                setShowImportModal(false);
-                setImportFile(null);
-                loadWidgets();
+        if (importMode === 'file') {
+            if (!importFile) return;
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                if (e.target?.result) {
+                    const content = e.target.result as string;
+                    const name = widgetName || importFile.name.replace('.html', '');
+                    await saveWidget(name, content);
+                    resetImport();
+                    loadWidgets();
+                }
+            };
+            reader.readAsText(importFile);
+        } else {
+            if (!widgetName || !widgetUrl) return;
+            // Ensure URL starts with http/https
+            let finalUrl = widgetUrl;
+            if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+                finalUrl = 'https://' + finalUrl;
             }
-        };
-        reader.readAsText(importFile);
+            await saveWidget(widgetName, '', finalUrl);
+            resetImport();
+            loadWidgets();
+        }
+    };
+
+    const resetImport = () => {
+        setShowImportModal(false);
+        setImportFile(null);
+        setWidgetName('');
+        setWidgetUrl('');
+        setImportMode('file');
     };
 
     const handleDelete = async (e: React.MouseEvent, name: string) => {
@@ -167,11 +189,11 @@ const WidgetsTab = ({ onShowSettings }: { onShowSettings?: () => void }) => {
                                     `}
                                 >
                                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${colorClass}`}>
-                                        <Box size={20} />
+                                        {w.path && (w.path.startsWith('http') && !w.path.includes(window.location.hostname)) ? <Globe size={20} /> : <Box size={20} />}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <h3 className="font-bold text-slate-800 dark:text-slate-200 truncate">{w.name}</h3>
-                                        <p className="text-[10px] uppercase tracking-wider text-slate-400">{w.isBuiltIn ? 'Built-in' : 'Custom'}</p>
+                                        <p className="text-[10px] uppercase tracking-wider text-slate-400">{w.isBuiltIn ? 'Built-in' : (w.path ? 'External' : 'Custom')}</p>
                                     </div>
                                     {!w.isBuiltIn && (
                                         <button
@@ -189,29 +211,71 @@ const WidgetsTab = ({ onShowSettings }: { onShowSettings?: () => void }) => {
             </div>
 
             {showImportModal && (
-                <Modal title="Import Widget" onClose={() => setShowImportModal(false)}>
+                <Modal title="Add Widget" onClose={resetImport}>
                     <div className="space-y-4">
-                        <p className="text-sm text-slate-600 dark:text-slate-300">
-                            Select an HTML file to import as a widget. It will be saved locally.
-                        </p>
-                        <input
-                            type="file"
-                            accept=".html"
-                            onChange={(e) => setImportFile(e.target.files?.[0] || null)}
-                            className="block w-full text-sm text-slate-500
-                                file:mr-4 file:py-2 file:px-4
-                                file:rounded-full file:border-0
-                                file:text-sm file:font-semibold
-                                file:bg-amber-50 file:text-amber-700
-                                hover:file:bg-amber-100
-                            "
-                        />
+                        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+                            <button
+                                onClick={() => setImportMode('file')}
+                                className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-bold rounded-md transition-all ${importMode === 'file' ? 'bg-white dark:bg-slate-700 shadow text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}`}
+                            >
+                                <FileCode size={16} /> File
+                            </button>
+                            <button
+                                onClick={() => setImportMode('url')}
+                                className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-bold rounded-md transition-all ${importMode === 'url' ? 'bg-white dark:bg-slate-700 shadow text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'}`}
+                            >
+                                <Globe size={16} /> URL
+                            </button>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Widget Name</label>
+                                <input
+                                    type="text"
+                                    placeholder={importMode === 'file' ? (importFile ? importFile.name.replace('.html', '') : "Enter name...") : "Enter name..."}
+                                    value={widgetName}
+                                    onChange={(e) => setWidgetName(e.target.value)}
+                                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 outline-none focus:border-amber-500 dark:text-white"
+                                />
+                            </div>
+
+                            {importMode === 'file' ? (
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">HTML File</label>
+                                    <input
+                                        type="file"
+                                        accept=".html"
+                                        onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                                        className="block w-full text-sm text-slate-500
+                                            file:mr-4 file:py-2 file:px-4
+                                            file:rounded-full file:border-0
+                                            file:text-sm file:font-semibold
+                                            file:bg-amber-50 file:text-amber-700
+                                            hover:file:bg-amber-100
+                                        "
+                                    />
+                                </div>
+                            ) : (
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">URL</label>
+                                    <input
+                                        type="text"
+                                        placeholder="https://example.com"
+                                        value={widgetUrl}
+                                        onChange={(e) => setWidgetUrl(e.target.value)}
+                                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 outline-none focus:border-amber-500 dark:text-white"
+                                    />
+                                </div>
+                            )}
+                        </div>
+
                         <button
                             onClick={handleImport}
-                            disabled={!importFile}
-                            className="w-full bg-amber-600 text-white font-bold py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={importMode === 'file' ? !importFile : (!widgetName || !widgetUrl)}
+                            className="w-full bg-amber-600 text-white font-bold py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed mt-2"
                         >
-                            Import Widget
+                            Add Widget
                         </button>
                     </div>
                 </Modal>
