@@ -4,7 +4,7 @@ import { usePackageManager, Package } from './PackageManagerContext';
 import { usePackageImport } from './usePackageHooks';
 import PackageExportModal from './PackageExportModal';
 import { ListData } from './ListsTab';
-import { Upload, Download, Trash2, ToggleLeft, ToggleRight, Box, Mic, StickyNote, ListIcon, SquaresPlus, Book, ListPlus } from './Icons';
+import { Upload, Download, Trash2, ToggleLeft, ToggleRight, Box, Mic, StickyNote, ListIcon, SquaresPlus, Book, ListPlus, Menu } from './Icons';
 import { Toast, SourceBadge } from './UI';
 import { PackageDetailView } from './PackageDetailView';
 
@@ -70,7 +70,7 @@ const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists, onNa
         <div className="flex flex-col h-full bg-[#F9F9F7] dark:bg-slate-950">
             <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0">
                 <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Packages</h1>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
                     <button
                         onClick={() => setShowExportModal(true)}
                         className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
@@ -85,6 +85,11 @@ const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists, onNa
                     >
                         <Download size={20} />
                     </button>
+                    {onShowSettings && (
+                        <button onClick={onShowSettings} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
+                            <Menu size={24} strokeWidth={1.5} />
+                        </button>
+                    )}
                     <input
                         type="file"
                         ref={fileInputRef}

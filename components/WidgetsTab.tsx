@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Box } from './Icons';
+import { Plus, Trash2, Box, Menu } from './Icons';
 import { getAllWidgets, saveWidget, deleteWidget, Widget } from '../widgetUtils';
 import WidgetViewer from './WidgetViewer';
 import { Modal } from './UI';
@@ -34,7 +34,7 @@ const getColor = (name: string) => {
     return COLORS[index];
 };
 
-const WidgetsTab = () => {
+const WidgetsTab = ({ onShowSettings }: { onShowSettings?: () => void }) => {
     const [widgets, setWidgets] = useState<Widget[]>([]);
     const [selectedWidget, setSelectedWidget] = useState<Widget | null>(null);
     const [showImportModal, setShowImportModal] = useState(false);
@@ -136,12 +136,19 @@ const WidgetsTab = () => {
         <div className="flex flex-col h-full bg-[#F9F9F7] dark:bg-slate-950">
             <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0">
                 <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Widgets</h1>
-                <button
-                    onClick={() => setShowImportModal(true)}
-                    className="bg-slate-900 dark:bg-slate-700 text-white p-2 rounded-full shadow-md hover:bg-slate-800 dark:hover:bg-slate-600 transition-colors"
-                >
-                    <Plus size={20} />
-                </button>
+                <div className="flex gap-2 items-center">
+                    <button
+                        onClick={() => setShowImportModal(true)}
+                        className="bg-slate-900 dark:bg-slate-700 text-white p-2 rounded-full shadow-md hover:bg-slate-800 dark:hover:bg-slate-600 transition-colors"
+                    >
+                        <Plus size={20} />
+                    </button>
+                    {onShowSettings && (
+                        <button onClick={onShowSettings} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
+                            <Menu size={24} strokeWidth={1.5} />
+                        </button>
+                    )}
+                </div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4">

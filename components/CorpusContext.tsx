@@ -41,6 +41,7 @@ export interface Sentence {
     story?: string;      // Book/story title for grouping
     chapter?: string;    // Chapter name within story
     line?: number;       // Line number for ordering within chapter
+    story_order?: number; // Canonical ordering of stories within a source
     author?: string;     // Author attribution
     speaker?: string;    // Speaker name for audio
     tone?: string;       // Tonal transcription

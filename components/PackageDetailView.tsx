@@ -4,7 +4,7 @@ import { useCorpus } from './CorpusContext';
 import {
     ArrowLeft, Folder, Mic, StickyNote,
     ChevronDown, ChevronRight, ListIcon, ListPlus, SquaresPlus,
-    Search, Pause, Volume2
+    Search, Pause, Volume2, Menu
 } from './Icons';
 import { SourceBadge } from './UI';
 import EntryCard from './EntryCard';
@@ -360,10 +360,15 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({
                 >
                     {(pkg.name.split(' ').length > 1 ? (pkg.name.split(' ')[0][0] + pkg.name.split(' ')[1][0]).toUpperCase() : pkg.name.substring(0, 2).toUpperCase())}
                 </div>
-                <div>
+                <div className="flex-1">
                     <h2 className="font-bold text-lg leading-tight">{pkg.name}</h2>
                     <p className="text-xs text-slate-500 dark:text-slate-400">Package Contents</p>
                 </div>
+                {onShowSettings && (
+                    <button onClick={onShowSettings} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
+                        <Menu size={24} strokeWidth={1.5} />
+                    </button>
+                )}
             </div>
 
             {/* Content Stats List */}

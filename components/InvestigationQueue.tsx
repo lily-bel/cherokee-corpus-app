@@ -2,18 +2,20 @@ import React, { useState, useMemo } from 'react';
 import { useCorpus, DictionaryEntry } from './CorpusContext';
 import { useReader, InvestigationItem } from './ReaderContext';
 import { LinkerModal } from './LinkerModal';
-import { ArrowLeft, Trash2, Search as SearchIcon, Clock, ChevronRight } from './Icons';
+import { ArrowLeft, Trash2, Search as SearchIcon, Clock, ChevronRight, Menu } from './Icons';
 
 interface InvestigationQueueProps {
     onBack: () => void;
     onNavigateToReader: (sentenceId: string) => void;
     customDictionaries?: Record<string, any>;
+    onShowSettings?: () => void;
 }
 
 export const InvestigationQueue: React.FC<InvestigationQueueProps> = ({
     onBack,
     onNavigateToReader,
-    customDictionaries
+    customDictionaries,
+    onShowSettings
 }) => {
     const { sentenceMap, glossMap, dictionaryMap, addUserGloss, personalWords } = useCorpus();
     const { investigationQueue, removeFromInvestigationQueue } = useReader();
@@ -112,7 +114,7 @@ export const InvestigationQueue: React.FC<InvestigationQueueProps> = ({
                     >
                         <ArrowLeft size={20} className="text-slate-600 dark:text-slate-400" />
                     </button>
-                    <div>
+                    <div className="flex-1">
                         <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">
                             Investigation Queue
                         </h1>
@@ -120,6 +122,11 @@ export const InvestigationQueue: React.FC<InvestigationQueueProps> = ({
                             {investigationQueue.length} word{investigationQueue.length !== 1 ? 's' : ''} to investigate
                         </p>
                     </div>
+                    {onShowSettings && (
+                        <button onClick={onShowSettings} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
+                            <Menu size={24} strokeWidth={1.5} />
+                        </button>
+                    )}
                 </div>
             </div>
 

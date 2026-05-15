@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useCorpus, CustomDictionary } from './CorpusContext';
-import { ArrowLeft, ArrowRight, Scissors, Merge as MergeIcon, Check, Type, BookOpen, ChevronDown } from './Icons';
+import { ArrowLeft, ArrowRight, Scissors, Merge as MergeIcon, Check, Type, BookOpen, ChevronDown, Menu } from './Icons';
 
 type Step = 'paste' | 'split' | 'metadata' | 'done';
 
@@ -17,13 +17,15 @@ interface TextImporterProps {
     onComplete: (storyId: string) => void;
     customDictionaries: Record<string, CustomDictionary>;
     preselectedDictionaryId?: string;
+    onShowSettings?: () => void;
 }
 
 export const TextImporter: React.FC<TextImporterProps> = ({
     onBack,
     onComplete,
     customDictionaries,
-    preselectedDictionaryId
+    preselectedDictionaryId,
+    onShowSettings
 }) => {
     const { addUserSentence, setCustomDictionaries } = useCorpus();
 
@@ -162,9 +164,16 @@ export const TextImporter: React.FC<TextImporterProps> = ({
                     >
                         <ArrowLeft size={20} className="text-slate-600 dark:text-slate-400" />
                     </button>
-                    <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                        Import Story
-                    </h1>
+                    <div className="flex-1">
+                        <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                            Import Story
+                        </h1>
+                    </div>
+                    {onShowSettings && (
+                        <button onClick={onShowSettings} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
+                            <Menu size={24} strokeWidth={1.5} />
+                        </button>
+                    )}
                 </div>
 
                 {/* Step Indicator */}

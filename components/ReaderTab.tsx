@@ -3,13 +3,14 @@ import { useReader, Book, Chapter, Story } from './ReaderContext';
 import { usePackageManager } from './PackageManagerContext';
 import { useCorpus } from './CorpusContext';
 import { InvestigationQueue } from './InvestigationQueue';
-import { ArrowLeft, BookOpen, ChevronRight, Plus, Search, Folder } from './Icons';
+import { ArrowLeft, BookOpen, ChevronRight, Plus, Search, Folder, Menu } from './Icons';
 import { Modal } from './UI';
 
 interface ReaderTabProps {
     customDictionaries?: Record<string, any>;
     onNavigateToReader: (bookId: string, chapterId: string, scrollToSentenceId?: string) => void;
     onOpenImporter: (dictionaryId?: string) => void;
+    onShowSettings?: () => void;
 }
 
 type ViewState = 'books' | 'stories' | 'chapters' | 'queue';
@@ -17,7 +18,8 @@ type ViewState = 'books' | 'stories' | 'chapters' | 'queue';
 export const ReaderTab: React.FC<ReaderTabProps> = ({
     customDictionaries,
     onNavigateToReader,
-    onOpenImporter
+    onOpenImporter,
+    onShowSettings
 }) => {
     const { books, getStoriesForBook, getChaptersForStory, investigationQueue, findBookAndChapterForSentence } = useReader();
     const { getPackageColor } = usePackageManager();
@@ -144,6 +146,7 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                 onBack={() => setView('books')}
                 onNavigateToReader={handleNavigateToReaderFromQueue}
                 customDictionaries={customDictionaries}
+                onShowSettings={onShowSettings}
             />
         );
     }
@@ -167,6 +170,11 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                                 {selectedBook.title}
                             </h1>
                         </div>
+                        {onShowSettings && (
+                            <button onClick={onShowSettings} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
+                                <Menu size={24} strokeWidth={1.5} />
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -240,6 +248,11 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                                 {selectedBook ? selectedBook.title : ''}
                             </p>
                         </div>
+                        {onShowSettings && (
+                            <button onClick={onShowSettings} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
+                                <Menu size={24} strokeWidth={1.5} />
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -277,12 +290,19 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                 <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
                     Reader
                 </h1>
-                <button
-                    onClick={() => setShowNewBookModal(true)}
-                    className="bg-slate-900 dark:bg-slate-700 text-white p-2 rounded-full shadow-md hover:bg-slate-800 transition-colors"
-                >
-                    <Plus size={20} />
-                </button>
+                <div className="flex gap-2 items-center">
+                    <button
+                        onClick={() => setShowNewBookModal(true)}
+                        className="bg-slate-900 dark:bg-slate-700 text-white p-2 rounded-full shadow-md hover:bg-slate-800 transition-colors"
+                    >
+                        <Plus size={20} />
+                    </button>
+                    {onShowSettings && (
+                        <button onClick={onShowSettings} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
+                            <Menu size={24} strokeWidth={1.5} />
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Content */}

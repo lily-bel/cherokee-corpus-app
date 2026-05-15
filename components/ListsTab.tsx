@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Star, ListIcon, Trash2, Pencil, ChevronRight, GripVertical, Folder, ArrowLeft, Plus, X, Search, Check, Volume2, Pause, Eye, EyeOff, Mic, StickyNote, ListPlus, BookOpen } from './Icons';
+import { Star, ListIcon, Trash2, Pencil, ChevronRight, GripVertical, Folder, ArrowLeft, Plus, X, Search, Check, Volume2, Pause, Eye, EyeOff, Mic, StickyNote, ListPlus, BookOpen, Menu } from './Icons';
 import { Modal, SourceBadge } from './UI';
 import { usePackageManager } from './PackageManagerContext';
 import { useCorpus } from './CorpusContext';
@@ -37,6 +37,7 @@ interface ListsTabProps {
     view?: 'all' | 'detail';
     setView?: (view: 'all' | 'detail') => void;
     onReadInContext?: (sentenceId: string) => void;
+    onShowSettings?: () => void;
 }
 
 const MiniAudioButton = ({ audio, isOfficial = false, color }: { audio: any, isOfficial?: boolean, color?: string }) => {
@@ -259,7 +260,8 @@ const ListsTab: React.FC<ListsTabProps> = ({
     setActiveListId: propSetActiveListId,
     view: propView,
     setView: propSetView,
-    onReadInContext
+    onReadInContext,
+    onShowSettings
 }) => {
     const { getPackageColor, packages, importedData } = usePackageManager();
     const { userAudioMeta, personalWords, glosses } = useCorpus();
@@ -904,6 +906,11 @@ const ListsTab: React.FC<ListsTabProps> = ({
                             <Trash2 size={24} />
                         </button>
                     )}
+                    {onShowSettings && (
+                        <button onClick={onShowSettings} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
+                            <Menu size={24} strokeWidth={1.5} />
+                        </button>
+                    )}
                 </div>
 
                 {/* Mode Toggle */}
@@ -1167,10 +1174,15 @@ const ListsTab: React.FC<ListsTabProps> = ({
         <div className="flex flex-col h-full">
             <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0">
                 <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">My Lists</h1>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
                     <button onClick={() => { setNewListName(''); setShowNewListModal(true); }} className="bg-slate-900 dark:bg-slate-700 text-white p-2 rounded-full shadow-md">
                         <Plus size={20} />
                     </button>
+                    {onShowSettings && (
+                        <button onClick={onShowSettings} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
+                            <Menu size={24} strokeWidth={1.5} />
+                        </button>
+                    )}
                 </div>
             </div>
 

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { Sentence, useCorpus } from './CorpusContext';
 import { usePackageManager } from './PackageManagerContext';
 
@@ -22,6 +22,7 @@ export interface Story {
     chapterCount: number;
     sentenceCount: number;
     isSequential: boolean; // false for "Individual Sentences"
+    order?: number;        // Canonical ordering within the book
 }
 
 export interface Chapter {
@@ -83,9 +84,24 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const { sentences, userSentences, customDictionaries: userDictionaries } = useCorpus();
     const { packages } = usePackageManager();
 
-    const [investigationQueue, setInvestigationQueue] = useState<InvestigationItem[]>([]);
+    const [investigationQueue, setInvestigationQueue] = useState<InvestigationItem[]>(() => {
+        try {
+            const saved = localStorage.getItem('cherokee_app_investigation_queue');
+            if (saved) return JSON.parse(saved);
+        } catch (e) {
+            console.error('Failed to load investigation queue', e);
+        }
+        return [];
+    });
 
-    // ... (rest of investigation queue effects) ...
+    // Persist investigation queue to localStorage
+    useEffect(() => {
+        try {
+            localStorage.setItem('cherokee_app_investigation_queue', JSON.stringify(investigationQueue));
+        } catch (e) {
+            console.error('Failed to save investigation queue', e);
+        }
+    }, [investigationQueue]);
 
     // Combine all sentences
     const allSentences = useMemo(() => {
@@ -209,20 +225,36 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
                 chaptersByStory.set(storyId, chapters);
 
+                // Determine story order from sentences (use minimum story_order found)
+                let storyOrder: number | undefined = undefined;
+                for (const s of storySentences) {
+                    if (s.story_order !== undefined) {
+                        if (storyOrder === undefined || s.story_order < storyOrder) {
+                            storyOrder = s.story_order;
+                        }
+                    }
+                }
+
                 stories.push({
                     id: storyId,
                     title: storyName,
                     bookId: bookId,
                     chapterCount: chapters.length,
                     sentenceCount: storySentences.length,
-                    isSequential
+                    isSequential,
+                    order: storyOrder
                 });
             });
 
-            // Sort stories
+            // Sort stories: by story_order if available, otherwise alphabetically
             stories.sort((a, b) => {
                 if (a.title === 'Individual Sentences') return 1;
                 if (b.title === 'Individual Sentences') return -1;
+                // If both have order, sort by order
+                if (a.order !== undefined && b.order !== undefined) return a.order - b.order;
+                // If only one has order, it comes first
+                if (a.order !== undefined) return -1;
+                if (b.order !== undefined) return 1;
                 return a.title.localeCompare(b.title);
             });
 

@@ -213,6 +213,7 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                         story: d.story || undefined,
                         chapter: d.chapter || undefined,
                         line: d.line ? parseInt(d.line, 10) : undefined,
+                        story_order: d.story_order !== undefined ? parseInt(d.story_order, 10) : undefined,
                         author: d.author || undefined,
                         speaker: d.speaker || undefined,
                         tone: d.tone || undefined,

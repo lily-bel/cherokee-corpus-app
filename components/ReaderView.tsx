@@ -4,7 +4,7 @@ import { useReader } from './ReaderContext';
 import { usePackageManager } from './PackageManagerContext';
 import { GlossPopover } from './GlossPopover';
 import { LinkerModal } from './LinkerModal';
-import { ArrowLeft, BookOpen, Eye, EyeOff, Type } from './Icons';
+import { ArrowLeft, BookOpen, Eye, EyeOff, Type, Menu } from './Icons';
 
 type StudyMode = 'study' | 'read';
 type ScriptMode = 'both' | 'syllabary' | 'translit';
@@ -16,6 +16,7 @@ interface ReaderViewProps {
     onBack: () => void;
     customDictionaries?: Record<string, any>;
     onCreateWord?: () => void;
+    onShowSettings?: () => void;
 }
 
 const CHUNK_SIZE = 20;
@@ -28,10 +29,11 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
     scrollToSentenceId,
     onBack,
     customDictionaries,
-    onCreateWord
+    onCreateWord,
+    onShowSettings
 }) => {
     const { glossMap, dictionaryMap, addUserGloss, removeUserGloss, personalWords } = useCorpus();
-    const { books, getSentencesForChapter, addToInvestigationQueue } = useReader();
+    const { books, getSentencesForChapter, addToInvestigationQueue, investigationQueue } = useReader();
     const { getPackageColor } = usePackageManager();
 
     const [studyMode, setStudyMode] = useState<StudyMode>('study');
@@ -62,6 +64,19 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
 
     const book = books.find(b => b.id === bookId);
     const sentences = useMemo(() => getSentencesForChapter(chapterId), [chapterId, getSentencesForChapter]);
+
+    // Build a fast lookup set for investigation queue items
+    const investigationSet = useMemo(() => {
+        const set = new Set<string>();
+        investigationQueue.forEach(item => {
+            set.add(`${item.sentence_id}_${item.word_index}`);
+        });
+        return set;
+    }, [investigationQueue]);
+
+    const isInQueue = (sentenceId: string, wordIndex: number): boolean => {
+        return investigationSet.has(`${sentenceId}_${wordIndex}`);
+    };
 
     // Initialize/Reset View on Chapter/Scroll Target Change
     useEffect(() => {
@@ -317,6 +332,11 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                             <ScriptIcon size={14} />
                             <span>{getScriptLabel()}</span>
                         </button>
+                        {onShowSettings && (
+                            <button onClick={onShowSettings} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
+                                <Menu size={24} strokeWidth={1.5} />
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
@@ -361,10 +381,11 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                                         const isClickable = studyMode === 'study';
 
                                         if (scriptMode === 'syllabary') {
+                                            const inQueue = isInQueue(sentence.id, tokenIdx);
                                             return (
                                                 <span
                                                     key={tokenIdx}
-                                                    className={`font-serif text-2xl text-slate-900 dark:text-slate-100 ${isClickable ? 'cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded px-0.5' : ''}`}
+                                                    className={`font-serif text-2xl text-slate-900 dark:text-slate-100 ${inQueue ? 'bg-blue-100/60 dark:bg-blue-800/30 rounded px-0.5' : ''} ${isClickable ? 'cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded px-0.5' : ''}`}
                                                     onClick={isClickable ? (e) => handleWordClick(sentence, tokenIdx, e) : undefined}
                                                 >
                                                     {token.syl}
@@ -376,10 +397,11 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                                         }
 
                                         if (scriptMode === 'translit') {
+                                            const inQueue = isInQueue(sentence.id, tokenIdx);
                                             return (
                                                 <span
                                                     key={tokenIdx}
-                                                    className={`text-xl text-slate-700 dark:text-slate-300 ${isClickable ? 'cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded px-0.5' : ''}`}
+                                                    className={`text-xl text-slate-700 dark:text-slate-300 ${inQueue ? 'bg-blue-100/60 dark:bg-blue-800/30 rounded px-0.5' : ''} ${isClickable ? 'cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded px-0.5' : ''}`}
                                                     onClick={isClickable ? (e) => handleWordClick(sentence, tokenIdx, e) : undefined}
                                                 >
                                                     {token.tr}
@@ -390,10 +412,12 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                                             );
                                         }
 
+                                        const inQueue = isInQueue(sentence.id, tokenIdx);
+
                                         return (
                                             <span
                                                 key={tokenIdx}
-                                                className={`inline-flex flex-col items-center relative ${isClickable ? 'cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded px-0.5 -mx-0.5' : ''}`}
+                                                className={`inline-flex flex-col items-center relative ${inQueue ? 'bg-blue-100/60 dark:bg-blue-800/30 rounded px-0.5 -mx-0.5' : ''} ${isClickable ? 'cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded px-0.5 -mx-0.5' : ''}`}
                                                 onClick={isClickable ? (e) => handleWordClick(sentence, tokenIdx, e) : undefined}
                                             >
                                                 <span className="font-serif text-xl text-slate-900 dark:text-slate-100">

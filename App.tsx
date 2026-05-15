@@ -1356,7 +1356,7 @@ function App() {
     return (
         <div className="h-screen w-full bg-[#F9F9F7] dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans flex flex-col overflow-hidden relative">
             <RainbowGradient />
-            {!selectedEntry && !activeWidgetName && (
+            {!selectedEntry && !activeWidgetName && activeTab === 'search' && (
                 <header className="bg-white dark:bg-slate-900 px-4 py-3 shadow-sm z-10 flex items-center justify-between shrink-0 h-[60px]">
                     <h1 className="font-noto-serif text-xl text-slate-800 dark:text-slate-100">ᏣᎳᎩ-English Dictionary</h1>
                     <button onClick={() => setShowSettingsModal(true)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
@@ -1724,9 +1724,10 @@ function App() {
                                 view={listsView}
                                 setView={setListsView}
                                 onReadInContext={handleReadInContext}
+                                onShowSettings={() => setShowSettingsModal(true)}
                             />
                         )}
-                        {activeTab === 'widgets' && <WidgetsTab />}
+                        {activeTab === 'widgets' && <WidgetsTab onShowSettings={() => setShowSettingsModal(true)} />}
                         {activeTab === 'reader' && (
                             readerView === 'importing' ? (
                                 <TextImporter
@@ -1737,6 +1738,7 @@ function App() {
                                     }}
                                     customDictionaries={customDictionaries}
                                     preselectedDictionaryId={importerDictionaryId}
+                                    onShowSettings={() => setShowSettingsModal(true)}
                                 />
                             ) : readerView === 'reading' && activeBookId && activeChapterId ? (
                                 <ReaderView
@@ -1751,6 +1753,7 @@ function App() {
                                     }}
                                     customDictionaries={customDictionaries}
                                     onCreateWord={openWordModal}
+                                    onShowSettings={() => setShowSettingsModal(true)}
                                 />
                             ) : (
                                 <ReaderTab
@@ -1765,6 +1768,7 @@ function App() {
                                         setImporterDictionaryId(dictionaryId);
                                         setReaderView('importing');
                                     }}
+                                    onShowSettings={() => setShowSettingsModal(true)}
                                 />
                             )
                         )}
@@ -1786,7 +1790,7 @@ function App() {
                             onShowSettings={() => setShowSettingsModal(true)}
                         />}
                         {
-                            activeTab === 'personal' && (!activeDictionaryId ? (<div className="flex flex-col h-full"><div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0"><h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Custom Dictionaries</h1><button onClick={() => setShowNewDictionaryModal(true)} className="bg-slate-900 dark:bg-slate-700 text-white p-2 rounded-full shadow-md"><Plus size={20} /></button></div><div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-4 content-start">{dictionaryList.map((nb: any) => {
+                            activeTab === 'personal' && (!activeDictionaryId ? (<div className="flex flex-col h-full"><div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0"><h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Custom Dictionaries</h1><div className="flex gap-2 items-center"><button onClick={() => setShowNewDictionaryModal(true)} className="bg-slate-900 dark:bg-slate-700 text-white p-2 rounded-full shadow-md"><Plus size={20} /></button><button onClick={() => setShowSettingsModal(true)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300"><Menu size={24} strokeWidth={1.5} /></button></div></div><div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-4 content-start">{dictionaryList.map((nb: any) => {
                                 const isImported = nb.type === 'imported';
                                 const colorClass = isImported ? `text-${nb.color === 'amber' ? 'amber' : (nb.color === 'slate' ? 'slate' : nb.color)}-600 dark:text-${nb.color === 'amber' ? 'amber' : (nb.color === 'slate' ? 'slate' : nb.color)}-400` : 'text-amber-500 hover:text-amber-600';
                                 // Handle hex colors
@@ -1799,7 +1803,7 @@ function App() {
                                     <div className="flex-1 flex items-center gap-2"><h2 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100">{customDictionaries[activeDictionaryId]?.name || dictionaryList.find(n => n.id === activeDictionaryId)?.name || 'Custom Dictionary'}</h2>
                                         {customDictionaries[activeDictionaryId] && <button onClick={() => { setRenameData({ type: 'dictionary', target: activeDictionaryId, value: customDictionaries[activeDictionaryId].name }); setShowNewDictionaryModal(true); }} className="p-1 text-slate-400 hover:text-sky-600 rounded-full"><Pencil size={14} /></button>}
                                     </div>
-                                    <div className="flex gap-2 ml-auto"><button onClick={handleExportDictionary} className="p-1.5 text-slate-400 hover:text-amber-600 rounded"><Share size={20} /></button><button onClick={() => setDictionaryToDelete(activeDictionaryId)} className="p-1.5 text-slate-400 hover:text-red-500 rounded"><Trash2 size={20} /></button></div>
+                                    <div className="flex gap-2 ml-auto items-center"><button onClick={handleExportDictionary} className="p-1.5 text-slate-400 hover:text-amber-600 rounded"><Share size={20} /></button><button onClick={() => setDictionaryToDelete(activeDictionaryId)} className="p-1.5 text-slate-400 hover:text-red-500 rounded"><Trash2 size={20} /></button><button onClick={() => setShowSettingsModal(true)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300"><Menu size={24} strokeWidth={1.5} /></button></div>
                                 </div>
                                 <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
                                     <button onClick={() => setDictionaryMode('words')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${dictionaryMode === 'words' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'} `}>Words</button>
