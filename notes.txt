@@ -2,6 +2,7 @@ TODO:
 - creating a story - need options to add chapters to existing story, also need a place to input the english + transliteration as well as the syllabary. You need to be able to separate all 3 by sentence at once.
 - splitting the sentences doesn't seem to work right now.
 - other forms - dont show repeat gloss forms
+- clicking root -> class -> verb goes back to root (page stays open behind i think)
 
 Other dynamic / default lists (CED Verbs / non-verbs)
 
