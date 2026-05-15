@@ -3,6 +3,7 @@ TODO:
 - splitting the sentences doesn't seem to work right now.
 - other forms - dont show repeat gloss forms
 - clicking root -> class -> verb goes back to root (page stays open behind i think)
+- check bible for chapter errors + mismatched syl/phonetics
 
 Other dynamic / default lists (CED Verbs / non-verbs)
 
