@@ -3,22 +3,22 @@
 A comprehensive Cherokee language app built in React. Features include:
 - Dictionary with multiple sources ([CED](https://cherokeenationdictionary.net/), [online dictionary](https://www.cherokeedictionary.net/), etc), root-word integration and audio for CED, and robust search options.
 - Tools to create custom dictionaries, conjugations, audio, sentences, etc.
-- Feature-rich full text reader with glossing. Link words to dictionary entries and create word-level notes in-context.
+- Feature-rich full text reader with glossing. Link words to dictionary entries and create word-level notes in context.
 - Import/Export for custom packages (words/sentences/glosses/audio/etc) with color coding for package management.
-- WIP study tools (custom word lists, widgets with custom exercises)
+- WIP study tools (custom word lists, widgets with study exercises, etc).
 
 ## The Data
 
-Dictionary data sources were synthesized over time from various sources.
+Lexical sources were synthesized over time from various sources.
 - [cherokeenationdictionary.net] - The official Cherokee Nation dictionary site. A maintained version of the CED by Durbin Feeling. Includes audio, sentence examples, and some conjugations for each word.
 - [cherokeedictionary.net] - The original online dictionary site. Contains CED and additional sources such as Raven Rock Dictionary, Noquisi Word List, Consortium Word List, and other smaller sources. Some typos and quality issues.
-- [Moondove's Spiral](https://web.archive.org/web/20160328135446/http://home.earthlink.net/~deanna1jc/moondoves_spiral_dictionary.htm) - A now offline website with a barebones wordlist. No syllabary so it is turned off by default in the app, but it nonetheless has many idioms and frequently used conversational words unlisted by other sources (ie donadagohvi).
-- _Cherokee Verb Reference Guide_ by Wyman Kirk - A print book, containing verbs mostly accounted for in CED, but with tables of 5x5 conjugations.
+- [Moondove's Spiral](https://web.archive.org/web/20160328135446/http://home.earthlink.net/~deanna1jc/moondoves_spiral_dictionary.htm) - A now offline website with a barebones word list. No syllabary, so it is hidde by default in the app, but nonetheless has many idioms and conversational words not covered by other sources (i.e. donadagohvi).
+- _Cherokee Verb Reference Guide_ by Wyman Kirk - A print book containing verbs mostly accounted for in CED, but with tables of 5x5 conjugations.
 - [_Learning to use the Cherokee Verb_](https://language.cherokee.org/media/vnihnhms/learning-to-use-the-cherokee-verb.pdf) by Durbin Feeling - A print book with deep conjugations of a small number of verbs.
-- [King Recreation](https://github.com/CharlieMcVicker/king-recreation/tree/main) - An analysis of CED verbs to describe their roots and verb classes. This information is built into the app.
-- [Cherokee New Testament](https://www.cherokeedictionary.net/cnt/) - The New Testament, translated to Cherokee. Used as a full text for reading + glossing.
+- [King Recreation](https://github.com/CharlieMcVicker/king-recreation/tree/main) - An analysis of CED verbs to describe their roots and verb classes. This data is built into the app.
+- [Cherokee New Testament](https://www.cherokeedictionary.net/cnt/) - The New Testament translated into Cherokee. Used as a full text for reading + glossing.
 
-I converted the print sources to CSVs and consolidated everything [here](https://github.com/lily-bel/cherokee-data-consolidation). This pre-processing allows for maintained sources like the CN dictionary and Root word project to be updated and used downstream in the app.
+I converted the print sources to CSVs and consolidated everything [here](https://github.com/lily-bel/cherokee-data-consolidation). This pre-processing allows for maintained sources like the CN dictionary and root word project to be updated and used downstream in the app.
 
 ## Search Tab
 
