@@ -202,11 +202,11 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
                 {/* Table */}
                 <div className="flex-1 overflow-y-auto p-0">
                     <table className="w-full text-left border-collapse table-fixed">
-                        <thead className="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-bold sticky top-0 z-10 shadow-sm">
+                        <thead className="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] uppercase tracking-wider font-bold sticky top-0 z-10 shadow-sm">
                             <tr>
-                                <th className="p-4 border-b border-slate-100 dark:border-slate-700 w-1/3">Form Name</th>
-                                <th className="p-4 border-b border-slate-100 dark:border-slate-700">Details</th>
-                                <th className="p-4 border-b border-slate-100 dark:border-slate-700 w-20 text-center">Audio</th>
+                                <th className="p-3 border-b border-slate-100 dark:border-slate-700 w-1/4">Form</th>
+                                <th className="p-3 border-b border-slate-100 dark:border-slate-700">Details</th>
+                                <th className="p-3 border-b border-slate-100 dark:border-slate-700 w-16 text-center">Audio</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -238,34 +238,34 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
 
                                 return (
                                     <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group relative">
-                                        <td className="p-4 align-top pl-6">
+                                        <td className="p-3 align-top pl-5">
                                             {/* SOURCE RIM */}
                                             <div
                                                 className="absolute left-0 top-0 bottom-0 w-1.5"
                                                 style={{ backgroundColor: borderStyle.borderLeftColor }}
                                             />
-                                            <div className="font-bold text-slate-700 dark:text-slate-200 text-sm break-words">{form.label}</div>
+                                            <div className="font-bold text-slate-700 dark:text-slate-200 text-xs break-words leading-tight">{form.label}</div>
                                             {form.source && (
-                                                <div className="mt-1.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                                                <div className="mt-1 text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                                                     {form.source}
                                                 </div>
                                             )}
                                             {form.type === 'custom' && (
-                                                <div className="mt-1.5 text-[10px] font-bold text-amber-500 uppercase tracking-widest">
-                                                    User Added
+                                                <div className="mt-1 text-[9px] font-bold text-amber-500 uppercase tracking-widest">
+                                                    User
                                                 </div>
                                             )}
                                         </td>
-                                        <td className="p-4 align-top">
+                                        <td className="p-3 align-top">
                                             <div className="flex flex-col gap-0.5 overflow-hidden">
-                                                <div className="font-noto-cherokee text-xl text-slate-800 dark:text-slate-100 break-words">{form.syllabary}</div>
-                                                <div className="font-noto-serif text-amber-700 dark:text-amber-400 font-medium break-words">{form.translit}</div>
-                                                <div className="text-xs text-slate-500 dark:text-slate-400 italic break-words">{form.tone}</div>
-                                                {form.notes && <div className="text-xs text-slate-400 mt-1 border-t border-slate-100 dark:border-slate-800 pt-1 break-words">{form.notes}</div>}
+                                                <div className="font-noto-cherokee text-lg text-slate-800 dark:text-slate-100 break-words leading-snug">{form.syllabary}</div>
+                                                <div className="font-noto-serif text-sm text-amber-700 dark:text-amber-400 font-medium break-words leading-snug">{form.translit}</div>
+                                                {form.tone && <div className="text-[10px] text-slate-400 dark:text-slate-500 italic break-words">{form.tone}</div>}
+                                                {form.notes && <div className="text-[10px] text-slate-400 mt-1 border-t border-slate-100 dark:border-slate-800 pt-1 break-words leading-tight">{form.notes}</div>}
                                             </div>
                                         </td>
-                                        <td className="p-4 align-top">
-                                            <div className="flex flex-col items-center gap-2">
+                                        <td className="p-3 align-top">
+                                            <div className="flex flex-col items-center gap-1.5">
                                                 {form.audio && (
                                                     <MiniAudioButton
                                                         key={`official-${form.audio}`}
@@ -292,10 +292,10 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
                                                 })}
                                                 <button
                                                     onClick={() => onRecordAudio(`form_${form.index}`)}
-                                                    className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 flex items-center justify-center transition-colors"
+                                                    className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 flex items-center justify-center transition-colors shrink-0"
                                                     title="Record Audio"
                                                 >
-                                                    <Mic size={16} />
+                                                    <Mic size={14} />
                                                 </button>
                                             </div>
                                         </td>

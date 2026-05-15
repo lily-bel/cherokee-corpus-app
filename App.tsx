@@ -103,6 +103,33 @@ function App() {
 
     const [renameData, setRenameData] = useState<{ type: string | null; target: string | null; value: string; initialEntryIndex?: string | null }>({ type: null, target: null, value: '', initialEntryIndex: null });
 
+    // --- PERFORMANCE OPTIMIZATION: PRE-CALCULATE LOOKUPS ---
+    const wordFormsLookupMap = useMemo(() => {
+        const map = new Map<string, any[]>();
+        Object.values(importedData).forEach((pkgData: any) => {
+            if (pkgData?.word_forms) {
+                pkgData.word_forms.forEach((f: any) => {
+                    if (f.word_index != null) {
+                        const idStr = String(f.word_index);
+                        let arr = map.get(idStr);
+                        if (!arr) {
+                            arr = [];
+                            map.set(idStr, arr);
+                        }
+                        arr.push(f);
+                    }
+                });
+            }
+        });
+        return map;
+    }, [importedData]);
+
+    const entriesWithOtherFormsSet = useMemo(() => {
+        const set = new Set<string>();
+        wordFormsLookupMap.forEach((_, key) => set.add(key));
+        return set;
+    }, [wordFormsLookupMap]);
+
     const [showMoveModal, setShowMoveModal] = useState(false);
     const [wordToMove, setWordToMove] = useState<string | null>(null);
 
@@ -755,18 +782,22 @@ function App() {
             if (searchLangs.syllabary && entry.Sentence_Syllabary) hasTargetData = true;
             if (searchLangs.english && entry.Sentence_English) hasTargetData = true;
         }
-        if (!hasTargetData && searchScopes.verbs) {
-            if (searchLangs.translit && entry.Verb_1st_Present) hasTargetData = true;
-            if (searchLangs.syllabary && entry.Verb_1st_Present_Syllabary) hasTargetData = true;
-            if (searchLangs.tone && entry.Verb_1st_Present_Tone) hasTargetData = true;
+        if (!hasTargetData && searchScopes.otherForms) {
+            // Check legacy Other_Forms
+            if (entry.Other_Forms) hasTargetData = true;
+            
+            // Check new imported word_forms using optimized set
+            if (!hasTargetData) {
+                const id = String(entry.id || entry.Index);
+                if (entriesWithOtherFormsSet.has(id)) hasTargetData = true;
+            }
         }
-        if (!hasTargetData && searchScopes.plurals) {
-            if (searchLangs.translit && entry.Plural) hasTargetData = true;
-            if (searchLangs.syllabary && entry.Plural_Syllabary) hasTargetData = true;
-            if (searchLangs.tone && entry.Plural_Tone) hasTargetData = true;
+        if (!hasTargetData && searchScopes.roots) {
+            const id = entry.id || entry.Index;
+            if (rootMap.has(id)) hasTargetData = true;
         }
         if (!hasTargetData && searchScopes.notes) {
-            // CHANGE: For CSV words (not personal), IGNORE entry.Notes. Only use userNotes.
+            // For CSV words (not personal), IGNORE entry.Notes. Only use userNotes.
             const note = isPersonal ? entry.Notes : userNotes[entry.Index];
             if (note) hasTargetData = true;
         }
@@ -774,13 +805,15 @@ function App() {
     };
 
     const searchableCount = useMemo(() => {
-        return allData.reduce((acc, entry) => {
-            // CHANGE: Check PoS Filter
-            if (posFilter !== "All" && entry.PoS !== posFilter) return acc;
+        if (searchScope === 'sentences') {
+            return sentences.length + userSentences.length;
+        }
 
+        return allData.reduce((acc, entry) => {
+            if (posFilter !== "All" && entry.PoS !== posFilter) return acc;
             return acc + (isEntrySearchable(entry, settings) ? 1 : 0);
         }, 0);
-    }, [allData, settings, userNotes, posFilter]);
+    }, [allData, settings, userNotes, posFilter, searchScope, sentences, userSentences, entriesWithOtherFormsSet, rootMap]);
 
     const toggleFavorite = (idx) => setFavorites(prev => prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]);
     const toggleInList = (listId, idx) => {
@@ -1294,8 +1327,8 @@ function App() {
         const isUserLibraryActive = packages.find(p => p.id === 'user')?.status === 'active';
         // Include user sentences in search if scope is sentences AND user library is active
         const combinedSentences = [...sentences, ...(isUserLibraryActive ? userSentences : [])];
-        return performSearch(query, allData, combinedSentences, entryToSentencesMap, settings, customDictionaries, userNotes, posFilter, searchScope, prioritizedSources, importedData, rootMap);
-    }, [query, allData, customDictionaries, settings, userNotes, posFilter, searchScope, sentences, userSentences, entryToSentencesMap, prioritizedSources, packages, importedData, rootMap]);
+        return performSearch(query, allData, combinedSentences, entryToSentencesMap, settings, customDictionaries, userNotes, posFilter, searchScope, prioritizedSources, importedData, rootMap, wordFormsLookupMap);
+    }, [query, allData, customDictionaries, settings, userNotes, posFilter, searchScope, sentences, userSentences, entryToSentencesMap, prioritizedSources, packages, importedData, rootMap, wordFormsLookupMap]);
 
     const filteredResults = useMemo(() => {
         if (!query && activeTab === 'search') return { active: [], inactive: [] };
@@ -1714,7 +1747,7 @@ function App() {
                                     const activeNotes = (isModal || isModalSentences) ? {} : userNotes;
                                     const activePrioritized = (isModal || isModalSentences) ? [] : prioritizedSources;
 
-                                    return performSearch(q, allData, [...sentences, ...userSentences], entryToSentencesMap, activeSettings, customDictionaries, activeNotes, activePos, isModalSentences ? 'sentences' : (isModal ? 'dictionary' : (scope || 'dictionary')), activePrioritized, importedData, rootMap);
+                                    return performSearch(q, allData, [...sentences, ...userSentences], entryToSentencesMap, activeSettings, customDictionaries, activeNotes, activePos, isModalSentences ? 'sentences' : (isModal ? 'dictionary' : (scope || 'dictionary')), activePrioritized, importedData, rootMap, wordFormsLookupMap);
                                 }}
                                 settings={settings}
                                 openWordModal={openWordModal}

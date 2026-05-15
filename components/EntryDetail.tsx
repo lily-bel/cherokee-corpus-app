@@ -435,20 +435,20 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
 
                     {/* Word Forms List (New) */}
                     {(cedForms.length > 0 || otherImportedForms.length > 0 || userFormsCount > 0 || legacyOfficialFormsCount > 0) && (
-                        <div className="pt-4">
+                        <div className="pt-4 -mx-5 px-5">
                             <h3 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-3">Conjugations / Forms</h3>
                             
                             {cedForms.length > 0 && (
-                                <div className="grid grid-cols-[auto_auto_1fr] gap-x-6 gap-y-2 mb-3 bg-slate-50 dark:bg-slate-900 p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 items-center">
+                                <div className="grid grid-cols-[minmax(80px,auto)_auto_1fr] gap-x-4 md:gap-x-8 gap-y-2 mb-3 bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800 items-center overflow-x-auto">
                                     {cedForms.map(f => (
                                         <React.Fragment key={f.form_name}>
-                                             <div className="text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider pr-2">
+                                             <div className="text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider pr-1 leading-tight py-1" title={f.displayLabel}>
                                                  {f.displayLabel}:
                                              </div>
-                                             <div className="font-noto-cherokee text-base text-slate-800 dark:text-slate-200 font-medium">
+                                             <div className="font-noto-cherokee text-base text-slate-800 dark:text-slate-200 font-medium whitespace-nowrap">
                                                  {f.syllabary}
                                              </div>
-                                             <div className="text-[15px] text-amber-800 dark:text-amber-400 italic font-semibold">
+                                             <div className="text-[15px] text-amber-800 dark:text-amber-400 italic font-semibold whitespace-nowrap">
                                                  {f.translit}
                                              </div>
                                         </React.Fragment>
