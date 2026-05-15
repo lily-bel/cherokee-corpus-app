@@ -968,20 +968,6 @@ function App() {
         exportDictionaryToCSV(activeDictionaryId, customDictionaries[activeDictionaryId].name, personalWords);
         showToast("CSV Exported", "success");
     };
-    const handleImportDictionary = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        importDictionaryFromCSV(file, (importedWords) => {
-            const newId = 'nb_' + Date.now();
-            const newName = file.name.replace('.csv', '');
-            setCustomDictionaries(prev => ({ ...prev, [newId]: { id: newId, name: newName, date: Date.now() } }));
-
-            const wordsWithId = importedWords.map((w, i) => ({ ...w, Index: newId + '_' + i, customDictionaryId: newId, DateCreated: Date.now() }));
-            setPersonalWords(prev => [...prev, ...wordsWithId]);
-            showToast(`Imported ${newName} `, "success");
-        });
-        e.target.value = null;
-    };
     const handleBackup = () => {
         const data = { favorites, customLists, customListOrder, customDictionaries, personalWords, userNotes, settings, searchHistory };
         downloadFile(JSON.stringify(data), `cherokee_backup_${Date.now()}.json`, 'application/json');
@@ -1327,7 +1313,7 @@ function App() {
         const isUserLibraryActive = packages.find(p => p.id === 'user')?.status === 'active';
         // Include user sentences in search if scope is sentences AND user library is active
         const combinedSentences = [...sentences, ...(isUserLibraryActive ? userSentences : [])];
-        return performSearch(query, allData, combinedSentences, entryToSentencesMap, settings, customDictionaries, userNotes, posFilter, searchScope, prioritizedSources, importedData, rootMap, wordFormsLookupMap);
+        return performSearch(query, allData, combinedSentences, entryToSentencesMap, settings, customDictionaries, userNotes, posFilter, searchScope, prioritizedSources, rootMap, wordFormsLookupMap);
     }, [query, allData, customDictionaries, settings, userNotes, posFilter, searchScope, sentences, userSentences, entryToSentencesMap, prioritizedSources, packages, importedData, rootMap, wordFormsLookupMap]);
 
     const filteredResults = useMemo(() => {
@@ -1747,7 +1733,7 @@ function App() {
                                     const activeNotes = (isModal || isModalSentences) ? {} : userNotes;
                                     const activePrioritized = (isModal || isModalSentences) ? [] : prioritizedSources;
 
-                                    return performSearch(q, allData, [...sentences, ...userSentences], entryToSentencesMap, activeSettings, customDictionaries, activeNotes, activePos, isModalSentences ? 'sentences' : (isModal ? 'dictionary' : (scope || 'dictionary')), activePrioritized, importedData, rootMap, wordFormsLookupMap);
+                                    return performSearch(q, allData, [...sentences, ...userSentences], entryToSentencesMap, activeSettings, customDictionaries, activeNotes, activePos, isModalSentences ? 'sentences' : (isModal ? 'dictionary' : (scope || 'dictionary')), activePrioritized, rootMap, wordFormsLookupMap);
                                 }}
                                 settings={settings}
                                 openWordModal={openWordModal}
