@@ -1,5 +1,5 @@
 # Cherokee Dictionary and Corpus App
-## [lily-bel.github.io/cherokee-corpus-app]
+## [lily-bel.github.io/cherokee-corpus-app](https://lily-bel.github.io/cherokee-corpus-app/)
 
 A comprehensive Cherokee language app built in React for web and mobile. 
 
