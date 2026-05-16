@@ -13,8 +13,8 @@ Features include:
 
 ## The Data
 Lexical sources were synthesized over time from various sources.
-- [cherokeenationdictionary.net] - The official Cherokee Nation dictionary site. A maintained version of the CED by Durbin Feeling. Includes audio, sentence examples, and some conjugations for each word.
-- [cherokeedictionary.net] - The original online dictionary site. Contains CED and additional sources such as Raven Rock Dictionary, Noquisi Word List, Consortium Word List, and other smaller sources. Some typos and quality issues.
+- [cherokeenationdictionary.net](cherokeenationdictionary.net) - The official Cherokee Nation dictionary site. A maintained version of the CED by Durbin Feeling. Includes audio, sentence examples, and some conjugations for each word.
+- [cherokeedictionary.net](cherokeedictionary.net) - The original online dictionary site. Contains CED and additional sources such as Raven Rock Dictionary, Noquisi Word List, Consortium Word List, and other smaller sources. Some typos and quality issues.
 - [Moondove's Spiral](https://web.archive.org/web/20160328135446/http://home.earthlink.net/~deanna1jc/moondoves_spiral_dictionary.htm) - A now offline website with a barebones word list. No syllabary, so it is hidden by default in the app, but nonetheless has many idioms and conversational words not covered by other sources (i.e. donadagohvi).
 - _Cherokee Verb Reference Guide_ by Wyman Kirk - A print book containing verbs mostly accounted for in CED, but with tables of 5x5 conjugations.
 - [_Learning to use the Cherokee Verb_](https://language.cherokee.org/media/vnihnhms/learning-to-use-the-cherokee-verb.pdf) by Durbin Feeling - A print book with deep conjugations of a small number of verbs.
