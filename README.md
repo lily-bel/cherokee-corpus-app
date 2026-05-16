@@ -1,6 +1,9 @@
 # Cherokee Dictionary and Corpus App
+## [lily-bel.github.io/cherokee-corpus-app]
 
-A comprehensive Cherokee language app built in React. Features include:
+A comprehensive Cherokee language app built in React for web and mobile. 
+
+Features include:
 - Dictionary with multiple sources ([CED](https://cherokeenationdictionary.net/), [online dictionary](https://www.cherokeedictionary.net/), etc), root-word integration and audio for CED, and robust search options.
 - Tools to create custom dictionaries, conjugations, audio, sentences, etc.
 - Feature-rich full text reader with glossing. Link words to dictionary entries and create word-level notes in context.
