@@ -24,7 +24,7 @@ Lexical sources were synthesized over time from various sources.
 I converted the print sources to CSVs and consolidated everything [here](https://github.com/lily-bel/cherokee-data-consolidation). This pre-processing allows for maintained sources like the CN dictionary and root word project to be updated and used downstream in the app.
 
 ## 🧐 Search Tab
-Feature-rich dictionary search.
+Cherokee dictionary with language specific features.
 - **Multi-Language Input**: Search using Syllabary, Phonetics/Transliteration, or English. Supports searching by root and conjugations (if available), tone, sentence examples, or your own notes.
 - **Flexible Scope**: All search options can be toggled on or off. Combined with regular expression support, this allows for narrow grammatical search for studying sound or tone.
 - **Detailed List View** - Search results include icons to indicate the dictionary source (CED, etc) and whether the entry has audio, custom word forms, and notes. These icons are color-coded by user / package.
