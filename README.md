@@ -34,8 +34,8 @@ Feature-rich dictionary search.
 ## ✏️ Entry View
 Clicking on a word brings you to its unique page. Aside from the entry and definition, there is a lot of useful information here.
 - **Audio** - Official audio is included from the Cherokee Nation dictionary. Custom audio can be recorded for entries and conjugations.
-- **Grammatical Data** - Based on dictionary sources words may have tone, root + verb class, conjugations, and grammar details like Set and required prefixes (de-, wi-).
-- **Sentence examples** - CED sentences are linked to words by default. Sentences can be manually glossed and will appear under the glossed words as other examples.
+- **Grammatical Data** - Depending on their source, words may have tone, root + verb class, conjugations, and grammar details like Set and required prefixes (de-, wi-).
+- **Sentence examples** - CED sentences are linked to words by default. More sentences can be linked as examples through glossing.
 - **Customization** - Official words can have custom audio, conjugations, and notes.
 - **URL Sharing** - Each entry and root has a unique ID and can be shared with a URL.
 
@@ -44,7 +44,7 @@ An immersive environment for reading full texts in Cherokee that integrates with
 - **Reading Modes** - Toggle between syllabary, phonetics, or both, and turn english translation on or off.
 - **Built-in Texts** - The CED sentences and Cherokee New Testament are available in full text form.
 - **Interactive Glossing**: Tap any word in a text to connect it to its dictionary entry (and create optional word-level notes) or mark it for future investigation.
-- **Text Importer (WIP)**: Upload your own texts to create your own corpus. _WIP - Lining up Cherokee + English and segmenting texts into sentences UX is still in progress._
+- **Text Importer (WIP)**: Upload your own texts to create your own corpus. _WIP - UX for lining up Cherokee + English and segmenting texts into sentences is still in progress._
 
 ## 📝 Lists Tab
 Organize words and sentences and see custom data all in one place.
@@ -53,20 +53,21 @@ Organize words and sentences and see custom data all in one place.
 - _Study modes planned for later release._
 
 ## 📚 Custom Dictionaries Tab
-Create notebooks of custom words or sentences with all the features of built-in words.
+Create notebooks of custom words and sentences with all the features of built-in entries.
 - **Entry Parity**: Custom entries have the same functionality as official sources. Custom words can be glossed to official sentences and vice-versa.
-- **Color Coding**: User-generated words, sentences, glosses, audio, and notes share a gold color scheme, compared to the grey of official sources.
+- **Color Coding**: User-generated words, sentences, glosses, audio, and notes share an orange color scheme, compared to the grey of official sources.
 
 ## 📦 Packages Tab
 Manage official and custom packages, import and export data _(words, sentences, audio, conjugations, notes, and glosses)_ to share with others.
-- **Official Sources and "My Library"** - Official (built-in) corpus and user-generated data appear as packages and can be enabled/disabled.
-- **Exporting**: User-generated data can be exported (deliniated by lists or custom dictionaries) into an organized zip file.
+- **Official Sources and "My Library"** - The official (built-in) corpus and user-generated data appear as packages and can be enabled/disabled.
+- **Exporting**: User-generated data can be exported (deliniated by list or custom dictionary) into an organized zip file.
 - **Importing**: Imported package data appears across the app in the chosen color.
 - **Information at a glace**: Packages are listed with counts of their data, and can be opened and viewed/searched in the package viewer.
 
 ## 🛠️ Widgets Tab
-An optional tab for custom HTML widgets.
+An optional tab for custom widgets.
 - **Syllabary Learner**: A (frankly better) version of my Learn Cherokee Syllabary app. Practice tracing, writing, and reading syllabary.
 - **Transliteration**: Convert syllabary <-> phonetics in 3 modes.
 - **Pronoun Game** - Practice pronomial prefixes.
 - **Grammar Guide**: Embed of the online CED grammar guide.
+- **Custom Widgets**: Import an html file or embed a website by URL to create your own widgets.
