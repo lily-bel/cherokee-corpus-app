@@ -16,7 +16,8 @@ TODO:
 - custom word forms can show in mini table, up to 6 max
 - audio record modal is behind other forms modal
 - header text overflows on mobile now, make it smaller. top bar could be thinner in general
-- adverbs got marked as verbs :(
+- adverbs got marked as verbs tense wise
+- reader - allow glossing in any mode
 
 - package fixes - they export properly but import gets tripped up, still expects old format. also audio names can be changed for readibility (put word in title)
 
