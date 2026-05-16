@@ -8,7 +8,6 @@ A comprehensive Cherokee language app built in React. Features include:
 - WIP study tools (custom word lists, widgets with study exercises, etc).
 
 ## The Data
-
 Lexical sources were synthesized over time from various sources.
 - [cherokeenationdictionary.net] - The official Cherokee Nation dictionary site. A maintained version of the CED by Durbin Feeling. Includes audio, sentence examples, and some conjugations for each word.
 - [cherokeedictionary.net] - The original online dictionary site. Contains CED and additional sources such as Raven Rock Dictionary, Noquisi Word List, Consortium Word List, and other smaller sources. Some typos and quality issues.
@@ -20,16 +19,15 @@ Lexical sources were synthesized over time from various sources.
 
 I converted the print sources to CSVs and consolidated everything [here](https://github.com/lily-bel/cherokee-data-consolidation). This pre-processing allows for maintained sources like the CN dictionary and root word project to be updated and used downstream in the app.
 
-## Search Tab
-
+## 🧐 Search Tab
+Feature-rich dictionary search.
 - **Multi-Language Input**: Search using Syllabary, Phonetics/Transliteration, or English. Supports searching by root and conjugations (if available), tone, sentence examples, or your own notes.
 - **Flexible Scope**: All search options can be toggled on or off. Combined with regular expression support, this allows for narrow grammatical search for studying sound or tone.
 - **Detailed List View** - Search results include icons to indicate the dictionary source (CED, etc) and whether the entry has audio, custom word forms, and notes. These icons are color-coded by user / package.
 - **Root Integration**: CED search results are grouped by their morphological root. Roots have their own unique pages with a list of verbs they form.
 - Search history, source filtering (CED, custom dictionaries, etc), and other QoL features.
 
-## Entry View
-
+## ✏️ Entry View
 Clicking on a word brings you to its unique page. Aside from the entry and definition, there is a lot of useful information here.
 - **Audio** - Official audio is included from the Cherokee Nation dictionary. Custom audio can be recorded for entries and conjugations.
 - **Grammatical Data** - Based on dictionary sources words may have tone, root + verb class, conjugations, and grammar details like Set and required prefixes (de-, wi-).
@@ -37,45 +35,34 @@ Clicking on a word brings you to its unique page. Aside from the entry and defin
 - **Customization** - Official words can have custom audio, conjugations, and notes.
 - **URL Sharing** - Each entry and root has a unique ID and can be shared with a URL.
 
-## Reader Tab
+## 📖 Reader Tab
 An immersive environment for reading full texts in Cherokee that integrates with other app features.
 - **Reading Modes** - Toggle between syllabary, phonetics, or both, and turn english translation on or off.
 - **Built-in Texts** - The CED sentences and Cherokee New Testament are available in full text form.
 - **Interactive Glossing**: Tap any word in a text to connect it to its dictionary entry (and create optional word-level notes) or mark it for future investigation.
 - **Text Importer (WIP)**: Upload your own texts to create your own corpus. _WIP - Lining up Cherokee + English and segmenting texts into sentences UX is still in progress._
 
-## Lists Tab
+## 📝 Lists Tab
 Organize words and sentences and see custom data all in one place.
-- **Favorites + Custom Lists**: One-tap bookmarking for words and sentences, or create your own lists.
-- ****: Create your own lists.
-- **Smart Lists**: Automatic collections for entries where you have recorded audio, added personal notes, or created custom glosses.
-- **Mass Actions**: Export lists or move items between collections effortlessly.
+- **Favorites + Custom Lists**: Star words and sentences to easily save them, or create your own lists.
+- **Smart Lists**: Built-in lists for entries with custom audio, word forms, notes, and glosses.
+- _Study modes planned for later release._
 
-## Custom Dictionaries Tab
-Take control of your learning by building your own linguistic database.
-
-- **Custom Notebooks**: Create multiple private dictionaries to organize your field notes or personal vocabulary.
-- **Entry Creation**: Add new words or sentences with full support for Syllabary, Transliteration, and definitions.
-- **Metadata Management**: Edit and refine your entries over time.
-- **Export/Import**: Move your personal data between devices using JSON backups or export to CSV for use in spreadsheet software.
+## 📚 Custom Dictionaries Tab
+Create notebooks of custom words or sentences with all the features of built-in words.
+- **Entry Parity**: Custom entries have the same functionality as official sources. Custom words can be glossed to official sentences and vice-versa.
+- **Color Coding**: User-generated words, sentences, glosses, audio, and notes share a gold color scheme, compared to the grey of official sources.
 
 ## 📦 Packages Tab
-Manage the vast amount of data available in the app through a modular system.
-
-- **Data Modularization**: Enable or disable specific "packages" (e.g., CED, Community Dictionaries) to keep your workspace focused.
-- **Package Details**: View metadata, versioning, and contribution info for each data source.
-- **Community Contributions**: Import third-party packages to expand your corpus.
+Manage official and custom packages, import and export data _(words, sentences, audio, conjugations, notes, and glosses)_ to share with others.
+- **Official Sources and "My Library"** - Official (built-in) corpus and user-generated data appear as packages and can be enabled/disabled.
+- **Exporting**: User-generated data can be exported (deliniated by lists or custom dictionaries) into an organized zip file.
+- **Importing**: Imported package data appears across the app in the chosen color.
+- **Information at a glace**: Packages are listed with counts of their data, and can be opened and viewed/searched in the package viewer.
 
 ## 🛠️ Widgets Tab
-A collection of specialized tools for specific linguistic tasks and learning games.
-
-- **Built-in Tools**: Includes a Syllabary Learner, Transliteration Converter, and Pronoun Game.
-- **Custom Widgets**: Import your own HTML-based tools or point to external web-based linguistic resources.
-- **Seamless Integration**: Widgets run within the app environment and can be accessed via direct URLs.
-
----
-
-## ⚙️ Customization & Settings
-- **Dark/Light Mode**: Full theme support for comfortable reading.
-- **Visual Preferences**: Toggle Part of Speech labels in lists, root headers, and interactive UI elements.
-- **Data Portability**: Full Backup/Restore system ensures your personal library is never lost.
+An optional tab for custom HTML widgets.
+- **Syllabary Learner**: A (frankly better) version of my Learn Cherokee Syllabary app. Practice tracing, writing, and reading syllabary.
+- **Transliteration**: Convert syllabary <-> phonetics in 3 modes.
+- **Pronoun Game** - Practice pronomial prefixes.
+- **Grammar Guide**: Embed of the online CED grammar guide.
