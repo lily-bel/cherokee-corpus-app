@@ -1,5 +1,6 @@
 # Cherokee Dictionary and Corpus App
-## [lily-bel.github.io/cherokee-corpus-app](https://lily-bel.github.io/cherokee-corpus-app/)
+## Beta link - [lily-bel.github.io/cherokee-corpus-app](https://lily-bel.github.io/cherokee-corpus-app/)
+_Note - Please wait for version 1.0 for guaranteed import/export compatibility. Cached data should be stable from beta version onward._
 
 A comprehensive Cherokee language app built in React for web and mobile. 
 
