@@ -454,11 +454,11 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
         
         let currentScore = 0;
         if (fLower === lowerQuery || fLower === queryWithTones) {
-            currentScore = 100;
+            currentScore = 120;
         } else if (fLower.startsWith(lowerQuery) || fLower.startsWith(queryWithTones)) {
-            currentScore = 50;
+            currentScore = 70;
         } else if (fLower.includes(lowerQuery) || fLower.includes(queryWithTones)) {
-            currentScore = 25;
+            currentScore = 15;
         }
 
         if (currentScore > 0) {
@@ -488,9 +488,20 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
       }
 
       if (entry.PoS && entry.PoS.toLowerCase().startsWith('v')) score += 30;
+
+      // Slight length penalty to break ties and order by relative length of primary Entry/Syllabary
+      const primaryLength = entry.Entry?.length || entry.Syllabary?.length || 0;
+      score -= primaryLength * 0.001;
     }
     return { ...entry, score };
   })
     .filter(item => item.score > 0)
-    .sort((a, b) => b.score - a.score);
+    .sort((a, b) => {
+      if (Math.abs(b.score - a.score) < 0.0001) {
+        const lenA = a.Entry?.length || a.Syllabary?.length || 999;
+        const lenB = b.Entry?.length || b.Syllabary?.length || 999;
+        return lenA - lenB;
+      }
+      return b.score - a.score;
+    });
 };
