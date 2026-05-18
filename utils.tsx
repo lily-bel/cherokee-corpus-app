@@ -457,18 +457,35 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
       for (const field of fieldsToSearch) {
         if (!field) continue;
         const fLower = field.toLowerCase();
-        if (fLower === lowerQuery || fLower === queryWithTones) { score = 100; break; }
-        if (fLower.startsWith(lowerQuery) || fLower.startsWith(queryWithTones)) score = Math.max(score, 50);
-        else if (fLower.includes(lowerQuery) || fLower.includes(queryWithTones)) score = Math.max(score, 25);
+        
+        let currentScore = 0;
+        if (fLower === lowerQuery || fLower === queryWithTones) {
+            currentScore = 100;
+        } else if (fLower.startsWith(lowerQuery) || fLower.startsWith(queryWithTones)) {
+            currentScore = 50;
+        } else if (fLower.includes(lowerQuery) || fLower.includes(queryWithTones)) {
+            currentScore = 25;
+        }
+
+        if (currentScore > 0) {
+            // Boost shorter matches based on how much of the field matches the query
+            // This grants up to 40 bonus points, keeping it below the +60 priority source boost
+            const ratio = lowerQuery.length / field.length;
+            currentScore += (ratio * 40);
+            
+            if (currentScore > score) {
+                score = currentScore;
+            }
+        }
       }
     }
 
     if (score > 0) {
       const entryId = parseInt(entry.Index || entry.id || "0");
 
-      if (customDictionaries[entry.Source]) score += 10;
-      else if (entryId >= 100000) score += 4;
-      if (entry.Source && prioritizedSources.includes(entry.Source.toLowerCase())) score += 2;
+      if (customDictionaries[entry.Source]) score += 60;
+      else if (entryId >= 100000) score += 60;
+      if (entry.Source && prioritizedSources.includes(entry.Source.toLowerCase())) score += 60;
 
       // Gold standard sources boost
       if (entry.sources) {
