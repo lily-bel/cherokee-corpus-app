@@ -3,6 +3,24 @@ TODO:
 - splitting the sentences doesn't seem to work right now.
 - other forms - dont show repeat gloss forms
 - clicking root -> class -> verb goes back to root (page stays open behind i think)
+- check bible for chapter errors + mismatched syl/phonetics
+- class page - show normal endings in table
+- gloss search has double entries
+- if theres only one form of a word dont display the word forms the same, its probably not "singular"
+- hide asterisks in sentences in reader + package manager
+- search algo - make sure exact / shorter are better within ced, deprioritize other forms, prioritize personal dictionaries
+- gloss popup - add a quick other forms dropdown to see other forms in the search. maybe theres a form section too?
+- add auto translit to create word modal
+- fix raven rock sentences
+- remove export notebook button
+- custom word forms can show in mini table, up to 6 max
+- audio record modal is behind other forms modal
+- header text overflows on mobile now, make it smaller. top bar could be thinner in general
+- adverbs got marked as verbs tense wise
+- reader - allow glossing in any mode
+
+- package fixes - they export properly but import gets tripped up, still expects old format. also audio names can be changed for readibility (put word in title)
+
 
 Other dynamic / default lists (CED Verbs / non-verbs)
 

@@ -283,7 +283,7 @@ export const getAllUserAudioKeys = async () => {
 };
 
 // --- SEARCH ALGORITHM ---
-export const performSearch = (query: string, allData: any[], sentences: any[], entryToSentencesMap: Map<string, string[]>, settings: any, customDictionaries: any, userNotes: any, posFilter: string, searchScope: string, prioritizedSources: string[] = [], importedData: any = {}) => {
+export const performSearch = (query: string, allData: any[], sentences: any[], entryToSentencesMap: Map<string, string[]>, settings: any, customDictionaries: any, userNotes: any, posFilter: string, searchScope: string, prioritizedSources: string[] = [], rootMap: Map<string, any> = new Map(), wordFormsLookupMap: Map<string, any[]> = new Map()) => {
   if (!query) return [];
   const lowerQuery = query.toLowerCase().trim();
   const queryWithTones = lowerQuery.replace(/[1234?]/g, m => ({ '1': '¹', '2': '²', '3': '³', '4': '⁴', '?': 'ʔ' }[m] || m));
@@ -311,7 +311,8 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
       main: searchScopes.main !== false,
       otherForms: searchScopes.otherForms !== false,
       notes: !!searchScopes.notes,
-      sentences: !!searchScopes.sentences
+      sentences: !!searchScopes.sentences,
+      roots: !!searchScopes.roots
   };
 
 
@@ -368,29 +369,7 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
     return [...textMatches, ...deepMatches].sort((a, b) => b.score - a.score);
   }
 
-  // --- DICTIONARY MODE PERFORMANCE OPTIMIZATION ---
-  // PRE-COMPUTE a flat word forms lookup Map ONCE per search! O(W) where W is number of word forms.
-  // This eliminates the catastrophic N^2 nested filtration inside the .map(entry) loop.
-  const wordFormsLookupMap = new Map<string, any[]>();
-  if (searchScope !== 'sentences' && activeScopes.otherForms) {
-      Object.values(importedData).forEach((pkgData: any) => {
-          if (pkgData?.word_forms) {
-              pkgData.word_forms.forEach((f: any) => {
-                  if (f.word_index != null) {
-                      const idStr = String(f.word_index);
-                      let arr = wordFormsLookupMap.get(idStr);
-                      if (!arr) {
-                          arr = [];
-                          wordFormsLookupMap.set(idStr, arr);
-                      }
-                      arr.push(f);
-                  }
-              });
-          }
-      });
-  }
-
-  // DICTIONARY MODE LOOP: O(N) where N is number of base entries.
+  // --- DICTIONARY MODE LOOP: O(N) where N is number of base entries. ---
   return allData.map(entry => {
     let score = 0;
 
@@ -449,6 +428,21 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
     if (activeScopes.notes) {
       const note = isPersonal ? entry.Notes : userNotes[entry.Index];
       if (note) fieldsToSearch.push(note);
+    }
+
+    if (activeScopes.roots) {
+        const id = entry.id || entry.Index;
+        const rootEntry = rootMap.get(id);
+        if (rootEntry) {
+            if (activeLangs.translit) {
+                if (rootEntry.root_h) fieldsToSearch.push(rootEntry.root_h);
+                if (rootEntry.root_g) fieldsToSearch.push(rootEntry.root_g);
+                if (rootEntry.root_slug) fieldsToSearch.push(rootEntry.root_slug);
+            }
+            if (activeLangs.english && rootEntry.definition) {
+                fieldsToSearch.push(rootEntry.definition);
+            }
+        }
     }
 
     if (settings?.enableRegex && regex) {

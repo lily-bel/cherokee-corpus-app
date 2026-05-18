@@ -40,7 +40,7 @@ const WidgetViewer: React.FC<WidgetViewerProps> = ({ widget, onClose }) => {
                 </div>
             </div>
             <div className="flex-1 relative bg-slate-100 dark:bg-slate-900">
-                {widget.isBuiltIn && widget.path ? (
+                {widget.path ? (
                     <iframe
                         src={widget.path}
                         className="w-full h-full border-0"

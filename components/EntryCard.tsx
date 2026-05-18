@@ -129,19 +129,22 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
 
   return (
     <div key={entry.Index} onClick={() => onClick(entry)} className={`bg-white dark:bg-slate-900 p-4 border-b border-slate-100 dark:border-slate-800 active:bg-slate-50 dark:active:bg-slate-800 transition-colors cursor-pointer ${isDimmed ? 'opacity-50 grayscale' : ''} `}>
-      <div className="flex justify-between items-start mb-1">
-        <div className="flex-1 min-w-0 pr-2">{entry.Syllabary && <span className="font-noto-cherokee text-xl font-bold text-slate-800 dark:text-slate-100 mr-2">{entry.Syllabary}</span>}<span className="font-noto-serif text-lg text-amber-700 dark:text-amber-400 font-medium break-words">{entry.Entry}</span></div>
+      <div className="flex justify-between items-start mb-2 gap-3">
+        <div className="flex-1 min-w-0 flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+          {entry.Syllabary && <span className="font-noto-cherokee text-lg font-bold text-slate-800 dark:text-slate-100">{entry.Syllabary}</span>}
+          <span className="font-noto-serif text-base text-amber-700 dark:text-amber-400 font-medium [overflow-wrap:anywhere] [word-break:normal]">{entry.Entry}</span>
+        </div>
         <div className="shrink-0 flex flex-col items-end gap-1">
           <div className="flex items-center gap-2">
-            <MultiSourceIcon Icon={StickyNote} colors={noteColors} size={16} />
-            <MultiSourceIcon Icon={SquaresPlus} colors={formColors} size={14} />
-            <MultiSourceIcon Icon={Mic} colors={audioColors} size={14} />
+            <MultiSourceIcon Icon={StickyNote} colors={noteColors} size={15} />
+            <MultiSourceIcon Icon={SquaresPlus} colors={formColors} size={13} />
+            <MultiSourceIcon Icon={Mic} colors={audioColors} size={13} />
             <SourceBadge source={entry.Source || entry.source} name={customDictionaries[entry.Source || entry.source]?.name} customColor={getPackageColor(entry.Source || entry.source)} />
           </div>
           {totalLists > 0 && <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-0.5"><ListIcon size={10} /> {totalLists}</span>}
         </div>
       </div>
-      <p className="font-noto-serif text-slate-600 dark:text-slate-400 text-sm line-clamp-2">
+      <p className="font-noto-serif text-slate-600 dark:text-slate-400 text-xs line-clamp-2">
         {entry.Definition}
         {/* PoS Moved After Definition */}
         {showPos && entry.PoS && <span className="text-slate-400 dark:text-slate-500 italic ml-1 lowercase">({entry.PoS})</span>}

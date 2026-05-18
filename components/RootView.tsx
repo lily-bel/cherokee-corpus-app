@@ -146,19 +146,19 @@ const RootView: React.FC<RootViewProps> = ({ slug, onClose, onViewEntry, onViewC
                                 </div>
 
                                 {isExpanded && (
-                                    <div className="animate-fade-in">
-                                        <div className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-3">CED Conjugations</div>
+                                    <div className="animate-fade-in -mx-6 px-6">
+                                        <div className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-3 px-1">CED Conjugations</div>
                                         {finalCedForms.length > 0 ? (
-                                            <div className="grid grid-cols-[auto_auto_1fr] gap-x-6 gap-y-2.5 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800 items-center shadow-sm">
+                                            <div className="grid grid-cols-[minmax(80px,auto)_auto_1fr] gap-x-4 md:gap-x-8 gap-y-2.5 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800 items-center shadow-sm overflow-x-auto">
                                                 {finalCedForms.map((f, i) => (
                                                     <React.Fragment key={i}>
-                                                         <div className="text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider pr-2">
+                                                         <div className="text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider pr-1 leading-tight py-1" title={f.displayLabel}>
                                                              {f.displayLabel}:
                                                          </div>
-                                                         <div className="font-noto-cherokee text-base text-slate-800 dark:text-slate-200 font-medium">
+                                                         <div className="font-noto-cherokee text-base text-slate-800 dark:text-slate-200 font-medium whitespace-nowrap">
                                                              {f.syllabary}
                                                          </div>
-                                                         <div className="text-[15px] text-amber-800 dark:text-amber-400 italic font-semibold">
+                                                         <div className="text-[15px] text-amber-800 dark:text-amber-400 italic font-semibold whitespace-nowrap">
                                                              {f.translit}
                                                          </div>
                                                     </React.Fragment>

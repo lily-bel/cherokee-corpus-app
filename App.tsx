@@ -7,7 +7,7 @@ import EntryDetail from './components/EntryDetail';
 
 import PackageManagerTab from './components/PackageManagerTab';
 import { useCorpus } from './components/CorpusContext';
-import { downloadFile, exportDictionaryToCSV, importDictionaryFromCSV, performSearch } from './utils';
+import { downloadFile, exportDictionaryToCSV, performSearch } from './utils';
 import { SentenceCard } from './components/SentenceCard';
 import WidgetsTab from './components/WidgetsTab';
 
@@ -28,7 +28,8 @@ const DEFAULT_SETTINGS = {
     enableRegex: false,
     showPosInLists: false,
     searchLangs: { syllabary: true, translit: true, english: true, tone: false },
-    searchScopes: { main: true, otherForms: true, sentences: false, notes: false },
+    searchScopes: { main: true, otherForms: true, sentences: false, notes: false, roots: true },
+    showRootHeaders: true,
 };
 
 function App() {
@@ -101,6 +102,33 @@ function App() {
     const restoreInputRef = useRef<any>(null);
 
     const [renameData, setRenameData] = useState<{ type: string | null; target: string | null; value: string; initialEntryIndex?: string | null }>({ type: null, target: null, value: '', initialEntryIndex: null });
+
+    // --- PERFORMANCE OPTIMIZATION: PRE-CALCULATE LOOKUPS ---
+    const wordFormsLookupMap = useMemo(() => {
+        const map = new Map<string, any[]>();
+        Object.values(importedData).forEach((pkgData: any) => {
+            if (pkgData?.word_forms) {
+                pkgData.word_forms.forEach((f: any) => {
+                    if (f.word_index != null) {
+                        const idStr = String(f.word_index);
+                        let arr = map.get(idStr);
+                        if (!arr) {
+                            arr = [];
+                            map.set(idStr, arr);
+                        }
+                        arr.push(f);
+                    }
+                });
+            }
+        });
+        return map;
+    }, [importedData]);
+
+    const entriesWithOtherFormsSet = useMemo(() => {
+        const set = new Set<string>();
+        wordFormsLookupMap.forEach((_, key) => set.add(key));
+        return set;
+    }, [wordFormsLookupMap]);
 
     const [showMoveModal, setShowMoveModal] = useState(false);
     const [wordToMove, setWordToMove] = useState<string | null>(null);
@@ -754,18 +782,22 @@ function App() {
             if (searchLangs.syllabary && entry.Sentence_Syllabary) hasTargetData = true;
             if (searchLangs.english && entry.Sentence_English) hasTargetData = true;
         }
-        if (!hasTargetData && searchScopes.verbs) {
-            if (searchLangs.translit && entry.Verb_1st_Present) hasTargetData = true;
-            if (searchLangs.syllabary && entry.Verb_1st_Present_Syllabary) hasTargetData = true;
-            if (searchLangs.tone && entry.Verb_1st_Present_Tone) hasTargetData = true;
+        if (!hasTargetData && searchScopes.otherForms) {
+            // Check legacy Other_Forms
+            if (entry.Other_Forms) hasTargetData = true;
+            
+            // Check new imported word_forms using optimized set
+            if (!hasTargetData) {
+                const id = String(entry.id || entry.Index);
+                if (entriesWithOtherFormsSet.has(id)) hasTargetData = true;
+            }
         }
-        if (!hasTargetData && searchScopes.plurals) {
-            if (searchLangs.translit && entry.Plural) hasTargetData = true;
-            if (searchLangs.syllabary && entry.Plural_Syllabary) hasTargetData = true;
-            if (searchLangs.tone && entry.Plural_Tone) hasTargetData = true;
+        if (!hasTargetData && searchScopes.roots) {
+            const id = entry.id || entry.Index;
+            if (rootMap.has(id)) hasTargetData = true;
         }
         if (!hasTargetData && searchScopes.notes) {
-            // CHANGE: For CSV words (not personal), IGNORE entry.Notes. Only use userNotes.
+            // For CSV words (not personal), IGNORE entry.Notes. Only use userNotes.
             const note = isPersonal ? entry.Notes : userNotes[entry.Index];
             if (note) hasTargetData = true;
         }
@@ -773,13 +805,15 @@ function App() {
     };
 
     const searchableCount = useMemo(() => {
-        return allData.reduce((acc, entry) => {
-            // CHANGE: Check PoS Filter
-            if (posFilter !== "All" && entry.PoS !== posFilter) return acc;
+        if (searchScope === 'sentences') {
+            return sentences.length + userSentences.length;
+        }
 
+        return allData.reduce((acc, entry) => {
+            if (posFilter !== "All" && entry.PoS !== posFilter) return acc;
             return acc + (isEntrySearchable(entry, settings) ? 1 : 0);
         }, 0);
-    }, [allData, settings, userNotes, posFilter]);
+    }, [allData, settings, userNotes, posFilter, searchScope, sentences, userSentences, entriesWithOtherFormsSet, rootMap]);
 
     const toggleFavorite = (idx) => setFavorites(prev => prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]);
     const toggleInList = (listId, idx) => {
@@ -933,20 +967,6 @@ function App() {
         if (!activeDictionaryId) return;
         exportDictionaryToCSV(activeDictionaryId, customDictionaries[activeDictionaryId].name, personalWords);
         showToast("CSV Exported", "success");
-    };
-    const handleImportDictionary = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        importDictionaryFromCSV(file, (importedWords) => {
-            const newId = 'nb_' + Date.now();
-            const newName = file.name.replace('.csv', '');
-            setCustomDictionaries(prev => ({ ...prev, [newId]: { id: newId, name: newName, date: Date.now() } }));
-
-            const wordsWithId = importedWords.map((w, i) => ({ ...w, Index: newId + '_' + i, customDictionaryId: newId, DateCreated: Date.now() }));
-            setPersonalWords(prev => [...prev, ...wordsWithId]);
-            showToast(`Imported ${newName} `, "success");
-        });
-        e.target.value = null;
     };
     const handleBackup = () => {
         const data = { favorites, customLists, customListOrder, customDictionaries, personalWords, userNotes, settings, searchHistory };
@@ -1293,8 +1313,8 @@ function App() {
         const isUserLibraryActive = packages.find(p => p.id === 'user')?.status === 'active';
         // Include user sentences in search if scope is sentences AND user library is active
         const combinedSentences = [...sentences, ...(isUserLibraryActive ? userSentences : [])];
-        return performSearch(query, allData, combinedSentences, entryToSentencesMap, settings, customDictionaries, userNotes, posFilter, searchScope, prioritizedSources, importedData);
-    }, [query, allData, customDictionaries, settings, userNotes, posFilter, searchScope, sentences, userSentences, entryToSentencesMap, prioritizedSources, packages, importedData]);
+        return performSearch(query, allData, combinedSentences, entryToSentencesMap, settings, customDictionaries, userNotes, posFilter, searchScope, prioritizedSources, rootMap, wordFormsLookupMap);
+    }, [query, allData, customDictionaries, settings, userNotes, posFilter, searchScope, sentences, userSentences, entryToSentencesMap, prioritizedSources, packages, rootMap, wordFormsLookupMap]);
 
     const filteredResults = useMemo(() => {
         if (!query && activeTab === 'search') return { active: [], inactive: [] };
@@ -1567,7 +1587,7 @@ function App() {
                                         
                                         // Look back to see if same root was rendered
                                         let showRootHeader = false;
-                                        if (rootEntry) {
+                                        if (rootEntry && settings.showRootHeaders !== false) {
                                             const prevItem = index > 0 ? array[index - 1] : null;
                                             const prevIsSentence = prevItem ? (prevItem.item || (prevItem.id && !prevItem.Index)) : true;
                                             const prevEntry = prevIsSentence ? null : prevItem;
@@ -1594,7 +1614,7 @@ function App() {
                                                         </div>
                                                     </div>
                                                 )}
-                                                <div className={rootEntry ? "ml-4 pl-2 border-l-2 border-amber-500/20 dark:border-amber-400/20" : ""}>
+                                                <div className={(rootEntry && settings.showRootHeaders !== false) ? "ml-4 pl-2 border-l-2 border-amber-500/20 dark:border-amber-400/20" : ""}>
                                                     <EntryCard entry={item} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} />
                                                 </div>
                                             </React.Fragment>
@@ -1713,7 +1733,7 @@ function App() {
                                     const activeNotes = (isModal || isModalSentences) ? {} : userNotes;
                                     const activePrioritized = (isModal || isModalSentences) ? [] : prioritizedSources;
 
-                                    return performSearch(q, allData, [...sentences, ...userSentences], entryToSentencesMap, activeSettings, customDictionaries, activeNotes, activePos, isModalSentences ? 'sentences' : (isModal ? 'dictionary' : (scope || 'dictionary')), activePrioritized, importedData);
+                                    return performSearch(q, allData, [...sentences, ...userSentences], entryToSentencesMap, activeSettings, customDictionaries, activeNotes, activePos, isModalSentences ? 'sentences' : (isModal ? 'dictionary' : (scope || 'dictionary')), activePrioritized, rootMap, wordFormsLookupMap);
                                 }}
                                 settings={settings}
                                 openWordModal={openWordModal}
@@ -1797,7 +1817,7 @@ function App() {
                                 const style = (isImported && nb.color.startsWith('#')) ? { color: nb.color } : {};
 
                                 return (<div key={nb.id} onClick={() => setActiveDictionaryId(nb.id)} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 flex flex-col shadow-sm hover:shadow-md transition-shadow active:bg-slate-50 dark:active:bg-slate-800 cursor-pointer h-32 justify-between"><Folder size={32} className={isImported && nb.color.startsWith('#') ? "" : (isImported ? colorClass : "text-amber-500")} style={style} /><div><h3 className="font-bold text-slate-800 dark:text-slate-200 line-clamp-1">{nb.name}</h3><p className="text-xs text-slate-400">{nb.countWords} words, {nb.countSentences} sentences</p></div></div>);
-                            })}{dictionaryList.length === 0 && (<div className="col-span-2 text-center py-12 text-slate-400 flex flex-col items-center"><BookOpen size={48} className="mb-4 opacity-20" /><p>No custom dictionaries yet.</p><button onClick={() => setShowNewDictionaryModal(true)} className="mt-4 text-sky-600 dark:text-sky-400 font-bold">Create one</button></div>)}</div><div className="p-4 border-t border-slate-200 dark:border-slate-800"><label className="w-full flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold py-3 rounded-xl cursor-pointer transition-colors"><Download size={20} /><span>Import CSV</span><input type="file" className="hidden" accept=".csv" onChange={handleImportDictionary} /></label></div></div>) : (<div className="flex flex-col h-full"><div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col gap-3 shrink-0">
+                            })}{dictionaryList.length === 0 && (<div className="col-span-2 text-center py-12 text-slate-400 flex flex-col items-center"><BookOpen size={48} className="mb-4 opacity-20" /><p>No custom dictionaries yet.</p><button onClick={() => setShowNewDictionaryModal(true)} className="mt-4 text-sky-600 dark:text-sky-400 font-bold">Create one</button></div>)}</div></div>) : (<div className="flex flex-col h-full"><div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col gap-3 shrink-0">
                                 <div className="flex items-center gap-3">
                                     <button onClick={() => setActiveDictionaryId(null)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full -ml-2"><ArrowLeft size={20} className="text-slate-500 dark:text-slate-400" /></button>
                                     <div className="flex-1 flex items-center gap-2"><h2 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100">{customDictionaries[activeDictionaryId]?.name || dictionaryList.find(n => n.id === activeDictionaryId)?.name || 'Custom Dictionary'}</h2>
@@ -1829,30 +1849,30 @@ function App() {
                     </>
                 )}
             </main >
-            <nav className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 pb-safe pt-2 px-6 flex justify-between shrink-0 h-[80px] pb-5">
-                <button onClick={() => { setActiveTab('search'); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'search' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
-                    <Search size={24} strokeWidth={2} />
-                    <span className="text-[10px] font-bold tracking-wide">Search</span>
+            <nav className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 pb-safe pt-2 px-1 flex justify-between shrink-0 h-[72px] md:h-[80px]">
+                <button onClick={() => { setActiveTab('search'); }} className={`flex flex-col items-center gap-1 py-2 rounded-lg flex-1 min-w-0 transition-colors ${activeTab === 'search' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
+                    <Search size={22} strokeWidth={2} className="md:w-6 md:h-6" />
+                    <span className="text-[9px] md:text-[10px] font-bold tracking-tight md:tracking-wide truncate w-full px-1">Search</span>
                 </button>
-                <button onClick={() => { if (activeTab === 'lists') setListsView('all'); setActiveTab('lists'); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'lists' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
-                    <ListIcon size={24} strokeWidth={2} />
-                    <span className="text-[10px] font-bold tracking-wide">Lists</span>
+                <button onClick={() => { if (activeTab === 'lists') setListsView('all'); setActiveTab('lists'); }} className={`flex flex-col items-center gap-1 py-2 rounded-lg flex-1 min-w-0 transition-colors ${activeTab === 'lists' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
+                    <ListIcon size={22} strokeWidth={2} className="md:w-6 md:h-6" />
+                    <span className="text-[9px] md:text-[10px] font-bold tracking-tight md:tracking-wide truncate w-full px-1">Lists</span>
                 </button>
-                <button onClick={() => { if (activeTab === 'reader') setReaderView('list'); setActiveTab('reader'); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'reader' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
-                    <BookOpen size={24} strokeWidth={2} />
-                    <span className="text-[10px] font-bold tracking-wide">Reader</span>
+                <button onClick={() => { if (activeTab === 'reader') setReaderView('list'); setActiveTab('reader'); }} className={`flex flex-col items-center gap-1 py-2 rounded-lg flex-1 min-w-0 transition-colors ${activeTab === 'reader' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
+                    <BookOpen size={22} strokeWidth={2} className="md:w-6 md:h-6" />
+                    <span className="text-[9px] md:text-[10px] font-bold tracking-tight md:tracking-wide truncate w-full px-1">Reader</span>
                 </button>
-                <button onClick={() => { if (activeTab === 'personal') setActiveDictionaryId(null); setActiveTab('personal'); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'personal' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
-                    <Book size={24} strokeWidth={2} />
-                    <span className="text-[10px] font-bold tracking-wide">Dictionaries</span>
+                <button onClick={() => { if (activeTab === 'personal') setActiveDictionaryId(null); setActiveTab('personal'); }} className={`flex flex-col items-center gap-1 py-2 rounded-lg flex-1 min-w-0 transition-colors ${activeTab === 'personal' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
+                    <Book size={22} strokeWidth={2} className="md:w-6 md:h-6" />
+                    <span className="text-[9px] md:text-[10px] font-bold tracking-tight md:tracking-wide truncate w-full px-1">Dicts</span>
                 </button>
-                <button onClick={() => { setActiveTab('packages'); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'packages' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
-                    <Box size={24} strokeWidth={2} />
-                    <span className="text-[10px] font-bold tracking-wide">Packages</span>
+                <button onClick={() => { setActiveTab('packages'); }} className={`flex flex-col items-center gap-1 py-2 rounded-lg flex-1 min-w-0 transition-colors ${activeTab === 'packages' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
+                    <Box size={22} strokeWidth={2} className="md:w-6 md:h-6" />
+                    <span className="text-[9px] md:text-[10px] font-bold tracking-tight md:tracking-wide truncate w-full px-1">Packages</span>
                 </button>
-                <button onClick={() => { setActiveTab('widgets'); }} className={`flex flex-col items-center gap-1 p-2 rounded-lg w-16 transition-colors ${activeTab === 'widgets' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
-                    <Layout size={24} strokeWidth={2} />
-                    <span className="text-[10px] font-bold tracking-wide">Widgets</span>
+                <button onClick={() => { setActiveTab('widgets'); }} className={`flex flex-col items-center gap-1 py-2 rounded-lg flex-1 min-w-0 transition-colors ${activeTab === 'widgets' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
+                    <Layout size={22} strokeWidth={2} className="md:w-6 md:h-6" />
+                    <span className="text-[9px] md:text-[10px] font-bold tracking-tight md:tracking-wide truncate w-full px-1">Widgets</span>
                 </button>
             </nav>
 
@@ -1875,9 +1895,12 @@ function App() {
                                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Search Scope</h4>
 
                                 {/* CHECKBOXES FIRST */}
-                                <div className="space-y-2 mb-4">{[{ k: 'main', l: 'Main Entry' }, { k: 'otherForms', l: 'Other Word Forms' }, { k: 'sentences', l: 'Sentences' }, { k: 'notes', l: 'Notes' }].map(opt => (<label key={opt.k} className="flex items-center justify-between cursor-pointer p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded"><span className="text-sm font-medium text-slate-700 dark:text-slate-300">{opt.l}</span><input type="checkbox" checked={settings.searchScopes[opt.k]} onChange={() => setSettings(s => ({ ...s, searchScopes: { ...s.searchScopes, [opt.k]: !s.searchScopes[opt.k] } }))} className="accent-amber-600 w-5 h-5 rounded" /></label>))}</div>
+                                <div className="space-y-2 mb-4">{[{ k: 'main', l: 'Main Entry' }, { k: 'otherForms', l: 'Other Word Forms' }, { k: 'roots', l: 'Roots' }, { k: 'sentences', l: 'Sentences' }, { k: 'notes', l: 'Notes' }].map(opt => (<label key={opt.k} className="flex items-center justify-between cursor-pointer p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded"><span className="text-sm font-medium text-slate-700 dark:text-slate-300">{opt.l}</span><input type="checkbox" checked={settings.searchScopes[opt.k]} onChange={() => setSettings(s => ({ ...s, searchScopes: { ...s.searchScopes, [opt.k]: !s.searchScopes[opt.k] } }))} className="accent-amber-600 w-5 h-5 rounded" /></label>))}</div>
+
+                                <div className="flex items-center justify-between p-1"><div className="flex flex-col"><span className="text-sm font-medium text-slate-700 dark:text-slate-300">Show Root Headers</span><span className="text-[10px] text-slate-400">Group search results by root</span></div><button onClick={() => setSettings(s => ({ ...s, showRootHeaders: !s.showRootHeaders }))} className={`transition - colors ${settings.showRootHeaders ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'} `}>{settings.showRootHeaders ? <ToggleRight size={32} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={32} />}</button></div>
 
                                 {/* POS FILTER Moved Here (Below Checkboxes) */}
+
                                 <div className="pt-2 border-t border-slate-100 dark:border-slate-800 mt-2">
                                     <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">Filter by Part of Speech</label>
                                     <select
