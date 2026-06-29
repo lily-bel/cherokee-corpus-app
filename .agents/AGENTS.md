@@ -36,7 +36,7 @@ remains fully synchronized and up-to-date.
 - **Use `--plain` flag** for AI-friendly output when viewing/listing
 - **Never bypass the CLI** - It handles Git, metadata, file naming, and relationships
 - **No Task, No Work**: ANY work you perform (including updating rules, writing code, or altering files) MUST be attached to a task. If a task does not exist for the work requested by the user, you MUST create and scope a new task before you begin any work.
-- **Troubleshooting CLI Path Issues**: If `backlog` or `node` commands fail with `CommandNotFoundException`, explicitly prepend their paths in your command: `$env:Path = "C:\Program Files\nodejs;C:\Users\lilyb\AppData\Roaming\npm;" + $env:Path; backlog <command>`
+- **Environment**: Node.js and the Backlog CLI are globally installed and permanently available on this PC. You can invoke `backlog` commands directly in your terminal (e.g., `backlog list`) without any path configuration.
 
 ---
 
