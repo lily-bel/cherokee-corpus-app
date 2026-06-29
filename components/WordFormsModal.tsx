@@ -2,7 +2,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { X, Mic, Trash2, Pause, Volume2, Plus } from './Icons';
-import { getFriendlyLabel, processFormsContextually } from '../utils';
+import { getFriendlyLabel, processFormsContextually, renderStyledText } from '../utils';
 import { useCorpus } from './CorpusContext';
 
 interface WordFormsModalProps {
@@ -396,7 +396,7 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
                                                         {/* English translation */}
                                                         {sentence.english && (
                                                             <div className="text-sm text-slate-500 dark:text-slate-400 italic border-t border-slate-100 dark:border-slate-800/60 pt-2.5 mt-2">
-                                                                {sentence.english}
+                                                                {renderStyledText(sentence.english)}
                                                             </div>
                                                         )}
 

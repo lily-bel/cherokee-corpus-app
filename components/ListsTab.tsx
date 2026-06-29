@@ -3,7 +3,7 @@ import { Star, ListIcon, Trash2, Pencil, ChevronRight, GripVertical, Folder, Arr
 import { Modal, SourceBadge } from './UI';
 import { usePackageManager } from './PackageManagerContext';
 import { useCorpus } from './CorpusContext';
-import { getAudioFromDB } from '../utils';
+import { getAudioFromDB, renderStyledText } from '../utils';
 
 export interface ListData {
     id: string;
@@ -1015,8 +1015,8 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                                     <td className="p-3 align-middle">
                                                         <div className="flex justify-between items-start">
                                                             <div>
-                                                                <div className="font-noto-cherokee text-lg text-slate-800 dark:text-slate-100 leading-tight">{sentence.syllabary || ''}</div>
-                                                                <div className="font-noto-serif text-sm text-slate-500 dark:text-slate-400 font-medium">{sentence.translit || ''}</div>
+                                                                <div className="font-noto-cherokee text-lg text-slate-800 dark:text-slate-100 leading-tight">{(sentence.syllabary || '').replace(/\*/g, '')}</div>
+                                                                <div className="font-noto-serif text-sm text-slate-500 dark:text-slate-400 font-medium">{(sentence.translit || '').replace(/\*/g, '')}</div>
                                                             </div>
                                                             {onReadInContext && (
                                                                 <button
@@ -1029,12 +1029,12 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                                             )}
                                                         </div>
                                                         <div className="md:hidden mt-2 font-noto-serif text-slate-600 dark:text-slate-300 text-sm line-clamp-2">
-                                                            {sentence.english || ''}
+                                                            {renderStyledText(sentence.english || '')}
                                                         </div>
                                                     </td>
                                                     <td className="p-3 align-middle hidden md:table-cell">
                                                         <div className="font-noto-serif text-slate-600 dark:text-slate-300 text-sm line-clamp-2">
-                                                            {sentence.english || ''}
+                                                            {renderStyledText(sentence.english || '')}
                                                         </div>
                                                     </td>
                                                     <td className="p-3 align-middle">

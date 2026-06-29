@@ -5,6 +5,7 @@ import { usePackageManager } from './PackageManagerContext';
 import { GlossPopover } from './GlossPopover';
 import { LinkerModal } from './LinkerModal';
 import { ArrowLeft, BookOpen, Eye, EyeOff, Type, Menu } from './Icons';
+import { renderStyledText } from '../utils';
 
 type StudyMode = 'study' | 'read';
 type ScriptMode = 'both' | 'syllabary' | 'translit';
@@ -221,7 +222,11 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
         const max = Math.max(syl.length, tr.length);
         const tokens: { syl: string; tr: string; index: number }[] = [];
         for (let i = 0; i < max; i++) {
-            tokens.push({ syl: syl[i] || '', tr: tr[i] || '', index: i });
+            tokens.push({
+                syl: (syl[i] || '').replace(/\*/g, ''),
+                tr: (tr[i] || '').replace(/\*/g, ''),
+                index: i
+            });
         }
         return tokens;
     };
@@ -439,7 +444,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
 
                                 {studyMode === 'study' && sentence.english && (
                                     <p className="mt-3 text-slate-500 dark:text-slate-400 italic text-sm border-t border-slate-100 dark:border-slate-800 pt-2">
-                                        {sentence.english}
+                                        {renderStyledText(sentence.english)}
                                     </p>
                                 )}
                             </div>

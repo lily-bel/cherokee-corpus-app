@@ -3,6 +3,7 @@ import { useCorpus, DictionaryEntry } from './CorpusContext';
 import { useReader, InvestigationItem } from './ReaderContext';
 import { LinkerModal } from './LinkerModal';
 import { ArrowLeft, Trash2, Search as SearchIcon, Clock, ChevronRight, Menu } from './Icons';
+import { renderStyledText } from '../utils';
 
 interface InvestigationQueueProps {
     onBack: () => void;
@@ -40,7 +41,11 @@ export const InvestigationQueue: React.FC<InvestigationQueueProps> = ({
         const max = Math.max(syl.length, tr.length);
         const tokens: { syl: string; tr: string; index: number }[] = [];
         for (let i = 0; i < max; i++) {
-            tokens.push({ syl: syl[i] || '', tr: tr[i] || '', index: i });
+            tokens.push({
+                syl: (syl[i] || '').replace(/\*/g, ''),
+                tr: (tr[i] || '').replace(/\*/g, ''),
+                index: i
+            });
         }
         return tokens;
     };
@@ -218,7 +223,7 @@ export const InvestigationQueue: React.FC<InvestigationQueueProps> = ({
 
                                     {/* English */}
                                     <div className="text-sm text-slate-500 dark:text-slate-400 italic border-t border-slate-100 dark:border-slate-800 pt-2 mt-2">
-                                        {sentence.english}
+                                        {renderStyledText(sentence.english)}
                                     </div>
 
                                     {/* Notes */}

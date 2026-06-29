@@ -9,7 +9,7 @@ import {
 import { SourceBadge } from './UI';
 import EntryCard from './EntryCard';
 import EntryDetail from './EntryDetail';
-import { getAudioFromDB } from '../utils';
+import { getAudioFromDB, renderStyledText } from '../utils';
 
 interface PackageDetailViewProps {
     packageId: string;
@@ -609,9 +609,9 @@ const CompactSentenceCard = ({ sentence, onClick }: { sentence: any, onClick?: (
             onClick={() => onClick && onClick(sentence)}
             className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer relative"
         >
-            <div className="font-noto-cherokee text-lg font-bold text-slate-800 dark:text-slate-100 mb-1">{sentence.syllabary}</div>
-            <div className="font-noto-serif text-amber-700 dark:text-amber-400 text-sm italic mb-1">{sentence.translit}</div>
-            <div className="text-slate-600 dark:text-slate-400 text-sm">{sentence.english}</div>
+            <div className="font-noto-cherokee text-lg font-bold text-slate-800 dark:text-slate-100 mb-1">{(sentence.syllabary || '').replace(/\*/g, '')}</div>
+            <div className="font-noto-serif text-amber-700 dark:text-amber-400 text-sm italic mb-1">{(sentence.translit || '').replace(/\*/g, '')}</div>
+            <div className="text-slate-600 dark:text-slate-400 text-sm">{renderStyledText(sentence.english)}</div>
             <div className="absolute top-4 right-4">
                 <SourceBadge
                     source={sentence.source}
@@ -781,7 +781,11 @@ const GlossCard = ({ gloss, onNavigate }: { gloss: any, onNavigate?: (type: 'dic
         const max = Math.max(syl.length, tr.length);
         const res: { syl: string, tr: string, index: number }[] = [];
         for (let i = 0; i < max; i++) {
-            res.push({ syl: syl[i] || '', tr: tr[i] || '', index: i });
+            res.push({
+                syl: (syl[i] || '').replace(/\*/g, ''),
+                tr: (tr[i] || '').replace(/\*/g, ''),
+                index: i
+            });
         }
         return res;
     }, [sentence]);
@@ -841,7 +845,7 @@ const GlossCard = ({ gloss, onNavigate }: { gloss: any, onNavigate?: (type: 'dic
                 onClick={() => onNavigate && onNavigate('sentence', sentence)}
                 className="mb-4 text-sm text-slate-600 dark:text-slate-300 italic cursor-pointer hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
             >
-                {sentence.english || sentence.definition}
+                {renderStyledText(sentence.english || sentence.definition)}
             </div>
 
             <EntryPreview entry={linkedEntry} onNavigate={onNavigate} />
