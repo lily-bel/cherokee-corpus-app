@@ -1,0 +1,107 @@
+[
+  {
+    "note": "[MVP] [Priority: High] [Feature] [Mobile-First]\nTarget Files: components/TextImporter.tsx, components/ReaderTab.tsx\nProblem: 3-column side-by-side text editors fail on mobile screens. Punctuation-based splitting creates sentence count mismatches.\nSpec:\n1. Step 1 \u2014 Raw Text Inputs: Provide 3 stacked full-width textareas for Cherokee Syllabary (e.g. \u13e3\u13b3\u13a9), Transliteration / Phonetic (e.g. Tsalagi), and English Translation.\n2. Step 2 \u2014 Strict Line-by-Line Tokenization & Live Counters: Split inputs strictly by line breaks (\\n). Each line equals 1 sentence (1 line = 1 sentence). Render live counter badges above textareas: # Syllabary lines, # Transliteration lines, # English lines.\nAlignment Validation:\n- If line counts match across all 3 inputs -> Show green readiness banner: \"Sentences Aligned (N lines)\". Enable \"Next: Review Sentences\" button.\n- If line counts differ -> Show red warning banner: \"Sentence count mismatch: Syllabary (X lines), Transliteration (Y lines), English (Z lines). Please adjust text before proceeding.\" Disable Next button.\n3. Step 3 \u2014 Mobile Sentence Card Review & Save: Render vertical list of cards (Line 1, Line 2, ...) displaying Syllabary, Transliteration, and English with inline edit capabilities.\nVerification: Paste 10 lines in each textarea -> Green banner shows 10 sentences -> Clicking Next creates chapter with 10 aligned sentences. Paste mismatched lines -> Red warning banner displays line counts and disables Next.",
+    "priority": 10,
+    "title": "Task 1.1: Mobile-First Multi-Step Chapter & Story Creator (Line-by-Line Alignment)"
+  },
+  {
+    "note": "[MVP] [Priority: Medium] [Feature]\nTarget Files: components/ReaderTab.tsx, components/TextImporter.tsx\nSpec:\n1. Add toggle in TextImporter: [Create New Story] vs [Add Chapter to Existing Story].\n2. When adding a chapter, display dropdown selector of existing books in ReaderContext.\n3. Automatically assign chapter_number = existingChapters.length + 1 and append new chapter data to selected book object.\nVerification: Select existing story -> Import 3 sentences -> Appends new chapter to existing book without overwriting existing chapters.",
+    "priority": 5,
+    "title": "Task 1.2: Add Chapter to Existing Story Support"
+  },
+  {
+    "note": "[MVP] [Priority: High] [Feature]\nTarget Files: components/ReaderView.tsx, components/SentenceCard.tsx\nSpec:\n1. In ReaderView, add a discrete chevron / caret icon (ChevronDown / ChevronUp) on the right side of each sentence line.\n2. Tapping chevron expands an unpadded inline SentenceCard directly below sentence line.\n3. Expanded card reveals sentence audio playback button, \"Add to Custom List / Group\" button, and sentence source/reference details.\n4. Individual word taps within sentence line continue to launch GlossPopover.\nVerification: Tap word in reader -> GlossPopover opens. Tap caret icon -> Inline sentence card expands with audio playback and list controls.",
+    "priority": 10,
+    "title": "Task 1.3: Immersion Reader Expandable Sentence Cards"
+  },
+  {
+    "note": "[DATA] [Post-MVP] [Priority: Medium] [Data]\nTarget: Cherokee Narrative & Story Data Packages\nNote: Data task - all editing and addition of narrative data packages must be done manually by a human.\nSpec:\n1. Manually compile, edit, and add pre-packaged Cherokee narrative and story data packages to the catalog.\n2. Verify narrative text accuracy and sentence alignment manually before inclusion in story package releases.",
+    "priority": 3,
+    "title": "Task 1.4: [DATA] Pre-packaged Cherokee Narratives & Stories Catalog (Post-MVP)"
+  },
+  {
+    "note": "[MVP] [Priority: Medium] [Feature]\nTarget Files: components/GlossPopover.tsx\nSpec:\n1. Add expandable section in GlossPopover titled \"Other Forms / Inflections\".\n2. When expanded, query wordFormsLookupMap and render inflected forms list with syllabary and transliteration.\nVerification: Click glossed word -> Popover opens -> Expand Other Forms -> List of inflections displays.",
+    "priority": 5,
+    "title": "Task 3.2: Gloss Popover Quick Other Forms Accordion"
+  },
+  {
+    "note": "[DATA] [MVP] [Priority: Medium] [Data Cleanup]\nTarget: Corpus Word Form & Part of Speech Data\nNote: Data cleanup task - all data edits must be done manually by a human, not via code implementation.\nSpec:\n1. Manually review entries with solitary word forms and update labeling (label as Base Form rather than Singular in the corpus dataset).\n2. Audit, clean up, and format part of speech tags across solitary form entries in the dictionary data.",
+    "priority": 5,
+    "title": "Task 3.4: [DATA] Solitary Form Labeling & Part of Speech Data Cleanup"
+  },
+  {
+    "note": "[MVP] [Priority: Medium] [Feature]\nTarget Files: App.tsx, utils.tsx, components/EntryCard.tsx, components/EntryDetail.tsx\nSpec:\n1. In Settings modal under Transliteration options, add a checkbox: \"Change entry transliteration\" (enabled by default).\n2. When checked on, dynamically convert official CED word entry transliterations throughout app from standard CED \"classic\" orthography to user's preferred style (Uchihara Aspiration or Reverse Aspiration) using convertTransliterationStyle(text, 'classic', preferredStyle).\nVerification: Select Aspiration mode in Settings with checkbox on -> CED entry cards and details dynamically render transliterations in chosen Uchihara orthography across all views.",
+    "priority": 5,
+    "title": "Task 3.5: App-Wide Dynamic Entry Transliteration Option"
+  },
+  {
+    "note": "[MVP] [Priority: Medium] [Documentation] [Feature]\nTarget Files: App.tsx, utils.tsx\nSpec:\n1. Add detailed inline explanations under Preferred Transliteration Style dropdown in Settings modal detailing Classic CED, Uchihara Aspiration, and Reverse Aspiration.\n2. Perform thorough audit of transliteration engine in utils.tsx to test for edge-case errors, missing syllable combinations, or phonetic conversion issues.\nVerification: Open Settings -> Explanatory text renders beneath Transliteration options. Transliteration conversion functions pass edge-case test suite without errors.",
+    "priority": 5,
+    "title": "Task 3.6: Transliteration Style Explanations & Algorithm Audit"
+  },
+  {
+    "note": "[MVP] [Priority: High] [Feature]\nTarget Files: components/PackageManagerTab.tsx, components/PackageExportModal.tsx\nSpec:\n1. Encapsulate all user-created words, sentences, and custom dictionary entries into default package named \"My Library\".\n2. Highlight \"My Library\" in UI with a distinct Gold color badge/accent.\n3. In PackageExportModal, add a checkbox: [ ] Allow package to be edited by importer.\nVerification: User personal entries render under \"My Library\" (Gold badge). Export package modal includes Allow package to be edited checkbox option.",
+    "priority": 10,
+    "title": "Task 4.1: My Library Gold Package & Package Export Settings"
+  },
+  {
+    "note": "[MVP] [Priority: High] [Bug]\nTarget Files: components/PackageManagerContext.tsx, components/usePackageHooks.ts\nSpec:\n1. Write schema normalizer normalizePackageData() supporting legacy and updated JSON keys for word_forms, sentences, dictionary, and metadata.\nVerification: Import legacy package ZIP -> Import succeeds cleanly.",
+    "priority": 10,
+    "title": "Task 4.2: Fix Package Import Compatibility (v1 vs v2 JSON schemas)"
+  },
+  {
+    "note": "[MVP] [Priority: High] [UI] [Bug]\nTarget Files: components/PackageManagerTab.tsx, components/UI.tsx\nSpec:\n1. If imported ZIP file is corrupted or missing manifest.json, display explicit red error toast without crashing app: \"Import Failed: Invalid package ZIP format.\"\nVerification: Drop invalid zip -> Red error toast displays cleanly.",
+    "priority": 10,
+    "title": "Task 4.3: Package Import ZIP Error Banners"
+  },
+  {
+    "note": "[Post-MVP] [Priority: Low] [Feature] [Architecture]\nTarget Files: components/PackageManagerContext.tsx\nSpec:\n1. Defer editable package sync to Post-MVP Firebase/Cloud Sync architecture.\n2. Implement primitive version control saving historical revisions of packages without complex merging.",
+    "priority": 2,
+    "title": "Task 4.4: Editable Packages & Version Control (Post-MVP)"
+  },
+  {
+    "note": "[MVP] [Priority: Medium] [Feature]\nTarget Files: utils.tsx, components/EntryDetail.tsx\nSpec:\n1. Implement tone conversion utilities supporting underdot notation (a\u0323, e\u0323), superscript numbers (a\u00b9, e\u00b2\u00b3), and syllabary tone annotations.\n2. Add tone style selection toggle in settings menu.\nVerification: Select underdot tone setting -> Dictionary entries update tone display dynamically.",
+    "priority": 5,
+    "title": "Task 6.1: Tone Regex Engine & Tone Rendering Preferences"
+  },
+  {
+    "note": "[MVP] [Priority: Medium] [UI]\nTarget Files: App.tsx, components/UI.tsx\nSpec:\n1. Build a 3-step first-time walkthrough overlay introducing Search, Reader, and Custom Lists. Store hasSeenTutorial in localStorage.\nVerification: Clear localStorage -> Refresh app -> Tutorial overlay appears.",
+    "priority": 5,
+    "title": "Task 7.3: Interactive Onboarding Tutorial"
+  },
+  {
+    "note": "[MVP] [Priority: High] [UI]\nTarget Files: App.tsx, index.css, tailwind.config.js\nSpec:\n1. Modern design system with dark/light HSL palettes, glassmorphism cards, Inter/Outfit typography, and micro-animations.\nVerification: Validate visual aesthetics across dark and light themes.",
+    "priority": 10,
+    "title": "Task 7.4: App-wide UI Aesthetics Overhaul"
+  },
+  {
+    "note": "[MVP] [Priority: High] [Bug] [Architecture]\nTarget Files: components/CorpusContext.tsx, App.tsx\nProblem: Current backup uses simple JSON dump that drops audio files and package distinctions.\nSpec:\n1. Refactor exportBackup() to generate a single master .zip file (cherokee_corpus_full_backup_[date].zip).\n2. Master ZIP Structure: manifest.json, packages/my_library.zip (Gold package), packages/[package_id].zip.\n3. Standalone Usability: Users can extract any individual package.zip from master backup and re-import independently.\n4. Refactor restoreBackup() to unzip master backup and restore all package .zip files into IndexedDB.\nVerification: Export full backup -> Extract master ZIP -> Sub-directory contains valid .zip files -> Restore master ZIP -> 100% of state restored.",
+    "priority": 10,
+    "title": "Task 8.1: Full App Master ZIP Backup Export & Restore"
+  },
+  {
+    "note": "[Post-MVP] [Priority: Low] [Feature]\nTarget Files: components/CorpusContext.tsx\nSpec: Firebase / Cloud authentication & remote sync integration.",
+    "priority": 2,
+    "title": "Task 8.2: Online Cloud Backup & Accounts (Post-MVP)"
+  },
+  {
+    "note": "[Post-MVP] [Priority: Medium] [Feature]\nTarget Files: components/WidgetsTab.tsx, components/WidgetViewer.tsx\nSpec: Complete and polish 5 built-in widgets: Syllabary Learner, Transliteration Utility, Pronoun Game, Grammar Guide, Custom Widget Importer.",
+    "priority": 5,
+    "title": "Task 9.1: Widgets System Completion"
+  },
+  {
+    "note": "[Post-MVP] [Priority: Medium] [Feature]\nTarget Files: components/InvestigationQueue.tsx\nSpec: Finish mass editor tool for investigation queue.",
+    "priority": 5,
+    "title": "Task 9.2: Finish Mass Editor Tool"
+  },
+  {
+    "note": "[Post-MVP] [Priority: Medium] [Feature]\nTarget Files: components/StudyTab.tsx\nSpec: Flashcards & Spaced Repetition Study Mode.",
+    "priority": 5,
+    "title": "Task 9.3: Flashcards & Spaced Repetition Study Mode"
+  },
+  {
+    "note": "[Post-MVP] [Priority: Low] [Feature]\nTarget Files: scripts/export_api.ts\nSpec: Public API & Export Layer.",
+    "priority": 2,
+    "title": "Task 9.4: Public API & Export Layer"
+  }
+]

@@ -81,12 +81,13 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
 
                 // Fetch Data Files
                 const base = import.meta.env.BASE_URL;
-                const [dictRes, sentRes, joinRes, conjRes, audioMapRes] = await Promise.all([
+                const [dictRes, sentRes, joinRes, conjRes, audioMapRes, officialListRes] = await Promise.all([
                     fetch(`${base}data/base_forms.json`).then(r => r.json()),
                     fetch(`${base}data/sentences.json`).then(r => r.json()),
                     fetch(`${base}data/sentence_joins.json`).then(r => r.json()),
                     fetch(`${base}data/conjugations.json`).then(r => r.json()),
-                    fetch(`${base}data/audio_mapping.json`).then(r => r.json())
+                    fetch(`${base}data/audio_mapping.json`).then(r => r.json()),
+                    fetch(`${base}data/lists/official_lists_ced_verbs.json`).then(r => r.ok ? r.json() : null).catch(() => null)
                 ]);
 
                 const dictionary = dictRes;
@@ -94,6 +95,22 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                 const glosses = joinRes;
                 const conjugations = conjRes;
                 const audioMapping = audioMapRes;
+
+                const officialLists: any[] = [];
+                if (officialListRes && officialListRes.name) {
+                    const items = [
+                        ...(officialListRes.words || []),
+                        ...(officialListRes.sentences || []).map((id: string) => `s_${id}`)
+                    ];
+                    officialLists.push({
+                        id: 'official_list_ced_verbs',
+                        name: officialListRes.name,
+                        items: items,
+                        type: 'imported',
+                        packageId: 'official-cherokee-data',
+                        color: 'slate'
+                    });
+                }
 
                 const audioByBaseForm: Record<string, string> = {};
                 const audioBySentence: Record<string, string> = {};
@@ -299,7 +316,8 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                         dictionary: normalizedDictionary, 
                         sentences: normalizedSentences, 
                         glosses: normalizedGlosses,
-                        word_forms: normalizedWordForms
+                        word_forms: normalizedWordForms,
+                        lists: officialLists
                     } 
                 }));
 

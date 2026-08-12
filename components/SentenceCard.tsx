@@ -18,7 +18,7 @@ interface SentenceCardProps {
     onEditNote?: (id: string, note: string) => void;
     onEditSentence?: (id: string) => void;
     sourceMap?: Record<string, string>;
-    onSaveAudio?: (id: string, blob: Blob, speaker: string) => void;
+    onSaveAudio?: (id: string, blob: Blob, speaker: string, formIndex?: number, wordSlug?: string) => void;
     userAudioMeta?: Record<string, any[]>;
     personalWords?: any[];
     onDeleteSentence?: (id: string) => void;
@@ -659,12 +659,13 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
             )}
             {showRecorder && (
                 <AudioRecorder
-                    title={sentence.english || "Sentence Audio"}
+                    formLabel="Sentence"
                     syllabary={sentence.syllabary}
-                    transliteration={sentence.translit}
+                    title={sentence.tone || sentence.translit}
+                    transliteration={sentence.english}
                     onSave={(blob, speaker) => {
                         if (onSaveAudio) {
-                            onSaveAudio(sentence.id + '_sentence', blob, speaker);
+                            onSaveAudio(sentence.id + '_sentence', blob, speaker, undefined, sentence.english || sentence.translit);
                         }
                         setShowRecorder(false);
                     }}

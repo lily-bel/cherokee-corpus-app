@@ -33,7 +33,7 @@ const RootView: React.FC<RootViewProps> = ({ slug, onClose, onViewEntry, onViewC
     return (
         <div style={style} className="fixed inset-0 z-[10001] bg-[#F9F9F7] dark:bg-slate-950 flex flex-col overflow-hidden font-sans">
             {/* Standard Header */}
-            <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex items-center justify-between shadow-sm shrink-0 h-[60px]">
+            <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 flex items-center justify-between shadow-sm shrink-0 h-12">
                 <div className="flex items-center gap-2">
                     <button onClick={onClose} className="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full flex items-center gap-2 text-slate-700 dark:text-slate-200 transition-colors">
                         <ArrowLeft size={24} />

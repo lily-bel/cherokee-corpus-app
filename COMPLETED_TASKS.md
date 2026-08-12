@@ -1,11 +1,64 @@
 # Cherokee Corpus App — Completed Tasks & Verification Log
 
 > **Target File Location:** `COMPLETED_TASKS.md`  
-> **Purpose:** Historical log of finished, verified, and user-approved tasks moved out of `TASKS.md` to maximize token efficiency for coding agents.
+> **Purpose:** Historical log of finished, verified, and user-approved tasks moved out of `BACKLOG.md` to maximize token efficiency for coding agents.
 
 ---
 
 ## 🏆 Completed Task Log
+
+### Task 7.2: Single-Level Folders for Custom Lists
+- **Completion Date:** 2026-08-12
+- **Status:** `[Completed]` (User Approved)
+- **Target Files:** [`components/ListsTab.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/ListsTab.tsx), [`utils.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/utils.tsx), [`App.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/App.tsx), [`components/PackageManagerContext.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/PackageManagerContext.tsx), [`components/PackageExportModal.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/PackageExportModal.tsx), [`components/PackageDetailView.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/PackageDetailView.tsx), [`scripts/generate_official_lists.py`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/scripts/generate_official_lists.py), [`public/data/lists/official_lists_ced_verbs.json`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/public/data/lists/official_lists_ced_verbs.json)
+- **Implementation Summary:**
+  1. Implemented single-level list folder structure using `[folder]|[name]` representation with input sanitization (`sanitizeListName`).
+  2. Created expandable/collapsible folders with drag-and-drop reordering for folders (`folder:FolderName` tokens in `customListOrder`) and lists.
+  3. Isolated pointer events and click handlers on folder headers so drag interactions on grip handles do not trigger expand/collapse.
+  4. Optimized item count calculations to instant `$O(1)$` length checks, eliminating drag rendering lag.
+  5. Created `"Auto Lists"` folder grouping built-in dynamic lists, and `"Official Lists"` folder containing `"CED Verbs"` (862 CED verb entries generated via script and stored in `public/data/lists/`).
+- **Verification:** Built cleanly via `npm run build`, tested folder reordering, collapse toggles, and package export/import parity, approved by user.
+
+### Task 7.1: Mobile Header & Compact Navigation Bar
+- **Completion Date:** 2026-08-12
+- **Status:** `[Completed]` (User Approved)
+- **Target Files:** [`App.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/App.tsx), [`components/ReaderTab.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/ReaderTab.tsx), [`components/ListsTab.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/ListsTab.tsx), [`components/PackageManagerTab.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/PackageManagerTab.tsx), [`components/WidgetsTab.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/WidgetsTab.tsx), [`components/RootView.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/RootView.tsx), [`components/ClassView.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/ClassView.tsx), [`components/EntryDetail.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/EntryDetail.tsx)
+- **Implementation Summary:**
+  1. Reduced top bar taskbar height across the app from 60px (`h-[60px]`/`py-3`) to 48px (`h-12`).
+  2. Applied clean truncation (`truncate`) for header titles to prevent overflow on mobile narrow screens.
+  3. Formatted touch targets for header action buttons (`Menu`, `Plus`, `ArrowLeft`, `Upload`) with consistent compact padding.
+- **Verification:** Built cleanly via `npm run build`, verified top headers across all tabs and full-screen overlay views.
+
+### Task 5.1: Fix Audio Recording Modal Target Form Prompt
+- **Completion Date:** 2026-08-12
+- **Status:** `[Completed]` (User Approved)
+- **Target Files:** [`components/AudioRecorder.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/AudioRecorder.tsx), [`components/EntryDetail.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/EntryDetail.tsx), [`components/SentenceCard.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/SentenceCard.tsx)
+- **Implementation Summary:**
+  1. Updated `AudioRecorder` signature to accept `formLabel` prop and display formatted target prompt headers (e.g. `"Recording for Base Form"`, `"Recording for Present: gawoniha"`, `"Recording for Sentence"`).
+  2. Updated `EntryDetail.tsx` and `SentenceCard.tsx` to pass explicit `formLabel`, form transliteration, syllabary, and form notes to `AudioRecorder`.
+- **Verification:** Built cleanly via `npm run build`, verified modal headings when recording base words, sentence lines, and inflected word forms.
+
+### Task 5.2: Human-Readable Audio File Naming Format & Package Mapping
+- **Completion Date:** 2026-08-12
+- **Status:** `[Completed]` (User Approved)
+- **Target Files:** [`components/CorpusContext.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/CorpusContext.tsx), [`components/usePackageHooks.ts`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/usePackageHooks.ts), [`utils.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/utils.tsx)
+- **Implementation Summary:**
+  1. Refactored `saveAudio` in `CorpusContext.tsx` to save local recordings using human-readable IDs (`cherokee_audio_[type]_[id]_[formIndex?]_[slug]_[speaker]_[timestamp]`).
+  2. Updated package export in `usePackageHooks.ts` to write clean human-readable audio filenames into the `audio/` directory in the package ZIP.
+  3. Added `audio_mapping.json` generation during package export, storing a complete JSON array mapping each exported audio file to its target entry ID (`target_id` / `merged_id`), type (`base_form` / `sentence` / `conjugation`), form index, speaker, and word slug.
+  4. Updated package import in `usePackageHooks.ts` to parse `audio_mapping.json` when importing package ZIPs, with regex fallbacks for legacy package ZIPs.
+- **Verification:** Built cleanly via `npm run build`, verified ZIP package export and import data structures.
+
+### Task 3.7: Fix Other Forms Click Z-Order & Search Match Priority
+- **Completion Date:** 2026-08-12
+- **Status:** `[Completed]` (User Approved)
+- **Target Files:** [`components/WordFormsModal.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/WordFormsModal.tsx), [`components/EntryDetail.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/EntryDetail.tsx), [`utils.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/utils.tsx)
+- **Implementation Summary:**
+  1. Updated `WordFormsModal` container z-index to `z-[15000]`. Previously set to `z-[9999]`, causing the modal to render behind `EntryDetail` (`z-[10000]`).
+  2. Added click handler (`onClick={() => setShowWordFormsModal(true)}`) and hover feedback to the conjugations/forms block in `EntryDetail.tsx` so clicking word forms opens `WordFormsModal`.
+  3. Implemented match priority segment tier checking in `utils.tsx` search engine (Tier 3: Exact Match, Tier 2: Starts With, Tier 1: Contains).
+  4. If the base form matches within the same or higher priority segment tier as an inflected form (`mainTier >= otherFormTier`), the search engine assumes the user was typing the base form, returning the entry without displaying redundant `"matched form:"` sub-labels. Sub-labels are only rendered when an inflected form reaches a strictly higher match tier than the base form.
+- **Verification:** Built cleanly via `npm run build`, verified search tier matching and modal z-index interactions, approved by user.
 
 ### Task 3.1: Strict Back-Stack Navigation (`Root -> Class -> Verb`)
 - **Completion Date:** 2026-08-12

@@ -59,6 +59,7 @@ export const StickyNote = (p) => <IconBase {...p} path={<><path d="M14 2H6a2 2 0
 export const AlertCircle = (p) => <IconBase {...p} path={<><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></>} />;
 export const BookOpen = (p) => <IconBase {...p} path={<><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></>} />;
 export const Folder = (p) => <IconBase {...p} path={<><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></>} />;
+export const FolderPlus = (p) => <IconBase {...p} path={<><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /><line x1="12" y1="11" x2="12" y2="17" /><line x1="9" y1="14" x2="15" y2="14" /></>} />;
 export const Check = (p) => <IconBase {...p} path={<polyline points="20 6 9 17 4 12" />} />;
 export const Minus = (p) => <IconBase {...p} path={<line x1="5" y1="12" x2="19" y2="12" />} />;
 export const ToggleLeft = (p) => <IconBase {...p} path={<><rect x="1" y="5" width="22" height="14" rx="7" ry="7" /><circle cx="8" cy="12" r="3" /></>} />;

@@ -3,6 +3,7 @@ import { Modal } from './UI';
 import { useCorpus } from './CorpusContext';
 import { usePackageExport } from './usePackageHooks';
 import { Download, Check, ListIcon, Mic, Box } from './Icons'; // Check imports
+import { parseListName } from '../utils';
 import { ListData } from './ListsTab';
 
 interface PackageExportModalProps {
@@ -280,7 +281,10 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({ onClose, custom
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2">
                                                 <span className="text-sm font-bold text-amber-600 dark:text-amber-500">
-                                                    {list.name}
+                                                    {(() => {
+                                                        const { folder, name: displayName } = parseListName(list.name);
+                                                        return folder ? `${folder} > ${displayName}` : displayName;
+                                                    })()}
                                                 </span>
                                             </div>
                                             <div className="text-xs text-slate-400 truncate">

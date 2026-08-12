@@ -4,7 +4,7 @@ import { Mic, Square, Play, Pause, RotateCcw, X, Save } from './Icons';
 import { renderStyledText } from '../utils';
 import { useCorpus } from './CorpusContext';
 
-const AudioRecorder = ({ onSave, onCancel, title, syllabary, transliteration }: any) => {
+const AudioRecorder = ({ onSave, onCancel, title, syllabary, transliteration, formLabel }: any) => {
     const [isRecording, setIsRecording] = useState(false);
     const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
     const [audioUrl, setAudioUrl] = useState<string | undefined>(undefined);
@@ -50,21 +50,16 @@ const AudioRecorder = ({ onSave, onCancel, title, syllabary, transliteration }: 
     }, [audioUrl]);
 
     const startRecording = async () => {
-        if (!streamRef.current) {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                streamRef.current = stream;
-            } catch (err) {
-                console.error("Error accessing microphone:", err);
-                setError("Could not access microphone. Please check permissions.");
-                return;
-            }
-        }
+        setError(null);
+        audioChunksRef.current = [];
 
         try {
+            if (!streamRef.current || !streamRef.current.active) {
+                streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
+            }
+
             const mediaRecorder = new MediaRecorder(streamRef.current);
             mediaRecorderRef.current = mediaRecorder;
-            audioChunksRef.current = [];
 
             mediaRecorder.ondataavailable = (event) => {
                 if (event.data.size > 0) {
@@ -77,21 +72,18 @@ const AudioRecorder = ({ onSave, onCancel, title, syllabary, transliteration }: 
                 setAudioBlob(blob);
                 const url = URL.createObjectURL(blob);
                 setAudioUrl(url);
-                // Don't stop tracks here so we can re-record quickly
             };
 
-            mediaRecorder.start();
+            mediaRecorder.start(100);
             setIsRecording(true);
-            setError(null);
             setRecordingTime(0);
 
             timerRef.current = window.setInterval(() => {
-                setRecordingTime(prev => prev + 1);
+                setRecordingTime((prev) => prev + 1);
             }, 1000);
-
         } catch (err) {
-            console.error("Error starting recorder:", err);
-            setError("Could not start recording.");
+            console.error("Error starting recording:", err);
+            setError("Could not start recording. Please check permissions.");
         }
     };
 
@@ -104,18 +96,23 @@ const AudioRecorder = ({ onSave, onCancel, title, syllabary, transliteration }: 
     };
 
     const togglePlayback = () => {
-        if (!audioPlayerRef.current || !audioUrl) return;
+        if (!audioUrl) return;
 
         if (isPlaying) {
-            audioPlayerRef.current.pause();
+            audioPlayerRef.current?.pause();
             setIsPlaying(false);
         } else {
+            if (!audioPlayerRef.current) {
+                audioPlayerRef.current = new Audio(audioUrl);
+                audioPlayerRef.current.onended = () => setIsPlaying(false);
+            }
             audioPlayerRef.current.play();
             setIsPlaying(true);
         }
     };
 
-    const handleReRecord = () => {
+    const handleReset = () => {
+        if (audioUrl) URL.revokeObjectURL(audioUrl);
         setAudioBlob(null);
         setAudioUrl(undefined);
         setIsPlaying(false);
@@ -146,7 +143,9 @@ const AudioRecorder = ({ onSave, onCancel, title, syllabary, transliteration }: 
 
                 <div className="p-6 flex flex-col items-center gap-6">
                     <div className="text-center">
-                        <p className="text-xs text-slate-400 uppercase tracking-wider font-bold mb-2">Recording for</p>
+                        <p className="text-xs text-slate-400 uppercase tracking-wider font-bold mb-2">
+                            {formLabel ? `Recording for ${formLabel}` : "Recording for"}
+                        </p>
                         {syllabary && <h4 className="text-2xl font-noto-cherokee font-bold text-slate-800 dark:text-slate-100 mb-1">{renderStyledText(syllabary)}</h4>}
                         {title && <h5 className="text-lg font-noto-serif text-amber-700 dark:text-amber-500 font-medium mb-1">{renderStyledText(title)}</h5>}
                         {transliteration && <p className="text-sm font-noto-serif text-slate-500 dark:text-slate-400 italic">{renderStyledText(transliteration)}</p>}
@@ -197,7 +196,7 @@ const AudioRecorder = ({ onSave, onCancel, title, syllabary, transliteration }: 
 
                             <div className="flex gap-2">
                                 <button
-                                    onClick={handleReRecord}
+                                    onClick={handleReset}
                                     className="flex-1 py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold flex items-center justify-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                                 >
                                     <RotateCcw size={18} /> Re-record

@@ -156,8 +156,8 @@ const WidgetsTab = ({ onShowSettings }: { onShowSettings?: () => void }) => {
 
     return (
         <div className="flex flex-col h-full bg-[#F9F9F7] dark:bg-slate-950">
-            <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0">
-                <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Widgets</h1>
+            <div className="px-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0 h-12">
+                <h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">Widgets</h1>
                 <div className="flex gap-2 items-center">
                     <button
                         onClick={() => setShowImportModal(true)}

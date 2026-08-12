@@ -252,7 +252,7 @@ function App() {
                 const savedOrder = localStorage.getItem('cherokee_app_list_order');
                 // Ensure default built-in lists are present in order
                 let order = savedOrder ? JSON.parse(savedOrder) : Object.keys(parsedLists);
-                const required = ['favorites', 'builtin_audio', 'builtin_notes', 'builtin_glosses', 'builtin_entries'];
+                const required = ['favorites', 'folder:Official Lists', 'official_list_ced_verbs', 'folder:Auto Lists', 'builtin_audio', 'builtin_notes', 'builtin_glosses', 'builtin_entries'];
                 required.forEach(key => {
                     if (!order.includes(key)) order.push(key);
                 });
@@ -360,6 +360,7 @@ function App() {
             keys.includes(k) ||
             k === 'favorites' ||
             k.startsWith('builtin_') ||
+            k.startsWith('folder:') ||
             importedListIds.includes(k)
         );
         if (valid.length !== customListOrder.length) setCustomListOrder(valid);
@@ -1514,10 +1515,10 @@ function App() {
         <div className="h-screen w-full bg-[#F9F9F7] dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans flex flex-col overflow-hidden relative">
             <RainbowGradient />
             {!selectedEntry && !activeWidgetName && activeTab === 'search' && (
-                <header className="bg-white dark:bg-slate-900 px-4 py-3 shadow-sm z-10 flex items-center justify-between shrink-0 h-[60px]">
-                    <h1 className="font-noto-serif text-xl text-slate-800 dark:text-slate-100 flex items-baseline gap-2">ᏣᎳᎩ-English Dictionary<span className="text-xs font-sans font-medium text-slate-400 dark:text-slate-500 tracking-wide">(BETA)</span></h1>
-                    <button onClick={() => setShowSettingsModal(true)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
-                        <Menu size={24} strokeWidth={1.5} />
+                <header className="bg-white dark:bg-slate-900 px-4 border-b border-slate-200 dark:border-slate-800 shadow-sm z-10 flex items-center justify-between shrink-0 h-12">
+                    <h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 flex items-baseline gap-2 truncate">ᏣᎳᎩ-English Dictionary<span className="text-xs font-sans font-medium text-slate-400 dark:text-slate-500 tracking-wide shrink-0">(BETA)</span></h1>
+                    <button onClick={() => setShowSettingsModal(true)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors">
+                        <Menu size={22} strokeWidth={1.5} />
                     </button>
                 </header>
             )}
@@ -2075,20 +2076,20 @@ function App() {
                             onShowSettings={() => setShowSettingsModal(true)}
                         />}
                         {
-                            activeTab === 'personal' && (!activeDictionaryId ? (<div className="flex flex-col h-full"><div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0"><h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Custom Dictionaries</h1><div className="flex gap-2 items-center"><button onClick={() => setShowNewDictionaryModal(true)} className="bg-slate-900 dark:bg-slate-700 text-white p-2 rounded-full shadow-md"><Plus size={20} /></button><button onClick={() => setShowSettingsModal(true)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300"><Menu size={24} strokeWidth={1.5} /></button></div></div><div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-4 content-start">{dictionaryList.map((nb: any) => {
+                            activeTab === 'personal' && (!activeDictionaryId ? (<div className="flex flex-col h-full"><div className="px-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0 h-12"><h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">Custom Dictionaries</h1><div className="flex gap-1.5 items-center"><button onClick={() => setShowNewDictionaryModal(true)} className="bg-slate-900 dark:bg-slate-700 text-white p-1.5 rounded-full shadow-sm hover:bg-slate-800 transition-colors"><Plus size={18} /></button><button onClick={() => setShowSettingsModal(true)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300"><Menu size={22} strokeWidth={1.5} /></button></div></div><div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-4 content-start">{dictionaryList.map((nb: any) => {
                                 const isImported = nb.type === 'imported';
                                 const colorClass = isImported ? `text-${nb.color === 'amber' ? 'amber' : (nb.color === 'slate' ? 'slate' : nb.color)}-600 dark:text-${nb.color === 'amber' ? 'amber' : (nb.color === 'slate' ? 'slate' : nb.color)}-400` : 'text-amber-500 hover:text-amber-600';
                                 // Handle hex colors
                                 const style = (isImported && nb.color.startsWith('#')) ? { color: nb.color } : {};
 
                                 return (<div key={nb.id} onClick={() => setActiveDictionaryId(nb.id)} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 flex flex-col shadow-sm hover:shadow-md transition-shadow active:bg-slate-50 dark:active:bg-slate-800 cursor-pointer h-32 justify-between"><Folder size={32} className={isImported && nb.color.startsWith('#') ? "" : (isImported ? colorClass : "text-amber-500")} style={style} /><div><h3 className="font-bold text-slate-800 dark:text-slate-200 line-clamp-1">{nb.name}</h3><p className="text-xs text-slate-400">{nb.countWords} words, {nb.countSentences} sentences</p></div></div>);
-                            })}{dictionaryList.length === 0 && (<div className="col-span-2 text-center py-12 text-slate-400 flex flex-col items-center"><BookOpen size={48} className="mb-4 opacity-20" /><p>No custom dictionaries yet.</p><button onClick={() => setShowNewDictionaryModal(true)} className="mt-4 text-sky-600 dark:text-sky-400 font-bold">Create one</button></div>)}</div></div>) : (<div className="flex flex-col h-full"><div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col gap-3 shrink-0">
+                            })}{dictionaryList.length === 0 && (<div className="col-span-2 text-center py-12 text-slate-400 flex flex-col items-center"><BookOpen size={48} className="mb-4 opacity-20" /><p>No custom dictionaries yet.</p><button onClick={() => setShowNewDictionaryModal(true)} className="mt-4 text-sky-600 dark:text-sky-400 font-bold">Create one</button></div>)}</div></div>) : (<div className="flex flex-col h-full"><div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col gap-2 shrink-0">
                                 <div className="flex items-center gap-3">
                                     <button onClick={() => setActiveDictionaryId(null)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full -ml-2"><ArrowLeft size={20} className="text-slate-500 dark:text-slate-400" /></button>
                                     <div className="flex-1 flex items-center gap-2"><h2 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100">{customDictionaries[activeDictionaryId]?.name || dictionaryList.find(n => n.id === activeDictionaryId)?.name || 'Custom Dictionary'}</h2>
                                         {customDictionaries[activeDictionaryId] && <button onClick={() => { setRenameData({ type: 'dictionary', target: activeDictionaryId, value: customDictionaries[activeDictionaryId].name }); setShowNewDictionaryModal(true); }} className="p-1 text-slate-400 hover:text-sky-600 rounded-full"><Pencil size={14} /></button>}
                                     </div>
-                                    <div className="flex gap-2 ml-auto items-center"><button onClick={() => setDictionaryToDelete(activeDictionaryId)} className="p-1.5 text-slate-400 hover:text-red-500 rounded"><Trash2 size={20} /></button><button onClick={() => setShowSettingsModal(true)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300"><Menu size={24} strokeWidth={1.5} /></button></div>
+                                    <div className="flex gap-2 ml-auto items-center"><button onClick={() => setDictionaryToDelete(activeDictionaryId)} className="p-1.5 text-slate-400 hover:text-red-500 rounded"><Trash2 size={20} /></button><button onClick={() => setShowSettingsModal(true)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300"><Menu size={22} strokeWidth={1.5} /></button></div>
                                 </div>
                                 <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
                                     <button onClick={() => setDictionaryMode('words')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${dictionaryMode === 'words' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'} `}>Words</button>

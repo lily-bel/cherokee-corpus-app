@@ -232,7 +232,7 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
         return (
             <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950">
                 {/* Header */}
-                <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3">
+                <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 h-12 flex items-center shrink-0">
                     <div className="flex items-center gap-3">
                         <button
                             onClick={() => { setView(selectedBook ? 'stories' : 'books'); setSelectedStory(null); }}
@@ -241,7 +241,7 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                             <ArrowLeft size={20} className="text-slate-600 dark:text-slate-400" />
                         </button>
                         <div className="flex-1 min-w-0">
-                            <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                            <h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">
                                 {selectedStory.title}
                             </h1>
                             <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -286,20 +286,20 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
     return (
         <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950">
             {/* Header */}
-            <div className="sticky top-0 z-10 px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0">
-                <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+            <div className="sticky top-0 z-10 px-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0 h-12">
+                <h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">
                     Reader
                 </h1>
-                <div className="flex gap-2 items-center">
+                <div className="flex gap-1.5 items-center">
                     <button
                         onClick={() => setShowNewBookModal(true)}
-                        className="bg-slate-900 dark:bg-slate-700 text-white p-2 rounded-full shadow-md hover:bg-slate-800 transition-colors"
+                        className="bg-slate-900 dark:bg-slate-700 text-white p-1.5 rounded-full shadow-sm hover:bg-slate-800 transition-colors"
                     >
-                        <Plus size={20} />
+                        <Plus size={18} />
                     </button>
                     {onShowSettings && (
-                        <button onClick={onShowSettings} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
-                            <Menu size={24} strokeWidth={1.5} />
+                        <button onClick={onShowSettings} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
+                            <Menu size={22} strokeWidth={1.5} />
                         </button>
                     )}
                 </div>

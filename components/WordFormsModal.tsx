@@ -103,16 +103,16 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
         return tokens;
     };
 
-    // Compile all forms
+    // Compile all forms with sequential 1-based indexing
     const allForms: any[] = [];
+    let formCounter = 1;
 
     // 1. Official Forms
     if (entry.Other_Forms) {
-        entry.Other_Forms.split('|').forEach((form: string, i: number) => {
+        entry.Other_Forms.split('|').forEach((form: string) => {
             const parts = form.split(':');
             if (parts.length >= 2) {
                 const values = parts[1].split('^');
-                const formIndex = i + 1;
                 allForms.push({
                     type: 'official',
                     label: parts[0],
@@ -120,7 +120,7 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
                     syllabary: values[1],
                     tone: values[2],
                     notes: values[3],
-                    index: formIndex, // Official 1-based index
+                    index: formCounter++,
                     color: 'slate'
                 });
             }
@@ -148,7 +148,7 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
             syllabary: f.syllabary,
             tone: f.tone,
             notes: f.notes,
-            index: f.computed_index,
+            index: formCounter++,
             color: f.color,
             source: f.source,
             audio: f.audio
@@ -157,12 +157,10 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
 
     // 3. Custom Forms
     if (userWordForms && userWordForms[entry.Index]) {
-        const officialCount = entry.Other_Forms ? entry.Other_Forms.split('|').length : 0;
-        userWordForms[entry.Index].split('|').forEach((form: string, i: number) => {
+        userWordForms[entry.Index].split('|').forEach((form: string) => {
             const parts = form.split(':');
             if (parts.length >= 2) {
                 const values = parts[1].split('^');
-                const formIndex = officialCount + i + 1;
                 allForms.push({
                     type: 'custom',
                     label: parts[0],
@@ -170,15 +168,15 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
                     syllabary: values[1],
                     tone: values[2],
                     notes: values[3],
-                    index: formIndex,
-                    color: 'gold' // or amber
+                    index: formCounter++,
+                    color: 'gold'
                 });
             }
         });
     }
 
     return createPortal(
-        <div className="fixed inset-0 z-[9999] flex flex-col bg-white dark:bg-slate-900 shadow-2xl">
+        <div className="fixed inset-0 z-[15000] flex flex-col bg-white dark:bg-slate-900 shadow-2xl">
             <div className="flex-1 flex flex-col overflow-hidden w-full h-full">
 
                 {/* Header */}

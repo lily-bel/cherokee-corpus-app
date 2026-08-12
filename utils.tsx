@@ -48,6 +48,28 @@ export const formatToneInput = (value: string) => {
   return value.replace(/[1234?]/g, m => map[m]);
 };
 
+export const parseListName = (fullName: string): { folder: string | null; name: string } => {
+  if (!fullName) return { folder: null, name: '' };
+  const parts = fullName.split('|');
+  if (parts.length > 1) {
+    const folder = parts[0].trim();
+    const name = parts.slice(1).join('|').trim();
+    return { folder: folder || null, name: name || fullName };
+  }
+  return { folder: null, name: fullName };
+};
+
+export const formatListName = (folder: string | null | undefined, name: string): string => {
+  const cleanFolder = folder ? folder.replace(/\|/g, '').trim() : '';
+  const cleanName = name.replace(/\|/g, '').trim();
+  return cleanFolder ? `${cleanFolder}|${cleanName}` : cleanName;
+};
+
+export const sanitizeListName = (input: string): string => {
+  return input.replace(/\|/g, '').trim();
+};
+
+
 const PRONOUN_MAP: Record<string, string> = {
     '1s': '1st person singular',
     '2s': '2nd person singular',
@@ -282,6 +304,12 @@ export const getAllUserAudioKeys = async () => {
   });
 };
 
+// Helper to normalize strings for robust matching (ignores tone numbers, glottal stops, apostrophes, spaces)
+export const cleanStr = (s?: string) => {
+  if (!s) return '';
+  return s.toLowerCase().replace(/[1234¹²³⁴ʔ’'ʼ\s\-_]/g, '');
+};
+
 // --- SEARCH ALGORITHM ---
 export const performSearch = (query: string, allData: any[], sentences: any[], entryToSentencesMap: Map<string, string[]>, settings: any, customDictionaries: any, userNotes: any, posFilter: string, searchScope: string, prioritizedSources: string[] = [], rootMap: Map<string, any> = new Map(), wordFormsLookupMap: Map<string, any[]> = new Map()) => {
   if (!query) return [];
@@ -368,12 +396,6 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
 
     return [...textMatches, ...deepMatches].sort((a, b) => b.score - a.score);
   }
-
-  // Helper to normalize strings for robust matching (ignores tone numbers, glottal stops, apostrophes, spaces)
-  const cleanStr = (s?: string) => {
-    if (!s) return '';
-    return s.toLowerCase().replace(/[1234¹²³⁴ʔ’'ʼ\s\-_]/g, '');
-  };
 
   const normQuery = cleanStr(query);
 
@@ -504,17 +526,33 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
       }
     }
 
-    score = Math.max(mainMatchScore, otherFormMatchScore, notesScore, rootScore);
+    const getMatchTier = (s: number) => {
+      if (s >= 120) return 3; // Exact match tier
+      if (s >= 70) return 2;  // Starts with tier
+      if (s >= 15) return 1;  // Contains tier
+      return 0;
+    };
 
-    // Only present matchedForm if other form matched AND form differs from main entry
+    const mainTier = getMatchTier(mainMatchScore);
+    const otherFormTier = getMatchTier(otherFormMatchScore);
+
+    // Assume user is typing base form if base form matches within same or higher priority segment tier
+    const baseFormHasPriority = mainTier > 0 && mainTier >= otherFormTier;
+
+    if (baseFormHasPriority) {
+      score = Math.max(mainMatchScore, notesScore, rootScore);
+    } else {
+      score = Math.max(mainMatchScore, otherFormMatchScore, notesScore, rootScore);
+    }
+
     let activeMatchedForm: { syllabary?: string; translit?: string; label?: string } | null = null;
-    if (otherFormMatchScore > 0) {
+    if (!baseFormHasPriority && otherFormMatchScore > 0) {
       const mf: any = matchedForm;
       if (mf) {
         const matchedT = mf.translit;
         const matchedS = mf.syllabary;
         const isIdenticalToMain = 
-          (matchedT && entry.Entry && cleanStr(matchedT) === cleanStr(entry.Entry)) &&
+          (matchedT && entry.Entry && cleanStr(matchedT) === cleanStr(entry.Entry)) ||
           (matchedS && entry.Syllabary && cleanStr(matchedS) === cleanStr(entry.Syllabary));
         if (!isIdenticalToMain) {
           activeMatchedForm = mf;

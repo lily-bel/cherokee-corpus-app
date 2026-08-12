@@ -304,22 +304,27 @@ export const usePackageExport = () => {
             // 5. Audio
             const audioFolder = zip.folder('audio');
             let audioCount = 0;
+            const audioMapping: any[] = [];
 
-            const exportAudioItems: { id: string, speaker: string, targetId: string, type: 'W' | 'S' }[] = [];
+            const exportAudioItems: { id: string, speaker: string, targetId: string, type: 'W' | 'S', formIndex?: number }[] = [];
 
-            const addAudioForTarget = (targetId: string, type: 'W' | 'S') => {
+            const addAudioForTarget = (targetId: string | undefined, type: 'W' | 'S') => {
+                if (!targetId) return;
                 const key = type === 'W' ? targetId : `${targetId}_sentence`;
                 const meta = userAudioMeta[key];
                 if (meta && Array.isArray(meta)) {
                     meta.forEach(a => {
                         if (!a.isOfficial) {
-                            exportAudioItems.push({ id: a.id, speaker: a.speaker, targetId, type });
+                            let formIndex: number | undefined = undefined;
+                            const fMatch = a.id.match(/(?:_F|\.)(\d+)_/);
+                            if (fMatch) formIndex = parseInt(fMatch[1]);
+                            exportAudioItems.push({ id: a.id, speaker: a.speaker, targetId, type, formIndex });
                         }
                     });
                 }
             };
 
-            wordsToExport.forEach(w => addAudioForTarget(w.id, 'W'));
+            wordsToExport.forEach(w => addAudioForTarget(w.id || w.Index, 'W'));
             sentencesToExport.forEach(s => addAudioForTarget(s.id, 'S'));
 
             if (extraAudioIds.size > 0 || dependencyAudioIds.length > 0) {
@@ -334,7 +339,10 @@ export const usePackageExport = () => {
                                     type = 'S';
                                     targetId = key.replace('_sentence', '');
                                 }
-                                exportAudioItems.push({ id: a.id, speaker: a.speaker, targetId, type });
+                                let formIndex: number | undefined = undefined;
+                                const fMatch = a.id.match(/(?:_F|\.)(\d+)_/);
+                                if (fMatch) formIndex = parseInt(fMatch[1]);
+                                exportAudioItems.push({ id: a.id, speaker: a.speaker, targetId, type, formIndex });
                             }
                         });
                     }
@@ -364,24 +372,49 @@ export const usePackageExport = () => {
                     const idx = speakerCounts[speaker] || 0;
                     speakerCounts[speaker] = idx + 1;
 
-                    const safeSpeaker = speaker.replace(/[^a-zA-Z0-9 ]/g, '').trim(); // Trim to avoid leading/trailing spaces in filename
+                    const safeSpeaker = speaker.replace(/[^a-zA-Z0-9]/g, '').trim() || 'User';
 
-                    // Extract the full ID section from the original ID to preserve sub-IDs (e.g. 10.2)
-                    // Original ID format: Speaker_Type-ID_Timestamp
-                    // We want to capture the 'ID' part which might be '10' or '10.2'
                     let idPart = item.targetId;
-                    const idMatch = item.id.match(/_[WS]-([0-9a-zA-Z\.\-]+)_\d+/);
+                    const idMatch = item.id.match(/(?:_[WS]|-)([0-9a-zA-Z\.\-]+)_\d+/);
                     if (idMatch) {
                         idPart = idMatch[1];
                     }
 
-                    const newFilename = `${safeSpeaker}_${item.type}-${idPart}_${idx}.mp3`;
+                    // Look up human-readable slug
+                    let wordSlug = 'audio';
+                    if (item.type === 'W') {
+                        const wordObj = wordsToExport.find(w => (w.id === item.targetId || w.Index === item.targetId));
+                        if (wordObj) {
+                            wordSlug = (wordObj.translit || wordObj.Entry || wordObj.syllabary || wordObj.Syllabary || 'word')
+                                .toLowerCase().replace(/[^a-z0-9]/g, '') || 'word';
+                        }
+                    } else {
+                        const sentObj = sentencesToExport.find(s => s.id === item.targetId);
+                        if (sentObj) {
+                            wordSlug = (sentObj.translit || sentObj.english || 'sentence')
+                                .toLowerCase().replace(/[^a-z0-9]/g, '') || 'sentence';
+                        }
+                    }
+
+                    const formSegment = item.formIndex !== undefined ? `_F${item.formIndex}` : '';
+                    const newFilename = `cherokee_audio_${item.type}_${idPart}${formSegment}_${wordSlug}_${safeSpeaker}_${idx}.mp3`;
 
                     try {
                         const blob = await getAudioFromDB(item.id);
                         if (blob) {
                             audioFolder?.file(newFilename, blob as Blob);
                             audioCount++;
+
+                            // Record mapping JSON entry
+                            audioMapping.push({
+                                audio_file: newFilename,
+                                target_id: item.targetId,
+                                merged_id: item.targetId,
+                                type: item.type === 'W' ? (item.formIndex !== undefined ? 'conjugation' : 'base_form') : 'sentence',
+                                form_index: item.formIndex ?? null,
+                                speaker: speaker,
+                                word_slug: wordSlug
+                            });
                         }
                     } catch (e) {
                         console.warn(`Failed to export audio ${item.id}`, e);
@@ -391,6 +424,9 @@ export const usePackageExport = () => {
 
             meta.stats.audio_files = audioCount;
             zip.file('metadata.json', JSON.stringify(meta, null, 2));
+            if (audioMapping.length > 0) {
+                zip.file('audio_mapping.json', JSON.stringify(audioMapping, null, 2));
+            }
 
             const content = await zip.generateAsync({ type: 'blob' });
             downloadFile(content, `${(meta.name || 'export').replace(/[^a-z0-9]/gi, '_')}.zip`, 'application/zip');
@@ -539,6 +575,25 @@ export const usePackageImport = () => {
 
         // 3. Audio
         const audioFolder = zip.folder('audio');
+        const audioMappingFile = zip.file('audio_mapping.json');
+        let audioMappingList: any[] = [];
+        if (audioMappingFile) {
+            try {
+                audioMappingList = JSON.parse(await audioMappingFile.async('string'));
+            } catch (e) {
+                console.warn("Failed to parse audio_mapping.json", e);
+            }
+        }
+
+        const audioMapByFile: Record<string, any> = {};
+        audioMappingList.forEach((m: any) => {
+            if (m.audio_file) {
+                audioMapByFile[m.audio_file] = m;
+                const basename = m.audio_file.split('/').pop() || m.audio_file;
+                audioMapByFile[basename] = m;
+            }
+        });
+
         const newAudioMeta: Record<string, any[]> = {};
 
         if (audioFolder) {
@@ -549,32 +604,66 @@ export const usePackageImport = () => {
                 if (!file.dir) {
                     const blob = await file.async('blob');
                     const filename = path.split('/').pop() || path;
-                    const id = filename.replace(/\.mp3$/i, '');
+                    const id = filename.replace(/\.(mp3|webm|m4a|wav|ogg)$/i, '');
 
                     await saveAudioToDB(id, blob);
 
-                    const match = id.match(/^([^_]+)_([WS])-(.+)_\d+$/);
-                    if (match) {
-                        const speaker = match[1];
-                        const type = match[2];
-                        const fullTargetId = match[3]; // e.g. "10" or "10.2"
-
-                        // For the dictionary key (metaKey), we need the base ID (e.g. "10")
-                        // so that EntryDetail can find it under userAudioMeta[e.Index]
-                        let baseId = fullTargetId;
-                        if (baseId.includes('.')) {
-                            baseId = baseId.split('.')[0];
-                        }
+                    // Check audio_mapping.json first
+                    const mapItem = audioMapByFile[filename] || audioMapByFile[path];
+                    if (mapItem) {
+                        const targetId = String(mapItem.target_id || mapItem.merged_id);
+                        const isSentence = mapItem.type === 'sentence' || mapItem.type === 'S';
+                        const type = isSentence ? 'S' : 'W';
+                        let baseId = targetId;
 
                         const metaKey = type === 'W' ? baseId : `${baseId}_sentence`;
 
                         if (!newAudioMeta[metaKey]) newAudioMeta[metaKey] = [];
                         newAudioMeta[metaKey].push({
                             id: id,
-                            speaker: speaker,
+                            speaker: mapItem.speaker || 'User',
                             date: Date.now(),
                             packageId: meta.id
                         });
+                    } else {
+                        // Fallback 1: Legacy Speaker_Type-ID_Timestamp or cherokee_audio_Type_ID...
+                        const match = id.match(/^(?:cherokee_audio_|.*?)([^\_]+)_([WS])-(.+)_\d+$/i) || id.match(/^([^_]+)_([WS])-(.+)_\d+$/);
+                        if (match) {
+                            const speaker = match[1];
+                            const type = match[2];
+                            const fullTargetId = match[3];
+
+                            let baseId = fullTargetId;
+                            if (baseId.includes('.')) {
+                                baseId = baseId.split('.')[0];
+                            }
+
+                            const metaKey = type === 'W' ? baseId : `${baseId}_sentence`;
+
+                            if (!newAudioMeta[metaKey]) newAudioMeta[metaKey] = [];
+                            newAudioMeta[metaKey].push({
+                                id: id,
+                                speaker: speaker,
+                                date: Date.now(),
+                                packageId: meta.id
+                            });
+                        } else {
+                            // Fallback 2: cherokee_audio_[WS]_[id]_[slug]_[speaker]_[idx]
+                            const cMatch = id.match(/^cherokee_audio_([WS])_([^_]+)(?:_F(\d+))?_(?:.+)$/i);
+                            if (cMatch) {
+                                const type = cMatch[1];
+                                const baseId = cMatch[2];
+                                const metaKey = type === 'W' ? baseId : `${baseId}_sentence`;
+
+                                if (!newAudioMeta[metaKey]) newAudioMeta[metaKey] = [];
+                                newAudioMeta[metaKey].push({
+                                    id: id,
+                                    speaker: 'User',
+                                    date: Date.now(),
+                                    packageId: meta.id
+                                });
+                            }
+                        }
                     }
                 }
             }

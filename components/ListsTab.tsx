@@ -1,13 +1,13 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Star, ListIcon, Trash2, Pencil, ChevronRight, GripVertical, Folder, ArrowLeft, Plus, X, Search, Check, Volume2, Pause, Eye, EyeOff, Mic, StickyNote, ListPlus, BookOpen, Menu } from './Icons';
+import { Star, ListIcon, Trash2, Pencil, ChevronRight, ChevronDown, GripVertical, Folder, FolderPlus, ArrowLeft, Plus, X, Search, Check, Volume2, Pause, Eye, EyeOff, Mic, StickyNote, ListPlus, BookOpen, Menu } from './Icons';
 import { Modal, SourceBadge } from './UI';
 import { usePackageManager } from './PackageManagerContext';
 import { useCorpus } from './CorpusContext';
-import { getAudioFromDB, renderStyledText } from '../utils';
+import { getAudioFromDB, renderStyledText, parseListName, formatListName, sanitizeListName } from '../utils';
 
 export interface ListData {
     id: string;
-    name: string;
+    name: string; // "Folder|List Name" or "List Name"
     items: string[]; // Array of Entry Index/IDs
     color?: string; // 'amber' | 'slate' | hex
     type: 'user' | 'imported' | 'default' | 'builtin_audio' | 'builtin_notes' | 'builtin_glosses' | 'builtin_entries';
@@ -143,7 +143,7 @@ const AddWordsModal = ({
     useEffect(() => {
         const timer = setTimeout(() => {
             setSearchTerm(query);
-            setLimit(50); // Reset limit on new search
+            setLimit(50);
         }, 300);
         return () => clearTimeout(timer);
     }, [query]);
@@ -255,7 +255,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
     onPerformSearch,
     sentences = [],
     userSentences = [],
-    userNotes, // Destructure userNotes from props
+    userNotes,
     activeListId: propActiveListId,
     setActiveListId: propSetActiveListId,
     view: propView,
@@ -266,7 +266,6 @@ const ListsTab: React.FC<ListsTabProps> = ({
     const { getPackageColor, packages, importedData } = usePackageManager();
     const { userAudioMeta, personalWords, glosses } = useCorpus();
 
-    // Use props if available, otherwise fallback to hook (though hook is more direct source of truth for dynamic lists)
     const effectiveUserAudioMeta = propUserAudioMeta || userAudioMeta;
 
     // Component State
@@ -288,13 +287,21 @@ const ListsTab: React.FC<ListsTabProps> = ({
         } catch { return []; }
     });
 
+    const [collapsedFolders, setCollapsedFolders] = useState<string[]>(() => {
+        try {
+            return JSON.parse(localStorage.getItem('cherokee_app_collapsed_folders') || '[]');
+        } catch { return []; }
+    });
+
+    useEffect(() => {
+        localStorage.setItem('cherokee_app_collapsed_folders', JSON.stringify(collapsedFolders));
+    }, [collapsedFolders]);
+
     // --- IMPORTED LISTS ---
     const importedLists = useMemo(() => {
         const lists: ListData[] = [];
         packages.forEach(pkg => {
             if (pkg.status === 'active' && importedData[pkg.id]?.lists) {
-                // Ensure color is from package if not set (though import logic sets it)
-                // Also update color if package color changed
                 importedData[pkg.id].lists!.forEach((l: any) => {
                     lists.push({ ...l, color: pkg.color });
                 });
@@ -307,16 +314,20 @@ const ListsTab: React.FC<ListsTabProps> = ({
         localStorage.setItem('cherokee_app_hidden_builtin_lists', JSON.stringify(hiddenBuiltInLists));
     }, [hiddenBuiltInLists]);
 
-
     // Modal States
     const [showNewListModal, setShowNewListModal] = useState(false);
     const [newListName, setNewListName] = useState('');
+    const [newListFolder, setNewListFolder] = useState('');
+    const [showNewFolderModal, setShowNewFolderModal] = useState(false);
+    const [newFolderName, setNewFolderName] = useState('');
+    const [renameFolderTarget, setRenameFolderTarget] = useState<string | null>(null);
+    const [renameFolderName, setRenameFolderName] = useState('');
+    const [deleteFolderTarget, setDeleteFolderTarget] = useState<string | null>(null);
     const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
     const [renameTargetId, setRenameTargetId] = useState<string | null>(null);
     const [showAddWordsModal, setShowAddWordsModal] = useState(false);
 
-
-    // --- GENERATE BUILT-IN LISTS ---
+    // --- GENERATE BUILT-IN LISTS (All in "Auto Lists" folder) ---
     const builtInLists = useMemo(() => {
         const audioItems: string[] = [];
         const noteItems: string[] = [];
@@ -327,7 +338,6 @@ const ListsTab: React.FC<ListsTabProps> = ({
         Object.entries(effectiveUserAudioMeta).forEach(([key, audioList]: [string, any]) => {
             const hasUserAudio = audioList.some((a: any) => !a.packageId || a.packageId === 'user');
             if (hasUserAudio) {
-                // key is either "Index" or "ID_sentence"
                 let listId = key;
                 if (key.endsWith('_sentence')) {
                     const baseId = key.replace('_sentence', '');
@@ -369,7 +379,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
         return [
             {
                 id: 'builtin_audio',
-                name: 'Custom Audio',
+                name: 'Auto Lists|Custom Audio',
                 items: audioItems,
                 type: 'builtin_audio',
                 color: 'slate',
@@ -377,7 +387,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
             },
             {
                 id: 'builtin_notes',
-                name: 'Custom Notes',
+                name: 'Auto Lists|Custom Notes',
                 items: noteItems,
                 type: 'builtin_notes',
                 color: 'slate',
@@ -385,7 +395,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
             },
             {
                 id: 'builtin_glosses',
-                name: 'Custom Glosses',
+                name: 'Auto Lists|Custom Glosses',
                 items: glossItems,
                 type: 'builtin_glosses',
                 color: 'slate',
@@ -393,7 +403,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
             },
             {
                 id: 'builtin_entries',
-                name: 'Custom Entries',
+                name: 'Auto Lists|Custom Entries',
                 items: entryItems,
                 type: 'builtin_entries',
                 color: 'slate',
@@ -409,6 +419,12 @@ const ListsTab: React.FC<ListsTabProps> = ({
         );
     };
 
+    const toggleFolderCollapse = (folderName: string, e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        setCollapsedFolders(prev =>
+            prev.includes(folderName) ? prev.filter(f => f !== folderName) : [...prev, folderName]
+        );
+    };
 
     // Sync Imported Lists to Order
     useEffect(() => {
@@ -427,8 +443,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
         }
     }, [importedLists]);
 
-
-    // --- MIGRATION CHECK ---
+    // --- GET LIST HELPER ---
     const getList = (id: string): ListData | null => {
         if (id === 'favorites') {
             return { id: 'favorites', name: 'Favorites', items: favorites, type: 'default', color: 'slate', icon: <Star size={24} className="fill-slate-400 dark:fill-slate-500" /> };
@@ -448,26 +463,49 @@ const ListsTab: React.FC<ListsTabProps> = ({
         return raw as ListData;
     };
 
+    // Get all available lists
+    const allAvailableLists = useMemo(() => {
+        const listMap = new Map<string, ListData>();
+        const fav = getList('favorites');
+        if (fav) listMap.set('favorites', fav);
+        builtInLists.forEach(l => listMap.set(l.id, l));
+        importedLists.forEach(l => listMap.set(l.id, l));
+        Object.keys(customLists).forEach(id => {
+            const listObj = getList(id);
+            if (listObj) listMap.set(id, listObj);
+        });
+        return listMap;
+    }, [favorites, builtInLists, importedLists, customLists]);
+
+    // Existing folders list
+    const existingFolders = useMemo(() => {
+        const folders = new Set<string>();
+        allAvailableLists.forEach(list => {
+            const { folder } = parseListName(list.name);
+            if (folder) folders.add(folder);
+        });
+        customListOrder.forEach(item => {
+            if (item.startsWith('folder:')) {
+                folders.add(item.substring(7));
+            }
+        });
+        return Array.from(folders);
+    }, [allAvailableLists, customListOrder]);
+
     // --- DETAIL VIEW HELPERS ---
     const activeList = activeListId ? getList(activeListId) : null;
 
-    // Split items into words and sentences
     const listItems = activeList ? activeList.items.map(id => {
-        // Check for Sentence Prefix
         if (id.startsWith('s_')) {
             const sId = id.substring(2);
             const sentence = sentences.find(s => s.id === sId) || userSentences.find(s => s.id === sId);
             if (sentence) return { type: 'sentence', data: sentence };
-            // If not found, it might be deleted, return null
             return null;
         }
 
-        // Standard Word Check
         const word = allData.find(d => d.Index === id);
         if (word) return { type: 'word', data: word };
 
-        // Fallback: Check sentences (if legacy/user sentences stored without prefix)
-        // Although new ones use prefix, this is for safety or existing non-colliding IDs
         const sentence = sentences.find(s => s.id === id) || userSentences.find(s => s.id === id);
         if (sentence) return { type: 'sentence', data: sentence };
 
@@ -482,11 +520,9 @@ const ListsTab: React.FC<ListsTabProps> = ({
         const list = getList(activeListId);
         if (!list) return;
 
-        // Only allow removing from user lists and favorites
         const canEdit = list.type === 'user' || list.id === 'favorites';
         if (!canEdit) return;
 
-        // Determine ID to remove (word Index or prefixed sentence ID)
         const removeId = (id: string) => {
             if (activeListId === 'favorites') {
                 setFavorites(prev => prev.filter(i => i !== id));
@@ -504,11 +540,8 @@ const ListsTab: React.FC<ListsTabProps> = ({
             }
         };
 
-        // If we passed the ID directly
         if (typeof item === 'string') {
-            // Try removing exact match first
             removeId(item);
-            // Also try removing s_ prefix version if it's a sentence ID (not starting with s_)
             if (!item.startsWith('s_')) removeId('s_' + item);
         }
     };
@@ -517,28 +550,54 @@ const ListsTab: React.FC<ListsTabProps> = ({
         setShowNewListModal(false);
         setRenameTargetId(null);
         setNewListName('');
+        setNewListFolder('');
     };
 
-    const handleRenameList = (id: string, newName: string) => {
+    const handleRenameList = (id: string, newName: string, folder: string) => {
+        const fullName = formatListName(folder, newName);
         setCustomLists(prev => ({
             ...prev,
-            [id]: { ...prev[id] as ListData, name: newName }
+            [id]: { ...prev[id] as ListData, name: fullName }
         }));
+
+        const cleanFolder = sanitizeListName(folder);
+        if (cleanFolder && !customListOrder.includes(`folder:${cleanFolder}`)) {
+            setCustomListOrder(prev => [`folder:${cleanFolder}`, ...prev]);
+        }
         closeNewListModal();
     };
 
     const handleCreateList = () => {
-        if (!newListName.trim()) return;
+        const cleanName = sanitizeListName(newListName);
+        if (!cleanName) return;
+        const cleanFolder = sanitizeListName(newListFolder);
+        const fullName = formatListName(cleanFolder, cleanName);
+
         const id = 'list_' + Date.now();
         const newList: ListData = {
             id,
-            name: newListName,
+            name: fullName,
             items: [],
             type: 'user',
             color: 'gold'
         };
         setCustomLists(prev => ({ ...prev, [id]: newList }));
-        setCustomListOrder(prev => [id, ...prev]);
+
+        setCustomListOrder(prev => {
+            const newOrder = [...prev];
+            if (cleanFolder) {
+                const folderToken = `folder:${cleanFolder}`;
+                if (!newOrder.includes(folderToken)) {
+                    newOrder.unshift(folderToken);
+                }
+                const folderIdx = newOrder.indexOf(folderToken);
+                newOrder.splice(folderIdx + 1, 0, id);
+            } else {
+                newOrder.unshift(id);
+            }
+            return newOrder;
+        });
+
         closeNewListModal();
     };
 
@@ -556,12 +615,82 @@ const ListsTab: React.FC<ListsTabProps> = ({
         }
     };
 
+    // --- FOLDER ACTIONS ---
+    const handleCreateFolder = () => {
+        const clean = sanitizeListName(newFolderName);
+        if (!clean) return;
+        const folderToken = `folder:${clean}`;
+        if (!customListOrder.includes(folderToken)) {
+            setCustomListOrder(prev => [folderToken, ...prev]);
+        }
+        setNewFolderName('');
+        setShowNewFolderModal(false);
+    };
+
+    const handleRenameFolder = (oldFolder: string, newFolder: string) => {
+        const cleanOld = sanitizeListName(oldFolder);
+        const cleanNew = sanitizeListName(newFolder);
+        if (!cleanNew || cleanOld === cleanNew) {
+            setRenameFolderTarget(null);
+            setRenameFolderName('');
+            return;
+        }
+
+        // Update all user lists inside this folder
+        setCustomLists(prev => {
+            const next = { ...prev };
+            Object.keys(next).forEach(id => {
+                const item = next[id];
+                if (!Array.isArray(item) && item.name) {
+                    const { folder, name: displayName } = parseListName(item.name);
+                    if (folder === cleanOld) {
+                        next[id] = {
+                            ...item,
+                            name: formatListName(cleanNew, displayName)
+                        };
+                    }
+                }
+            });
+            return next;
+        });
+
+        // Update customListOrder folder token
+        setCustomListOrder(prev => prev.map(k => k === `folder:${cleanOld}` ? `folder:${cleanNew}` : k));
+
+        // Update collapsed state
+        setCollapsedFolders(prev => prev.map(f => f === cleanOld ? cleanNew : f));
+
+        setRenameFolderTarget(null);
+        setRenameFolderName('');
+    };
+
+    const handleDeleteFolder = (folderName: string) => {
+        const clean = sanitizeListName(folderName);
+
+        // Delete user lists in folder
+        setCustomLists(prev => {
+            const next = { ...prev };
+            Object.keys(next).forEach(id => {
+                const item = next[id];
+                if (!Array.isArray(item) && item.name) {
+                    const { folder } = parseListName(item.name);
+                    if (folder === clean) {
+                        delete next[id];
+                    }
+                }
+            });
+            return next;
+        });
+
+        setCustomListOrder(prev => prev.filter(k => k !== `folder:${clean}`));
+        setDeleteFolderTarget(null);
+    };
+
     const handleToggleItem = (itemId: string) => {
         if (!activeListId) return;
         const list = getList(activeListId);
         if (!list) return;
 
-        // Only allow editing user lists and favorites
         const canEdit = list.type === 'user' || list.id === 'favorites';
         if (!canEdit) return;
 
@@ -570,7 +699,6 @@ const ListsTab: React.FC<ListsTabProps> = ({
             ? list.items.filter(i => i !== itemId)
             : [...list.items, itemId];
 
-        // Optimistic update for UI responsiveness
         if (activeListId === 'favorites') {
             setFavorites(prev => isCurrentlyIn ? prev.filter(i => i !== itemId) : [...prev, itemId]);
         } else {
@@ -621,7 +749,6 @@ const ListsTab: React.FC<ListsTabProps> = ({
             }
         };
 
-        // Prevent native scrolling when dragging is active
         const handleTouchMoveWindow = (e: TouchEvent) => {
             if (isDraggingRef.current) {
                 if (e.cancelable) e.preventDefault();
@@ -677,28 +804,25 @@ const ListsTab: React.FC<ListsTabProps> = ({
 
         setTimeout(() => {
             isDragTriggered.current = false;
-        }, 50);
+        }, 150);
     };
 
     const handlePointerDown = (e: React.PointerEvent, id: string) => {
         if (view !== 'all') return;
 
-        // Ignore clicks on buttons/interactive elements
         if ((e.target as HTMLElement).tagName.toLowerCase() === 'button' || (e.target as HTMLElement).closest('button')) return;
 
-        // Reset any existing states
         if (longPressTimer.current) clearTimeout(longPressTimer.current);
 
         const row = (e.target as HTMLElement).closest('[data-list-id]') as HTMLDivElement;
         if (!row) return;
 
-        // Store initial data
         initialTouchPos.current = { x: e.clientX, y: e.clientY };
         pendingDragRef.current = {
             id,
             startX: e.clientX,
             startY: e.clientY,
-            target: e.currentTarget as HTMLElement, // The row itself (since we moved the listener)
+            target: e.currentTarget as HTMLElement,
             pointerId: e.pointerId
         };
 
@@ -714,37 +838,32 @@ const ListsTab: React.FC<ListsTabProps> = ({
             return;
         }
 
-        // Start Timer
         longPressTimer.current = setTimeout(() => {
             if (pendingDragRef.current) {
                 const { id, startY, target, pointerId } = pendingDragRef.current;
 
-                // Start Drag
                 dragItemRef.current = row;
                 lastPointerEvent.current = { clientX: pendingDragRef.current.startX, clientY: startY };
 
                 startDrag(id, row, startY);
                 if (navigator.vibrate) navigator.vibrate(50);
 
-                // Capture Pointer
                 try {
                     target.setPointerCapture(pointerId);
                 } catch (err) {
                     console.warn("Failed to capture pointer", err);
                 }
             }
-        }, 300); // 300ms hold
+        }, 300);
     };
 
     const handlePointerMoveRow = (e: React.PointerEvent) => {
-        // If we are WAITING for long press, we need to check movement.
         if (longPressTimer.current && pendingDragRef.current && !draggingId) {
             const moveThreshold = 10;
             const dx = Math.abs(e.clientX - pendingDragRef.current.startX);
             const dy = Math.abs(e.clientY - pendingDragRef.current.startY);
 
             if (dx > moveThreshold || dy > moveThreshold) {
-                // Moved too much, cancel hold
                 clearTimeout(longPressTimer.current);
                 longPressTimer.current = null;
                 pendingDragRef.current = null;
@@ -767,14 +886,12 @@ const ListsTab: React.FC<ListsTabProps> = ({
         const container = dragContainerRef.current;
         if (!container) return;
 
-        // 1. Update Transform
         const ds = container.scrollTop - initialScrollTop.current;
         const dy = (e.clientY - initialTouchPos.current.y) + ds;
         dragItemRef.current.style.transform = `translateY(${dy}px) scale(1.02)`;
         dragItemRef.current.style.boxShadow = '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)';
         isDragTriggered.current = true;
 
-        // 2. Update Scroll Speed (for next interval tick)
         const scrollZone = 100;
         const rect = container.getBoundingClientRect();
         let speed = 0;
@@ -790,7 +907,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                 scrollInterval.current = setInterval(() => {
                     if (dragContainerRef.current && scrollSpeed.current !== 0) {
                         dragContainerRef.current.scrollTop += scrollSpeed.current;
-                        if (updateRef.current) updateRef.current(); // Use ref to call latest version
+                        if (updateRef.current) updateRef.current();
                     }
                 }, 16);
             }
@@ -801,7 +918,6 @@ const ListsTab: React.FC<ListsTabProps> = ({
             }
         }
 
-        // 3. Swap Logic (Uses functional update to avoid stale customListOrder)
         const elements = document.elementsFromPoint(e.clientX, e.clientY);
         const listRow = elements.find(el => el.hasAttribute('data-list-id') && el.getAttribute('data-list-id') !== draggingId);
 
@@ -821,7 +937,6 @@ const ListsTab: React.FC<ListsTabProps> = ({
                         newOrder.splice(currentIndex, 1);
                         newOrder.splice(targetIndex, 0, draggingId);
 
-                        // Compensation adjustment
                         initialTouchPos.current!.y += (diff * singleH);
                         return newOrder;
                     }
@@ -843,17 +958,88 @@ const ListsTab: React.FC<ListsTabProps> = ({
         return (
             <>
                 {showNewListModal && (
-                    <Modal title={renameTargetId ? "Rename List" : "New List"} onClose={closeNewListModal}>
+                    <Modal title={renameTargetId ? "Edit List" : "New List"} onClose={closeNewListModal}>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold uppercase text-slate-500 mb-1">List Name</label>
+                                <input
+                                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-3 outline-none focus:ring-2 focus:ring-amber-500 dark:text-white"
+                                    placeholder="List Name"
+                                    value={newListName}
+                                    onChange={e => setNewListName(sanitizeListName(e.target.value))}
+                                    autoFocus
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Folder (Optional)</label>
+                                <div className="flex gap-2">
+                                    <select
+                                        className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-3 outline-none focus:ring-2 focus:ring-amber-500 dark:text-white"
+                                        value={newListFolder}
+                                        onChange={e => setNewListFolder(e.target.value)}
+                                    >
+                                        <option value="">(No Folder / Root)</option>
+                                        {existingFolders.map(f => (
+                                            <option key={f} value={f}>{f}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <p className="text-[11px] text-slate-400 mt-1">Select an existing folder or type a folder name above.</p>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-2 mt-6">
+                            <button onClick={closeNewListModal} className="flex-1 py-3 bg-slate-200 dark:bg-slate-700 rounded-lg text-slate-600 dark:text-slate-300 font-bold">Cancel</button>
+                            <button
+                                onClick={renameTargetId ? () => handleRenameList(renameTargetId, newListName, newListFolder) : handleCreateList}
+                                disabled={!newListName.trim()}
+                                className="flex-1 py-3 bg-amber-500 rounded-lg text-white font-bold disabled:opacity-50"
+                            >
+                                Save
+                            </button>
+                        </div>
+                    </Modal>
+                )}
+
+                {showNewFolderModal && (
+                    <Modal title="New Folder" onClose={() => setShowNewFolderModal(false)}>
                         <input
                             className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-3 outline-none focus:ring-2 focus:ring-amber-500 dark:text-white"
-                            placeholder="List Name"
-                            value={newListName}
-                            onChange={e => setNewListName(e.target.value)}
+                            placeholder="Folder Name"
+                            value={newFolderName}
+                            onChange={e => setNewFolderName(sanitizeListName(e.target.value))}
                             autoFocus
                         />
                         <div className="flex gap-2 mt-4">
-                            <button onClick={closeNewListModal} className="flex-1 py-3 bg-slate-200 dark:bg-slate-700 rounded-lg text-slate-600 dark:text-slate-300 font-bold">Cancel</button>
-                            <button onClick={renameTargetId ? () => handleRenameList(renameTargetId, newListName) : handleCreateList} disabled={!newListName.trim()} className="flex-1 py-3 bg-amber-500 rounded-lg text-white font-bold disabled:opacity-50">Save</button>
+                            <button onClick={() => setShowNewFolderModal(false)} className="flex-1 py-3 bg-slate-200 dark:bg-slate-700 rounded-lg text-slate-600 dark:text-slate-300 font-bold">Cancel</button>
+                            <button onClick={handleCreateFolder} disabled={!newFolderName.trim()} className="flex-1 py-3 bg-amber-500 rounded-lg text-white font-bold disabled:opacity-50">Create Folder</button>
+                        </div>
+                    </Modal>
+                )}
+
+                {renameFolderTarget && (
+                    <Modal title="Rename Folder" onClose={() => setRenameFolderTarget(null)}>
+                        <input
+                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-3 outline-none focus:ring-2 focus:ring-amber-500 dark:text-white"
+                            placeholder="Folder Name"
+                            value={renameFolderName}
+                            onChange={e => setRenameFolderName(sanitizeListName(e.target.value))}
+                            autoFocus
+                        />
+                        <div className="flex gap-2 mt-4">
+                            <button onClick={() => setRenameFolderTarget(null)} className="flex-1 py-3 bg-slate-200 dark:bg-slate-700 rounded-lg text-slate-600 dark:text-slate-300 font-bold">Cancel</button>
+                            <button onClick={() => handleRenameFolder(renameFolderTarget, renameFolderName)} disabled={!renameFolderName.trim()} className="flex-1 py-3 bg-amber-500 rounded-lg text-white font-bold disabled:opacity-50">Save</button>
+                        </div>
+                    </Modal>
+                )}
+
+                {deleteFolderTarget && (
+                    <Modal title="Delete Folder?" onClose={() => setDeleteFolderTarget(null)}>
+                        <p className="text-slate-600 dark:text-slate-400 mb-4">Are you sure you want to delete folder <strong>"{deleteFolderTarget}"</strong> and all custom lists inside it?</p>
+                        <div className="flex gap-2">
+                            <button onClick={() => setDeleteFolderTarget(null)} className="flex-1 py-3 bg-slate-200 dark:bg-slate-700 rounded-lg text-slate-600 dark:text-slate-300 font-bold">Cancel</button>
+                            <button onClick={() => handleDeleteFolder(deleteFolderTarget)} className="flex-1 py-3 bg-red-500 rounded-lg text-white font-bold">Delete</button>
                         </div>
                     </Modal>
                 )}
@@ -883,22 +1069,31 @@ const ListsTab: React.FC<ListsTabProps> = ({
 
     if (view === 'detail' && activeList) {
         const canEdit = activeList.type === 'user' || activeList.id === 'favorites';
+        const { folder: activeListFolder, name: activeListDisplayName } = parseListName(activeList.name);
+
         return (
             <div className="flex flex-col h-full bg-[#F9F9F7] dark:bg-slate-950">
                 {/* Header */}
-                <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center gap-3 shrink-0">
+                <div className="px-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center gap-3 shrink-0 h-12">
                     <button onClick={() => setView('all')} className="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-500 dark:text-slate-400">
                         <ArrowLeft size={24} />
                     </button>
-                    <div className="flex-1">
-                        <h2 className="font-noto-serif text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                            {activeList.name}
-                            {activeList.type === 'user' && (
-                                <button onClick={() => { setRenameTargetId(activeList.id); setNewListName(activeList.name); setShowNewListModal(true); }} className="text-slate-400 hover:text-amber-600">
-                                    <Pencil size={16} />
-                                </button>
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                            {activeListFolder && (
+                                <span className="text-xs font-bold text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 rounded shrink-0">
+                                    {activeListFolder}
+                                </span>
                             )}
-                        </h2>
+                            <h2 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 truncate">
+                                {activeListDisplayName}
+                                {activeList.type === 'user' && (
+                                    <button onClick={() => { setRenameTargetId(activeList.id); setNewListName(activeListDisplayName); setNewListFolder(activeListFolder || ''); setShowNewListModal(true); }} className="text-slate-400 hover:text-amber-600">
+                                        <Pencil size={16} />
+                                    </button>
+                                )}
+                            </h2>
+                        </div>
                         <p className="text-xs text-slate-500 dark:text-slate-400">{listItems.length} items</p>
                     </div>
                     {activeList.type === 'user' && (
@@ -998,7 +1193,6 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                                 </tr>
                                             );
                                         } else {
-                                            // Sentence Row
                                             const sentence = data;
                                             const userAudio = (effectiveUserAudioMeta?.[sentence.id + '_sentence'] || [])
                                                 .filter((audio: any) => {
@@ -1043,7 +1237,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                                                 <MiniAudioButton audio={sentence.audio} isOfficial={true} />
                                                             )}
                                                             {userAudio.map((audio: any) => {
-                                                                const isOfficialItem = audio.packageId?.startsWith('official'); // Heuristic
+                                                                const isOfficialItem = audio.packageId?.startsWith('official');
                                                                 return (
                                                                     <MiniAudioButton
                                                                         key={audio.id}
@@ -1086,9 +1280,10 @@ const ListsTab: React.FC<ListsTabProps> = ({
         );
     }
 
-    const renderListRow = (list: ListData, isHidden: boolean) => {
+    const renderListRow = (list: ListData, isHidden: boolean, isInsideFolder = false) => {
         if (!list) return null;
 
+        const { name: displayName } = parseListName(list.name);
         const isUser = list.type === 'user';
         const isFavorite = list.type === 'default';
         const isBuiltIn = list.type.startsWith('builtin');
@@ -1101,12 +1296,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
         if (isImported && list.color) {
             if (list.color.startsWith('#')) {
                 style = { backgroundColor: list.color, color: 'white' };
-                colorClass = ''; // Override class
-            } else {
-                // Fallback or named color
-                // Note: Tailwind dynamic classes might not work if not safe-listed.
-                // But app seems to use some dynamic logic or safe list.
-                // Package colors are hex usually now.
+                colorClass = '';
             }
         }
 
@@ -1120,7 +1310,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                 data-list-id={list.id}
                 onContextMenu={(e) => e.preventDefault()}
                 onClick={() => { if (!isReordering && !draggingId && !isDragTriggered.current) { setActiveListId(list.id); setView('detail'); } }}
-                onPointerDown={e => { if (!isHidden) handlePointerDown(e, list.id); }} // Re-enabled for imported
+                onPointerDown={e => { if (!isHidden) handlePointerDown(e, list.id); }}
                 onPointerMove={handlePointerMoveRow}
                 onPointerUp={handlePointerUpRow}
                 onPointerCancel={handlePointerUpRow}
@@ -1129,9 +1319,10 @@ const ListsTab: React.FC<ListsTabProps> = ({
                     relative bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between cursor-pointer active:scale-[0.98] select-none
                     ${draggingId === list.id ? 'opacity-90 border-amber-500 scale-105 z-50 transition-none shadow-xl' : 'transition-all'}
                     ${isHidden ? 'opacity-60 grayscale' : ''}
+                    ${isInsideFolder ? 'ml-2' : ''}
                 `}
             >
-                <div className="flex items-center gap-3 pointer-events-none">
+                <div className="flex items-center gap-3 pointer-events-none min-w-0 flex-1">
                     {!isHidden && (
                         <div
                             className="text-slate-300 dark:text-slate-700 shrink-0 drag-handle pointer-events-auto cursor-grab active:cursor-grabbing"
@@ -1139,26 +1330,19 @@ const ListsTab: React.FC<ListsTabProps> = ({
                             <GripVertical size={18} />
                         </div>
                     )}
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${colorClass}`} style={style}>
-                        {React.cloneElement(icon as React.ReactElement, { size: 20 })}
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${colorClass}`} style={style}>
+                        {React.cloneElement(icon as React.ReactElement, { size: 18 })}
                     </div>
-                    <div>
-                        <h3 className="font-bold text-slate-800 dark:text-slate-100 leading-tight">{list.name}</h3>
-                        <p className="text-[10px] uppercase tracking-wider text-slate-400 mt-0.5">{list.items.filter(id => {
-                            // Logic copied from previous implementation to robustly count valid items
-                            if (id.startsWith('s_')) {
-                                const sId = id.substring(2);
-                                return sentences.some(s => s.id === sId) || userSentences.some(s => s.id === sId);
-                            }
-                            return allData.some(d => d.Index === id) || sentences.some(s => s.id === id) || userSentences.some(s => s.id === id);
-                        }).length} items</p>
+                    <div className="min-w-0 flex-1">
+                        <h3 className="font-bold text-slate-800 dark:text-slate-100 leading-tight truncate">{displayName}</h3>
+                        <p className="text-[10px] uppercase tracking-wider text-slate-400 mt-0.5">{list.items?.length || 0} items</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 shrink-0 ml-2">
                     {isBuiltIn && (
                         <button
                             onClick={(e) => toggleBuiltInVisibility(list.id, e)}
-                            className="p-2 text-slate-300 hover:text-slate-500 dark:hover:text-slate-200 pointer-events-auto"
+                            className="p-1.5 text-slate-300 hover:text-slate-500 dark:hover:text-slate-200 pointer-events-auto"
                             title={isHidden ? "Unhide" : "Hide"}
                         >
                             {isHidden ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -1170,29 +1354,195 @@ const ListsTab: React.FC<ListsTabProps> = ({
         );
     };
 
+    const renderFolderRow = (folderName: string, folderLists: ListData[]) => {
+        const isCollapsed = collapsedFolders.includes(folderName);
+        const folderToken = `folder:${folderName}`;
+
+        const totalItems = folderLists.reduce((acc, list) => acc + (list.items?.length || 0), 0);
+
+        const isUserFolder = folderLists.some(l => l.type === 'user');
+
+        return (
+            <div key={folderToken} data-list-id={folderToken} className="space-y-2">
+                {/* Folder Header */}
+                <div
+                    onContextMenu={(e) => e.preventDefault()}
+                    onClick={(e) => {
+                        if (isReordering || isDragTriggered.current) return;
+                        if ((e.target as HTMLElement).closest('.drag-handle')) return;
+                        toggleFolderCollapse(folderName, e);
+                    }}
+                    onPointerDown={e => handlePointerDown(e, folderToken)}
+                    onPointerMove={handlePointerMoveRow}
+                    onPointerUp={handlePointerUpRow}
+                    onPointerCancel={handlePointerUpRow}
+                    style={{ touchAction: 'pan-y' }}
+                    className={`
+                        relative bg-slate-100/80 dark:bg-slate-800/80 rounded-xl p-3 border border-slate-200/80 dark:border-slate-700/60 shadow-sm flex items-center justify-between cursor-pointer select-none transition-all
+                        ${draggingId === folderToken ? 'opacity-90 border-amber-500 scale-105 z-50 shadow-xl' : ''}
+                    `}
+                >
+                    <div className="flex items-center gap-3 pointer-events-none min-w-0 flex-1">
+                        <div className="text-slate-400 dark:text-slate-600 shrink-0 drag-handle pointer-events-auto cursor-grab active:cursor-grabbing">
+                            <GripVertical size={18} />
+                        </div>
+                        <div className="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                            <Folder size={20} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                            <h3 className="font-bold text-slate-900 dark:text-slate-100 leading-tight truncate">{folderName}</h3>
+                            <p className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 mt-0.5">
+                                {folderLists.length} {folderLists.length === 1 ? 'list' : 'lists'} · {totalItems} items
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0 ml-2">
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setNewListFolder(folderName); setNewListName(''); setShowNewListModal(true); }}
+                            className="p-1.5 text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors pointer-events-auto rounded-md"
+                            title="Add List in Folder"
+                        >
+                            <Plus size={18} />
+                        </button>
+                        {isUserFolder && (
+                            <>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); setRenameFolderTarget(folderName); setRenameFolderName(folderName); }}
+                                    className="p-1.5 text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors pointer-events-auto rounded-md"
+                                    title="Rename Folder"
+                                >
+                                    <Pencil size={16} />
+                                </button>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); setDeleteFolderTarget(folderName); }}
+                                    className="p-1.5 text-slate-400 hover:text-red-500 transition-colors pointer-events-auto rounded-md"
+                                    title="Delete Folder"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            </>
+                        )}
+                        <button
+                            onClick={(e) => toggleFolderCollapse(folderName, e)}
+                            className="p-1.5 text-slate-500 dark:text-slate-400 transition-colors pointer-events-auto rounded-md"
+                        >
+                            {isCollapsed ? <ChevronRight size={18} /> : <ChevronDown size={18} />}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Folder Body (List Items) */}
+                {!isCollapsed && (
+                    <div className="pl-3 border-l-2 border-slate-200 dark:border-slate-800 space-y-2 py-1 ml-4">
+                        {folderLists.length === 0 ? (
+                            <div className="p-3 text-center text-xs text-slate-400 italic">Folder is empty</div>
+                        ) : (
+                            folderLists.map(list => {
+                                const isHidden = hiddenBuiltInLists.includes(list.id);
+                                return renderListRow(list, isHidden, true);
+                            })
+                        )}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    // Build the ordered view of items & folders
+    const renderOrderedContent = () => {
+        const renderedFolders = new Set<string>();
+        const renderedListIds = new Set<string>();
+
+        const activeFolders = new Set<string>(existingFolders);
+
+        const fullOrder = [...customListOrder];
+        activeFolders.forEach(f => {
+            const token = `folder:${f}`;
+            if (!fullOrder.includes(token)) {
+                fullOrder.push(token);
+            }
+        });
+
+        const elementsToRender: React.ReactNode[] = [];
+
+        fullOrder.forEach(itemKey => {
+            if (itemKey.startsWith('folder:')) {
+                const folderName = itemKey.substring(7);
+                if (renderedFolders.has(folderName)) return;
+                renderedFolders.add(folderName);
+
+                const folderLists = Array.from(allAvailableLists.values()).filter(l => {
+                    const { folder } = parseListName(l.name);
+                    return folder === folderName;
+                });
+
+                folderLists.sort((a, b) => {
+                    const idxA = fullOrder.indexOf(a.id);
+                    const idxB = fullOrder.indexOf(b.id);
+                    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                    return 0;
+                });
+
+                folderLists.forEach(l => renderedListIds.add(l.id));
+                elementsToRender.push(renderFolderRow(folderName, folderLists));
+            } else {
+                const list = getList(itemKey);
+                if (!list || renderedListIds.has(list.id)) return;
+
+                const { folder } = parseListName(list.name);
+                if (!folder) {
+                    renderedListIds.add(list.id);
+                    const isHidden = hiddenBuiltInLists.includes(list.id);
+                    if (!isHidden) {
+                        elementsToRender.push(renderListRow(list, false));
+                    }
+                }
+            }
+        });
+
+        allAvailableLists.forEach((list, id) => {
+            if (!renderedListIds.has(id)) {
+                const { folder } = parseListName(list.name);
+                if (!folder && !hiddenBuiltInLists.includes(id)) {
+                    renderedListIds.add(id);
+                    elementsToRender.push(renderListRow(list, false));
+                }
+            }
+        });
+
+        return elementsToRender;
+    };
+
     return (
         <div className="flex flex-col h-full">
-            <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0">
-                <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">My Lists</h1>
-                <div className="flex gap-2 items-center">
-                    <button onClick={() => { setNewListName(''); setShowNewListModal(true); }} className="bg-slate-900 dark:bg-slate-700 text-white p-2 rounded-full shadow-md">
-                        <Plus size={20} />
+            <div className="px-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0 h-12">
+                <h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">My Lists</h1>
+                <div className="flex gap-1.5 items-center">
+                    <button
+                        onClick={() => { setNewFolderName(''); setShowNewFolderModal(true); }}
+                        className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 p-1.5 rounded-full shadow-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                        title="New Folder"
+                    >
+                        <FolderPlus size={18} />
+                    </button>
+                    <button
+                        onClick={() => { setNewListName(''); setNewListFolder(''); setShowNewListModal(true); }}
+                        className="bg-amber-500 text-white p-1.5 rounded-full shadow-sm hover:bg-amber-600 transition-colors"
+                        title="New List"
+                    >
+                        <Plus size={18} />
                     </button>
                     {onShowSettings && (
-                        <button onClick={onShowSettings} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
-                            <Menu size={24} strokeWidth={1.5} />
+                        <button onClick={onShowSettings} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
+                            <Menu size={22} strokeWidth={1.5} />
                         </button>
                     )}
                 </div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 content-start grid gap-3" ref={dragContainerRef}>
-                {customListOrder.map(id => {
-                    if (hiddenBuiltInLists.includes(id)) return null;
-                    const list = getList(id);
-                    if (!list) return null;
-                    return renderListRow(list, false);
-                })}
+                {renderOrderedContent()}
 
                 {/* Hidden Built-in Lists */}
                 {builtInLists.filter(l => hiddenBuiltInLists.includes(l.id)).length > 0 && (

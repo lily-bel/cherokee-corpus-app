@@ -9,7 +9,7 @@ import {
 import { SourceBadge } from './UI';
 import EntryCard from './EntryCard';
 import EntryDetail from './EntryDetail';
-import { getAudioFromDB, renderStyledText } from '../utils';
+import { getAudioFromDB, renderStyledText, parseListName } from '../utils';
 
 interface PackageDetailViewProps {
     packageId: string;
@@ -347,22 +347,21 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({
     return (
         <div className="flex flex-col h-full bg-[#F9F9F7] dark:bg-slate-950 text-slate-800 dark:text-slate-100">
             {/* Header */}
-            <div className="px-4 py-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center gap-3 shrink-0 sticky top-0 z-10">
+            <div className="px-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center gap-3 shrink-0 sticky top-0 z-10 h-12">
                 <button
                     onClick={onBack}
-                    className="p-2 -ml-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    className="p-1.5 -ml-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 >
-                    <ArrowLeft size={24} />
+                    <ArrowLeft size={20} />
                 </button>
                 <div
-                    className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-sm"
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-sm shrink-0"
                     style={{ backgroundColor: pkg.color }}
                 >
                     {(pkg.name.split(' ').length > 1 ? (pkg.name.split(' ')[0][0] + pkg.name.split(' ')[1][0]).toUpperCase() : pkg.name.substring(0, 2).toUpperCase())}
                 </div>
-                <div className="flex-1">
-                    <h2 className="font-bold text-lg leading-tight">{pkg.name}</h2>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Package Contents</p>
+                <div className="flex-1 min-w-0">
+                    <h2 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">{pkg.name}</h2>
                 </div>
                 {onShowSettings && (
                     <button onClick={onShowSettings} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
@@ -873,16 +872,21 @@ const GlossCard = ({ gloss, onNavigate }: { gloss: any, onNavigate?: (type: 'dic
     );
 };
 
-const ListCard = ({ list, onNavigate }: { list: any, onNavigate?: (type: 'dictionary' | 'list' | 'word' | 'sentence', payload: any) => void }) => (
-    <div
-        onClick={() => onNavigate && onNavigate('list', list.id)}
-        className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-    >
-        <div className="flex items-center gap-3">
-            <div>
-                <div className="font-bold text-slate-800 dark:text-slate-100">{list.name}</div>
-                <div className="text-xs text-slate-500">{list.count} items</div>
+const ListCard = ({ list, onNavigate }: { list: any, onNavigate?: (type: 'dictionary' | 'list' | 'word' | 'sentence', payload: any) => void }) => {
+    const { folder, name: displayName } = parseListName(list.name);
+    return (
+        <div
+            onClick={() => onNavigate && onNavigate('list', list.id)}
+            className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+        >
+            <div className="flex items-center gap-3">
+                <div>
+                    <div className="font-bold text-slate-800 dark:text-slate-100">
+                        {folder ? `${folder} > ${displayName}` : displayName}
+                    </div>
+                    <div className="text-xs text-slate-500">{list.count} items</div>
+                </div>
             </div>
         </div>
-    </div>
-); // Note: Corrected placement of ListCard to ensure valid TSX
+    );
+};

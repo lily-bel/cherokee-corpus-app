@@ -150,7 +150,7 @@ interface CorpusContextType {
 
     // Audio
     userAudioMeta: Record<string, any[]>;
-    saveAudio: (targetId: string, blob: Blob, speaker: string, formIndex?: number) => Promise<void>; // Updated signature
+    saveAudio: (targetId: string, blob: Blob, speaker: string, formIndex?: number, wordSlug?: string) => Promise<void>;
     deleteAudio: (targetId: string, audioId: string) => Promise<void>;
     importAudioMeta: (newMeta: Record<string, any[]>) => void;
     removePackageAudio: (packageId: string) => Promise<void>;
@@ -452,8 +452,8 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
 
     // Audio Actions
-    const saveAudio = async (targetId: string, blob: Blob, speaker: string, formIndex?: number) => {
-        const { saveAudioToDB } = await import('../utils');
+    const saveAudio = async (targetId: string, blob: Blob, speaker: string, formIndex?: number, wordSlug?: string) => {
+        const { saveAudioToDB, cleanStr } = await import('../utils');
 
         let type = 'W';
         let id = targetId;
@@ -463,13 +463,17 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             id = targetId.replace('_sentence', '');
         }
 
-        const index = Date.now();
-        // Construct ID: Speaker_Type-ID[_FormIndex]_Timestamp
+        const rawSlug = wordSlug || id;
+        const safeSlug = cleanStr(rawSlug).replace(/[^a-z0-9]/g, '') || 'audio';
+        const safeSpeaker = speaker.replace(/[^a-zA-Z0-9]/g, '') || 'User';
+        const timestamp = Date.now();
+
+        // Human-Readable ID: cherokee_audio_[type]_[id]_[formIndex?]_[slug]_[speaker]_[timestamp]
         let audioId = '';
         if (formIndex !== undefined) {
-            audioId = `${speaker}_${type}-${id}.${formIndex}_${index}`;
+            audioId = `cherokee_audio_${type}_${id}_F${formIndex}_${safeSlug}_${safeSpeaker}_${timestamp}`;
         } else {
-            audioId = `${speaker}_${type}-${id}_${index}`;
+            audioId = `cherokee_audio_${type}_${id}_${safeSlug}_${safeSpeaker}_${timestamp}`;
         }
 
         await saveAudioToDB(audioId, blob);
@@ -477,7 +481,7 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setUserAudioMeta(prev => {
             const newMeta = { ...prev };
             if (!newMeta[targetId]) newMeta[targetId] = [];
-            newMeta[targetId].push({ id: audioId, speaker, date: Date.now() });
+            newMeta[targetId].push({ id: audioId, speaker, date: timestamp });
             return newMeta;
         });
     };

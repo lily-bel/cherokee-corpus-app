@@ -156,16 +156,16 @@ export const TextImporter: React.FC<TextImporterProps> = ({
     return (
         <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950">
             {/* Header */}
-            <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3">
-                <div className="flex items-center gap-3">
+            <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 h-12 flex items-center shrink-0">
+                <div className="flex items-center gap-3 w-full">
                     <button
                         onClick={onBack}
-                        className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        className="p-1.5 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                     >
                         <ArrowLeft size={20} className="text-slate-600 dark:text-slate-400" />
                     </button>
-                    <div className="flex-1">
-                        <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                    <div className="flex-1 min-w-0">
+                        <h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">
                             Import Story
                         </h1>
                     </div>

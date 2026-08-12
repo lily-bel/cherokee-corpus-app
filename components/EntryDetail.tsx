@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Pencil, ListPlus, Star, ListIcon, X, Plus, Folder, Pause, MicPlus, Trash2, Mic, Menu } from './Icons';
 import { AudioPlayer, SourceBadge } from './UI';
-import { renderStyledText, getAudioFromDB, processFormsContextually } from '../utils';
+import { renderStyledText, getAudioFromDB, processFormsContextually, parseListName } from '../utils';
 import { usePackageManager } from './PackageManagerContext';
 import AudioRecorder from './AudioRecorder';
 import { useCorpus } from './CorpusContext';
@@ -193,68 +193,65 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
         const targetIndex = parseInt(parts[1]);
         if (isNaN(targetIndex)) return null;
 
-        // Check Official Forms
-        let officialCount = 0;
+        const list: any[] = [];
+        let indexCounter = 1;
+
+        // 1. Official Forms
         if (e.Other_Forms) {
-            const forms = e.Other_Forms.split('|');
-            officialCount = forms.length;
-            if (targetIndex >= 1 && targetIndex <= forms.length) {
-                const f = forms[targetIndex - 1];
-                const parts = f.split(':');
+            e.Other_Forms.split('|').forEach((form: string) => {
+                const parts = form.split(':');
                 if (parts.length >= 2) {
                     const values = parts[1].split('^');
-                    return {
+                    list.push({
+                        index: indexCounter++,
                         label: parts[0],
                         translit: values[0],
                         syllabary: values[1],
                         tone: values[2],
                         notes: values[3]
-                    };
+                    });
                 }
-            }
+            });
         }
 
-        // Check Imported Forms
-        const imported = importedForms.find(f => f.computed_index === targetIndex);
-        if (imported) {
-            return {
-                label: imported.form_name,
-                translit: imported.translit,
-                syllabary: imported.syllabary,
-                tone: imported.tone,
-                notes: imported.notes
-            };
-        }
+        // 2. Imported Forms
+        importedForms.forEach(f => {
+            list.push({
+                index: indexCounter++,
+                label: f.displayLabel || f.form_name,
+                translit: f.translit,
+                syllabary: f.syllabary,
+                tone: f.tone,
+                notes: f.notes
+            });
+        });
 
-        // Check Custom Forms
+        // 3. Custom Forms
         if (userWordForms && userWordForms[e.Index]) {
-            const forms = userWordForms[e.Index].split('|');
-            const customArrayIndex = targetIndex - officialCount - 1;
-
-            if (customArrayIndex >= 0 && customArrayIndex < forms.length) {
-                const f = forms[customArrayIndex];
-                const parts = f.split(':');
+            userWordForms[e.Index].split('|').forEach((form: string) => {
+                const parts = form.split(':');
                 if (parts.length >= 2) {
                     const values = parts[1].split('^');
-                    return {
+                    list.push({
+                        index: indexCounter++,
                         label: parts[0],
                         translit: values[0],
                         syllabary: values[1],
                         tone: values[2],
                         notes: values[3]
-                    };
+                    });
                 }
-            }
+            });
         }
 
-        return null;
+        return list.find(f => f.index === targetIndex) || null;
     }, [recorderTarget, e, importedForms, userWordForms]);
 
 
     return (
         <div style={style} className="fixed inset-0 z-[10000] bg-[#F9F9F7] dark:bg-slate-950 flex flex-col overflow-hidden">
             {/* Header */}
-            <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex items-center justify-between shadow-sm shrink-0 h-[60px]">
+            <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 flex items-center justify-between shadow-sm shrink-0 h-12">
                 <div className="flex items-center gap-2">
                     <button onClick={onClose} className="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full">
                         <ArrowLeft size={24} className="text-slate-700 dark:text-slate-200" />
@@ -412,9 +409,10 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
                             }).map(id => {
                                 const list = customLists[id];
                                 const name = Array.isArray(list) ? id : list.name;
+                                const { folder, name: displayName } = parseListName(name);
                                 return (
                                     <span key={id} className="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 font-bold text-[10px] uppercase tracking-wider flex items-center gap-1">
-                                        {name}
+                                        {folder ? `${folder} > ${displayName}` : displayName}
                                     </span>
                                 );
                             })}
@@ -439,7 +437,11 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
                             <h3 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-3">Conjugations / Forms</h3>
                             
                             {cedForms.length > 0 && (
-                                <div className="grid grid-cols-[minmax(80px,auto)_auto_1fr] gap-x-4 md:gap-x-8 gap-y-2 mb-3 bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800 items-center overflow-x-auto">
+                                <div 
+                                    onClick={() => setShowWordFormsModal(true)}
+                                    className="grid grid-cols-[minmax(80px,auto)_auto_1fr] gap-x-4 md:gap-x-8 gap-y-2 mb-3 bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800 items-center overflow-x-auto cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors"
+                                    title="Click to view all word forms"
+                                >
                                     {cedForms.map(f => (
                                         <React.Fragment key={f.form_name}>
                                              <div className="text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider pr-1 leading-tight py-1" title={f.displayLabel}>
@@ -579,12 +581,15 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
                                 if (!list) return null;
                                 const isChecked = Array.isArray(list) ? list.includes(e.Index) : list.items.includes(e.Index);
                                 const name = Array.isArray(list) ? listId : list.name;
+                                const { folder, name: displayName } = parseListName(name);
                                 return (
                                     <label key={listId} className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 dark:border-slate-800 active:bg-slate-50 dark:active:bg-slate-800 cursor-pointer">
                                         <input type="checkbox" checked={isChecked} onChange={() => onToggleList(listId, e.Index)} className="w-5 h-5 accent-amber-500" />
                                         <div className="flex items-center gap-2">
                                             <ListIcon size={18} className="text-slate-500" />
-                                            <span className="font-medium text-slate-700 dark:text-slate-200">{name}</span>
+                                            <span className="font-medium text-slate-700 dark:text-slate-200">
+                                                {folder ? `${folder} > ${displayName}` : displayName}
+                                            </span>
                                         </div>
                                     </label>
                                 );
@@ -599,16 +604,19 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
 
             {showRecorder && (
                 <AudioRecorder
-                    title={recorderTarget === 'entry' ? e.Entry : (recorderTarget === 'sentence' ? (e.Sentence_English || "Example Sentence") : (activeFormData ? activeFormData.translit : `Form Audio`))}
+                    formLabel={recorderTarget === 'entry' ? 'Base Form' : (recorderTarget === 'sentence' ? 'Sentence' : (activeFormData?.label || 'Word Form'))}
                     syllabary={recorderTarget === 'entry' ? e.Syllabary : (recorderTarget === 'sentence' ? e.Sentence_Syllabary : (activeFormData ? activeFormData.syllabary : null))}
-                    transliteration={recorderTarget === 'entry' ? null : (recorderTarget === 'sentence' ? e.Sentence_Transliteration : null)}
+                    title={recorderTarget === 'entry' ? (e.Entry_Tone || e.Entry) : (recorderTarget === 'sentence' ? (e.Sentence_Tone || e.Sentence_Transliteration) : (activeFormData ? (activeFormData.tone || activeFormData.translit) : `Form Audio`))}
+                    transliteration={recorderTarget === 'entry' ? (e.Definition || e.English || null) : (recorderTarget === 'sentence' ? e.Sentence_English : (activeFormData ? (e.Definition || e.English || activeFormData.notes || null) : null))}
                     onSave={(blob, speaker) => {
                         if (typeof recorderTarget === 'string' && recorderTarget.startsWith('form_')) {
                             const formIndex = parseInt(recorderTarget.split('_')[1]);
-                            onSaveAudio(e.Index, blob, speaker, formIndex);
+                            const slug = activeFormData?.translit || activeFormData?.syllabary || e.Entry;
+                            onSaveAudio(e.Index, blob, speaker, formIndex, slug);
                         } else {
                             const targetIndex = recorderTarget === 'entry' ? e.Index : e.Index + '_sentence';
-                            onSaveAudio(targetIndex, blob, speaker);
+                            const slug = recorderTarget === 'entry' ? (e.Entry || e.Syllabary) : (e.Sentence_English || e.Sentence_Transliteration);
+                            onSaveAudio(targetIndex, blob, speaker, undefined, slug);
                         }
                         setShowRecorder(false);
                     }}
