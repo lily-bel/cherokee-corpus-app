@@ -7,6 +7,18 @@
 
 ## 🏆 Completed Task Log
 
+### Task 3.1: Strict Back-Stack Navigation (`Root -> Class -> Verb`)
+- **Completion Date:** 2026-08-12
+- **Status:** `[Completed]` (User Approved)
+- **Target Files:** [`components/RootView.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/RootView.tsx), [`components/ClassView.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/ClassView.tsx), [`components/EntryDetail.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/EntryDetail.tsx), [`App.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/App.tsx)
+- **Implementation Summary:**
+  1. Introduced `NavItem` discriminated union type (`root`, `class`, `entry`) and `navStack` state in `App.tsx` replacing scattered `selectedEntry` / `selectedRoot` / `selectedClass` state variables.
+  2. `RootView`, `ClassView`, and `EntryDetail` receive a `style` prop with dynamic `zIndex` (`10000 + index`) so each overlay layer remains mounted in the DOM, preserving scroll position and expanded state behind the top view.
+  3. Pressing Back or Close pops exactly 1 level from the stack: `EntryDetail → ClassView → RootView → main page`.
+  4. Navigation is synchronized with the HTML5 History API via `updateUrlAndHistory`, storing the serialized nav stack in `window.history.state` on every push/replace so the browser's native Back/Forward buttons restore the exact view stack across unlimited consecutive navigation steps.
+  5. Removed `animate-fade-in` from all full-screen overlays for instant, crisp transitions.
+- **Verification:** Built cleanly via `npm run build`, Back/Forward verified across multiple navigation levels, approved by user.
+
 ### Task 3.3: Word Creation Modal Auto-Syllabary Engine & Transliteration Settings
 - **Completion Date:** 2026-08-12
 - **Status:** `[Completed]` (User Approved)

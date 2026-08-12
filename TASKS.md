@@ -137,16 +137,7 @@ When working on this repository, all AI agents **MUST** follow these mandatory r
 ## 📖 Feature Module 3: Dictionary Views, Navigation & Popups
 
 ### Task 3.1: Strict Back-Stack Navigation (`Root -> Class -> Verb`)
-- **Tags:** `[MVP]` `[Priority: High]` `[Bug]`
-- **Target Files:** [`components/RootView.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/RootView.tsx), [`components/ClassView.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/ClassView.tsx), [`App.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/App.tsx)
-- **Specification:**
-  1. Maintain a strict navigation stack array: `[RootView, ClassView, VerbEntryDetail]`.
-  2. Pressing the Back button or Close icon pops 1 level off the navigation stack:
-     - From Verb Entry Detail -> Returns to Class View.
-     - From Class View -> Returns to Root View.
-     - From Root View -> Returns to main search/tab page.
-- **Verification Criteria:**
-  - Open Root -> Select Class -> Select Verb -> Press Back -> Returns to Class View without losing state.
+- **Status:** `[Completed]` (Archived in [`COMPLETED_TASKS.md`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/COMPLETED_TASKS.md))
 
 ---
 

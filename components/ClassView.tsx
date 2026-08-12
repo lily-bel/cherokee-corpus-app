@@ -9,9 +9,10 @@ interface ClassViewProps {
     onViewClass: (className: string) => void;
     onViewEntry: (entry: any) => void;
     onShowSettings?: () => void;
+    style?: React.CSSProperties;
 }
 
-const ClassView: React.FC<ClassViewProps> = ({ className, onClose, onViewEntry, onShowSettings }) => {
+const ClassView: React.FC<ClassViewProps> = ({ className, onClose, onViewEntry, onShowSettings, style }) => {
     const { roots, dictionaryMap } = useCorpus();
 
     const mainClassName = className.includes('[') ? className.split('[')[0] : className;
@@ -99,7 +100,7 @@ const ClassView: React.FC<ClassViewProps> = ({ className, onClose, onViewEntry, 
     }, [mainClassName, roots]);
 
     return (
-        <div className="fixed inset-0 z-[10002] bg-[#F9F9F7] dark:bg-slate-950 flex flex-col overflow-hidden animate-fade-in font-sans">
+        <div style={style} className="fixed inset-0 z-[10002] bg-[#F9F9F7] dark:bg-slate-950 flex flex-col overflow-hidden font-sans">
             {/* Standard Header */}
             <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex items-center justify-between shadow-sm shrink-0 h-[60px]">
                 <div className="flex items-center gap-2">

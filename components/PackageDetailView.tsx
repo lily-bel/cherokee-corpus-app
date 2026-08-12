@@ -345,7 +345,7 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({
     }
 
     return (
-        <div className="flex flex-col h-full bg-[#F9F9F7] dark:bg-slate-950 animate-fade-in text-slate-800 dark:text-slate-100">
+        <div className="flex flex-col h-full bg-[#F9F9F7] dark:bg-slate-950 text-slate-800 dark:text-slate-100">
             {/* Header */}
             <div className="px-4 py-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center gap-3 shrink-0 sticky top-0 z-10">
                 <button

@@ -27,7 +27,7 @@ const getHexColor = (col: string) => {
   return COLORS[col] || COLORS.slate;
 };
 
-const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, userWordForms, onSaveAudio, onDeleteAudio, favorites, customLists, customListOrder, onClose, onEdit, onToggleFavorite, onToggleList, onDelete, onSearchTerm, onOpenNewListModal, onMove, personalWords, onEditSentence, onDeleteSentence, onCreateWord, onManageForms, onReadInContext, onShowSettings, onViewRoot, onViewClass }) => {
+const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, userWordForms, onSaveAudio, onDeleteAudio, favorites, customLists, customListOrder, onClose, onEdit, onToggleFavorite, onToggleList, onDelete, onSearchTerm, onOpenNewListModal, onMove, personalWords, onEditSentence, onDeleteSentence, onCreateWord, onManageForms, onReadInContext, onShowSettings, onViewRoot, onViewClass, style }: any) => {
     const [showListSheet, setShowListSheet] = useState(false);
     const [showRecorder, setShowRecorder] = useState(false);
     const [recorderTarget, setRecorderTarget] = useState<'entry' | 'sentence' | string>('entry');
@@ -117,7 +117,7 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
     // HANDLE SENTENCE VIEW (If entry is a sentence object)
     if (e.english && !e.Definition) {
         return (
-            <div className="absolute inset-0 z-0 bg-[#F9F9F7] dark:bg-slate-950 flex flex-col overflow-hidden">
+            <div style={style} className="fixed inset-0 z-[10000] bg-[#F9F9F7] dark:bg-slate-950 flex flex-col overflow-hidden">
                 <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex items-center justify-between shadow-sm shrink-0 h-[60px]">
                     <button onClick={onClose} className="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full"><ArrowLeft size={24} className="text-slate-700 dark:text-slate-200" /></button>
                 </div>
@@ -252,7 +252,7 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
 
 
     return (
-        <div className="fixed inset-0 z-[10000] bg-[#F9F9F7] dark:bg-slate-950 flex flex-col overflow-hidden animate-fade-in">
+        <div style={style} className="fixed inset-0 z-[10000] bg-[#F9F9F7] dark:bg-slate-950 flex flex-col overflow-hidden">
             {/* Header */}
             <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex items-center justify-between shadow-sm shrink-0 h-[60px]">
                 <div className="flex items-center gap-2">

@@ -178,7 +178,7 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
     }
 
     return createPortal(
-        <div className="fixed inset-0 z-[9999] flex flex-col bg-white dark:bg-slate-900 animate-fade-in shadow-2xl">
+        <div className="fixed inset-0 z-[9999] flex flex-col bg-white dark:bg-slate-900 shadow-2xl">
             <div className="flex-1 flex flex-col overflow-hidden w-full h-full">
 
                 {/* Header */}
