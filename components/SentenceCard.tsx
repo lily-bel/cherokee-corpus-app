@@ -35,7 +35,7 @@ interface SentenceCardProps {
 }
 
 export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, isDimmed, customDictionaries, userNotes, onEditNote, onEditSentence, sourceMap, onSaveAudio, userAudioMeta, personalWords, onDeleteSentence, onDeleteAudio, onCreateWord, favorites, customLists, onToggleFavorite, onToggleList, onOpenNewListModal, onReadInContext }) => {
-    const { glossMap, dictionaryMap, addUserGloss, removeUserGloss, removeUserSentence } = useCorpus();
+    const { dictionary, glossMap, dictionaryMap, addUserGloss, removeUserGloss, removeUserSentence } = useCorpus();
     const { packages, getPackageColor, importedData } = usePackageManager(); // Add this line
     const [activePopover, setActivePopover] = useState<{ index: number, rect: { x: number, y: number } } | null>(null);
     const [showRecorder, setShowRecorder] = useState(false);
@@ -275,52 +275,76 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
     }).length : 0;
     const totalLists = (inFav ? 1 : 0) + inLists;
 
+    // Compute rim color from source package
+    const rimHex = (() => {
+        const c = getPackageColor(sentence.source);
+        if (c?.startsWith('#')) return c;
+        const map: Record<string, string> = {
+            amber: '#f59e0b', blue: '#3b82f6', green: '#22c55e', red: '#ef4444',
+            purple: '#a855f7', sky: '#0ea5e9', pink: '#ec4899', orange: '#f97316', slate: '#64748b'
+        };
+        if (c && map[c]) return map[c];
+        if (sentence.source === 'user' || sentence.source.startsWith('nb_') || customDictionaries?.[sentence.source]) return '#f59e0b';
+        return '#64748b';
+    })();
 
     return (
-        <div className={`bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm mb-4 ${isDimmed ? 'opacity-50 grayscale' : ''}`}>
+        <div className={`bg-white dark:bg-slate-900/40 rounded-xl border border-slate-200 dark:border-slate-800 p-4 pl-6 shadow-sm mb-4 relative overflow-hidden group/card hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all ${isDimmed ? 'opacity-50 grayscale' : ''} ${onClick ? 'cursor-pointer' : ''}`} onClick={onClick}>
+            {/* Color Bar Rim */}
+            <div className="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-xl" style={{ backgroundColor: rimHex }} />
             {/* Header / Controls */}
-            <div className={`flex justify-between items-start mb-2 ${onClick ? 'cursor-pointer' : ''}`} onClick={onClick}>
-                <div className="flex items-center gap-2">
-                    {/* Edit/Delete buttons for user sentences - Moved to Left */}
-                    {(sentence.source === 'user' || sentence.source.startsWith('nb_')) ? (
-                        <div className="flex gap-1">
-                            {onEditSentence && (
-                                <button onClick={(e) => { e.stopPropagation(); onEditSentence(sentence.id); }} className="text-slate-400 hover:text-amber-600 p-1 rounded-full hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors">
-                                    <Pencil size={14} />
-                                </button>
-                            )}
-                            <button onClick={handleDelete} className="text-slate-400 hover:text-red-500 p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-                                <Trash2 size={14} />
-                            </button>
-                        </div>
-                    ) : null}
+            <div className="flex justify-between items-center mb-1.5" onClick={e => e.stopPropagation()}>
+                <div className="flex gap-1 items-center">
+                   {/* Left side empty or add items here if needed */}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                     {/* Read in Context Button */}
                     {onReadInContext && (
                         <button
                             onClick={(e) => { e.stopPropagation(); onReadInContext(sentence.id); }}
-                            className="text-xs font-medium text-sky-600 dark:text-sky-400 hover:underline flex items-center gap-1"
+                            className="text-[10px] font-bold text-sky-600 dark:text-sky-400 uppercase tracking-widest hover:underline flex items-center gap-1"
                             title="See in context"
                         >
                             <BookOpen size={12} />
                             See in Context
                         </button>
                     )}
+                    
                     {/* List Add Button */}
                     {(onToggleFavorite || onToggleList) && (
-                        <button onClick={(e) => { e.stopPropagation(); setShowListSheet(true); }} className={`p-1 rounded-full transition-colors flex items-center gap-1 ${totalLists > 0 ? 'text-amber-500 bg-amber-50 dark:bg-amber-900/20' : 'text-slate-300 hover:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
+                        <button onClick={(e) => { e.stopPropagation(); setShowListSheet(true); }} className={`p-1 rounded-full transition-colors flex items-center gap-1 ${totalLists > 0 ? 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20' : 'text-slate-300 hover:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
                             {totalLists > 0 ? <ListIcon size={14} className="fill-amber-100" /> : <ListPlus size={14} />}
                             {totalLists > 0 && <span className="text-[10px] font-bold">{totalLists}</span>}
                         </button>
                     )}
-                    {sentence.audio && <div className="text-slate-400"><Mic size={14} /></div>}
+
+                    {/* Edit Note Button */}
+                    {onEditNote && (
+                        <button onClick={(e) => { e.stopPropagation(); onEditNote(sentence.id, userNotes?.[`s_${sentence.id}`] || ''); }} className="text-slate-300 hover:text-amber-600 p-1 rounded-full hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors">
+                            <Pencil size={14} />
+                        </button>
+                    )}
+
                     <SourceBadge source={sentence.source} name={customDictionaries?.[sentence.source]?.name || sourceMap?.[sentence.source] || sentence.source} />
                 </div>
             </div>
 
+            {/* Edit/Delete for user sentences - hover reveal */}
+            {(sentence.source === 'user' || sentence.source.startsWith('nb_')) && (
+                <div className="absolute top-2 right-2 flex gap-1 z-10 opacity-0 group-hover/card:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+                    {onEditSentence && (
+                        <button onClick={(e) => { e.stopPropagation(); onEditSentence(sentence.id); }} className="text-slate-400 hover:text-amber-600 p-1 rounded-full hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors bg-white/80 dark:bg-slate-900/80 shadow-sm">
+                            <Pencil size={12} />
+                        </button>
+                    )}
+                    <button onClick={handleDelete} className="text-slate-400 hover:text-red-500 p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors bg-white/80 dark:bg-slate-900/80 shadow-sm">
+                        <Trash2 size={12} />
+                    </button>
+                </div>
+            )}
+
             {/* Sentence Tokens */}
-            <div className="flex flex-wrap gap-x-3 gap-y-4 mb-4">
+            <div className="flex flex-wrap gap-x-3 gap-y-2 mb-3">
                 {tokens.map((token, i) => {
                     const isSelected = selectedIndices.includes(i);
                     const glossMeta = getGlossMeta(i);
@@ -364,73 +388,52 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                 })}
             </div>
 
-            {/* Gloss Buttons & Audio Add - Moved Here */}
-            <div className="flex items-center justify-between mb-2" onClick={e => e.stopPropagation()}>
-                <div className="flex gap-2">
-                    {selectMode ? (
-                        <>
-                            <button
-                                onClick={() => { setSelectMode(false); setSelectedIndices([]); }}
-                                className="text-xs font-bold text-slate-500 hover:text-slate-700 px-2 py-1"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleLinkSelection}
-                                disabled={selectedIndices.length === 0}
-                                className={`text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 transition-colors ${selectedIndices.length > 0 ? 'bg-amber-500 text-white shadow-md hover:bg-amber-600' : 'bg-slate-100 text-slate-400'}`}
-                            >
-                                <Plus size={12} /> Gloss ({selectedIndices.length})
-                            </button>
-                        </>
-                    ) : (
-                        <button
-                            onClick={() => setSelectMode(true)}
-                            className="text-xs font-bold text-slate-500 hover:text-amber-600 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 hover:border-amber-200 transition-colors"
-                        >
-                            Gloss Multiple
-                        </button>
-                    )}
-                </div>
-                {/* Add User Audio Button */}
-                {onSaveAudio && (
+            {/* Gloss Select Mode Bar - only shows when active */}
+            {selectMode && (
+                <div className="flex items-center gap-2 mb-2" onClick={e => e.stopPropagation()}>
                     <button
-                        onClick={() => setShowRecorder(true)}
-                        className="text-slate-400 hover:text-amber-600 p-1 rounded-full hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                        onClick={() => { setSelectMode(false); setSelectedIndices([]); }}
+                        className="text-xs font-bold text-slate-500 hover:text-slate-700 px-2 py-1"
                     >
-                        <MicPlus size={16} />
+                        Cancel
                     </button>
-                )}
-            </div>
+                    <button
+                        onClick={handleLinkSelection}
+                        disabled={selectedIndices.length === 0}
+                        className={`text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 transition-colors ${selectedIndices.length > 0 ? 'bg-amber-500 text-white shadow-md hover:bg-amber-600' : 'bg-slate-100 text-slate-400'}`}
+                    >
+                        <Plus size={12} /> Gloss ({selectedIndices.length})
+                    </button>
+                </div>
+            )}
 
             {/* English Translation */}
-            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-300 italic">
+            <div className="text-sm text-slate-500 dark:text-slate-400 italic border-t border-slate-100 dark:border-slate-800/60 pt-2.5 mt-2">
                 {renderStyledText(sentence.english)}
             </div>
 
-            {/* Official Audio */}
-            {sentence.audio && (() => {
-                const sColor = getPackageColor(sentence.source);
-                const isOfficial = packages.find(p => (p.id === sentence.source || p.metadata.source_names?.[sentence.source]) && p.type === 'official');
-                const isOfficialFile = isOfficial || sentence.audio.endsWith('.m4a') || sentence.audio.startsWith('Word_') || sentence.audio.match(/^\d{4}\./);
-                
-                // If this is a packaged custom audio, it's handled by userAudioMeta. Don't show duplicate here.
-                if (!isOfficialFile) return null;
+            {/* All Audios & Record Button */}
+            {(sentence.audio || userAudioMeta?.[sentence.id + '_sentence'] || onSaveAudio) && (
+                <div className="mt-3 flex flex-wrap gap-2 items-center" onClick={e => e.stopPropagation()}>
+                    {/* Official Audio */}
+                    {sentence.audio && (() => {
+                        const sColor = getPackageColor(sentence.source);
+                        const isOfficial = packages.find(p => (p.id === sentence.source || p.metadata.source_names?.[sentence.source]) && p.type === 'official');
+                        const isOfficialFile = isOfficial || sentence.audio.endsWith('.m4a') || sentence.audio.startsWith('Word_') || sentence.audio.match(/^\d{4}\./);
+                        
+                        if (!isOfficialFile) return null;
 
-                const customColor = isOfficial ? undefined : sColor;
-                const audioUrl = `https://cherokeenationdictionary.net/Audio/${sentence.audio}`;
-                
-                return (
-                    <div className="mt-3" onClick={e => e.stopPropagation()}>
-                        <AudioPlayer src={audioUrl} label={sentence.speaker || "Official"} icon={Mic} variant="gray" customColor={customColor} />
-                    </div>
-                );
-            })()}
-            {/* User Audio */}
-            {userAudioMeta && userAudioMeta[sentence.id + '_sentence'] && (
-                <div className="mt-2 flex flex-wrap gap-2" onClick={e => e.stopPropagation()}>
-                    {userAudioMeta[sentence.id + '_sentence']
-                        .filter(audio => {
+                        const customColor = isOfficial ? undefined : sColor;
+                        const audioUrl = `https://cherokeenationdictionary.net/Audio/${sentence.audio}`;
+                        
+                        return (
+                            <AudioPlayer src={audioUrl} label={sentence.speaker || "Official"} icon={Mic} variant="gray" customColor={customColor} />
+                        );
+                    })()}
+
+                    {/* User Audios */}
+                    {userAudioMeta?.[sentence.id + '_sentence']
+                        ?.filter(audio => {
                             if (audio.packageId === 'official-cherokee-data' || audio.id.endsWith('.m4a')) return false;
                             if (!audio.packageId) {
                                 const userPkg = packages.find(p => p.id === 'user');
@@ -440,7 +443,6 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                             return pkg && pkg.status === 'active';
                         })
                         .map((audio: any) => {
-                            // Determine color
                             const audioPkg = packages.find(p => p.id === audio.packageId);
                             const isOfficial = audioPkg ? audioPkg.type === 'official' : false;
                             const pkgColor = getPackageColor(audio.packageId || 'user');
@@ -468,7 +470,6 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                             } else if (pkgColor && pkgColor !== 'slate') {
                                 className += isPlaying ? `bg-${pkgColor}-100 dark:bg-${pkgColor}-900 text-${pkgColor}-800 dark:text-${pkgColor}-100` : `bg-${pkgColor}-500 text-white hover:bg-${pkgColor}-600`;
                             } else {
-                                // Default Amber
                                 className += isPlaying ? 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100' : 'bg-amber-500 text-white hover:bg-amber-600';
                             }
 
@@ -489,12 +490,23 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                                 </div>
                             );
                         })}
+                        
+                    {/* Record Audio Button - inline with audio */}
+                    {onSaveAudio && (
+                        <button
+                            onClick={() => setShowRecorder(true)}
+                            className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors shrink-0"
+                            title="Record Audio"
+                        >
+                            <MicPlus size={14} />
+                        </button>
+                    )}
                 </div>
             )}
 
-            {/* Notes */}
-            {(onEditNote || importedNotes.length > 0) && (
-                <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800" onClick={e => e.stopPropagation()}>
+            {/* Notes - only shown when notes exist */}
+            {(importedNotes.length > 0 || (userNotes?.[`s_${sentence.id}`])) && (
+                <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800" onClick={e => e.stopPropagation()}>
                     {/* Imported Notes */}
                     {importedNotes.map((note, i) => (
                         <div key={i} className="mb-2 text-xs text-slate-600 dark:text-slate-300 border-l-2 pl-2" style={{ borderLeftColor: note.color }}>
@@ -502,22 +514,13 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                         </div>
                     ))}
 
-                    {onEditNote && (
+                    {userNotes?.[`s_${sentence.id}`] && onEditNote && (
                         <div
-                            onClick={() => onEditNote(sentence.id, userNotes?.[`s_${sentence.id}`] || '')}
-                            className={`text-xs text-slate-600 dark:text-slate-300 hover:text-amber-600 cursor-pointer flex items-center gap-1 group relative ${userNotes?.[`s_${sentence.id}`] ? 'border-l-2 pl-2 border-l-amber-500' : ''}`}
+                            onClick={() => onEditNote(sentence.id, userNotes[`s_${sentence.id}`] || '')}
+                            className="text-xs text-slate-600 dark:text-slate-300 hover:text-amber-600 cursor-pointer flex items-center gap-1 group relative border-l-2 pl-2 border-l-amber-500"
                         >
-                            {userNotes?.[`s_${sentence.id}`] ? (
-                                <>
-                                    <span>{userNotes[`s_${sentence.id}`]}</span>
-                                    <Pencil size={10} className="absolute -right-1 top-0 opacity-0 group-hover:opacity-100 transition-opacity text-amber-600" />
-                                </>
-                            ) : (
-                                <>
-                                    <Pencil size={12} className="opacity-30 group-hover:opacity-100 transition-opacity" />
-                                    <span className="opacity-50">Add note...</span>
-                                </>
-                            )}
+                            <span>{userNotes[`s_${sentence.id}`]}</span>
+                            <Pencil size={10} className="absolute -right-1 top-0 opacity-0 group-hover:opacity-100 transition-opacity text-amber-600" />
                         </div>
                     )}
                 </div>
@@ -593,7 +596,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                     initialQuery={showLinker.initialQuery}
                     targetWord={showLinker.targetWord}
                     initialData={showLinker.initialData}
-                    dictionary={Array.from(dictionaryMap.values())}
+                    dictionary={dictionary}
                     personalWords={personalWords}
                     onClose={() => setShowLinker(null)}
                     onSelect={(entry, notes, breakdownCherokee, breakdownEnglish) => {

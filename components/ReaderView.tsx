@@ -33,7 +33,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
     onCreateWord,
     onShowSettings
 }) => {
-    const { glossMap, dictionaryMap, addUserGloss, removeUserGloss, personalWords } = useCorpus();
+    const { dictionary, glossMap, dictionaryMap, addUserGloss, removeUserGloss, personalWords } = useCorpus();
     const { books, getSentencesForChapter, addToInvestigationQueue, investigationQueue } = useReader();
     const { getPackageColor } = usePackageManager();
 
@@ -232,8 +232,6 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
     };
 
     const handleWordClick = (sentence: Sentence, wordIndex: number, event: React.MouseEvent) => {
-        if (studyMode !== 'study') return;
-
         event.stopPropagation();
         const rect = (event.target as HTMLElement).getBoundingClientRect();
 
@@ -383,7 +381,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                                 <div className={`flex flex-wrap gap-x-1 gap-y-1 leading-relaxed ${studyMode === 'study' && scriptMode === 'both' ? 'gap-x-2' : 'gap-x-1'}`}>
                                     {tokens.map((token, tokenIdx) => {
                                         const glossColor = getGlossColor(sentence.id, tokenIdx);
-                                        const isClickable = studyMode === 'study';
+                                        const isClickable = true;
 
                                         if (scriptMode === 'syllabary') {
                                             const inQueue = isInQueue(sentence.id, tokenIdx);
@@ -531,7 +529,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                 <LinkerModal
                     initialQuery={showLinker.initialQuery}
                     targetWord={showLinker.targetWord}
-                    dictionary={Array.from(dictionaryMap.values())}
+                    dictionary={dictionary}
                     personalWords={personalWords}
                     customDictionaries={customDictionaries}
                     onClose={() => setShowLinker(null)}

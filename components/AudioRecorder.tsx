@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Mic, Square, Play, Pause, RotateCcw, X, Save } from './Icons';
 import { renderStyledText } from '../utils';
 import { useCorpus } from './CorpusContext';
@@ -133,7 +134,7 @@ const AudioRecorder = ({ onSave, onCancel, title, syllabary, transliteration }: 
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[20000] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in p-4">
             <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl flex flex-col">
                 <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
@@ -265,8 +266,10 @@ const AudioRecorder = ({ onSave, onCancel, title, syllabary, transliteration }: 
                     )}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
+
 
 export default AudioRecorder;

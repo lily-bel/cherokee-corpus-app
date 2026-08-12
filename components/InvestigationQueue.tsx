@@ -18,7 +18,7 @@ export const InvestigationQueue: React.FC<InvestigationQueueProps> = ({
     customDictionaries,
     onShowSettings
 }) => {
-    const { sentenceMap, glossMap, dictionaryMap, addUserGloss, personalWords } = useCorpus();
+    const { dictionary, sentenceMap, glossMap, addUserGloss, personalWords } = useCorpus();
     const { investigationQueue, removeFromInvestigationQueue } = useReader();
 
     const [showLinker, setShowLinker] = useState<{
@@ -250,7 +250,7 @@ export const InvestigationQueue: React.FC<InvestigationQueueProps> = ({
                 <LinkerModal
                     initialQuery={showLinker.initialQuery}
                     targetWord={showLinker.targetWord}
-                    dictionary={Array.from(dictionaryMap.values())}
+                    dictionary={dictionary}
                     personalWords={personalWords}
                     customDictionaries={customDictionaries}
                     onSelect={handleGlossCreated}

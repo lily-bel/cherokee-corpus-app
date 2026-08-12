@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { AlertCircle, Volume2, ChevronUp, ChevronDown, Pencil, ArrowUp, ArrowDown, Trash2 } from './Icons';
 
 export const Toast = ({ show, message, type = 'error' }) => {
@@ -114,12 +115,13 @@ export const CollapsibleCard = ({ title, icon: Icon, count, children, defaultOpe
   );
 };
 
-export const Modal = ({ title, children, onClose }: any) => (
+export const Modal = ({ title, children, onClose }: any) => createPortal(
   <div className="fixed inset-0 z-[20000] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={onClose}>
     <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-sm shadow-2xl p-6 animate-scale-in max-h-[90vh] overflow-y-auto border dark:border-slate-800" onClick={e => e.stopPropagation()}>
       <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4">{title}</h3>
       {children}
       <div className="mt-6 flex justify-end gap-2"><button onClick={onClose} className="px-4 py-2 rounded-lg text-slate-500 dark:text-slate-400 font-medium hover:bg-slate-100 dark:hover:bg-slate-800">Cancel</button></div>
     </div>
-  </div>
+  </div>,
+  document.body
 );

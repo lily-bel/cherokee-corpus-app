@@ -7,7 +7,7 @@ import EntryDetail from './components/EntryDetail';
 
 import PackageManagerTab from './components/PackageManagerTab';
 import { useCorpus } from './components/CorpusContext';
-import { downloadFile, exportDictionaryToCSV, performSearch } from './utils';
+import { downloadFile, performSearch } from './utils';
 import { SentenceCard } from './components/SentenceCard';
 import WidgetsTab from './components/WidgetsTab';
 
@@ -121,8 +121,20 @@ function App() {
                 });
             }
         });
+        if (userWordForms) {
+            Object.entries(userWordForms).forEach(([wIdx, forms]: [string, any]) => {
+                if (Array.isArray(forms)) {
+                    let arr = map.get(wIdx);
+                    if (!arr) {
+                        arr = [];
+                        map.set(wIdx, arr);
+                    }
+                    arr.push(...forms);
+                }
+            });
+        }
         return map;
-    }, [importedData]);
+    }, [importedData, userWordForms]);
 
     const entriesWithOtherFormsSet = useMemo(() => {
         const set = new Set<string>();
@@ -963,11 +975,6 @@ function App() {
     // Manual Upload Removed - Handled by CorpusContext
     // Manual Upload Removed - Handled by CorpusContext
 
-    const handleExportDictionary = () => {
-        if (!activeDictionaryId) return;
-        exportDictionaryToCSV(activeDictionaryId, customDictionaries[activeDictionaryId].name, personalWords);
-        showToast("CSV Exported", "success");
-    };
     const handleBackup = () => {
         const data = { favorites, customLists, customListOrder, customDictionaries, personalWords, userNotes, settings, searchHistory };
         downloadFile(JSON.stringify(data), `cherokee_backup_${Date.now()}.json`, 'application/json');
@@ -1823,7 +1830,7 @@ function App() {
                                     <div className="flex-1 flex items-center gap-2"><h2 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100">{customDictionaries[activeDictionaryId]?.name || dictionaryList.find(n => n.id === activeDictionaryId)?.name || 'Custom Dictionary'}</h2>
                                         {customDictionaries[activeDictionaryId] && <button onClick={() => { setRenameData({ type: 'dictionary', target: activeDictionaryId, value: customDictionaries[activeDictionaryId].name }); setShowNewDictionaryModal(true); }} className="p-1 text-slate-400 hover:text-sky-600 rounded-full"><Pencil size={14} /></button>}
                                     </div>
-                                    <div className="flex gap-2 ml-auto items-center"><button onClick={handleExportDictionary} className="p-1.5 text-slate-400 hover:text-amber-600 rounded"><Share size={20} /></button><button onClick={() => setDictionaryToDelete(activeDictionaryId)} className="p-1.5 text-slate-400 hover:text-red-500 rounded"><Trash2 size={20} /></button><button onClick={() => setShowSettingsModal(true)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300"><Menu size={24} strokeWidth={1.5} /></button></div>
+                                    <div className="flex gap-2 ml-auto items-center"><button onClick={() => setDictionaryToDelete(activeDictionaryId)} className="p-1.5 text-slate-400 hover:text-red-500 rounded"><Trash2 size={20} /></button><button onClick={() => setShowSettingsModal(true)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300"><Menu size={24} strokeWidth={1.5} /></button></div>
                                 </div>
                                 <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
                                     <button onClick={() => setDictionaryMode('words')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${dictionaryMode === 'words' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'} `}>Words</button>

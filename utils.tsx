@@ -369,113 +369,167 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
     return [...textMatches, ...deepMatches].sort((a, b) => b.score - a.score);
   }
 
+  // Helper to normalize strings for robust matching (ignores tone numbers, glottal stops, apostrophes, spaces)
+  const cleanStr = (s?: string) => {
+    if (!s) return '';
+    return s.toLowerCase().replace(/[1234¹²³⁴ʔ’'ʼ\s\-_]/g, '');
+  };
+
+  const normQuery = cleanStr(query);
+
   // --- DICTIONARY MODE LOOP: O(N) where N is number of base entries. ---
   return allData.map(entry => {
     let score = 0;
+    let matchedForm: { syllabary?: string; translit?: string; label?: string } | null = null;
+    let mainMatchScore = 0;
+    let otherFormMatchScore = 0;
+    const isPersonal = customDictionaries && customDictionaries[entry.Source];
 
     if (posFilter !== "All") {
       if (entry.PoS !== posFilter) return { ...entry, score: 0 };
     }
 
-    const fieldsToSearch: string[] = [];
-    const isPersonal = customDictionaries && customDictionaries[entry.Source];
+    const testMatchScore = (str?: string) => {
+      if (!str) return 0;
+      if (regex && regex.test(str)) return 100;
+      
+      const fLower = str.toLowerCase();
+      const normF = cleanStr(str);
+      let s = 0;
 
+      // 1. Exact Match (Exact case or normalized tone/punctuation match)
+      if (fLower === lowerQuery || fLower === queryWithTones || (normF.length > 0 && normF === normQuery)) {
+        s = 120;
+      }
+      // 2. Starts With Match
+      else if (fLower.startsWith(lowerQuery) || fLower.startsWith(queryWithTones) || (normF.length > 0 && normF.startsWith(normQuery))) {
+        s = 70;
+      }
+      // 3. Contains Substring Match
+      else if (fLower.includes(lowerQuery) || fLower.includes(queryWithTones) || (normF.length > 0 && normF.includes(normQuery))) {
+        s = 15;
+      }
+
+      if (s > 0) {
+        // Boost shorter matching strings (ratio of query length to target string length)
+        const targetLen = Math.max(str.length, normF.length || 1);
+        const queryLen = Math.max(lowerQuery.length, normQuery.length || 1);
+        const ratio = Math.min(1.0, queryLen / targetLen);
+        s += (ratio * 35);
+      }
+      return s;
+    };
+
+    // 1. Check Main Entry Fields
     if (activeScopes.main) {
-      if (activeLangs.translit && entry.Entry) fieldsToSearch.push(entry.Entry);
-      if (activeLangs.syllabary && entry.Syllabary) fieldsToSearch.push(entry.Syllabary);
-      if (activeLangs.english && entry.Definition) fieldsToSearch.push(entry.Definition);
-      if (activeLangs.tone && entry.Entry_Tone) fieldsToSearch.push(entry.Entry_Tone);
+      if (activeLangs.translit && entry.Entry) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.Entry));
+      if (activeLangs.syllabary && entry.Syllabary) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.Syllabary));
+      if (activeLangs.english && entry.Definition) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.Definition));
+      if (activeLangs.tone && entry.Entry_Tone) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.Entry_Tone));
     }
 
-    // OTHER FORMS SEARCH (Replaces Verbs/Plurals)
+    // 2. Check Other Forms (Inflections / Conjugations)
     if (activeScopes.otherForms) {
-        // 1. Check Legacy Other_Forms
-        if (entry.Other_Forms) {
-          const forms = entry.Other_Forms.split('|');
-          forms.forEach((form: string) => {
-            const parts = form.split(':');
-            if (parts.length > 1) {
-              const values = parts[1].split('^');
-              if (activeLangs.translit && values[0]) fieldsToSearch.push(values[0]);
-              if (activeLangs.syllabary && values[1]) fieldsToSearch.push(values[1]);
-              if (activeLangs.tone && values[2]) fieldsToSearch.push(values[2]);
+      // Legacy Other_Forms
+      if (entry.Other_Forms) {
+        const forms = entry.Other_Forms.split('|');
+        forms.forEach((form: string) => {
+          const parts = form.split(':');
+          if (parts.length > 1) {
+            const label = parts[0];
+            const values = parts[1].split('^');
+            const translit = values[0];
+            const syllabary = values[1];
+            const tone = values[2];
+
+            let fScore = 0;
+            if (activeLangs.translit && translit) fScore = Math.max(fScore, testMatchScore(translit));
+            if (activeLangs.syllabary && syllabary) fScore = Math.max(fScore, testMatchScore(syllabary));
+            if (activeLangs.tone && tone) fScore = Math.max(fScore, testMatchScore(tone));
+
+            if (fScore > otherFormMatchScore) {
+              otherFormMatchScore = fScore;
+              matchedForm = { translit, syllabary, label };
+            }
+          }
+        });
+      }
+
+      // Imported word_forms
+      const id1 = entry.id != null ? String(entry.id) : null;
+      const id2 = entry.Index != null ? String(entry.Index) : null;
+
+      const extractMatchedForms = (idStr: string | null) => {
+        if (!idStr) return;
+        const entryForms = wordFormsLookupMap.get(idStr);
+        if (entryForms) {
+          entryForms.forEach((f: any) => {
+            let fScore = 0;
+            if (activeLangs.translit && f.translit) fScore = Math.max(fScore, testMatchScore(f.translit));
+            if (activeLangs.syllabary && f.syllabary) fScore = Math.max(fScore, testMatchScore(f.syllabary));
+            if (activeLangs.tone && f.tone) fScore = Math.max(fScore, testMatchScore(f.tone));
+
+            if (fScore > otherFormMatchScore) {
+              otherFormMatchScore = fScore;
+              matchedForm = { translit: f.translit, syllabary: f.syllabary, label: f.form_name || f.label || f.name };
             }
           });
         }
-        
-        // 2. Check New Imported word_forms using our optimized map lookup! O(1) vs previous O(W).
-        const id1 = entry.id != null ? String(entry.id) : null;
-        const id2 = entry.Index != null ? String(entry.Index) : null;
+      };
 
-        const extractMatchedForms = (idStr: string | null) => {
-            if (!idStr) return;
-            const entryForms = wordFormsLookupMap.get(idStr);
-            if (entryForms) {
-                entryForms.forEach((f: any) => {
-                    if (activeLangs.translit && f.translit) fieldsToSearch.push(f.translit);
-                    if (activeLangs.syllabary && f.syllabary) fieldsToSearch.push(f.syllabary);
-                    if (activeLangs.tone && f.tone) fieldsToSearch.push(f.tone);
-                });
-            }
-        };
-
-        extractMatchedForms(id1);
-        if (id2 && id2 !== id1) {
-            extractMatchedForms(id2);
-        }
+      extractMatchedForms(id1);
+      if (id2 && id2 !== id1) extractMatchedForms(id2);
     }
 
+    // 3. Notes & Roots
+    let notesScore = 0;
     if (activeScopes.notes) {
       const note = isPersonal ? entry.Notes : userNotes[entry.Index];
-      if (note) fieldsToSearch.push(note);
+      if (note) notesScore = Math.max(notesScore, testMatchScore(note));
     }
 
+    let rootScore = 0;
     if (activeScopes.roots) {
-        const id = entry.id || entry.Index;
-        const rootEntry = rootMap.get(id);
-        if (rootEntry) {
-            if (activeLangs.translit) {
-                if (rootEntry.root_h) fieldsToSearch.push(rootEntry.root_h);
-                if (rootEntry.root_g) fieldsToSearch.push(rootEntry.root_g);
-                if (rootEntry.root_slug) fieldsToSearch.push(rootEntry.root_slug);
-            }
-            if (activeLangs.english && rootEntry.definition) {
-                fieldsToSearch.push(rootEntry.definition);
-            }
+      const id = entry.id || entry.Index;
+      const rootEntry = rootMap.get(id);
+      if (rootEntry) {
+        if (activeLangs.translit) {
+          if (rootEntry.root_h) rootScore = Math.max(rootScore, testMatchScore(rootEntry.root_h));
+          if (rootEntry.root_g) rootScore = Math.max(rootScore, testMatchScore(rootEntry.root_g));
+          if (rootEntry.root_slug) rootScore = Math.max(rootScore, testMatchScore(rootEntry.root_slug));
         }
+        if (activeLangs.english && rootEntry.definition) {
+          rootScore = Math.max(rootScore, testMatchScore(rootEntry.definition));
+        }
+      }
     }
 
-    if (settings?.enableRegex && regex) {
-      if (fieldsToSearch.some(f => f && regex.test(f))) score = 100;
-    } else {
-      for (const field of fieldsToSearch) {
-        if (!field) continue;
-        const fLower = field.toLowerCase();
-        
-        let currentScore = 0;
-        if (fLower === lowerQuery || fLower === queryWithTones) {
-            currentScore = 120;
-        } else if (fLower.startsWith(lowerQuery) || fLower.startsWith(queryWithTones)) {
-            currentScore = 70;
-        } else if (fLower.includes(lowerQuery) || fLower.includes(queryWithTones)) {
-            currentScore = 15;
-        }
+    score = Math.max(mainMatchScore, otherFormMatchScore, notesScore, rootScore);
 
-        if (currentScore > 0) {
-            // Boost shorter matches based on how much of the field matches the query
-            // This grants up to 40 bonus points, keeping it below the +60 priority source boost
-            const ratio = lowerQuery.length / field.length;
-            currentScore += (ratio * 40);
-            
-            if (currentScore > score) {
-                score = currentScore;
-            }
+    // Only present matchedForm if other form matched AND form differs from main entry
+    let activeMatchedForm: { syllabary?: string; translit?: string; label?: string } | null = null;
+    if (otherFormMatchScore > 0) {
+      const mf: any = matchedForm;
+      if (mf) {
+        const matchedT = mf.translit;
+        const matchedS = mf.syllabary;
+        const isIdenticalToMain = 
+          (matchedT && entry.Entry && cleanStr(matchedT) === cleanStr(entry.Entry)) &&
+          (matchedS && entry.Syllabary && cleanStr(matchedS) === cleanStr(entry.Syllabary));
+        if (!isIdenticalToMain) {
+          activeMatchedForm = mf;
         }
       }
     }
 
     if (score > 0) {
       const entryId = parseInt(entry.Index || entry.id || "0");
+      const srcLower = (entry.Source || entry.source || "").toLowerCase();
+
+      // Priority CED Source boost
+      if (srcLower === 'ced' || srcLower.includes('durbin feeling') || srcLower.includes('cherokee nation')) {
+        score += 80;
+      }
 
       if (customDictionaries[entry.Source]) score += 60;
       else if (entryId >= 100000) score += 60;
@@ -483,25 +537,27 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
 
       // Gold standard sources boost
       if (entry.sources) {
-          if (entry.sources['cn-app-dictionary.csv']) score += 60;
-          if (entry.sources['hierarchical-dict.json']) score += 60;
+        if (entry.sources['cn-app-dictionary.csv']) score += 60;
+        if (entry.sources['hierarchical-dict.json']) score += 60;
       }
 
       if (entry.PoS && entry.PoS.toLowerCase().startsWith('v')) score += 30;
 
-      // Slight length penalty to break ties and order by relative length of primary Entry/Syllabary
+      // Primary length tie-breaker: shorter entry strings rank higher within same score tier
       const primaryLength = entry.Entry?.length || entry.Syllabary?.length || 0;
       score -= primaryLength * 0.001;
     }
-    return { ...entry, score };
+    return { ...entry, score, matchedForm: activeMatchedForm };
   })
     .filter(item => item.score > 0)
     .sort((a, b) => {
-      if (Math.abs(b.score - a.score) < 0.0001) {
-        const lenA = a.Entry?.length || a.Syllabary?.length || 999;
-        const lenB = b.Entry?.length || b.Syllabary?.length || 999;
-        return lenA - lenB;
+      const scoreDiff = b.score - a.score;
+      if (Math.abs(scoreDiff) > 0.05) {
+        return scoreDiff;
       }
-      return b.score - a.score;
+      // Tie-breaker: sort by shorter word length first
+      const lenA = a.Entry?.length || a.Syllabary?.length || 999;
+      const lenB = b.Entry?.length || b.Syllabary?.length || 999;
+      return lenA - lenB;
     });
 };

@@ -11,7 +11,7 @@ interface ClassViewProps {
     onShowSettings?: () => void;
 }
 
-const ClassView: React.FC<ClassViewProps> = ({ className, onClose, onViewClass, onViewEntry, onShowSettings }) => {
+const ClassView: React.FC<ClassViewProps> = ({ className, onClose, onViewEntry, onShowSettings }) => {
     const { roots, dictionaryMap } = useCorpus();
 
     const mainClassName = className.includes('[') ? className.split('[')[0] : className;
@@ -31,25 +31,72 @@ const ClassView: React.FC<ClassViewProps> = ({ className, onClose, onViewClass, 
     }, [mainClassName, roots]);
 
     const getEndings = (clsName: string) => {
-        const example = roots.find(r => r.class_name === clsName && r.segmented_forms);
-        if (!example || !example.segmented_forms) return null;
+        const classVerbs = roots.filter(r => r.class_name === clsName && r.segmented_forms);
+        if (classVerbs.length === 0) return null;
 
         const parseForm = (formStr: string) => {
             if (!formStr) return '';
             const parts = formStr.replace(/-+/g, '-').split('-');
-            return parts.length > 1 ? parts[parts.length - 1] : '';
+            return parts.length > 1 ? parts[parts.length - 1] : formStr;
         };
 
-        return {
-            present: parseForm(example.segmented_forms.present),
-            imperfective: parseForm(example.segmented_forms.imperfective),
-            perfective: parseForm(example.segmented_forms.perfective),
-            imperative: parseForm(example.segmented_forms.imperative),
-            infinitive: parseForm(example.segmented_forms.infinitive)
+        const result = {
+            present: '',
+            imperfective: '',
+            perfective: '',
+            imperative: '',
+            infinitive: ''
         };
+
+        for (const verb of classVerbs) {
+            const f = verb.segmented_forms;
+            if (f) {
+                if (!result.present && f.present) result.present = parseForm(f.present);
+                if (!result.imperfective && f.imperfective) result.imperfective = parseForm(f.imperfective);
+                if (!result.perfective && f.perfective) result.perfective = parseForm(f.perfective);
+                if (!result.imperative && f.imperative) result.imperative = parseForm(f.imperative);
+                if (!result.infinitive && f.infinitive) result.infinitive = parseForm(f.infinitive);
+            }
+        }
+
+        if (result.present || result.imperfective || result.perfective || result.imperative || result.infinitive) {
+            return result;
+        }
+        return null;
     };
 
-    const parentEndings = useMemo(() => getEndings(mainClassName), [mainClassName, roots]);
+    const parentEndings = useMemo(() => {
+        const baseEndings = getEndings(mainClassName);
+        const result = baseEndings || {
+            present: '',
+            imperfective: '',
+            perfective: '',
+            imperative: '',
+            infinitive: ''
+        };
+
+        // Fallback to any verb in the superclass to ensure all columns are filled if possible
+        const superclassVerbs = roots.filter(r => r.class_name && (r.class_name === mainClassName || r.class_name.startsWith(mainClassName + '[')) && r.segmented_forms);
+
+        const parseForm = (formStr: string) => {
+            if (!formStr) return '';
+            const parts = formStr.replace(/-+/g, '-').split('-');
+            return parts.length > 1 ? parts[parts.length - 1] : formStr;
+        };
+
+        for (const verb of superclassVerbs) {
+            const f = verb.segmented_forms;
+            if (f) {
+                if (!result.present && f.present) result.present = parseForm(f.present);
+                if (!result.imperfective && f.imperfective) result.imperfective = parseForm(f.imperfective);
+                if (!result.perfective && f.perfective) result.perfective = parseForm(f.perfective);
+                if (!result.imperative && f.imperative) result.imperative = parseForm(f.imperative);
+                if (!result.infinitive && f.infinitive) result.infinitive = parseForm(f.infinitive);
+            }
+        }
+
+        return (result.present || result.imperfective || result.perfective || result.imperative || result.infinitive) ? result : null;
+    }, [mainClassName, roots]);
 
     return (
         <div className="fixed inset-0 z-[10002] bg-[#F9F9F7] dark:bg-slate-950 flex flex-col overflow-hidden animate-fade-in font-sans">
@@ -98,12 +145,34 @@ const ClassView: React.FC<ClassViewProps> = ({ className, onClose, onViewClass, 
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
+                            {parentEndings && (
+                                <tr key={mainClassName} className={`group transition-colors ${mainClassName === className ? 'bg-amber-50 dark:bg-slate-900/60' : ''}`}>
+                                    <td className="py-2.5 font-bold text-slate-800 dark:text-slate-200 text-[10px] truncate pr-1 font-mono" title={mainClassName}>
+                                        {mainClassName}
+                                    </td>
+                                    <td className="py-2.5 px-1 font-mono text-[10px] text-slate-800 dark:text-slate-200 text-center font-semibold">
+                                        {parentEndings.present || ''}
+                                    </td>
+                                    <td className="py-2.5 px-1 font-mono text-[10px] text-slate-800 dark:text-slate-200 text-center font-semibold">
+                                        {parentEndings.imperfective || ''}
+                                    </td>
+                                    <td className="py-2.5 px-1 font-mono text-[10px] text-slate-800 dark:text-slate-200 text-center font-semibold">
+                                        {parentEndings.perfective || ''}
+                                    </td>
+                                    <td className="py-2.5 px-1 font-mono text-[10px] text-slate-800 dark:text-slate-200 text-center font-semibold">
+                                        {parentEndings.imperative || ''}
+                                    </td>
+                                    <td className="py-2.5 px-1 font-mono text-[10px] text-slate-800 dark:text-slate-200 text-center font-semibold">
+                                        {parentEndings.infinitive || ''}
+                                    </td>
+                                </tr>
+                            )}
                             {variations.length > 0 ? variations.map(v => {
                                 const endings = getEndings(v);
                                 if (!endings) return null;
 
                                 return (
-                                    <tr key={v} className={`group cursor-pointer hover:bg-amber-50/40 dark:hover:bg-slate-800/40 transition-colors ${v === className ? 'bg-amber-50 dark:bg-slate-900/60' : ''}`} onClick={() => onViewClass(v)}>
+                                    <tr key={v} className={`group transition-colors ${v === className ? 'bg-amber-50 dark:bg-slate-900/60' : ''}`}>
                                         <td className="py-2.5 font-medium text-slate-800 dark:text-slate-200 text-[10px] truncate pr-1 font-mono" title={v}>
                                             {v}
                                         </td>
@@ -125,9 +194,11 @@ const ClassView: React.FC<ClassViewProps> = ({ className, onClose, onViewClass, 
                                     </tr>
                                 );
                             }) : (
-                                <tr>
-                                    <td colSpan={6} className="py-4 text-center text-[10px] text-slate-400 dark:text-slate-500 italic">No variations documented</td>
-                                </tr>
+                                !parentEndings && (
+                                    <tr>
+                                        <td colSpan={6} className="py-4 text-center text-[10px] text-slate-400 dark:text-slate-500 italic">No variations documented</td>
+                                    </tr>
+                                )
                             )}
                         </tbody>
                     </table>

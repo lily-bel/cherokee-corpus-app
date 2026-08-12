@@ -144,6 +144,17 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
           {totalLists > 0 && <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-0.5"><ListIcon size={10} /> {totalLists}</span>}
         </div>
       </div>
+      {entry.matchedForm && (
+        <div className="text-xs text-amber-600 dark:text-amber-400 italic mb-1.5 font-medium flex items-center flex-wrap gap-x-1.5 gap-y-0.5">
+          <span className="text-slate-400 dark:text-slate-500 not-italic">matched form:</span>
+          {entry.matchedForm.syllabary && (
+            <span className="font-noto-cherokee font-semibold">{entry.matchedForm.syllabary}</span>
+          )}
+          {entry.matchedForm.translit && (
+            <span className="font-noto-serif">{entry.matchedForm.translit}</span>
+          )}
+        </div>
+      )}
       <p className="font-noto-serif text-slate-600 dark:text-slate-400 text-xs line-clamp-2">
         {entry.Definition}
         {/* PoS Moved After Definition */}
