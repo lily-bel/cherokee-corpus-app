@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Plus, Trash2 } from './Icons';
-import { formatToneInput } from '../utils';
+import { Plus, Trash2, TranslateCherokee } from './Icons';
+import { formatToneInput, transliterateToSyllabary, TransliterationStyle } from '../utils';
 
 interface FormRow {
     id: string;
@@ -15,10 +15,23 @@ interface WordFormsEditorProps {
     forms: FormRow[];
     setForms: React.Dispatch<React.SetStateAction<FormRow[]>>;
     usedFormLabels: string[];
+    transliterationStyle?: TransliterationStyle;
 }
 
-export const WordFormsEditor: React.FC<WordFormsEditorProps> = ({ forms, setForms, usedFormLabels }) => {
+export const WordFormsEditor: React.FC<WordFormsEditorProps> = ({ forms, setForms, usedFormLabels, transliterationStyle }) => {
     const [showLabelSuggestions, setShowLabelSuggestions] = useState<string | null>(null);
+
+    const getEffectiveStyle = (): TransliterationStyle => {
+        if (transliterationStyle) return transliterationStyle;
+        try {
+            const saved = localStorage.getItem('cherokee_app_settings');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (parsed.transliterationStyle) return parsed.transliterationStyle;
+            }
+        } catch (e) {}
+        return 'classic';
+    };
 
     const addFormRow = () => {
         setForms(prev => [
@@ -33,6 +46,14 @@ export const WordFormsEditor: React.FC<WordFormsEditorProps> = ({ forms, setForm
 
     const updateFormRow = (id: string, field: keyof FormRow, text: string) => {
         setForms(prev => prev.map(f => f.id === id ? { ...f, [field]: text } : f));
+    };
+
+    const handleAutoSyllabaryForRow = (id: string) => {
+        const row = forms.find(f => f.id === id);
+        if (!row || !row.translit.trim()) return;
+        const style = getEffectiveStyle();
+        const generated = transliterateToSyllabary(row.translit, style);
+        updateFormRow(id, 'syllabary', generated);
     };
 
     return (
@@ -84,18 +105,6 @@ export const WordFormsEditor: React.FC<WordFormsEditorProps> = ({ forms, setForm
                                 )}
                             </div>
 
-                            {/* Syllabary */}
-                            <div>
-                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Syllabary</label>
-                                <input
-                                    type="text"
-                                    value={row.syllabary}
-                                    onChange={e => updateFormRow(row.id, 'syllabary', e.target.value)}
-                                    placeholder="ᏣᎳᎩ"
-                                    className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg px-3 py-2 text-lg outline-none focus:border-amber-500 dark:text-white font-noto-cherokee"
-                                />
-                            </div>
-
                             {/* Transliteration */}
                             <div>
                                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Transliteration</label>
@@ -108,6 +117,28 @@ export const WordFormsEditor: React.FC<WordFormsEditorProps> = ({ forms, setForm
                                 />
                             </div>
 
+                            {/* Syllabary */}
+                            <div>
+                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1 block mb-1">Syllabary</label>
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        value={row.syllabary}
+                                        onChange={e => updateFormRow(row.id, 'syllabary', e.target.value)}
+                                        placeholder="ᏣᎳᎩ"
+                                        className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg pl-3 pr-10 py-2 text-lg outline-none focus:border-amber-500 dark:text-white font-noto-cherokee"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => handleAutoSyllabaryForRow(row.id)}
+                                        title="Auto-generate Syllabary from Transliteration"
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 hover:bg-amber-100/60 dark:hover:bg-amber-900/40 rounded-md transition-colors flex items-center justify-center"
+                                    >
+                                        <TranslateCherokee size={18} />
+                                    </button>
+                                </div>
+                            </div>
+
                             {/* Tone */}
                             <div>
                                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Tone</label>
@@ -115,7 +146,7 @@ export const WordFormsEditor: React.FC<WordFormsEditorProps> = ({ forms, setForm
                                     type="text"
                                     value={row.tone}
                                     onChange={e => updateFormRow(row.id, 'tone', formatToneInput(e.target.value))}
-                                    placeholder="1-4"
+                                    placeholder="e.g. tsa2la2gi"
                                     className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-amber-500 dark:text-white"
                                 />
                             </div>

@@ -43,6 +43,7 @@ export const Volume2 = (p) => <IconBase {...p} path={<><polygon points="11 5 6 9
 export const ArrowLeft = (p) => <IconBase {...p} path={<><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" /></>} />;
 export const X = (p) => <IconBase {...p} path={<><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></>} />;
 export const Filter = (p) => <IconBase {...p} path={<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />} />;
+export const Sliders = (p) => <IconBase {...p} path={<><line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" /><line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" /><line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" /><line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" /></>} />;
 export const ListIcon = (p) => <IconBase {...p} path={<><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></>} />;
 export const ChevronDown = (p) => <IconBase {...p} path={<polyline points="6 9 12 15 18 9" />} />;
 export const ChevronUp = (p) => <IconBase {...p} path={<polyline points="18 15 12 9 6 15" />} />;
@@ -90,4 +91,34 @@ export const Scissors = (p) => <IconBase {...p} path={<><circle cx="6" cy="6" r=
 export const Merge = (p) => <IconBase {...p} path={<><path d="M8 18L12 22L16 18" /><path d="M12 22V12" /><path d="M16 12C16 10.6739 15.4732 9.40215 14.5355 8.46447C13.5979 7.52678 12.3261 7 11 7H8" /><path d="M16 7C16 8.32608 15.4732 9.59785 14.5355 10.5355C13.5979 11.4732 12.3261 12 11 12H8" /></>} />;
 export const Globe = (p) => <IconBase {...p} path={<><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></>} />;
 export const FileCode = (p) => <IconBase {...p} path={<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><path d="M8 13l3 3-3 3" /><path d="M16 19l-3-3 3-3" /></>} />;
+
+export const TranslateCherokee = ({ size = 20, className = "", ...props }: any) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 299 299"
+    className={className}
+    {...props}
+  >
+    <g>
+      <text xmlSpace="preserve" textAnchor="start" fontFamily="Noto Sans JP" fontSize="250" id="svg_2" y="285.68428" x="161.71345" strokeWidth="0" stroke="#000" fill="currentColor">s</text>
+      <path id="svg_3" d="m-45.59738,152.81233" opacity="NaN" strokeWidth="0" stroke="#000" fill="#c17d7d" />
+      <path id="svg_5" d="m44.47996,115.6546" opacity="NaN" strokeWidth="0" stroke="#000" fill="#000000" />
+      <path fill="#fff" stroke="currentColor" opacity="NaN" d="m43.46378,116.20141" id="svg_4" />
+      <path fill="#c17d7d" stroke="currentColor" strokeWidth="0" opacity="NaN" d="m78.24638,161.08942" id="svg_7" />
+      <path fill="none" stroke="currentColor" d="m44.25429,116.20141c13.83399,0 32.01581,11.85771 32.41107,43.87352c0.39526,32.01581 -16.20553,44.26877 -33.20158,44.66403c-16.99605,0.39526 -31.62055,-18.18182 -32.01581,-44.66403c-0.39526,-26.48221 18.97233,-43.87352 32.80632,-43.87352z" id="svg_6" strokeWidth="17" fillOpacity="0" />
+      <path fill="#c17d7d" stroke="currentColor" strokeWidth="0" d="m125.72334,158.34239c0.34913,0.37549 -45.10541,-0.01977 -45.45454,0l45.45454,0z" id="svg_8" />
+      <path fill="none" stroke="currentColor" opacity="NaN" d="m79.0369,159.66649c1.18577,0 47.43083,0.39526 47.0817,0.25693" id="svg_10" strokeWidth="17" fillOpacity="0" />
+      <path fill="#fff" stroke="currentColor" opacity="NaN" d="m97.16131,115.39771l59.88408,-0.13833l-29.61137,0" id="svg_11" strokeWidth="17" />
+      <path fill="#000000" stroke="currentColor" strokeWidth="0" opacity="NaN" d="m125.11067,66.20141" id="svg_15" />
+      <path fill="none" stroke="currentColor" opacity="NaN" d="m127.08696,115.21327l-0.57311,43.52438c0.17785,0.34914 -4.56523,44.61791 36.93674,45.40843" id="svg_18" strokeWidth="17" fillOpacity="0" />
+      <path strokeWidth="10" id="svg_17" d="m271.67032,128.23457c52.46913,-75.30864 -21.60494,-119.1358 -48.76543,-88.2716" opacity="NaN" stroke="currentColor" fill="none" />
+      <path id="svg_19" d="m-91.24582,-29.05917l0.3725,-0.3725l0,0.18625l0.55875,0l0,-0.55875l-0.18625,0l0.3725,-0.3725l0.3725,0.3725l-0.18625,0l0,0.93125l-0.93125,0l0,0.18625l-0.3725,-0.3725l0,0z" stroke="currentColor" fill="none" />
+      <path fillOpacity="0" strokeWidth="10" id="svg_28" d="m226.91467,10.91666l-5.16563,30.33334l27.5,0.625" opacity="NaN" stroke="currentColor" fill="none" />
+      <path fillOpacity="0" strokeWidth="10" id="svg_29" d="m290.66467,127.79166l-22.66563,5.33334l-1.25,-26.875" opacity="NaN" stroke="currentColor" fill="none" />
+      <path id="svg_35" d="m81.79845,68.66537c7.75194,-6.97674 23.25581,-24.03101 46.51163,-25.5814c23.25581,-1.55039 41.08527,-1.55039 67.44186,24.8062c26.35659,26.35659 22.48062,59.68992 22.48062,63.56589" fillOpacity="0" strokeWidth="17" stroke="currentColor" fill="none" />
+    </g>
+  </svg>
+);
+
 

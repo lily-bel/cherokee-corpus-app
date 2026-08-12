@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Search, Book, Menu, X, Filter, Clock, ListIcon, Folder, BookOpen, Download, ArrowLeft, Pencil, ChevronDown, Share, Trash2, Plus, ChevronUp, Minus, Check, ToggleLeft, ToggleRight, Box, Layout } from './components/Icons';
+import { Search, Book, Menu, X, Filter, Sliders, Clock, ListIcon, Folder, BookOpen, Download, ArrowLeft, Pencil, ChevronDown, Share, Trash2, Plus, ChevronUp, Minus, Check, ToggleLeft, ToggleRight, Box, Layout } from './components/Icons';
 import { Toast, Modal } from './components/UI';
 import EntryCard from './components/EntryCard';
 import EntryDetail from './components/EntryDetail';
@@ -30,6 +30,7 @@ const DEFAULT_SETTINGS = {
     searchLangs: { syllabary: true, translit: true, english: true, tone: false },
     searchScopes: { main: true, otherForms: true, sentences: false, notes: false, roots: true },
     showRootHeaders: true,
+    transliterationStyle: 'classic' as 'classic' | 'aspiration' | 'reverse_aspiration',
 };
 
 function App() {
@@ -82,6 +83,7 @@ function App() {
 
     const [settings, setSettings] = useState(DEFAULT_SETTINGS);
     const [showSettingsModal, setShowSettingsModal] = useState(false);
+    const [showSearchSettingsPopover, setShowSearchSettingsPopover] = useState(false);
 
     const [showNewListModal, setShowNewListModal] = useState(false);
     const [newListName, setNewListName] = useState('');
@@ -1428,148 +1430,307 @@ function App() {
                             <div className="flex flex-col h-full">
                                 <div className="p-4 bg-[#F9F9F7] dark:bg-slate-950">
                                     <div className="relative">
-                                        <div className="absolute left-3 top-3.5 text-slate-400"><Search size={20} /></div>
-                                        <input type="text" className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-3 pl-10 pr-4 text-lg shadow-sm outline-none font-noto-serif text-slate-800 dark:text-slate-100" placeholder={settings.enableRegex ? "Regex Search..." : "Search..."} value={inputValue} onChange={(e) => setInputValue(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') addToHistory(query); }} />
-                                        {inputValue ? <button onClick={() => { setInputValue(''); setQuery(''); }} className="absolute right-3 top-3.5 text-slate-300"><X size={20} /></button> : null}
-                                    </div>
-                                    <div className="flex justify-end mt-2 items-center gap-4">
-                                        {/* Search Scope Toggle */}
-                                        <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-lg flex text-sm font-medium">
+                                        <div className="absolute left-3 top-3.5 text-slate-400 pointer-events-none"><Search size={20} /></div>
+                                        <input
+                                            type="text"
+                                            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-3 pl-10 pr-20 text-lg shadow-sm outline-none font-noto-serif text-slate-800 dark:text-slate-100"
+                                            placeholder={settings.enableRegex ? "Regex Search..." : "Search..."}
+                                            value={inputValue}
+                                            onChange={(e) => setInputValue(e.target.value)}
+                                            onKeyDown={(e) => { if (e.key === 'Enter') addToHistory(query); }}
+                                        />
+                                        <div className="absolute right-3 top-2.5 flex items-center gap-1">
+                                            {inputValue ? (
+                                                <button
+                                                    onClick={() => { setInputValue(''); setQuery(''); }}
+                                                    className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                                                    title="Clear search"
+                                                >
+                                                    <X size={18} />
+                                                </button>
+                                            ) : null}
                                             <button
-                                                onClick={() => setSearchScope('dictionary')}
-                                                className={`px-3 py-1 rounded-md transition-all ${searchScope === 'dictionary' ? 'bg-white dark:bg-slate-700 shadow text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'} `}
+                                                onClick={() => setShowSearchSettingsPopover(!showSearchSettingsPopover)}
+                                                className={`p-1.5 rounded-lg transition-colors flex items-center justify-center ${showSearchSettingsPopover ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                                                title="Search Settings"
                                             >
-                                                Dictionary
-                                            </button>
-                                            <button
-                                                onClick={() => setSearchScope('sentences')}
-                                                className={`px-3 py-1 rounded-md transition-all ${searchScope === 'sentences' ? 'bg-white dark:bg-slate-700 shadow text-slate-900 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'} `}
-                                            >
-                                                Sentences
+                                                <Sliders size={18} />
                                             </button>
                                         </div>
-                                        <button onClick={() => setShowFilters(!showFilters)} className="flex items-center gap-1 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide hover:text-amber-700"><Filter size={12} /> Filter Sources</button>
                                     </div>
-                                    {showFilters && (
-                                        <div className="mt-2 p-3 bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-2 animate-fade-in max-h-64 overflow-y-auto">
-                                            {/* Source List */}
-                                            {searchScope === 'dictionary' && availableSources.map(src => {
-                                                if (src.code === 'Other') {
-                                                    return (
-                                                        <div key="OtherGroup" className="flex flex-col">
-                                                            <div className="flex items-center justify-between p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded">
-                                                                <label className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer flex-1">
-                                                                    {/* Tri-state Checkbox Implementation */}
-                                                                    <div onClick={(e) => { e.preventDefault(); toggleAllSmallSources(); }} className="w-4 h-4 rounded border border-slate-300 dark:border-slate-600 flex items-center justify-center bg-white dark:bg-slate-800 overflow-hidden">
-                                                                        {otherGroupState === 'all' && <div className="w-full h-full bg-amber-600 flex items-center justify-center"><Check size={12} className="text-white" /></div>}
-                                                                        {otherGroupState === 'some' && <div className="w-full h-full bg-amber-600 flex items-center justify-center"><Minus size={12} className="text-white" /></div>}
-                                                                    </div>
+                                    {showSearchSettingsPopover && (
+                                        <div className="mt-2 p-4 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-200 dark:border-slate-800 space-y-4 animate-fade-in z-30 max-h-[calc(100vh-215px)] overflow-y-auto">
+                                            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+                                                <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                                                    <Sliders size={14} /> Search Options
+                                                </h3>
+                                                <button
+                                                    onClick={() => setShowSearchSettingsPopover(false)}
+                                                    className="text-xs text-amber-600 dark:text-amber-400 hover:underline font-medium"
+                                                >
+                                                    Done
+                                                </button>
+                                            </div>
 
-                                                                    <span className="font-bold uppercase text-xs text-slate-500 dark:text-slate-400 mr-2 min-w-[3rem] shrink-0 text-center bg-slate-100 dark:bg-slate-800 rounded px-1">...</span>
-                                                                    <span className="font-bold text-slate-600 dark:text-slate-400">Other Sources</span>
-                                                                    <span className="ml-auto text-xs text-slate-400 font-mono">({src.count})</span>
-                                                                </label>
-                                                                <button onClick={(e) => { e.preventDefault(); setExpandOthers(!expandOthers); }} className="p-1 ml-2 text-slate-400 hover:text-amber-600">
-                                                                    {expandOthers ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                                                                </button>
-                                                            </div>
+                                            {/* Search Mode (Dictionary vs Sentences) */}
+                                            <div>
+                                                <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Search Mode</h4>
+                                                <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-lg flex text-sm font-medium">
+                                                    <button
+                                                        onClick={() => setSearchScope('dictionary')}
+                                                        className={`flex-1 py-1.5 rounded-md transition-all text-center ${searchScope === 'dictionary' ? 'bg-white dark:bg-slate-700 shadow text-slate-900 dark:text-slate-100 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                                                    >
+                                                        Dictionary
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setSearchScope('sentences')}
+                                                        className={`flex-1 py-1.5 rounded-md transition-all text-center ${searchScope === 'sentences' ? 'bg-white dark:bg-slate-700 shadow text-slate-900 dark:text-slate-100 font-bold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                                                    >
+                                                        Sentences
+                                                    </button>
+                                                </div>
+                                            </div>
 
-                                                            {/* Indented Small Sources */}
-                                                            {expandOthers && (
-                                                                <div className="ml-8 mt-1 border-l-2 border-slate-100 dark:border-slate-800 pl-2 space-y-1">
-                                                                    {expandedSmallSourcesDict.map(smallSrc => (
-                                                                        <label key={smallSrc.code} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded">
-                                                                            <input
-                                                                                type="checkbox"
-                                                                                checked={filters[smallSrc.code] !== false}
-                                                                                onChange={() => setFilters(prev => ({ ...prev, [smallSrc.code]: !prev[smallSrc.code] }))}
-                                                                                className="accent-amber-600 w-4 h-4 rounded"
-                                                                            />
-                                                                            <div className="flex-1 flex items-center min-w-0">
-                                                                                <span className="font-bold uppercase text-xs text-slate-500 dark:text-slate-400 mr-2 min-w-[3rem] shrink-0 text-center bg-slate-100 dark:bg-slate-800 rounded px-1">{smallSrc.code}</span>
-                                                                                <span className="truncate">{smallSrc.name}</span>
-                                                                                <span className="ml-auto text-[10px] text-slate-300 font-mono">({smallSrc.count})</span>
-                                                                            </div>
-                                                                        </label>
-                                                                    ))}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    );
-                                                }
+                                            <hr className="border-slate-100 dark:border-slate-800" />
 
-                                                return (
-                                                    <label key={src.code} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded">
-                                                        <input type="checkbox" checked={filters[src.code] !== false} onChange={() => setFilters(prev => ({ ...prev, [src.code]: !prev[src.code] }))} className="accent-amber-600 w-4 h-4 rounded" />
-                                                        <div className="flex-1 flex items-center min-w-0">
-                                                            <span className="font-bold uppercase text-xs text-slate-500 dark:text-slate-400 mr-2 min-w-[3rem] shrink-0 text-center bg-slate-100 dark:bg-slate-800 rounded px-1">{src.badge}</span>
-                                                            <span className="truncate">{src.name}</span>
-                                                            <span className="ml-auto text-xs text-slate-400 font-mono">({src.count})</span>
-                                                        </div>
-                                                    </label>
-                                                )
-                                            })}
+                                            {/* Filter Data Sources */}
+                                            <div>
+                                                <button
+                                                    onClick={() => setShowFilters(!showFilters)}
+                                                    className="w-full flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wide transition-colors"
+                                                >
+                                                    <span className="flex items-center gap-2"><Filter size={14} className="text-amber-600 dark:text-amber-400" /> Filter Sources</span>
+                                                    {showFilters ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+                                                </button>
 
-                                            {/* Sentence Sources */}
-                                            {searchScope === 'sentences' && (
-                                                <>
-                                                    {availableSentenceSources.mainSources.map(src => {
-                                                        if (src.code === 'other_group') {
-                                                            return (
-                                                                <div key="other_group" className="flex flex-col">
-                                                                    <div className="flex items-center justify-between p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded">
-                                                                        <label className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer flex-1">
-                                                                            {/* Tri-state Checkbox Implementation */}
-                                                                            <div onClick={(e) => { e.preventDefault(); toggleAllSentenceSmallSources(); }} className="w-4 h-4 rounded border border-slate-300 dark:border-slate-600 flex items-center justify-center bg-white dark:bg-slate-800 overflow-hidden">
-                                                                                {sentenceOtherGroupState === 'all' && <div className="w-full h-full bg-amber-600 flex items-center justify-center"><Check size={12} className="text-white" /></div>}
-                                                                                {sentenceOtherGroupState === 'some' && <div className="w-full h-full bg-amber-600 flex items-center justify-center"><Minus size={12} className="text-white" /></div>}
-                                                                            </div>
+                                                {showFilters && (
+                                                    <div className="mt-2 p-3 bg-slate-50/50 dark:bg-slate-900/60 rounded-lg border border-slate-200 dark:border-slate-700 flex flex-col gap-2 max-h-56 overflow-y-auto shadow-inner">
+                                                        {/* Dictionary Sources */}
+                                                        {searchScope === 'dictionary' && availableSources.map(src => {
+                                                            if (src.code === 'Other') {
+                                                                return (
+                                                                    <div key="OtherGroup" className="flex flex-col">
+                                                                        <div className="flex items-center justify-between p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded">
+                                                                            <label className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer flex-1">
+                                                                                <div onClick={(e) => { e.preventDefault(); toggleAllSmallSources(); }} className="w-4 h-4 rounded border border-slate-300 dark:border-slate-600 flex items-center justify-center bg-white dark:bg-slate-800 overflow-hidden">
+                                                                                    {otherGroupState === 'all' && <div className="w-full h-full bg-amber-600 flex items-center justify-center"><Check size={12} className="text-white" /></div>}
+                                                                                    {otherGroupState === 'some' && <div className="w-full h-full bg-amber-600 flex items-center justify-center"><Minus size={12} className="text-white" /></div>}
+                                                                                </div>
 
-                                                                            <span className="font-bold uppercase text-xs text-slate-500 dark:text-slate-400 mr-2 min-w-[3rem] shrink-0 text-center bg-slate-100 dark:bg-slate-800 rounded px-1">...</span>
-                                                                            <span className="font-bold text-slate-600 dark:text-slate-400">Other Sources</span>
-                                                                            <span className="ml-auto text-xs text-slate-400 font-mono">({availableSentenceSources.otherSources.length})</span>
-                                                                        </label>
-                                                                        <button onClick={(e) => { e.preventDefault(); setExpandedSmallSources(!expandedSmallSources); }} className="p-1 ml-2 text-slate-400 hover:text-amber-600">
-                                                                            {expandedSmallSources ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                                                                        </button>
-                                                                    </div>
-
-                                                                    {expandedSmallSources && (
-                                                                        <div className="ml-8 mt-1 border-l-2 border-slate-100 dark:border-slate-800 pl-2 space-y-1">
-                                                                            {availableSentenceSources.otherSources.map(smallSrc => (
-                                                                                <label key={smallSrc.code} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded">
-                                                                                    <input
-                                                                                        type="checkbox"
-                                                                                        checked={sentenceFilters[smallSrc.code] !== false}
-                                                                                        onChange={() => setSentenceFilters(prev => ({ ...prev, [smallSrc.code]: !prev[smallSrc.code] }))}
-                                                                                        className="accent-amber-600 w-4 h-4 rounded"
-                                                                                    />
-                                                                                    <div className="flex-1 flex items-center min-w-0">
-                                                                                        <span className="font-bold uppercase text-xs text-slate-500 dark:text-slate-400 mr-2 min-w-[3rem] shrink-0 text-center bg-slate-100 dark:bg-slate-800 rounded px-1">{smallSrc.code}</span>
-                                                                                        <span className="truncate">{smallSrc.name.replace(`[${smallSrc.code}] `, '')}</span>
-                                                                                        <span className="ml-auto text-[10px] text-slate-300 font-mono">({smallSrc.count})</span>
-                                                                                    </div>
-                                                                                </label>
-                                                                            ))}
+                                                                                <span className="font-bold uppercase text-xs text-slate-500 dark:text-slate-400 mr-2 min-w-[3rem] shrink-0 text-center bg-white dark:bg-slate-800 rounded px-1">...</span>
+                                                                                <span className="font-bold text-slate-600 dark:text-slate-400">Other Sources</span>
+                                                                                <span className="ml-auto text-xs text-slate-400 font-mono">({src.count})</span>
+                                                                            </label>
+                                                                            <button onClick={(e) => { e.preventDefault(); setExpandOthers(!expandOthers); }} className="p-1 ml-2 text-slate-400 hover:text-amber-600">
+                                                                                {expandOthers ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                                                            </button>
                                                                         </div>
-                                                                    )}
-                                                                </div>
-                                                            );
-                                                        }
 
-                                                        return (
-                                                            <label key={src.code} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded">
-                                                                <input type="checkbox" checked={sentenceFilters[src.code] !== false} onChange={() => setSentenceFilters(prev => ({ ...prev, [src.code]: !prev[src.code] }))} className="accent-amber-600 w-4 h-4 rounded" />
-                                                                <div className="flex-1 flex items-center min-w-0">
-                                                                    <span className="font-bold uppercase text-xs text-slate-500 dark:text-slate-400 mr-2 min-w-[3rem] shrink-0 text-center bg-slate-100 dark:bg-slate-800 rounded px-1">{src.badge}</span>
-                                                                    <span className="truncate">{src.name}</span>
-                                                                    <span className="ml-auto text-xs text-slate-400 font-mono">({src.count})</span>
-                                                                </div>
-                                                            </label>
-                                                        )
-                                                    })}
-                                                </>
-                                            )}
+                                                                        {expandOthers && (
+                                                                            <div className="ml-8 mt-1 border-l-2 border-slate-200 dark:border-slate-700 pl-2 space-y-1">
+                                                                                {expandedSmallSourcesDict.map(smallSrc => (
+                                                                                    <label key={smallSrc.code} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded">
+                                                                                        <input
+                                                                                            type="checkbox"
+                                                                                            checked={filters[smallSrc.code] !== false}
+                                                                                            onChange={() => setFilters(prev => ({ ...prev, [smallSrc.code]: !prev[smallSrc.code] }))}
+                                                                                            className="accent-amber-600 w-4 h-4 rounded"
+                                                                                        />
+                                                                                        <div className="flex-1 flex items-center min-w-0">
+                                                                                            <span className="font-bold uppercase text-xs text-slate-500 dark:text-slate-400 mr-2 min-w-[3rem] shrink-0 text-center bg-white dark:bg-slate-800 rounded px-1">{smallSrc.code}</span>
+                                                                                            <span className="truncate">{smallSrc.name}</span>
+                                                                                            <span className="ml-auto text-[10px] text-slate-300 font-mono">({smallSrc.count})</span>
+                                                                                        </div>
+                                                                                    </label>
+                                                                                ))}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            }
+
+                                                            return (
+                                                                <label key={src.code} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded">
+                                                                    <input type="checkbox" checked={filters[src.code] !== false} onChange={() => setFilters(prev => ({ ...prev, [src.code]: !prev[src.code] }))} className="accent-amber-600 w-4 h-4 rounded" />
+                                                                    <div className="flex-1 flex items-center min-w-0">
+                                                                        <span className="font-bold uppercase text-xs text-slate-500 dark:text-slate-400 mr-2 min-w-[3rem] shrink-0 text-center bg-white dark:bg-slate-800 rounded px-1">{src.badge}</span>
+                                                                        <span className="truncate">{src.name}</span>
+                                                                        <span className="ml-auto text-xs text-slate-400 font-mono">({src.count})</span>
+                                                                    </div>
+                                                                </label>
+                                                            )
+                                                        })}
+
+                                                        {/* Sentence Sources */}
+                                                        {searchScope === 'sentences' && (
+                                                            <>
+                                                                {availableSentenceSources.mainSources.map(src => {
+                                                                    if (src.code === 'other_group') {
+                                                                        return (
+                                                                            <div key="other_group" className="flex flex-col">
+                                                                                <div className="flex items-center justify-between p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded">
+                                                                                    <label className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer flex-1">
+                                                                                        <div onClick={(e) => { e.preventDefault(); toggleAllSentenceSmallSources(); }} className="w-4 h-4 rounded border border-slate-300 dark:border-slate-600 flex items-center justify-center bg-white dark:bg-slate-800 overflow-hidden">
+                                                                                            {sentenceOtherGroupState === 'all' && <div className="w-full h-full bg-amber-600 flex items-center justify-center"><Check size={12} className="text-white" /></div>}
+                                                                                            {sentenceOtherGroupState === 'some' && <div className="w-full h-full bg-amber-600 flex items-center justify-center"><Minus size={12} className="text-white" /></div>}
+                                                                                        </div>
+
+                                                                                        <span className="font-bold uppercase text-xs text-slate-500 dark:text-slate-400 mr-2 min-w-[3rem] shrink-0 text-center bg-white dark:bg-slate-800 rounded px-1">...</span>
+                                                                                        <span className="font-bold text-slate-600 dark:text-slate-400">Other Sources</span>
+                                                                                        <span className="ml-auto text-xs text-slate-400 font-mono">({availableSentenceSources.otherSources.length})</span>
+                                                                                    </label>
+                                                                                    <button onClick={(e) => { e.preventDefault(); setExpandedSmallSources(!expandedSmallSources); }} className="p-1 ml-2 text-slate-400 hover:text-amber-600">
+                                                                                        {expandedSmallSources ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                                                                    </button>
+                                                                                </div>
+
+                                                                                {expandedSmallSources && (
+                                                                                    <div className="ml-8 mt-1 border-l-2 border-slate-200 dark:border-slate-700 pl-2 space-y-1">
+                                                                                        {availableSentenceSources.otherSources.map(smallSrc => (
+                                                                                            <label key={smallSrc.code} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded">
+                                                                                                <input
+                                                                                                    type="checkbox"
+                                                                                                    checked={sentenceFilters[smallSrc.code] !== false}
+                                                                                                    onChange={() => setSentenceFilters(prev => ({ ...prev, [smallSrc.code]: !prev[smallSrc.code] }))}
+                                                                                                    className="accent-amber-600 w-4 h-4 rounded"
+                                                                                                />
+                                                                                                <div className="flex-1 flex items-center min-w-0">
+                                                                                                    <span className="font-bold uppercase text-xs text-slate-500 dark:text-slate-400 mr-2 min-w-[3rem] shrink-0 text-center bg-white dark:bg-slate-800 rounded px-1">{smallSrc.code}</span>
+                                                                                                    <span className="truncate">{smallSrc.name.replace(`[${smallSrc.code}] `, '')}</span>
+                                                                                                    <span className="ml-auto text-[10px] text-slate-300 font-mono">({smallSrc.count})</span>
+                                                                                                </div>
+                                                                                            </label>
+                                                                                        ))}
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                        );
+                                                                    }
+
+                                                                    return (
+                                                                        <label key={src.code} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded">
+                                                                            <input type="checkbox" checked={sentenceFilters[src.code] !== false} onChange={() => setSentenceFilters(prev => ({ ...prev, [src.code]: !prev[src.code] }))} className="accent-amber-600 w-4 h-4 rounded" />
+                                                                            <div className="flex-1 flex items-center min-w-0">
+                                                                                <span className="font-bold uppercase text-xs text-slate-500 dark:text-slate-400 mr-2 min-w-[3rem] shrink-0 text-center bg-white dark:bg-slate-800 rounded px-1">{src.badge}</span>
+                                                                                <span className="truncate">{src.name}</span>
+                                                                                <span className="ml-auto text-xs text-slate-400 font-mono">({src.count})</span>
+                                                                            </div>
+                                                                        </label>
+                                                                    )
+                                                                })}
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <hr className="border-slate-100 dark:border-slate-800" />
+
+                                            {/* Search Languages */}
+                                            <div>
+                                                <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Search Languages</h4>
+                                                <div className="grid grid-cols-2 gap-1.5">
+                                                    {[
+                                                        { k: 'syllabary', l: 'ᏣᎳᎩ (Syllabary)' },
+                                                        { k: 'translit', l: 'Jalagi (Translit)' },
+                                                        { k: 'english', l: 'English' },
+                                                        { k: 'tone', l: 'Tone' }
+                                                    ].map(opt => (
+                                                        <label key={opt.k} className="flex items-center justify-between cursor-pointer p-1.5 rounded hover:bg-slate-50 dark:hover:bg-slate-800 text-sm">
+                                                            <span className="text-slate-700 dark:text-slate-300 text-xs font-medium">{opt.l}</span>
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={settings.searchLangs[opt.k]}
+                                                                onChange={() => setSettings(s => ({
+                                                                    ...s,
+                                                                    searchLangs: { ...s.searchLangs, [opt.k]: !s.searchLangs[opt.k] }
+                                                                }))}
+                                                                className="accent-amber-600 w-4 h-4 rounded cursor-pointer"
+                                                            />
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <hr className="border-slate-100 dark:border-slate-800" />
+
+                                            {/* Search Scope */}
+                                            <div>
+                                                <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Search Scope</h4>
+                                                <div className="grid grid-cols-2 gap-1.5">
+                                                    {[
+                                                        { k: 'main', l: 'Main Entry' },
+                                                        { k: 'otherForms', l: 'Other Word Forms' },
+                                                        { k: 'roots', l: 'Roots' },
+                                                        { k: 'sentences', l: 'Sentences' },
+                                                        { k: 'notes', l: 'Notes' }
+                                                    ].map(opt => (
+                                                        <label key={opt.k} className="flex items-center justify-between cursor-pointer p-1.5 rounded hover:bg-slate-50 dark:hover:bg-slate-800 text-sm">
+                                                            <span className="text-slate-700 dark:text-slate-300 text-xs font-medium">{opt.l}</span>
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={settings.searchScopes[opt.k]}
+                                                                onChange={() => setSettings(s => ({
+                                                                    ...s,
+                                                                    searchScopes: { ...s.searchScopes, [opt.k]: !s.searchScopes[opt.k] }
+                                                                }))}
+                                                                className="accent-amber-600 w-4 h-4 rounded cursor-pointer"
+                                                            />
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <hr className="border-slate-100 dark:border-slate-800" />
+
+                                            {/* Part of Speech & Search Toggles */}
+                                            <div className="space-y-3">
+                                                <div>
+                                                    <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5 block">Filter by Part of Speech</label>
+                                                    <select
+                                                        value={posFilter}
+                                                        onChange={(e) => setPosFilter(e.target.value)}
+                                                        className="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs outline-none"
+                                                    >
+                                                        {uniquePoS.map(pos => <option key={pos} value={pos}>{pos}</option>)}
+                                                    </select>
+                                                </div>
+
+                                                <div className="flex items-center justify-between pt-1">
+                                                    <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Enable Regex Search</span>
+                                                    <button
+                                                        onClick={() => setSettings(s => ({ ...s, enableRegex: !s.enableRegex }))}
+                                                        className={`transition-colors ${settings.enableRegex ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}
+                                                    >
+                                                        {settings.enableRegex ? <ToggleRight size={24} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={24} />}
+                                                    </button>
+                                                </div>
+
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Show Part of Speech</span>
+                                                    <button
+                                                        onClick={() => setSettings(s => ({ ...s, showPosInLists: !s.showPosInLists }))}
+                                                        className={`transition-colors ${settings.showPosInLists ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}
+                                                    >
+                                                        {settings.showPosInLists ? <ToggleRight size={24} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={24} />}
+                                                    </button>
+                                                </div>
+
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Show Root Headers</span>
+                                                    <button
+                                                        onClick={() => setSettings(s => ({ ...s, showRootHeaders: !s.showRootHeaders }))}
+                                                        className={`transition-colors ${settings.showRootHeaders ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}
+                                                    >
+                                                        {settings.showRootHeaders ? <ToggleRight size={24} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={24} />}
+                                                    </button>
+                                                </div>
+
+                                                <div className="pt-2 text-center border-t border-slate-100 dark:border-slate-800">
+                                                    <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Searchable Entries</div>
+                                                    <div className="text-xs font-bold text-slate-500 dark:text-slate-400">{searchableCount}</div>
+                                                </div>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -1890,36 +2051,29 @@ function App() {
                 showSettingsModal && (
                     <Modal title="Settings" onClose={() => setShowSettingsModal(false)}>
                         <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
-                            <div className="flex items-center justify-between"><div className="flex flex-col"><span className="text-sm font-bold text-slate-700 dark:text-slate-200">Dark Mode</span><span className="text-xs text-slate-400">Toggle app theme</span></div><button onClick={() => setSettings(s => ({ ...s, darkMode: !s.darkMode }))} className={`transition - colors ${settings.darkMode ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'} `}>{settings.darkMode ? <ToggleRight size={32} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={32} />}</button></div>
-                            <hr className="border-slate-100 dark:border-slate-800" />
-                            <div className="flex items-center justify-between"><div className="flex flex-col"><span className="text-sm font-bold text-slate-700 dark:text-slate-200">Enable Regex Search</span><span className="text-xs text-slate-400">Use regular expressions</span></div><button onClick={() => setSettings(s => ({ ...s, enableRegex: !s.enableRegex }))} className={`transition - colors ${settings.enableRegex ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'} `}>{settings.enableRegex ? <ToggleRight size={32} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={32} />}</button></div>
-                            <hr className="border-slate-100 dark:border-slate-800" />
-                            <div className="flex items-center justify-between"><div className="flex flex-col"><span className="text-sm font-bold text-slate-700 dark:text-slate-200">Show PoS in Lists</span><span className="text-xs text-slate-400">Display Part of Speech in search/lists</span></div><button onClick={() => setSettings(s => ({ ...s, showPosInLists: !s.showPosInLists }))} className={`transition - colors ${settings.showPosInLists ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'} `}>{settings.showPosInLists ? <ToggleRight size={32} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={32} />}</button></div>
-                            <hr className="border-slate-100 dark:border-slate-800" />
-                            <div><h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Search Languages</h4><div className="space-y-2">{[{ k: 'syllabary', l: 'ᏣᎳᎩ (Syllabary)' }, { k: 'translit', l: 'Jalagi (Translit)' }, { k: 'english', l: 'English' }, { k: 'tone', l: 'Tone' }].map(opt => (<label key={opt.k} className="flex items-center justify-between cursor-pointer p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded"><span className="text-sm font-medium text-slate-700 dark:text-slate-300">{opt.l}</span><input type="checkbox" checked={settings.searchLangs[opt.k]} onChange={() => setSettings(s => ({ ...s, searchLangs: { ...s.searchLangs, [opt.k]: !s.searchLangs[opt.k] } }))} className="accent-amber-600 w-5 h-5 rounded" /></label>))}</div></div>
+                            <div className="flex items-center justify-between">
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Dark Mode</span>
+                                    <span className="text-xs text-slate-400">Toggle app theme</span>
+                                </div>
+                                <button onClick={() => setSettings(s => ({ ...s, darkMode: !s.darkMode }))} className={`transition-colors ${settings.darkMode ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}>
+                                    {settings.darkMode ? <ToggleRight size={32} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={32} />}
+                                </button>
+                            </div>
                             <hr className="border-slate-100 dark:border-slate-800" />
                             <div>
-                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Search Scope</h4>
-
-                                {/* CHECKBOXES FIRST */}
-                                <div className="space-y-2 mb-4">{[{ k: 'main', l: 'Main Entry' }, { k: 'otherForms', l: 'Other Word Forms' }, { k: 'roots', l: 'Roots' }, { k: 'sentences', l: 'Sentences' }, { k: 'notes', l: 'Notes' }].map(opt => (<label key={opt.k} className="flex items-center justify-between cursor-pointer p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded"><span className="text-sm font-medium text-slate-700 dark:text-slate-300">{opt.l}</span><input type="checkbox" checked={settings.searchScopes[opt.k]} onChange={() => setSettings(s => ({ ...s, searchScopes: { ...s.searchScopes, [opt.k]: !s.searchScopes[opt.k] } }))} className="accent-amber-600 w-5 h-5 rounded" /></label>))}</div>
-
-                                <div className="flex items-center justify-between p-1"><div className="flex flex-col"><span className="text-sm font-medium text-slate-700 dark:text-slate-300">Show Root Headers</span><span className="text-[10px] text-slate-400">Group search results by root</span></div><button onClick={() => setSettings(s => ({ ...s, showRootHeaders: !s.showRootHeaders }))} className={`transition - colors ${settings.showRootHeaders ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'} `}>{settings.showRootHeaders ? <ToggleRight size={32} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={32} />}</button></div>
-
-                                {/* POS FILTER Moved Here (Below Checkboxes) */}
-
-                                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 mt-2">
-                                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 block">Filter by Part of Speech</label>
-                                    <select
-                                        value={posFilter}
-                                        onChange={(e) => setPosFilter(e.target.value)}
-                                        className="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-sm outline-none"
-                                    >
-                                        {uniquePoS.map(pos => <option key={pos} value={pos}>{pos}</option>)}
-                                    </select>
-                                </div>
+                                <label className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-1 block">Preferred Transliteration Style</label>
+                                <p className="text-xs text-slate-400 mb-3">Controls automatic syllabary and transliteration conversion across the app.</p>
+                                <select
+                                    value={settings.transliterationStyle || 'classic'}
+                                    onChange={(e) => setSettings(s => ({ ...s, transliterationStyle: e.target.value as any }))}
+                                    className="w-full p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-sm outline-none focus:ring-2 focus:ring-amber-500 font-medium"
+                                >
+                                    <option value="classic">Classic (CED)</option>
+                                    <option value="aspiration">Aspiration (Uchihara t/th)</option>
+                                    <option value="reverse_aspiration">Reverse Aspiration (d/dh)</option>
+                                </select>
                             </div>
-                            <div className="pt-2 text-center"><div className="text-[10px] font-bold text-slate-300 uppercase">Searchable Entries</div><div className="text-sm font-bold text-slate-400">{searchableCount}</div></div>
                             <hr className="border-slate-100 dark:border-slate-800" />
                             <div>
                                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Data Management</h4>
@@ -1966,6 +2120,7 @@ function App() {
                         editingId={editingId}
                         customDictionaries={customDictionaries}
                         usedFormLabels={usedFormLabels}
+                        settings={settings}
                     />
                 )
             }
@@ -1979,6 +2134,7 @@ function App() {
                         onSave={saveAdditionalForms}
                         initialForms={currentAdditionalForms}
                         usedFormLabels={usedFormLabels}
+                        settings={settings}
                     />
                 )
             }

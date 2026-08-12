@@ -19,8 +19,9 @@ When working on this repository, all AI agents **MUST** follow these mandatory r
 3. **CLARIFY UNSTATED SPECIFICATIONS:**  
    > ❓ Whenever a task specification or feature detail is unstated or ambiguous, agents should ask the user for clarification before making assumptions or guessing implementation choices.
 
-4. **ARCHIVING COMPLETED TASKS:**  
-   > 📁 Once a task is finished and user-approved, move its detailed spec to [`COMPLETED_TASKS.md`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/COMPLETED_TASKS.md) and leave a 1-line reference in `TASKS.md` to conserve context tokens for future agents.
+4. **TASK REVIEW & ARCHIVING LIFECYCLE:**  
+   > ⏳ **Step 1 — Move to Pending Review:** When an agent finishes implementing and verifying a task, do NOT move it directly to `COMPLETED_TASKS.md`. Instead, update its status to `[Pending Review]` and place its detailed spec under the **`## 🔍 Tasks Pending User Review`** section in `TASKS.md`.
+   > 📁 **Step 2 — Move to Completed Tasks:** Only move a task's detailed spec to [`COMPLETED_TASKS.md`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/COMPLETED_TASKS.md) (leaving a 1-line reference in `TASKS.md`) AFTER the user has explicitly tested and approved the task!
 
 ---
 
@@ -118,23 +119,18 @@ When working on this repository, all AI agents **MUST** follow these mandatory r
 ---
 
 ### Task 2.3: Deduplicate 'Other Forms' in Search Results
-- **Tags:** `[MVP]` `[Priority: Medium]` `[Bug]`
-- **Target Files:** [`utils.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/utils.tsx), [`components/EntryCard.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/EntryCard.tsx)
-- **Specification:**
-  1. Filter out duplicate inflected form cards that share identical surface strings and definition targets.
-- **Verification Criteria:**
-  - Search verb root with duplicate gloss paradigms -> Output list displays unique deduplicated forms.
+- **Status:** `[Completed]` (Archived in [`COMPLETED_TASKS.md`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/COMPLETED_TASKS.md))
 
 ---
 
-### Task 2.4: Dedicated Search Bar Settings Dropdown
-- **Tags:** `[MVP]` `[Priority: Medium]` `[UI]`
-- **Target Files:** [`App.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/App.tsx)
-- **Specification:**
-  1. Add a dedicated Filter/Sliders button directly inside the search bar.
-  2. Clicking button opens a quick popover with search language toggles (Syllabary, Transliteration, English, Tone) and search scope toggles (Main entries, Other forms, Sentences, Notes, Roots).
-- **Verification Criteria:**
-  - Click filter icon in search bar -> Popover opens and updates active search scope instantly.
+### Task 2.4: Dedicated Search Bar Settings Dropdown & Search Options
+- **Status:** `[Completed]` (Archived in [`COMPLETED_TASKS.md`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/COMPLETED_TASKS.md))
+
+---
+
+## 🔍 Tasks Pending User Review
+
+*No tasks currently pending user review.*
 
 ---
 
@@ -165,23 +161,33 @@ When working on this repository, all AI agents **MUST** follow these mandatory r
 
 ---
 
-### Task 3.3: Word Creation Modal Auto-Transliteration
-- **Tags:** `[MVP]` `[Priority: Medium]` `[Feature]`
-- **Target Files:** [`components/WordModal.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/WordModal.tsx), [`utils.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/utils.tsx)
-- **Specification:**
-  1. When typing Cherokee Syllabary in `WordModal`, auto-populate matching Transliteration in `Entry` field if currently blank.
-- **Verification Criteria:**
-  - Type "ᏣᎳᎩ" in Syllabary field -> Transliteration field automatically populates "tsalagi".
-
----
-
 ### Task 3.4: Solitary Form Labeling & Part of Speech Formatting
 - **Tags:** `[MVP]` `[Priority: Medium]` `[Bug]` `[UI]`
 - **Target Files:** [`components/EntryDetail.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/EntryDetail.tsx), [`components/WordFormsModal.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/WordFormsModal.tsx)
 - **Specification:**
   1. If entry has only 1 form (`forms.length === 1`), display form header as `"Base Form"` instead of `"Singular"`.
+---
+
+### Task 3.5: App-Wide Dynamic Entry Transliteration Option
+- **Tags:** `[MVP]` `[Priority: Medium]` `[Feature]`
+- **Target Files:** [`App.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/App.tsx), [`utils.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/utils.tsx), [`components/EntryCard.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/EntryCard.tsx), [`components/EntryDetail.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/EntryDetail.tsx)
+- **Specification:**
+  1. In the Settings modal under Transliteration options, add a checkbox: `"Change entry transliteration"` (enabled by default).
+  2. When checked on, dynamically convert official CED word entry transliterations throughout the app from standard CED "classic" orthography to the user's preferred transliteration style (e.g., Uchihara Aspiration or Reverse Aspiration) using `convertTransliterationStyle(text, 'classic', preferredStyle)`.
 - **Verification Criteria:**
-  - Open single-form entry -> Header reads "Base Form".
+  - Select 'Aspiration' mode in Settings with 'Change entry transliteration' checked -> CED dictionary entry cards and details dynamically render transliterations in chosen Uchihara orthography across all views.
+
+---
+
+### Task 3.6: Transliteration Style Explanations & Algorithm Audit
+- **Tags:** `[MVP]` `[Priority: Medium]` `[Documentation]` `[Feature]`
+- **Target Files:** [`App.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/App.tsx), [`utils.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/utils.tsx)
+- **Specification:**
+  1. Add detailed inline explanations under the Preferred Transliteration Style dropdown in the Settings modal detailing what each style is (Classic CED, Uchihara Aspiration, and Reverse Aspiration).
+  2. Perform a thorough audit of the transliteration engine in `utils.tsx` (derived from `Transliteration Converter.html`) to test for edge-case errors, missing syllable combinations, or phonetic conversion issues.
+- **Verification Criteria:**
+  - Open Settings -> Clear explanatory text renders beneath Transliteration options.
+  - Transliteration conversion functions in `utils.tsx` pass edge-case test suite without errors.
 
 ---
 

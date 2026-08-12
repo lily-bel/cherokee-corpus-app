@@ -378,7 +378,7 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
   const normQuery = cleanStr(query);
 
   // --- DICTIONARY MODE LOOP: O(N) where N is number of base entries. ---
-  return allData.map(entry => {
+  const sortedResults = allData.map(entry => {
     let score = 0;
     let matchedForm: { syllabary?: string; translit?: string; label?: string } | null = null;
     let mainMatchScore = 0;
@@ -560,4 +560,216 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
       const lenB = b.Entry?.length || b.Syllabary?.length || 999;
       return lenA - lenB;
     });
-};
+
+  // Task 2.3: Deduplicate cards sharing identical surface strings and definition targets
+  const deduplicatedResults: any[] = [];
+  const seenKeys = new Set<string>();
+
+  for (const item of sortedResults) {
+    const dispSyllabary = cleanStr(item.matchedForm?.syllabary || item.Syllabary);
+    const dispTranslit = cleanStr(item.matchedForm?.translit || item.Entry);
+    const dispDef = cleanStr(item.Definition);
+
+    // If all surface fields are blank, don't deduplicate
+    if (!dispSyllabary && !dispTranslit && !dispDef) {
+      deduplicatedResults.push(item);
+      continue;
+    }
+
+    const key = `${dispSyllabary}|${dispTranslit}|${dispDef}`;
+    if (!seenKeys.has(key)) {
+      seenKeys.add(key);
+      deduplicatedResults.push(item);
+    }
+  }
+
+  return deduplicatedResults;
+};
+
+// --- TRANSLITERATION & SYLLABARY CONVERSION UTILITIES ---
+
+export type TransliterationStyle = 'classic' | 'aspiration' | 'reverse_aspiration';
+
+export const SYLLABARY_MAP: [string, string][] = [
+    ["hna", "Ꮏ"], ["nah", "Ꮐ"], ["qua", "Ꮖ"], ["que", "Ꮗ"], ["qui", "Ꮘ"],
+    ["quo", "Ꮙ"], ["quu", "Ꮚ"], ["quv", "Ꮛ"], ["dla", "Ꮬ"], ["tla", "Ꮭ"],
+    ["tle", "Ꮮ"], ["tli", "Ꮯ"], ["tlo", "Ꮰ"], ["tlu", "Ꮱ"], ["tlv", "Ꮲ"],
+    ["tsa", "Ꮳ"], ["tse", "Ꮴ"], ["tsi", "Ꮵ"], ["tso", "Ꮶ"], ["tsu", "Ꮷ"],
+    ["tsv", "Ꮸ"],
+    
+    ["ga", "Ꭶ"], ["ka", "Ꭷ"], ["ge", "Ꭸ"], ["gi", "Ꭹ"], ["go", "Ꭺ"],
+    ["gu", "Ꭻ"], ["gv", "Ꭼ"], ["ha", "Ꭽ"], ["he", "Ꭾ"], ["hi", "Ꭿ"],
+    ["ho", "Ꮀ"], ["hu", "Ꮁ"], ["hv", "Ꮂ"], ["la", "Ꮃ"], ["le", "Ꮄ"],
+    ["li", "Ꮅ"], ["lo", "Ꮆ"], ["lu", "Ꮇ"], ["lv", "Ꮈ"], ["ma", "Ꮉ"],
+    ["me", "Ꮊ"], ["mi", "Ꮋ"], ["mo", "Ꮌ"], ["mu", "Ꮍ"], ["mv", "Ᏽ"],
+    ["na", "Ꮎ"], ["ne", "Ꮑ"], ["ni", "Ꮒ"], ["no", "Ꮓ"], ["nu", "Ꮔ"],
+    ["nv", "Ꮕ"], ["sa", "Ꮜ"], ["se", "Ꮞ"], ["si", "Ꮟ"], ["so", "Ꮠ"],
+    ["su", "Ꮡ"], ["sv", "Ꮢ"], ["da", "Ꮣ"], ["ta", "Ꮤ"], ["de", "Ꮥ"],
+    ["te", "Ꮦ"], ["di", "Ꮧ"], ["ti", "Ꮨ"], ["do", "Ꮩ"], ["du", "Ꮪ"],
+    ["dv", "Ꮫ"], ["wa", "Ꮹ"], ["we", "Ꮺ"], ["wi", "Ꮻ"], ["wo", "Ꮼ"],
+    ["wu", "Ꮽ"], ["wv", "Ꮾ"], ["ya", "Ꮿ"], ["ye", "Ᏸ"], ["yi", "Ᏹ"],
+    ["yo", "Ᏺ"], ["yu", "Ᏻ"], ["yv", "Ᏼ"],
+    
+    ["a", "Ꭰ"], ["e", "Ꭱ"], ["i", "Ꭲ"], ["o", "Ꭳ"], ["u", "Ꭴ"],
+    ["v", "Ꭵ"], ["s", "Ꮝ"],
+
+    ["dle", "Ꮮ"], ["dli", "Ꮯ"], ["dlo", "Ꮰ"], ["dlu", "Ꮱ"], ["dlv", "Ꮲ"],
+    ["kwa", "Ꮖ"], ["kwe", "Ꮗ"], ["kwi", "Ꮘ"], ["kwo", "Ꮙ"], ["kwu", "Ꮚ"], ["kwv", "Ꮛ"],
+    ["gwa", "Ꮖ"], ["gwe", "Ꮗ"], ["gwi", "Ꮘ"], ["gwo", "Ꮙ"], ["gwu", "Ꮚ"], ["gwv", "Ꮛ"],
+    ["hla", "Ꮭ"], ["hle", "Ꮮ"], ["hli", "Ꮯ"], ["hlo", "Ꮰ"], ["hlu", "Ꮱ"], ["hlv", "Ꮲ"],
+    ["ke", "Ꭸ"], ["ki", "Ꭹ"], ["ko", "Ꭺ"], ["ku", "Ꭻ"], ["kv", "Ꭼ"],
+    ["to", "Ꮩ"], ["tu", "Ꮪ"], ["tv", "Ꮫ"],
+    ["ja", "Ꭸ"], ["je", "Ꭹ"], ["ji", "Ꭺ"], ["jo", "Ꭻ"], ["ju", "Ꭼ"], ["jv", "Ꭼ"]
+];
+
+export const REVERSE_SYLLABARY_MAP: Record<string, string> = (() => {
+    const map: Record<string, string> = {};
+    SYLLABARY_MAP.forEach(([latin, syllabary]) => {
+        if (!map[syllabary]) {
+            map[syllabary] = latin;
+        }
+    });
+    return map;
+})();
+
+export function applyAspirationMode(text: string): string {
+    let s = text;
+    s = s.replace(/t(?!s)/g, "th");
+
+    const rules: [string, string][] = [
+        ["d", "t"], ["k", "kh"], ["g", "k"], ["j", "ts"],
+        ["ch", "tsh"], ["hn", "nh"], ["hl", "lh"], ["hy", "yh"],
+        ["hw", "wh"], ["?", "'"], ["’", "'"], ["qu", "kw"]
+    ];
+
+    rules.forEach(([oldChar, newChar]) => {
+        s = s.split(oldChar).join(newChar);
+    });
+
+    s = s.replace(/sl(?=[aeiouv])/g, "slh");
+    s = s.replace(/([^ht])s/g, "$1hs");
+    return s;
+}
+
+export function applyReverseAspirationMode(text: string): string {
+    let s = applyAspirationMode(text);
+
+    const rules: [string, string][] = [
+        ["kw", "gw"],
+        ["ts", "j"], ["k", "g"], ["t", "d"]
+    ];
+
+    rules.forEach(([oldChar, newChar]) => {
+        s = s.split(oldChar).join(newChar);
+    });
+
+    return s;
+}
+
+export function reverseAspirationToClassic(text: string): string {
+    let s = text;
+
+    s = s.replace(/hs/g, "s");
+    s = s.replace(/slh/g, "sl");
+
+    const rules: [string, string][] = [
+        ["kw", "qu"],
+        ["wh", "hw"], ["yh", "hy"], ["lh", "hl"], ["nh", "hn"],
+        ["tsh", "ch"], ["ts", "j"], ["'", "?"]
+    ];
+    rules.forEach(([oldChar, newChar]) => {
+        s = s.split(oldChar).join(newChar);
+    });
+
+    s = s.replace(/t(?!h)/g, "d");
+    s = s.replace(/th/g, "t");
+
+    s = s.replace(/k(?!h)/g, "g");
+    s = s.replace(/kh/g, "k");
+
+    return s;
+}
+
+export function reverseReverseAspirationToClassic(text: string): string {
+    let s = text;
+
+    const rules: [string, string][] = [
+        ["gw", "kw"],
+        ["j", "ts"], ["g", "k"], ["d", "t"]
+    ];
+    rules.forEach(([oldChar, newChar]) => {
+        s = s.split(oldChar).join(newChar);
+    });
+
+    return reverseAspirationToClassic(s);
+}
+
+export function normalizeTransliterationToClassic(text: string, style: TransliterationStyle): string {
+    if (!text) return '';
+    let classic = text.toLowerCase();
+    if (style === 'aspiration') {
+        classic = reverseAspirationToClassic(classic);
+    } else if (style === 'reverse_aspiration') {
+        classic = reverseReverseAspirationToClassic(classic);
+    }
+    return classic;
+}
+
+export function convertTransliterationStyle(text: string, fromStyle: TransliterationStyle, toStyle: TransliterationStyle): string {
+    if (!text || fromStyle === toStyle) return text;
+    const classic = normalizeTransliterationToClassic(text, fromStyle);
+    if (toStyle === 'aspiration') {
+        return applyAspirationMode(classic);
+    } else if (toStyle === 'reverse_aspiration') {
+        return applyReverseAspirationMode(classic);
+    }
+    return classic;
+}
+
+export function transliterateToSyllabary(inputText: string, style: TransliterationStyle = 'classic'): string {
+    if (!inputText) return '';
+
+    let classicText = normalizeTransliterationToClassic(inputText, style);
+
+    let result = "";
+    let i = 0;
+
+    while (i < classicText.length) {
+        let matched = false;
+
+        for (let j = 0; j < SYLLABARY_MAP.length; j++) {
+            const [latinKey, syllabaryChar] = SYLLABARY_MAP[j];
+            
+            if (classicText.startsWith(latinKey, i)) {
+                result += syllabaryChar;
+                i += latinKey.length;
+                matched = true;
+                break;
+            }
+        }
+        
+        if (!matched) {
+            result += classicText[i];
+            i++;
+        }
+    }
+
+    return result;
+}
+
+export function syllabaryToTransliteration(inputText: string, style: TransliterationStyle = 'classic'): string {
+    if (!inputText) return '';
+    let classicResult = "";
+    for (let i = 0; i < inputText.length; i++) {
+        let char = inputText[i];
+        classicResult += REVERSE_SYLLABARY_MAP[char] || char;
+    }
+
+    if (style === 'aspiration') {
+        return applyAspirationMode(classicResult);
+    } else if (style === 'reverse_aspiration') {
+        return applyReverseAspirationMode(classicResult);
+    }
+    return classicResult;
+}
+

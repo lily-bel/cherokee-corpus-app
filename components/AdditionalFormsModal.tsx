@@ -8,6 +8,7 @@ interface AdditionalFormsModalProps {
     onSave: (formsString: string) => void;
     initialForms: string;
     usedFormLabels: string[];
+    settings?: any;
 }
 
 export const AdditionalFormsModal: React.FC<AdditionalFormsModalProps> = ({
@@ -15,7 +16,8 @@ export const AdditionalFormsModal: React.FC<AdditionalFormsModalProps> = ({
     onClose,
     onSave,
     initialForms,
-    usedFormLabels
+    usedFormLabels,
+    settings
 }) => {
     const [forms, setForms] = useState<any[]>([]);
 
@@ -60,6 +62,7 @@ export const AdditionalFormsModal: React.FC<AdditionalFormsModalProps> = ({
                 forms={forms}
                 setForms={setForms}
                 usedFormLabels={usedFormLabels}
+                transliterationStyle={settings?.transliterationStyle}
             />
 
             <button onClick={handleSave} className="w-full mt-6 bg-amber-600 text-white font-bold py-3 rounded-lg">

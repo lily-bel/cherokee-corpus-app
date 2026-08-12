@@ -7,6 +7,42 @@
 
 ## 🏆 Completed Task Log
 
+### Task 3.3: Word Creation Modal Auto-Syllabary Engine & Transliteration Settings
+- **Completion Date:** 2026-08-12
+- **Status:** `[Completed]` (User Approved)
+- **Target Files:** [`components/WordModal.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/WordModal.tsx), [`components/WordFormsEditor.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/WordFormsEditor.tsx), [`utils.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/utils.tsx), [`components/Icons.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/Icons.tsx)
+- **Implementation Summary:**
+  1. Extracted complete transliteration engine into exported utility functions in `utils.tsx` supporting classic CED, Uchihara aspiration, and reverse aspiration modes.
+  2. Added Preferred Transliteration Style selector control to Settings modal.
+  3. Added embedded Auto-Syllabary icon button (`TranslateCherokee`) inside the right side of Syllabary input fields in WordModal and WordFormsEditor.
+  4. Clicking Auto-Syllabary button converts entered transliteration to Cherokee Syllabary according to active transliteration style setting.
+  5. Placed Transliteration field before Syllabary in create/edit form areas and updated Tone input placeholder to `e.g. tsa2la2gi`.
+- **Verification:** Built cleanly via `npm run build`, verified form interactions, and approved by user.
+
+---
+
+### Task 2.4: Dedicated Search Bar Settings Dropdown & Search Options
+- **Completion Date:** 2026-08-12
+- **Status:** `[Completed]` (User Approved)
+- **Target Files:** [`App.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/App.tsx), [`components/Icons.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/Icons.tsx)
+- **Implementation Summary:**
+  1. Added dedicated Filter/Sliders icon button directly inside the search bar.
+  2. Clicking button opens a quick popover with search settings, Dictionary/Sentences search mode toggle, filter data sources dropdown, and search options.
+  3. Replaced text label "Show PoS in Lists" with "Show Part of Speech".
+- **Verification:** Built cleanly via `npm run build`, tested popover functionality, and approved by user.
+
+---
+
+### Task 2.3: Deduplicate 'Other Forms' in Search Results
+- **Completion Date:** 2026-08-12
+- **Status:** `[Completed]` (User Approved)
+- **Target Files:** [`utils.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/utils.tsx)
+- **Implementation Summary:**
+  1. Updated `performSearch()` in `utils.tsx` to filter out duplicate inflected form cards that share identical surface strings and definition targets.
+- **Verification:** Built cleanly via `npm run build`, tested search output deduplication, and approved by user.
+
+---
+
 ### Task 2.2: Matched "Other Form" Sub-Labeling on Search Entry Cards
 - **Completion Date:** 2026-08-06
 - **Status:** `[Completed]` (User Approved)

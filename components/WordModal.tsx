@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from './UI';
-import { formatToneInput } from '../utils';
+import { formatToneInput, transliterateToSyllabary, TransliterationStyle } from '../utils';
 import { WordFormsEditor } from './WordFormsEditor';
+import { TranslateCherokee } from './Icons';
 
 interface WordFormData {
     Entry: string;
@@ -23,6 +24,7 @@ interface WordModalProps {
     editingId?: string | null;
     customDictionaries: Record<string, any>;
     usedFormLabels?: string[];
+    settings?: any;
 }
 
 export const WordModal: React.FC<WordModalProps> = ({
@@ -33,7 +35,8 @@ export const WordModal: React.FC<WordModalProps> = ({
     isSentenceMode = false,
     editingId,
     customDictionaries,
-    usedFormLabels = []
+    usedFormLabels = [],
+    settings
 }) => {
     const [formData, setFormData] = useState<WordFormData | undefined>(initialData);
     const [otherForms, setOtherForms] = useState<any[]>([]);
@@ -65,6 +68,35 @@ export const WordModal: React.FC<WordModalProps> = ({
 
     if (!isOpen) return null;
 
+    const getEffectiveStyle = (): TransliterationStyle => {
+        if (settings?.transliterationStyle) return settings.transliterationStyle;
+        try {
+            const saved = localStorage.getItem('cherokee_app_settings');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (parsed.transliterationStyle) return parsed.transliterationStyle;
+            }
+        } catch (e) {}
+        return 'classic';
+    };
+
+    const handleAutoSyllabary = () => {
+        const translit = formData?.Entry || '';
+        if (!translit.trim()) return;
+        const style = getEffectiveStyle();
+        const generated = transliterateToSyllabary(translit, style);
+        setFormData(prev => ({
+            ...(prev || {} as WordFormData),
+            Syllabary: generated,
+            Entry: prev?.Entry || translit,
+            Definition: prev?.Definition || '',
+            PoS: prev?.PoS || '',
+            Entry_Tone: prev?.Entry_Tone || '',
+            Notes: prev?.Notes || '',
+            customDictionaryId: prev?.customDictionaryId || ''
+        }));
+    };
+
     const handleSave = () => {
         // Serialize Other_Forms: Label:Translit^Syllabary^Tone^Notes
         const serializedForms = otherForms
@@ -90,15 +122,6 @@ export const WordModal: React.FC<WordModalProps> = ({
         <Modal title={editingId ? "Edit Word" : (isSentenceMode ? "New Sentence" : "New Word")} onClose={onClose}>
             <div className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
                 <div>
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">Syllabary (Cherokee)</label>
-                    <input
-                        type="text"
-                        value={formData?.Syllabary || ''}
-                        onChange={e => setFormData(prev => ({ ...(prev || {} as WordFormData), Syllabary: e.target.value, Entry: prev?.Entry || '', Definition: prev?.Definition || '', PoS: prev?.PoS || '', Entry_Tone: prev?.Entry_Tone || '', Notes: prev?.Notes || '', customDictionaryId: prev?.customDictionaryId || '' }))}
-                        className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 font-noto-cherokee text-lg outline-none focus:border-amber-500 dark:text-white"
-                    />
-                </div>
-                <div>
                     <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">Transliteration (Cherokee)</label>
                     <input
                         type="text"
@@ -106,6 +129,25 @@ export const WordModal: React.FC<WordModalProps> = ({
                         onChange={e => setFormData(prev => ({ ...(prev || {} as WordFormData), Entry: e.target.value, Syllabary: prev?.Syllabary || '', Definition: prev?.Definition || '', PoS: prev?.PoS || '', Entry_Tone: prev?.Entry_Tone || '', Notes: prev?.Notes || '', customDictionaryId: prev?.customDictionaryId || '' }))}
                         className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 font-noto-serif outline-none focus:border-amber-500 dark:text-white"
                     />
+                </div>
+                <div>
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">Syllabary (Cherokee)</label>
+                    <div className="relative">
+                        <input
+                            type="text"
+                            value={formData?.Syllabary || ''}
+                            onChange={e => setFormData(prev => ({ ...(prev || {} as WordFormData), Syllabary: e.target.value, Entry: prev?.Entry || '', Definition: prev?.Definition || '', PoS: prev?.PoS || '', Entry_Tone: prev?.Entry_Tone || '', Notes: prev?.Notes || '', customDictionaryId: prev?.customDictionaryId || '' }))}
+                            className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg pl-3 pr-10 py-2 font-noto-cherokee text-lg outline-none focus:border-amber-500 dark:text-white"
+                        />
+                        <button
+                            type="button"
+                            onClick={handleAutoSyllabary}
+                            title="Auto-generate Syllabary from Transliteration"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 hover:bg-amber-100/60 dark:hover:bg-amber-900/40 rounded-md transition-colors flex items-center justify-center"
+                        >
+                            <TranslateCherokee size={18} />
+                        </button>
+                    </div>
                 </div>
                 <div>
                     <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">{isSentenceMode ? "English Translation" : "Definition"}</label>
@@ -136,7 +178,7 @@ export const WordModal: React.FC<WordModalProps> = ({
                                     type="text"
                                     value={formData?.Entry_Tone || ''}
                                     onChange={e => setFormData(prev => ({ ...(prev || {} as WordFormData), Entry_Tone: formatToneInput(e.target.value), Entry: prev?.Entry || '', Syllabary: prev?.Syllabary || '', Definition: prev?.Definition || '', PoS: prev?.PoS || '', Notes: prev?.Notes || '', customDictionaryId: prev?.customDictionaryId || '' }))}
-                                    placeholder="Type 1-4 for tones"
+                                    placeholder="e.g. tsa2la2gi"
                                     className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 outline-none focus:border-amber-500 font-sans dark:text-white"
                                 />
                             </div>
@@ -147,6 +189,7 @@ export const WordModal: React.FC<WordModalProps> = ({
                             forms={otherForms}
                             setForms={setOtherForms}
                             usedFormLabels={usedFormLabels}
+                            transliterationStyle={settings?.transliterationStyle}
                         />
 
                         <div>
