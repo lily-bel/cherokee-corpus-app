@@ -67,7 +67,13 @@ export const InvestigationQueue: React.FC<InvestigationQueueProps> = ({
         });
     };
 
-    const handleGlossCreated = (entry: DictionaryEntry, notes: string, breakdownCherokee: string, breakdownEnglish: string) => {
+    const handleGlossCreated = (
+        entry: DictionaryEntry,
+        notes: string,
+        breakdownCherokee: string,
+        breakdownEnglish: string,
+        formInfo?: { form_name?: string; form_syllabary?: string; form_translit?: string }
+    ) => {
         if (!showLinker) return;
 
         // Create the gloss
@@ -81,7 +87,10 @@ export const InvestigationQueue: React.FC<InvestigationQueueProps> = ({
             source: 'user',
             gloss_syllabary: showLinker.targetWord.syllabary,
             gloss_phonetic: showLinker.targetWord.translit,
-            gloss_english: entry.definition || entry.Definition
+            gloss_english: entry.definition || entry.Definition,
+            form_name: formInfo?.form_name,
+            form_syllabary: formInfo?.form_syllabary,
+            form_translit: formInfo?.form_translit
         });
 
         // Remove from investigation queue

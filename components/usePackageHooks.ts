@@ -193,7 +193,10 @@ export const usePackageExport = () => {
                     "source file": "user generated",
                     gloss_syllabary: g.gloss_syllabary || '',
                     gloss_phonetic: g.gloss_phonetic || '',
-                    gloss_english: g.gloss_english || ''
+                    gloss_english: g.gloss_english || '',
+                    form_name: g.form_name || '',
+                    form_syllabary: g.form_syllabary || '',
+                    form_translit: g.form_translit || ''
                 };
             });
 
@@ -565,6 +568,9 @@ export const usePackageImport = () => {
             gloss_syllabary: d.Gloss_Syllabary || d.gloss_syllabary,
             gloss_phonetic: d.Gloss_Phonetic || d.gloss_phonetic,
             gloss_english: d.Gloss_English || d.gloss_english,
+            form_name: d.Form_Name || d.form_name,
+            form_syllabary: d.Form_Syllabary || d.form_syllabary,
+            form_translit: d.Form_Translit || d.form_translit,
             // Legacy
             Sentence_ID: d.Sentence_ID || d.sentence_id,
             Word_Index: d.Word_Index || d.word_index,

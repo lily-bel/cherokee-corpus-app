@@ -7,7 +7,7 @@ import EntryDetail from './components/EntryDetail';
 
 import PackageManagerTab from './components/PackageManagerTab';
 import { useCorpus } from './components/CorpusContext';
-import { downloadFile, performSearch } from './utils';
+import { downloadFile, performSearch, buildWordFormsLookupMap } from './utils';
 import { SentenceCard } from './components/SentenceCard';
 import WidgetsTab from './components/WidgetsTab';
 
@@ -120,35 +120,7 @@ function App() {
 
     // --- PERFORMANCE OPTIMIZATION: PRE-CALCULATE LOOKUPS ---
     const wordFormsLookupMap = useMemo(() => {
-        const map = new Map<string, any[]>();
-        Object.values(importedData).forEach((pkgData: any) => {
-            if (pkgData?.word_forms) {
-                pkgData.word_forms.forEach((f: any) => {
-                    if (f.word_index != null) {
-                        const idStr = String(f.word_index);
-                        let arr = map.get(idStr);
-                        if (!arr) {
-                            arr = [];
-                            map.set(idStr, arr);
-                        }
-                        arr.push(f);
-                    }
-                });
-            }
-        });
-        if (userWordForms) {
-            Object.entries(userWordForms).forEach(([wIdx, forms]: [string, any]) => {
-                if (Array.isArray(forms)) {
-                    let arr = map.get(wIdx);
-                    if (!arr) {
-                        arr = [];
-                        map.set(wIdx, arr);
-                    }
-                    arr.push(...forms);
-                }
-            });
-        }
-        return map;
+        return buildWordFormsLookupMap(importedData, userWordForms);
     }, [importedData, userWordForms]);
 
     const entriesWithOtherFormsSet = useMemo(() => {

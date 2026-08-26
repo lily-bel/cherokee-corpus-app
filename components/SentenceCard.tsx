@@ -47,7 +47,15 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
         indices: number[],
         initialQuery: string,
         targetWord?: { syllabary: string, translit: string } | { syllabary: string, translit: string }[],
-        initialData?: { entry: any, notes: string, breakdownCherokee: string, breakdownEnglish: string },
+        initialData?: {
+            entry: any,
+            notes: string,
+            breakdownCherokee: string,
+            breakdownEnglish: string,
+            formName?: string,
+            formSyllabary?: string,
+            formTranslit?: string
+        },
         glossId?: string
     } | null>(null);
     const [selectMode, setSelectMode] = useState(false);
@@ -592,7 +600,10 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                                     entry,
                                     notes: gloss.notes || '',
                                     breakdownCherokee: gloss.breakdown_cherokee || '',
-                                    breakdownEnglish: gloss.breakdown_english || ''
+                                    breakdownEnglish: gloss.breakdown_english || '',
+                                    formName: gloss.form_name,
+                                    formSyllabary: gloss.form_syllabary,
+                                    formTranslit: gloss.form_translit
                                 },
                                 glossId: gloss.id
                             });
@@ -611,7 +622,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                     dictionary={dictionary}
                     personalWords={personalWords}
                     onClose={() => setShowLinker(null)}
-                    onSelect={(entry, notes, breakdownCherokee, breakdownEnglish) => {
+                    onSelect={(entry, notes, breakdownCherokee, breakdownEnglish, formInfo) => {
                         const targetWords = Array.isArray(showLinker.targetWord) 
                             ? showLinker.targetWord 
                             : (showLinker.targetWord ? [showLinker.targetWord] : []);
@@ -632,7 +643,10 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                                 id: showLinker.glossId,
                                 gloss_syllabary: glossSyl,
                                 gloss_phonetic: glossPhon,
-                                gloss_english: glossDef
+                                gloss_english: glossDef,
+                                form_name: formInfo?.form_name,
+                                form_syllabary: formInfo?.form_syllabary,
+                                form_translit: formInfo?.form_translit
                             });
                         } else {
                             // Creating new gloss - Single entry for multiple words
@@ -646,7 +660,10 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                                 source: 'user',
                                 gloss_syllabary: glossSyl,
                                 gloss_phonetic: glossPhon,
-                                gloss_english: glossDef
+                                gloss_english: glossDef,
+                                form_name: formInfo?.form_name,
+                                form_syllabary: formInfo?.form_syllabary,
+                                form_translit: formInfo?.form_translit
                             });
                         }
                         setShowLinker(null);

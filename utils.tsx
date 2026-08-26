@@ -810,4 +810,190 @@ export function syllabaryToTransliteration(inputText: string, style: Translitera
     }
     return classicResult;
 }
+
+export interface EntryFormItem {
+    label: string;
+    translit: string;
+    syllabary: string;
+    tone?: string;
+    notes?: string;
+    type?: 'official' | 'imported' | 'custom' | 'base';
+    color?: string;
+}
+
+export function buildWordFormsLookupMap(importedData: any = {}, userWordForms: Record<string, any> = {}): Map<string, any[]> {
+    const map = new Map<string, any[]>();
+    Object.values(importedData || {}).forEach((pkgData: any) => {
+        if (pkgData?.word_forms) {
+            pkgData.word_forms.forEach((f: any) => {
+                if (f.word_index != null) {
+                    const idStr = String(f.word_index);
+                    let arr = map.get(idStr);
+                    if (!arr) {
+                        arr = [];
+                        map.set(idStr, arr);
+                    }
+                    arr.push(f);
+                }
+            });
+        }
+    });
+    if (userWordForms) {
+        Object.entries(userWordForms).forEach(([wIdx, formsVal]) => {
+            if (typeof formsVal === 'string') {
+                formsVal.split('|').forEach((form: string) => {
+                    const parts = form.split(':');
+                    if (parts.length >= 2) {
+                        const values = parts[1].split('^');
+                        let arr = map.get(wIdx);
+                        if (!arr) {
+                            arr = [];
+                            map.set(wIdx, arr);
+                        }
+                        arr.push({
+                            word_index: wIdx,
+                            form_name: parts[0],
+                            translit: values[0] || '',
+                            syllabary: values[1] || '',
+                            tone: values[2] || '',
+                            notes: values[3] || '',
+                            color: 'amber'
+                        });
+                    }
+                });
+            } else if (Array.isArray(formsVal)) {
+                let arr = map.get(wIdx);
+                if (!arr) {
+                    arr = [];
+                    map.set(wIdx, arr);
+                }
+                arr.push(...formsVal);
+            }
+        });
+    }
+    return map;
+}
+
+export function getAllFormsForEntry(
+    entry: any,
+    wordFormsLookupMap?: Map<string, any[]>,
+    userWordForms?: Record<string, any>,
+    packages?: any[],
+    importedData?: any
+): EntryFormItem[] {
+    if (!entry) return [];
+    const forms: EntryFormItem[] = [];
+
+    // 1. Official forms from Other_Forms string
+    if (entry.Other_Forms) {
+        entry.Other_Forms.split('|').forEach((form: string) => {
+            const parts = form.split(':');
+            if (parts.length >= 2) {
+                const values = parts[1].split('^');
+                forms.push({
+                    type: 'official',
+                    label: parts[0],
+                    translit: values[0] || '',
+                    syllabary: values[1] || '',
+                    tone: values[2] || '',
+                    notes: values[3] || '',
+                    color: 'slate'
+                });
+            }
+        });
+    }
+
+    // 2. Imported Forms from packages / wordFormsLookupMap
+    const id = entry.id != null ? String(entry.id) : (entry.Index != null ? String(entry.Index) : null);
+    if (id && wordFormsLookupMap) {
+        const lookup = wordFormsLookupMap.get(id);
+        if (lookup) {
+            lookup.forEach((f: any) => {
+                if (!forms.some(existing => existing.syllabary === f.syllabary && existing.translit === f.translit && existing.label === (f.form_name || f.label))) {
+                    forms.push({
+                        type: 'imported',
+                        label: f.form_name || f.label || f.displayLabel || 'Form',
+                        translit: f.translit || '',
+                        syllabary: f.syllabary || '',
+                        tone: f.tone || '',
+                        notes: f.notes || '',
+                        color: f.color || 'sky'
+                    });
+                }
+            });
+        }
+    } else if (id && packages && importedData) {
+        packages.forEach(p => {
+            if (p.status === 'active' && importedData[p.id]?.word_forms) {
+                const pForms = importedData[p.id].word_forms.filter((f: any) => String(f.word_index) === id);
+                pForms.forEach((f: any) => {
+                    if (!forms.some(existing => existing.syllabary === f.syllabary && existing.translit === f.translit && existing.label === f.form_name)) {
+                        forms.push({
+                            type: 'imported',
+                            label: f.form_name || f.label || 'Form',
+                            translit: f.translit || '',
+                            syllabary: f.syllabary || '',
+                            tone: f.tone || '',
+                            notes: f.notes || '',
+                            color: p.color
+                        });
+                    }
+                });
+            }
+        });
+    }
+
+    // 3. Custom forms from userWordForms
+    if (userWordForms && id && userWordForms[id] && typeof userWordForms[id] === 'string') {
+        userWordForms[id].split('|').forEach((form: string) => {
+            const parts = form.split(':');
+            if (parts.length >= 2) {
+                const values = parts[1].split('^');
+                if (!forms.some(existing => existing.syllabary === values[1] && existing.translit === values[0] && existing.label === parts[0])) {
+                    forms.push({
+                        type: 'custom',
+                        label: parts[0],
+                        translit: values[0] || '',
+                        syllabary: values[1] || '',
+                        tone: values[2] || '',
+                        notes: values[3] || '',
+                        color: 'amber'
+                    });
+                }
+            }
+        });
+    }
+
+    // 4. Ensure base entry is included in the forms list if not already present
+    const baseTranslit = (entry.translit || entry.Entry || '').trim();
+    const baseSyllabary = (entry.syllabary || entry.Syllabary || '').trim();
+
+    if (baseTranslit || baseSyllabary) {
+        const alreadyHasBase = forms.some(f => 
+            (f.syllabary && cleanStr(f.syllabary) === cleanStr(baseSyllabary)) ||
+            (f.translit && cleanStr(f.translit) === cleanStr(baseTranslit))
+        );
+        if (!alreadyHasBase) {
+            const isVerb = entry.PoS && entry.PoS.toLowerCase().startsWith('v');
+            const defaultLabel = forms.length === 0 ? 'Base Form' : (isVerb ? 'Present 3sg' : 'Base Form');
+            forms.unshift({
+                type: 'base',
+                label: defaultLabel,
+                translit: baseTranslit,
+                syllabary: baseSyllabary,
+                tone: entry.tone || entry.Entry_Tone || '',
+                notes: entry.notes || entry.Notes || '',
+                color: 'slate'
+            });
+        }
+    }
+
+    // If only 1 form total, ensure its label is 'Base Form'
+    if (forms.length === 1 && (!forms[0].label || forms[0].label === 'Form')) {
+        forms[0].label = 'Base Form';
+    }
+
+    return forms;
+}
+
 

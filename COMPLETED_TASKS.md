@@ -37,6 +37,19 @@
   2. Replaced the simple sentence row on expansion to prevent duplicate text display, with a `ChevronUp` header button to collapse back to the compact reader line.
   3. Preserved virtualized container scroll position and height measurements during inline expansion.
 
+### Task 3.2: Gloss Popover & Linker Word Forms Search, Root Headers, & Form Alignment
+- **Completion Date:** 2026-08-26
+- **Status:** `[Completed]` (User Approved)
+- **Target Files:** [`components/GlossPopover.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/GlossPopover.tsx), [`components/LinkerModal.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/LinkerModal.tsx), [`components/CorpusContext.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/CorpusContext.tsx), [`components/ReaderView.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/ReaderView.tsx), [`components/SentenceCard.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/SentenceCard.tsx), [`components/InvestigationQueue.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/InvestigationQueue.tsx), [`components/usePackageHooks.ts`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/usePackageHooks.ts), [`utils.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/utils.tsx), [`App.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/App.tsx)
+- **Implementation Summary:**
+  1. Connected `LinkerModal` search with `wordFormsLookupMap` to search across base entries, official inflections (`Other_Forms`), package forms, and custom user forms.
+  2. Rendered `matched form: [syllabary] [translit] ([form_name])` and grouped `-root-` header pills in Linker search results.
+  3. Clicking a matched inflected search result auto-captures that specific inflection into the gloss.
+  4. Added a unified "Word Form" selector dropdown in Step 2 of `LinkerModal` listing all paradigm forms without detached base-form duplication. If a word only has 1 form, it is listed as `Base Form`.
+  5. Added `form_name`, `form_syllabary`, and `form_translit` to the `Gloss` interface, package export/import, and reader gloss editing workflows.
+  6. Updated `GlossPopover` to display the `matched form:` sub-label when an inflected form is linked, and added an expandable "Other Forms / Inflections" accordion listing all forms and highlighting the linked form.
+- **Verification:** Built cleanly via `npm run build` (`vite v5.4.21 built in 15.95s`), tested, and approved by user.
+
 ### Task 7.2: Single-Level Folders for Custom Lists
 - **Completion Date:** 2026-08-12
 - **Status:** `[Completed]` (User Approved)

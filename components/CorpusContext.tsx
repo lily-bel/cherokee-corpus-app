@@ -60,6 +60,9 @@ export interface Gloss {
     gloss_syllabary?: string;
     gloss_phonetic?: string;
     gloss_english?: string;
+    form_name?: string;
+    form_syllabary?: string;
+    form_translit?: string;
 }
 
 export interface CustomDictionary {

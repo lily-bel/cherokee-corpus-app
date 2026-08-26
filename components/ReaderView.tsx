@@ -79,6 +79,15 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
         initialQuery: string;
         targetWord: { syllabary: string; translit: string };
         glossId?: string;
+        initialData?: {
+            entry: DictionaryEntry;
+            notes: string;
+            breakdownCherokee: string;
+            breakdownEnglish: string;
+            formName?: string;
+            formSyllabary?: string;
+            formTranslit?: string;
+        };
     } | null>(null);
     const [flashingSentenceId, setFlashingSentenceId] = useState<string | null>(null);
     const [expandedSentenceId, setExpandedSentenceId] = useState<string | null>(null);
@@ -583,7 +592,16 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                                     wordIndex: activePopover.wordIndex,
                                     initialQuery: entry.translit || '',
                                     targetWord: { syllabary: targetToken.syl, translit: targetToken.tr },
-                                    glossId: gloss.id
+                                    glossId: gloss.id,
+                                    initialData: {
+                                        entry,
+                                        notes: gloss.notes || '',
+                                        breakdownCherokee: gloss.breakdown_cherokee || '',
+                                        breakdownEnglish: gloss.breakdown_english || '',
+                                        formName: gloss.form_name,
+                                        formSyllabary: gloss.form_syllabary,
+                                        formTranslit: gloss.form_translit
+                                    }
                                 });
                             }
                             setActivePopover(null);
@@ -599,11 +617,12 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                 <LinkerModal
                     initialQuery={showLinker.initialQuery}
                     targetWord={showLinker.targetWord}
+                    initialData={showLinker.initialData}
                     dictionary={dictionary}
                     personalWords={personalWords}
                     customDictionaries={customDictionaries}
                     onClose={() => setShowLinker(null)}
-                    onSelect={(entry, notes, breakdownCherokee, breakdownEnglish) => {
+                    onSelect={(entry, notes, breakdownCherokee, breakdownEnglish, formInfo) => {
                         addUserGloss({
                             sentence_id: showLinker.sentenceId,
                             word_index: showLinker.wordIndex.toString(),
@@ -615,7 +634,10 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                             id: showLinker.glossId,
                             gloss_syllabary: showLinker.targetWord.syllabary,
                             gloss_phonetic: showLinker.targetWord.translit,
-                            gloss_english: entry.definition || entry.Definition
+                            gloss_english: entry.definition || entry.Definition,
+                            form_name: formInfo?.form_name,
+                            form_syllabary: formInfo?.form_syllabary,
+                            form_translit: formInfo?.form_translit
                         });
                         setShowLinker(null);
                     }}

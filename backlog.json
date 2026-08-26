@@ -5,11 +5,6 @@
     "title": "Task 1.4: [DATA] Pre-packaged Cherokee Narratives & Stories Catalog (Post-MVP)"
   },
   {
-    "note": "[MVP] [Priority: Medium] [Feature]\nTarget Files: components/GlossPopover.tsx\nSpec:\n1. Add expandable section in GlossPopover titled \"Other Forms / Inflections\".\n2. When expanded, query wordFormsLookupMap and render inflected forms list with syllabary and transliteration.\nVerification: Click glossed word -> Popover opens -> Expand Other Forms -> List of inflections displays.",
-    "priority": 5,
-    "title": "Task 3.2: Gloss Popover Quick Other Forms Accordion"
-  },
-  {
     "note": "[DATA] [MVP] [Priority: Medium] [Data Cleanup]\nTarget: Corpus Word Form & Part of Speech Data\nNote: Data cleanup task - all data edits must be done manually by a human, not via code implementation.\nSpec:\n1. Manually review entries with solitary word forms and update labeling (label as Base Form rather than Singular in the corpus dataset).\n2. Audit, clean up, and format part of speech tags across solitary form entries in the dictionary data.",
     "priority": 5,
     "title": "Task 3.4: [DATA] Solitary Form Labeling & Part of Speech Data Cleanup"
