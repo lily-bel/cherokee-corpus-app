@@ -1,20 +1,5 @@
 [
   {
-    "note": "[MVP] [Priority: High] [Feature] [Mobile-First]\nTarget Files: components/TextImporter.tsx, components/ReaderTab.tsx\nProblem: 3-column side-by-side text editors fail on mobile screens. Punctuation-based splitting creates sentence count mismatches.\nSpec:\n1. Step 1 \u2014 Raw Text Inputs: Provide 3 stacked full-width textareas for Cherokee Syllabary (e.g. \u13e3\u13b3\u13a9), Transliteration / Phonetic (e.g. Tsalagi), and English Translation.\n2. Step 2 \u2014 Strict Line-by-Line Tokenization & Live Counters: Split inputs strictly by line breaks (\\n). Each line equals 1 sentence (1 line = 1 sentence). Render live counter badges above textareas: # Syllabary lines, # Transliteration lines, # English lines.\nAlignment Validation:\n- If line counts match across all 3 inputs -> Show green readiness banner: \"Sentences Aligned (N lines)\". Enable \"Next: Review Sentences\" button.\n- If line counts differ -> Show red warning banner: \"Sentence count mismatch: Syllabary (X lines), Transliteration (Y lines), English (Z lines). Please adjust text before proceeding.\" Disable Next button.\n3. Step 3 \u2014 Mobile Sentence Card Review & Save: Render vertical list of cards (Line 1, Line 2, ...) displaying Syllabary, Transliteration, and English with inline edit capabilities.\nVerification: Paste 10 lines in each textarea -> Green banner shows 10 sentences -> Clicking Next creates chapter with 10 aligned sentences. Paste mismatched lines -> Red warning banner displays line counts and disables Next.",
-    "priority": 10,
-    "title": "Task 1.1: Mobile-First Multi-Step Chapter & Story Creator (Line-by-Line Alignment)"
-  },
-  {
-    "note": "[MVP] [Priority: Medium] [Feature]\nTarget Files: components/ReaderTab.tsx, components/TextImporter.tsx\nSpec:\n1. Add toggle in TextImporter: [Create New Story] vs [Add Chapter to Existing Story].\n2. When adding a chapter, display dropdown selector of existing books in ReaderContext.\n3. Automatically assign chapter_number = existingChapters.length + 1 and append new chapter data to selected book object.\nVerification: Select existing story -> Import 3 sentences -> Appends new chapter to existing book without overwriting existing chapters.",
-    "priority": 5,
-    "title": "Task 1.2: Add Chapter to Existing Story Support"
-  },
-  {
-    "note": "[MVP] [Priority: High] [Feature]\nTarget Files: components/ReaderView.tsx, components/SentenceCard.tsx\nSpec:\n1. In ReaderView, add a discrete chevron / caret icon (ChevronDown / ChevronUp) on the right side of each sentence line.\n2. Tapping chevron expands an unpadded inline SentenceCard directly below sentence line.\n3. Expanded card reveals sentence audio playback button, \"Add to Custom List / Group\" button, and sentence source/reference details.\n4. Individual word taps within sentence line continue to launch GlossPopover.\nVerification: Tap word in reader -> GlossPopover opens. Tap caret icon -> Inline sentence card expands with audio playback and list controls.",
-    "priority": 10,
-    "title": "Task 1.3: Immersion Reader Expandable Sentence Cards"
-  },
-  {
     "note": "[DATA] [Post-MVP] [Priority: Medium] [Data]\nTarget: Cherokee Narrative & Story Data Packages\nNote: Data task - all editing and addition of narrative data packages must be done manually by a human.\nSpec:\n1. Manually compile, edit, and add pre-packaged Cherokee narrative and story data packages to the catalog.\n2. Verify narrative text accuracy and sentence alignment manually before inclusion in story package releases.",
     "priority": 3,
     "title": "Task 1.4: [DATA] Pre-packaged Cherokee Narratives & Stories Catalog (Post-MVP)"

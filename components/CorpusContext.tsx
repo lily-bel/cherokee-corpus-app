@@ -42,6 +42,7 @@ export interface Sentence {
     chapter?: string;    // Chapter name within story
     line?: number;       // Line number for ordering within chapter
     story_order?: number; // Canonical ordering of stories within a source
+    chapter_order?: number; // Canonical ordering of chapters within a story
     author?: string;     // Author attribution
     speaker?: string;    // Speaker name for audio
     tone?: string;       // Tonal transcription
@@ -147,6 +148,9 @@ interface CorpusContextType {
     addUserSentence: (sentence: Sentence) => void;
     removeUserSentence: (id: string) => void;
     removeUserSentences: (ids: string[]) => void;
+    deleteUserBook: (source: string) => void;
+    deleteUserChapter: (source: string, storyTitle: string, chapterName: string) => void;
+    reorderUserChapters: (source: string, storyTitle: string, chapterNamesInOrder: string[]) => void;
 
     // Audio
     userAudioMeta: Record<string, any[]>;
@@ -451,6 +455,41 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setUserSentences(prev => prev.filter(s => !idsSet.has(s.id)));
     };
 
+    const deleteUserBook = (source: string) => {
+        setCustomDictionaries(prev => {
+            const next = { ...prev };
+            delete next[source];
+            return next;
+        });
+        setUserSentences(prev => prev.filter(s => s.source !== source));
+    };
+
+    const deleteUserChapter = (source: string, storyTitle: string, chapterName: string) => {
+        setUserSentences(prev => prev.filter(s => {
+            if (s.source === source && (s.story === storyTitle || !s.story) && (s.chapter === chapterName || (chapterName === '1' && !s.chapter))) {
+                return false;
+            }
+            return true;
+        }));
+    };
+
+    const reorderUserChapters = (source: string, storyTitle: string, chapterNamesInOrder: string[]) => {
+        const orderMap = new Map<string, number>();
+        chapterNamesInOrder.forEach((name, idx) => {
+            orderMap.set(name, idx + 1);
+        });
+
+        setUserSentences(prev => prev.map(s => {
+            if (s.source === source && (s.story === storyTitle || !s.story)) {
+                const chapName = s.chapter || '1';
+                if (orderMap.has(chapName)) {
+                    return { ...s, chapter_order: orderMap.get(chapName) };
+                }
+            }
+            return s;
+        }));
+    };
+
     // Audio Actions
     const saveAudio = async (targetId: string, blob: Blob, speaker: string, formIndex?: number, wordSlug?: string) => {
         const { saveAudioToDB, cleanStr } = await import('../utils');
@@ -568,6 +607,9 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             addUserSentence,
             removeUserSentence,
             removeUserSentences,
+            deleteUserBook,
+            deleteUserChapter,
+            reorderUserChapters,
             customDictionaries,
             personalWords,
             setCustomDictionaries,

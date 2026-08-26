@@ -10,6 +10,7 @@ export interface Book {
     author?: string;      // From first sentence
     source: string;       // Data source (shorthand)
     storyCount: number;
+    chapterCount: number;
     sentenceCount: number;
     isCollection: boolean; // true if ONLY "Individual Sentences"
     userType?: 'book' | 'notebook';
@@ -30,6 +31,7 @@ export interface Chapter {
     name: string;
     storyId: string;
     sentenceIds: string[];
+    order?: number;        // Canonical ordering within the story
 }
 
 export interface InvestigationItem {
@@ -205,18 +207,31 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                         return a.id.localeCompare(b.id);
                     });
 
+                    let chapterOrder: number | undefined = undefined;
+                    for (const s of chapterSentences) {
+                        if (s.chapter_order !== undefined) {
+                            if (chapterOrder === undefined || s.chapter_order < chapterOrder) {
+                                chapterOrder = s.chapter_order;
+                            }
+                        }
+                    }
+
                     chapters.push({
                         id: chapterId,
-                        name: isSequential ? `Chapter ${chapterName}` : 'Sentences',
+                        name: isSequential ? chapterName : 'Sentences',
                         storyId: storyId,
-                        sentenceIds: sorted.map(s => s.id)
+                        sentenceIds: sorted.map(s => s.id),
+                        order: chapterOrder
                     });
 
                     sentencesByChapter.set(chapterId, sorted.map(s => s.id));
                 });
 
-                // Sort chapters numerically
+                // Sort chapters: by order if available, otherwise numerically / alphabetically
                 chapters.sort((a, b) => {
+                    if (a.order !== undefined && b.order !== undefined) return a.order - b.order;
+                    if (a.order !== undefined) return -1;
+                    if (b.order !== undefined) return 1;
                     const aNum = parseInt(a.name.replace(/\D/g, ''), 10);
                     const bNum = parseInt(b.name.replace(/\D/g, ''), 10);
                     if (!isNaN(aNum) && !isNaN(bNum)) return aNum - bNum;
@@ -268,6 +283,7 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 author: author,
                 source: source,
                 storyCount: stories.length,
+                chapterCount: stories.reduce((acc, s) => acc + s.chapterCount, 0),
                 sentenceCount: sourceSentences.length,
                 isCollection,
                 userType: userDictionaries[source]?.type

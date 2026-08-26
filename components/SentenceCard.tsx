@@ -4,7 +4,7 @@ import { usePackageManager } from './PackageManagerContext';
 import { GlossPopover } from './GlossPopover';
 import { LinkerModal } from './LinkerModal';
 import { AudioPlayer, SourceBadge } from './UI';
-import { Check, Plus, Mic, Pencil, MicPlus, Trash2, Pause, ListIcon, Star, X, ListPlus, BookOpen } from './Icons';
+import { Check, Plus, Mic, Pencil, MicPlus, Trash2, Pause, ListIcon, Star, X, ListPlus, BookOpen, ChevronUp } from './Icons';
 import { getAudioFromDB, renderStyledText } from '../utils';
 
 import AudioRecorder from './AudioRecorder';
@@ -32,9 +32,10 @@ interface SentenceCardProps {
     onOpenNewListModal?: (id: string) => void;
     // Reader Props
     onReadInContext?: (sentenceId: string) => void;
+    onCollapse?: () => void;
 }
 
-export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, isDimmed, customDictionaries, userNotes, onEditNote, onEditSentence, sourceMap, onSaveAudio, userAudioMeta, personalWords, onDeleteSentence, onDeleteAudio, onCreateWord, favorites, customLists, onToggleFavorite, onToggleList, onOpenNewListModal, onReadInContext }) => {
+export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, isDimmed, customDictionaries, userNotes, onEditNote, onEditSentence, sourceMap, onSaveAudio, userAudioMeta, personalWords, onDeleteSentence, onDeleteAudio, onCreateWord, favorites, customLists, onToggleFavorite, onToggleList, onOpenNewListModal, onReadInContext, onCollapse }) => {
     const { dictionary, glossMap, dictionaryMap, addUserGloss, removeUserGloss, removeUserSentence } = useCorpus();
     const { packages, getPackageColor, importedData } = usePackageManager(); // Add this line
     const [activePopover, setActivePopover] = useState<{ index: number, rect: { x: number, y: number } } | null>(null);
@@ -326,6 +327,17 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                     )}
 
                     <SourceBadge source={sentence.source} name={customDictionaries?.[sentence.source]?.name || sourceMap?.[sentence.source] || sentence.source} />
+
+                    {/* Collapse Button (in Reader context) */}
+                    {onCollapse && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onCollapse(); }}
+                            className="p-1 text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
+                            title="Collapse sentence card"
+                        >
+                            <ChevronUp size={16} />
+                        </button>
+                    )}
                 </div>
             </div>
 

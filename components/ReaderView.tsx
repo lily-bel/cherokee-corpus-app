@@ -4,7 +4,8 @@ import { useReader } from './ReaderContext';
 import { usePackageManager } from './PackageManagerContext';
 import { GlossPopover } from './GlossPopover';
 import { LinkerModal } from './LinkerModal';
-import { ArrowLeft, BookOpen, Eye, EyeOff, Type, Menu } from './Icons';
+import { SentenceCard } from './SentenceCard';
+import { ArrowLeft, BookOpen, Eye, EyeOff, Type, Menu, ChevronDown } from './Icons';
 import { renderStyledText } from '../utils';
 
 type StudyMode = 'study' | 'read';
@@ -18,6 +19,21 @@ interface ReaderViewProps {
     customDictionaries?: Record<string, any>;
     onCreateWord?: () => void;
     onShowSettings?: () => void;
+    // SentenceCard integration props
+    userNotes?: Record<string, string>;
+    onEditNote?: (id: string, note: string) => void;
+    onEditSentence?: (id: string) => void;
+    onDeleteSentence?: (id: string) => void;
+    sourceMap?: Record<string, string>;
+    onSaveAudio?: (id: string, blob: Blob, speaker: string, formIndex?: number, wordSlug?: string) => void;
+    userAudioMeta?: Record<string, any[]>;
+    onDeleteAudio?: (targetId: string, audioId: string) => void;
+    personalWords?: any[];
+    favorites?: string[];
+    customLists?: Record<string, any>;
+    onToggleFavorite?: (id: string) => void;
+    onToggleList?: (listId: string, id: string) => void;
+    onOpenNewListModal?: (id: string) => void;
 }
 
 const CHUNK_SIZE = 20;
@@ -31,7 +47,20 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
     onBack,
     customDictionaries,
     onCreateWord,
-    onShowSettings
+    onShowSettings,
+    userNotes,
+    onEditNote,
+    onEditSentence,
+    onDeleteSentence,
+    sourceMap,
+    onSaveAudio,
+    userAudioMeta,
+    onDeleteAudio,
+    favorites,
+    customLists,
+    onToggleFavorite,
+    onToggleList,
+    onOpenNewListModal
 }) => {
     const { dictionary, glossMap, dictionaryMap, addUserGloss, removeUserGloss, personalWords } = useCorpus();
     const { books, getSentencesForChapter, addToInvestigationQueue, investigationQueue } = useReader();
@@ -52,6 +81,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
         glossId?: string;
     } | null>(null);
     const [flashingSentenceId, setFlashingSentenceId] = useState<string | null>(null);
+    const [expandedSentenceId, setExpandedSentenceId] = useState<string | null>(null);
 
     // Virtualization State
     const [visibleRange, setVisibleRange] = useState({ start: 0, end: CHUNK_SIZE });
@@ -308,10 +338,12 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                         </button>
                         <div className="flex-1 min-w-0 flex items-baseline gap-2">
                             <h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">
-                                {book?.title || 'Reader'}
+                                {sentences.length > 0 && sentences[0]?.chapter
+                                    ? `${book?.title || 'Reader'} • ${sentences[0].chapter}`
+                                    : (book?.title || 'Reader')}
                             </h1>
                             <span className="text-xs text-slate-500 dark:text-slate-400 shrink-0">
-                                ({sentences.length} sents)
+                                ({sentences.length} {sentences.length === 1 ? 'sent' : 'sents'})
                             </span>
                         </div>
                     </div>
@@ -359,6 +391,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                     {visibleSentences.map((sentence, _sentenceIdx) => {
                         const tokens = tokenizeSentence(sentence);
                         const isFlashing = flashingSentenceId === sentence.id;
+                        const isExpanded = expandedSentenceId === sentence.id;
 
                         return (
                             <div
@@ -377,73 +410,110 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                                 className={`mb-6 transition-all duration-500 ${isFlashing ? 'bg-amber-100 dark:bg-amber-900/30 rounded-lg p-4 -mx-4 shadow-lg' : ''
                                     }`}
                             >
-                                {/* Sentence Content */}
-                                <div className={`flex flex-wrap gap-x-1 gap-y-1 leading-relaxed ${studyMode === 'study' && scriptMode === 'both' ? 'gap-x-2' : 'gap-x-1'}`}>
-                                    {tokens.map((token, tokenIdx) => {
-                                        const glossColor = getGlossColor(sentence.id, tokenIdx);
-                                        const isClickable = true;
+                                {isExpanded ? (
+                                    <SentenceCard
+                                        sentence={sentence}
+                                        customDictionaries={customDictionaries}
+                                        userNotes={userNotes}
+                                        onEditNote={onEditNote}
+                                        onEditSentence={onEditSentence}
+                                        onDeleteSentence={onDeleteSentence}
+                                        sourceMap={sourceMap}
+                                        personalWords={personalWords}
+                                        onSaveAudio={onSaveAudio}
+                                        userAudioMeta={userAudioMeta}
+                                        onDeleteAudio={onDeleteAudio}
+                                        onCreateWord={onCreateWord}
+                                        favorites={favorites}
+                                        customLists={customLists}
+                                        onToggleFavorite={onToggleFavorite}
+                                        onToggleList={onToggleList}
+                                        onOpenNewListModal={onOpenNewListModal}
+                                        onCollapse={() => setExpandedSentenceId(null)}
+                                    />
+                                ) : (
+                                    <>
+                                        <div className="flex items-start justify-between gap-2">
+                                            {/* Sentence Content */}
+                                            <div className={`flex-1 flex flex-wrap gap-x-1 gap-y-1 leading-relaxed ${studyMode === 'study' && scriptMode === 'both' ? 'gap-x-2' : 'gap-x-1'}`}>
+                                                {tokens.map((token, tokenIdx) => {
+                                                    const glossColor = getGlossColor(sentence.id, tokenIdx);
+                                                    const isClickable = true;
 
-                                        if (scriptMode === 'syllabary') {
-                                            const inQueue = isInQueue(sentence.id, tokenIdx);
-                                            return (
-                                                <span
-                                                    key={tokenIdx}
-                                                    className={`font-serif text-2xl text-slate-900 dark:text-slate-100 ${inQueue ? 'bg-blue-100/60 dark:bg-blue-800/30 rounded px-0.5' : ''} ${isClickable ? 'cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded px-0.5' : ''}`}
-                                                    onClick={isClickable ? (e) => handleWordClick(sentence, tokenIdx, e) : undefined}
-                                                >
-                                                    {token.syl}
-                                                    {glossColor && studyMode === 'study' && (
-                                                        <span className="block h-0.5 rounded-full -mt-1" style={{ backgroundColor: glossColor }} />
-                                                    )}
-                                                </span>
-                                            );
-                                        }
+                                                    if (scriptMode === 'syllabary') {
+                                                        const inQueue = isInQueue(sentence.id, tokenIdx);
+                                                        return (
+                                                            <span
+                                                                key={tokenIdx}
+                                                                className={`font-serif text-2xl text-slate-900 dark:text-slate-100 ${inQueue ? 'bg-blue-100/60 dark:bg-blue-800/30 rounded px-0.5' : ''} ${isClickable ? 'cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded px-0.5' : ''}`}
+                                                                onClick={isClickable ? (e) => handleWordClick(sentence, tokenIdx, e) : undefined}
+                                                            >
+                                                                {token.syl}
+                                                                {glossColor && studyMode === 'study' && (
+                                                                    <span className="block h-0.5 rounded-full -mt-1" style={{ backgroundColor: glossColor }} />
+                                                                )}
+                                                            </span>
+                                                        );
+                                                    }
 
-                                        if (scriptMode === 'translit') {
-                                            const inQueue = isInQueue(sentence.id, tokenIdx);
-                                            return (
-                                                <span
-                                                    key={tokenIdx}
-                                                    className={`text-xl text-slate-700 dark:text-slate-300 ${inQueue ? 'bg-blue-100/60 dark:bg-blue-800/30 rounded px-0.5' : ''} ${isClickable ? 'cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded px-0.5' : ''}`}
-                                                    onClick={isClickable ? (e) => handleWordClick(sentence, tokenIdx, e) : undefined}
-                                                >
-                                                    {token.tr}
-                                                    {glossColor && studyMode === 'study' && (
-                                                        <span className="block h-0.5 rounded-full" style={{ backgroundColor: glossColor }} />
-                                                    )}
-                                                </span>
-                                            );
-                                        }
+                                                    if (scriptMode === 'translit') {
+                                                        const inQueue = isInQueue(sentence.id, tokenIdx);
+                                                        return (
+                                                            <span
+                                                                key={tokenIdx}
+                                                                className={`text-xl text-slate-700 dark:text-slate-300 ${inQueue ? 'bg-blue-100/60 dark:bg-blue-800/30 rounded px-0.5' : ''} ${isClickable ? 'cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded px-0.5' : ''}`}
+                                                                onClick={isClickable ? (e) => handleWordClick(sentence, tokenIdx, e) : undefined}
+                                                            >
+                                                                {token.tr}
+                                                                {glossColor && studyMode === 'study' && (
+                                                                    <span className="block h-0.5 rounded-full" style={{ backgroundColor: glossColor }} />
+                                                                )}
+                                                            </span>
+                                                        );
+                                                    }
 
-                                        const inQueue = isInQueue(sentence.id, tokenIdx);
+                                                    const inQueue = isInQueue(sentence.id, tokenIdx);
 
-                                        return (
-                                            <span
-                                                key={tokenIdx}
-                                                className={`inline-flex flex-col items-center relative ${inQueue ? 'bg-blue-100/60 dark:bg-blue-800/30 rounded px-0.5 -mx-0.5' : ''} ${isClickable ? 'cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded px-0.5 -mx-0.5' : ''}`}
-                                                onClick={isClickable ? (e) => handleWordClick(sentence, tokenIdx, e) : undefined}
+                                                    return (
+                                                        <span
+                                                            key={tokenIdx}
+                                                            className={`inline-flex flex-col items-center relative ${inQueue ? 'bg-blue-100/60 dark:bg-blue-800/30 rounded px-0.5 -mx-0.5' : ''} ${isClickable ? 'cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded px-0.5 -mx-0.5' : ''}`}
+                                                            onClick={isClickable ? (e) => handleWordClick(sentence, tokenIdx, e) : undefined}
+                                                        >
+                                                            <span className="font-serif text-xl text-slate-900 dark:text-slate-100">
+                                                                {token.syl}
+                                                            </span>
+                                                            <span className="text-sm text-slate-500 dark:text-slate-400">
+                                                                {token.tr}
+                                                            </span>
+                                                            {glossColor && studyMode === 'study' && (
+                                                                <div
+                                                                    className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
+                                                                    style={{ backgroundColor: glossColor }}
+                                                                />
+                                                            )}
+                                                        </span>
+                                                    );
+                                                })}
+                                            </div>
+
+                                            {/* Caret / Chevron button */}
+                                            <button
+                                                type="button"
+                                                onClick={() => setExpandedSentenceId(sentence.id)}
+                                                className="p-1.5 text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors shrink-0 mt-0.5"
+                                                title="Expand sentence details"
                                             >
-                                                <span className="font-serif text-xl text-slate-900 dark:text-slate-100">
-                                                    {token.syl}
-                                                </span>
-                                                <span className="text-sm text-slate-500 dark:text-slate-400">
-                                                    {token.tr}
-                                                </span>
-                                                {glossColor && studyMode === 'study' && (
-                                                    <div
-                                                        className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
-                                                        style={{ backgroundColor: glossColor }}
-                                                    />
-                                                )}
-                                            </span>
-                                        );
-                                    })}
-                                </div>
+                                                <ChevronDown size={16} />
+                                            </button>
+                                        </div>
 
-                                {studyMode === 'study' && sentence.english && (
-                                    <p className="mt-3 text-slate-500 dark:text-slate-400 italic text-sm border-t border-slate-100 dark:border-slate-800 pt-2">
-                                        {renderStyledText(sentence.english)}
-                                    </p>
+                                        {studyMode === 'study' && sentence.english && (
+                                            <p className="mt-3 text-slate-500 dark:text-slate-400 italic text-sm border-t border-slate-100 dark:border-slate-800 pt-2">
+                                                {renderStyledText(sentence.english)}
+                                            </p>
+                                        )}
+                                    </>
                                 )}
                             </div>
                         );

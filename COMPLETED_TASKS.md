@@ -7,6 +7,36 @@
 
 ## 🏆 Completed Task Log
 
+### Task 1.1: Mobile-First Multi-Step Chapter & Story Creator (Line-by-Line Alignment)
+- **Completion Date:** 2026-08-26
+- **Status:** `[Completed]` (User Approved)
+- **Target Files:** [`components/TextImporter.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/TextImporter.tsx), [`components/ReaderTab.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/ReaderTab.tsx), [`components/CorpusContext.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/CorpusContext.tsx), [`App.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/App.tsx)
+- **Implementation Summary:**
+  1. Overhauled `TextImporter` into a 3-step mobile-first wizard: Step 1 (Book Title & Chapter Name inputs), Step 2 (3 stacked textareas with strict `\n` sentence splitting, live sentence counter badges, alignment validation banner, and clean neutral placeholders), and Step 3 (Interactive Sentence Cards review).
+  2. Implemented two-way sync: clicking `Back` from the Review step reconstructs textarea contents from edits made on individual sentence cards.
+  3. Created books directly with clean 2-level hierarchy (Book &rarr; Chapters &rarr; Sentences).
+
+### Task 1.2: Add Chapter to Existing Story / Book Support
+- **Completion Date:** 2026-08-26
+- **Status:** `[Completed]` (User Approved)
+- **Target Files:** [`components/ReaderTab.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/ReaderTab.tsx), [`components/TextImporter.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/TextImporter.tsx), [`components/CorpusContext.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/CorpusContext.tsx), [`components/ReaderContext.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/ReaderContext.tsx)
+- **Implementation Summary:**
+  1. Added toggle in `TextImporter` to "Create New Book" vs "Add Chapter to Existing Book" with dropdown selection of editable books.
+  2. Updated `ReaderTab` navigation flow so tapping any book (including 1-chapter books) opens the Chapter selection page.
+  3. Added topbar `+` button and bottom dashed `+ Add new chapter` card in chapter view for editable stories.
+  4. Added delete functionality for books and chapters with confirmation modals (`Modal`).
+  5. Added up/down icon button reordering for chapters, persisting `chapter_order` across user sentences and sorting dynamically in `ReaderContext`.
+  6. Cleaned up chapter naming in `ReaderContext` to display exact names without forced `"Chapter "` prefixes.
+
+### Task 1.3: Immersion Reader Expandable Sentence Cards
+- **Completion Date:** 2026-08-26
+- **Status:** `[Completed]` (User Approved)
+- **Target Files:** [`components/ReaderView.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/ReaderView.tsx), [`components/SentenceCard.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/SentenceCard.tsx), [`App.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/App.tsx)
+- **Implementation Summary:**
+  1. Added expandable accordion functionality to `ReaderView`: tapping the chevron icon seamlessly expands the row into a full `SentenceCard` with audio controls, recorder, personal notes, and list actions.
+  2. Replaced the simple sentence row on expansion to prevent duplicate text display, with a `ChevronUp` header button to collapse back to the compact reader line.
+  3. Preserved virtualized container scroll position and height measurements during inline expansion.
+
 ### Task 7.2: Single-Level Folders for Custom Lists
 - **Completion Date:** 2026-08-12
 - **Status:** `[Completed]` (User Approved)

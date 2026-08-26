@@ -3,13 +3,13 @@ import { useReader, Book, Chapter, Story } from './ReaderContext';
 import { usePackageManager } from './PackageManagerContext';
 import { useCorpus } from './CorpusContext';
 import { InvestigationQueue } from './InvestigationQueue';
-import { ArrowLeft, BookOpen, ChevronRight, Plus, Search, Folder, Menu } from './Icons';
+import { ArrowLeft, BookOpen, ChevronRight, ChevronUp, ChevronDown, Plus, Search, Folder, Menu, Trash2 } from './Icons';
 import { Modal } from './UI';
 
 interface ReaderTabProps {
     customDictionaries?: Record<string, any>;
     onNavigateToReader: (bookId: string, chapterId: string, scrollToSentenceId?: string) => void;
-    onOpenImporter: (dictionaryId?: string) => void;
+    onOpenImporter: (dictionaryId?: string, initialStoryName?: string, initialMode?: 'new' | 'append') => void;
     onShowSettings?: () => void;
 }
 
@@ -23,7 +23,7 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
 }) => {
     const { books, getStoriesForBook, getChaptersForStory, investigationQueue, findBookAndChapterForSentence } = useReader();
     const { getPackageColor } = usePackageManager();
-    const { setCustomDictionaries } = useCorpus();
+    const { setCustomDictionaries, deleteUserBook, deleteUserChapter, reorderUserChapters } = useCorpus();
 
     const [view, setView] = useState<ViewState>('books');
     const [selectedBook, setSelectedBook] = useState<Book | null>(null);
@@ -31,6 +31,8 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
 
     const [showNewBookModal, setShowNewBookModal] = useState(false);
     const [newBookName, setNewBookName] = useState('');
+    const [bookToDelete, setBookToDelete] = useState<Book | null>(null);
+    const [chapterToDelete, setChapterToDelete] = useState<Chapter | null>(null);
 
     // Group books into sequential and collections
     const groupedBooks = useMemo(() => {
@@ -65,29 +67,44 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
     const handleStoryClick = (story: Story) => {
         const chapters = getChaptersForStory(story.id);
         if (chapters.length === 1 && !story.isSequential) {
-            // If it's just individual sentences and only one "chapter", go straight to reader
-            onNavigateToReader(story.bookId, chapters[0].id);
-        } else if (chapters.length === 1 && story.isSequential) {
-            // Even if sequential, if only one chapter, skip chapter view
+            // If it's just individual sentences (unstructured collection), go straight to reader
             onNavigateToReader(story.bookId, chapters[0].id);
         } else {
+            // For sequential stories/books, open chapters view even if only 1 chapter
             setSelectedStory(story);
             setView('chapters');
         }
     };
 
     const handleBookClick = (book: Book) => {
+        setSelectedBook(book);
         const stories = getStoriesForBook(book.id);
         if (stories.length === 1) {
             handleStoryClick(stories[0]);
-        } else {
-            setSelectedBook(book);
+        } else if (stories.length === 0) {
+            // Empty book - open chapters view so user can add chapter
+            const emptyStory: Story = {
+                id: `${book.id}_st_${book.title.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`,
+                title: book.title,
+                bookId: book.id,
+                chapterCount: 0,
+                sentenceCount: 0,
+                isSequential: true
+            };
+            setSelectedStory(emptyStory);
+            setView('chapters');
+        } else if (stories.length > 1) {
+            // Multiple stories - show stories list (e.g. Bible)
             setView('stories');
+        } else {
+            // Fallback
+            setView('books');
         }
     };
 
     const handleChapterClick = (chapter: Chapter) => {
-        onNavigateToReader(chapter.storyId.split('_st_')[0], chapter.id);
+        if (!selectedBook) return;
+        onNavigateToReader(selectedBook.id, chapter.id);
     };
 
     const handleNavigateToReaderFromQueue = (sentenceId: string) => {
@@ -139,6 +156,33 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
         setShowNewBookModal(false);
     };
 
+    const isBookEditable = (book: Book) => {
+        return book.source === 'user' || book.source.startsWith('nb_') || !!customDictionaries?.[book.source];
+    };
+
+    const handleDeleteBook = (book: Book) => {
+        setBookToDelete(book);
+    };
+
+    const handleDeleteChapter = (chapter: Chapter, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setChapterToDelete(chapter);
+    };
+
+    const handleMoveChapter = (chapters: Chapter[], idx: number, direction: 'up' | 'down', e: React.MouseEvent) => {
+        e.stopPropagation();
+        const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+        if (targetIdx < 0 || targetIdx >= chapters.length) return;
+
+        const reordered = [...chapters];
+        const temp = reordered[idx];
+        reordered[idx] = reordered[targetIdx];
+        reordered[targetIdx] = temp;
+
+        const chapterNames = reordered.map(c => c.name);
+        reorderUserChapters(selectedBook?.source || 'user', selectedStory?.title || '', chapterNames);
+    };
+
     // Render Queue View
     if (view === 'queue') {
         return (
@@ -157,7 +201,8 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
 
         return (
             <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950">
-                <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3">
+                {/* Header */}
+                <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 h-12 flex items-center shrink-0">
                     <div className="flex items-center gap-3">
                         <button
                             onClick={() => { setView('books'); setSelectedBook(null); }}
@@ -166,9 +211,14 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                             <ArrowLeft size={20} className="text-slate-600 dark:text-slate-400" />
                         </button>
                         <div className="flex-1 min-w-0">
-                            <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                            <h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">
                                 {selectedBook.title}
                             </h1>
+                            {selectedBook.author && (
+                                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                                    by {selectedBook.author}
+                                </p>
+                            )}
                         </div>
                         {onShowSettings && (
                             <button onClick={onShowSettings} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
@@ -178,47 +228,26 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                     </div>
                 </div>
 
+                {/* Story List */}
                 <div className="flex-1 overflow-y-auto p-4">
                     <div className="space-y-2">
                         {stories.map(story => (
                             <button
                                 key={story.id}
                                 onClick={() => handleStoryClick(story)}
-                                className={`w-full rounded-xl border p-4 text-left transition-colors flex items-center justify-between group ${story.isSequential
-                                        ? "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700"
-                                        : "bg-slate-50 dark:bg-slate-900/40 border-dashed border-slate-300 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-900"
-                                    }`}
+                                className="w-full bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 text-left hover:border-amber-300 dark:hover:border-amber-700 transition-colors flex items-center justify-between group"
                             >
-                                <div className="flex items-center gap-4">
-                                    <div className={`p-2 rounded-lg ${story.isSequential ? "bg-amber-100 dark:bg-amber-900/30 text-amber-600" : "bg-slate-200 dark:bg-slate-800 text-slate-500"}`}>
-                                        {story.isSequential ? <BookOpen size={18} /> : <Folder size={18} />}
-                                    </div>
-                                    <div>
-                                        <h3 className={`font-bold transition-colors ${story.isSequential ? 'text-slate-900 dark:text-slate-100 group-hover:text-amber-600' : 'text-slate-500 dark:text-slate-400'}`}>
-                                            {story.title}
-                                        </h3>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                                            {story.sentenceCount} sentences {story.chapterCount > 1 && ` across ${story.chapterCount} chapters`}
-                                            {!story.isSequential && ' • Unstructured Collection'}
-                                        </p>
-                                    </div>
+                                <div>
+                                    <h3 className="font-bold text-slate-900 dark:text-slate-100 group-hover:text-amber-600 transition-colors">
+                                        {story.title}
+                                    </h3>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                                        {story.chapterCount} chapter{story.chapterCount !== 1 ? 's' : ''} • {story.sentenceCount} sentence{story.sentenceCount !== 1 ? 's' : ''}
+                                    </p>
                                 </div>
                                 <ChevronRight size={20} className="text-slate-400 group-hover:text-amber-500" />
                             </button>
                         ))}
-
-                        {/* Create New Story Button (only for user notebooks) */}
-                        {(selectedBook.source === 'user' || selectedBook.source.startsWith('nb_')) && (
-                            <div className="pt-2">
-                                <button
-                                    onClick={() => onOpenImporter(selectedBook.source)}
-                                    className="w-full py-3 border-2 border-dashed border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-bold rounded-xl hover:border-amber-400 hover:text-amber-600 dark:hover:border-amber-700 dark:hover:text-amber-500 transition-colors flex items-center justify-center gap-2"
-                                >
-                                    <Plus size={20} />
-                                    <span>Create New Story</span>
-                                </button>
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>
@@ -228,15 +257,16 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
     // Render Chapters View
     if (view === 'chapters' && selectedStory) {
         const chapters = getChaptersForStory(selectedStory.id);
+        const canEdit = !selectedBook || selectedBook.source === 'user' || selectedBook.source.startsWith('nb_') || (selectedBook.source && customDictionaries?.[selectedBook.source]);
 
         return (
             <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950">
                 {/* Header */}
-                <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 h-12 flex items-center shrink-0">
-                    <div className="flex items-center gap-3">
+                <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 h-12 flex items-center justify-between shrink-0">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
                         <button
-                            onClick={() => { setView(selectedBook ? 'stories' : 'books'); setSelectedStory(null); }}
-                            className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                            onClick={() => { setView(selectedBook && getStoriesForBook(selectedBook.id).length > 1 ? 'stories' : 'books'); setSelectedStory(null); }}
+                            className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
                         >
                             <ArrowLeft size={20} className="text-slate-600 dark:text-slate-400" />
                         </button>
@@ -244,10 +274,23 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                             <h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">
                                 {selectedStory.title}
                             </h1>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
-                                {selectedBook ? selectedBook.title : ''}
-                            </p>
+                            {selectedBook && selectedBook.title !== selectedStory.title && (
+                                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                                    {selectedBook.title}
+                                </p>
+                            )}
                         </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                        {canEdit && (
+                            <button
+                                onClick={() => onOpenImporter(selectedBook?.source, selectedStory.title, 'append')}
+                                className="bg-slate-900 dark:bg-slate-700 text-white p-1.5 rounded-full shadow-sm hover:bg-slate-800 transition-colors"
+                                title="Add new chapter"
+                            >
+                                <Plus size={18} />
+                            </button>
+                        )}
                         {onShowSettings && (
                             <button onClick={onShowSettings} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
                                 <Menu size={24} strokeWidth={1.5} />
@@ -259,25 +302,99 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                 {/* Chapter List */}
                 <div className="flex-1 overflow-y-auto p-4">
                     <div className="space-y-2">
-                        {chapters.map(chapter => (
-                            <button
+                        {chapters.map((chapter, idx) => (
+                            <div
                                 key={chapter.id}
                                 onClick={() => handleChapterClick(chapter)}
-                                className="w-full bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 text-left hover:border-amber-300 dark:hover:border-amber-700 transition-colors flex items-center justify-between group"
+                                className="w-full bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 text-left hover:border-amber-300 dark:hover:border-amber-700 transition-colors flex items-center justify-between group cursor-pointer"
                             >
-                                <div>
-                                    <h3 className="font-bold text-slate-900 dark:text-slate-100 group-hover:text-amber-600 transition-colors">
+                                <div className="flex-1 min-w-0 pr-2">
+                                    <h3 className="font-bold text-slate-900 dark:text-slate-100 group-hover:text-amber-600 transition-colors truncate">
                                         {chapter.name}
                                     </h3>
                                     <p className="text-xs text-slate-500 dark:text-slate-400">
                                         {chapter.sentenceIds.length} sentence{chapter.sentenceIds.length !== 1 ? 's' : ''}
                                     </p>
                                 </div>
+
+                                <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
+                                    {canEdit && (
+                                        <>
+                                            {chapters.length > 1 && (
+                                                <div className="flex items-center">
+                                                    <button
+                                                        onClick={(e) => handleMoveChapter(chapters, idx, 'up', e)}
+                                                        disabled={idx === 0}
+                                                        className="p-1.5 text-slate-400 hover:text-amber-600 disabled:opacity-20 disabled:hover:text-slate-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                                        title="Move chapter up"
+                                                    >
+                                                        <ChevronUp size={16} />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => handleMoveChapter(chapters, idx, 'down', e)}
+                                                        disabled={idx === chapters.length - 1}
+                                                        className="p-1.5 text-slate-400 hover:text-amber-600 disabled:opacity-20 disabled:hover:text-slate-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                                        title="Move chapter down"
+                                                    >
+                                                        <ChevronDown size={16} />
+                                                    </button>
+                                                </div>
+                                            )}
+                                            <button
+                                                onClick={(e) => handleDeleteChapter(chapter, e)}
+                                                className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors ml-1"
+                                                title="Delete chapter"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </>
+                                    )}
+                                    <ChevronRight size={20} className="text-slate-400 group-hover:text-amber-500 ml-1" />
+                                </div>
+                            </div>
+                        ))}
+
+                        {/* Outlined Add New Chapter Card */}
+                        {canEdit && (
+                            <button
+                                onClick={() => onOpenImporter(selectedBook?.source, selectedStory.title, 'append')}
+                                className="w-full bg-slate-50/50 dark:bg-slate-900/30 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-4 text-left hover:border-amber-400 dark:hover:border-amber-600 hover:bg-white dark:hover:bg-slate-900 transition-all flex items-center justify-between group"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 group-hover:bg-amber-100 dark:group-hover:bg-amber-900/40 transition-colors">
+                                        <Plus size={18} />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-slate-600 dark:text-slate-300 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                                            Add new chapter
+                                        </h3>
+                                        <p className="text-xs text-slate-400">
+                                            Import sentences for Chapter {chapters.length + 1}
+                                        </p>
+                                    </div>
+                                </div>
                                 <ChevronRight size={20} className="text-slate-400 group-hover:text-amber-500" />
                             </button>
-                        ))}
+                        )}
                     </div>
                 </div>
+
+                {chapterToDelete && (
+                    <Modal title="Delete Chapter?" onClose={() => setChapterToDelete(null)}>
+                        <p className="text-slate-600 dark:text-slate-300 mb-6">
+                            Are you sure you want to delete <strong>"{chapterToDelete.name}"</strong>? All sentences inside this chapter will be deleted.
+                        </p>
+                        <button
+                            onClick={() => {
+                                deleteUserChapter(selectedBook?.source || 'user', selectedStory.title, chapterToDelete.name);
+                                setChapterToDelete(null);
+                            }}
+                            className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition-colors"
+                        >
+                            Delete Chapter
+                        </button>
+                    </Modal>
+                )}
             </div>
         );
     }
@@ -356,6 +473,7 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                                             title={book.title}
                                             color={getSourceColor(book.source)}
                                             onClick={() => handleBookClick(book)}
+                                            onDelete={isBookEditable(book) ? () => handleDeleteBook(book) : undefined}
                                         />
                                     ))}
                                 </div>
@@ -387,6 +505,7 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                                             title={book.title}
                                             color={getSourceColor(book.source)}
                                             onClick={() => handleBookClick(book)}
+                                            onDelete={isBookEditable(book) ? () => handleDeleteBook(book) : undefined}
                                         />
                                     ))}
                                 </div>
@@ -420,6 +539,23 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                         </div>
                     </Modal>
                 )}
+
+                {bookToDelete && (
+                    <Modal title="Delete Book?" onClose={() => setBookToDelete(null)}>
+                        <p className="text-slate-600 dark:text-slate-300 mb-6">
+                            Are you sure you want to delete <strong>"{bookToDelete.title}"</strong> and all its chapters? All sentences inside it will be lost.
+                        </p>
+                        <button
+                            onClick={() => {
+                                deleteUserBook(bookToDelete.source);
+                                setBookToDelete(null);
+                            }}
+                            className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition-colors"
+                        >
+                            Delete Book
+                        </button>
+                    </Modal>
+                )}
             </div>
         </div>
     );
@@ -431,13 +567,14 @@ const BookCard: React.FC<{
     title: string;
     color?: string;
     onClick: () => void;
-}> = ({ book, title, color, onClick }) => {
+    onDelete?: () => void;
+}> = ({ book, title, color, onClick, onDelete }) => {
     const Icon = book.isCollection ? Folder : BookOpen;
 
     return (
-        <button
+        <div
             onClick={onClick}
-            className={`w-full rounded-xl border p-4 text-left transition-colors flex items-center gap-4 group ${book.isCollection
+            className={`w-full rounded-xl border p-4 text-left transition-colors flex items-center gap-4 group cursor-pointer ${book.isCollection
                     ? "bg-slate-50/50 dark:bg-slate-900/30 border-dashed border-slate-200 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-900"
                     : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700"
                 }`}
@@ -456,7 +593,7 @@ const BookCard: React.FC<{
 
             {/* Book Info */}
             <div className="flex-1 min-w-0">
-                <h3 className={`font-bold transition-colors ${book.isCollection ? "text-slate-600 dark:text-slate-400" : "text-slate-900 dark:text-slate-100 group-hover:text-amber-600"}`}>
+                <h3 className={`font-bold transition-colors truncate ${book.isCollection ? "text-slate-600 dark:text-slate-400" : "text-slate-900 dark:text-slate-100 group-hover:text-amber-600"}`}>
                     {title}
                 </h3>
                 {book.author && (
@@ -469,14 +606,25 @@ const BookCard: React.FC<{
                     {!book.isCollection && (
                         <>
                             <span>•</span>
-                            <span>{book.storyCount} {book.storyCount === 1 ? 'story' : 'stories'}</span>
+                            <span>{book.chapterCount || book.storyCount} {book.chapterCount === 1 ? 'chapter' : 'chapters'}</span>
                         </>
                     )}
                 </div>
             </div>
 
-            <ChevronRight size={20} className="text-slate-400 group-hover:text-amber-500 shrink-0" />
-        </button>
+            <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
+                {onDelete && (
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                        title="Delete book"
+                    >
+                        <Trash2 size={16} />
+                    </button>
+                )}
+                <ChevronRight size={20} className="text-slate-400 group-hover:text-amber-500" />
+            </div>
+        </div>
     );
 };
 

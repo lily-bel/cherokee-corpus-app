@@ -74,6 +74,8 @@ function App() {
     const [activeChapterId, setActiveChapterId] = useState<string | null>(null);
     const [scrollToSentenceId, setScrollToSentenceId] = useState<string | undefined>(undefined);
     const [importerDictionaryId, setImporterDictionaryId] = useState<string | undefined>(undefined);
+    const [importerStoryName, setImporterStoryName] = useState<string | undefined>(undefined);
+    const [importerMode, setImporterMode] = useState<'new' | 'append' | undefined>(undefined);
 
     // Search & Input States
     const [inputValue, setInputValue] = useState('');
@@ -2017,13 +2019,22 @@ function App() {
                         {activeTab === 'reader' && (
                             readerView === 'importing' ? (
                                 <TextImporter
-                                    onBack={() => { setReaderView('list'); setImporterDictionaryId(undefined); }}
+                                    onBack={() => {
+                                        setReaderView('list');
+                                        setImporterDictionaryId(undefined);
+                                        setImporterStoryName(undefined);
+                                        setImporterMode(undefined);
+                                    }}
                                     onComplete={(_storyId) => {
                                         setReaderView('list');
                                         setImporterDictionaryId(undefined);
+                                        setImporterStoryName(undefined);
+                                        setImporterMode(undefined);
                                     }}
                                     customDictionaries={customDictionaries}
                                     preselectedDictionaryId={importerDictionaryId}
+                                    initialStoryName={importerStoryName}
+                                    initialMode={importerMode}
                                     onShowSettings={() => setShowSettingsModal(true)}
                                 />
                             ) : readerView === 'reading' && activeBookId && activeChapterId ? (
@@ -2040,6 +2051,20 @@ function App() {
                                     customDictionaries={customDictionaries}
                                     onCreateWord={openWordModal}
                                     onShowSettings={() => setShowSettingsModal(true)}
+                                    userNotes={userNotes}
+                                    onEditNote={handleEditSentenceNote}
+                                    onEditSentence={handleEditSentence}
+                                    onDeleteSentence={handleDeleteSentence}
+                                    sourceMap={sourceMap}
+                                    personalWords={personalWords}
+                                    onSaveAudio={saveAudio}
+                                    userAudioMeta={userAudioMeta}
+                                    onDeleteAudio={deleteAudio}
+                                    favorites={favorites}
+                                    customLists={customLists}
+                                    onToggleFavorite={toggleFavorite}
+                                    onToggleList={toggleInList}
+                                    onOpenNewListModal={() => setShowNewListModal(true)}
                                 />
                             ) : (
                                 <ReaderTab
@@ -2050,8 +2075,10 @@ function App() {
                                         setScrollToSentenceId(sentenceId);
                                         setReaderView('reading');
                                     }}
-                                    onOpenImporter={(dictionaryId) => {
+                                    onOpenImporter={(dictionaryId, storyName, mode) => {
                                         setImporterDictionaryId(dictionaryId);
+                                        setImporterStoryName(storyName);
+                                        setImporterMode(mode);
                                         setReaderView('importing');
                                     }}
                                     onShowSettings={() => setShowSettingsModal(true)}
