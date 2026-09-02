@@ -84,21 +84,6 @@
         "note": "[MVP] [Priority: Medium] [Documentation] [Feature]\nTarget Files: App.tsx, utils.tsx\nSpec:\n1. Add detailed inline explanations under Preferred Transliteration Style dropdown in Settings modal detailing Classic CED, Uchihara Aspiration, and Reverse Aspiration.\n2. Perform thorough audit of transliteration engine in utils.tsx to test for edge-case errors, missing syllable combinations, or phonetic conversion issues.\nVerification: Open Settings -> Explanatory text renders beneath Transliteration options. Transliteration conversion functions pass edge-case test suite without errors."
       },
       {
-        "title": "Task 4.1: My Library Gold Package & Package Export Settings",
-        "priority": 10,
-        "note": "[MVP] [Priority: High] [Feature]\nTarget Files: components/PackageManagerTab.tsx, components/PackageExportModal.tsx\nSpec:\n1. Encapsulate all user-created words, sentences, and custom dictionary entries into default package named \"My Library\".\n2. Highlight \"My Library\" in UI with a distinct Gold color badge/accent.\n3. In PackageExportModal, add a checkbox: [ ] Allow package to be edited by importer.\nVerification: User personal entries render under \"My Library\" (Gold badge). Export package modal includes Allow package to be edited checkbox option."
-      },
-      {
-        "title": "Task 4.2: Fix Package Import Compatibility (v1 vs v2 JSON schemas)",
-        "priority": 10,
-        "note": "[MVP] [Priority: High] [Bug]\nTarget Files: components/PackageManagerContext.tsx, components/usePackageHooks.ts\nSpec:\n1. Write schema normalizer normalizePackageData() supporting legacy and updated JSON keys for word_forms, sentences, dictionary, and metadata.\nVerification: Import legacy package ZIP -> Import succeeds cleanly."
-      },
-      {
-        "title": "Task 4.3: Package Import ZIP Error Banners",
-        "priority": 10,
-        "note": "[MVP] [Priority: High] [UI] [Bug]\nTarget Files: components/PackageManagerTab.tsx, components/UI.tsx\nSpec:\n1. If imported ZIP file is corrupted or missing manifest.json, display explicit red error toast without crashing app: \"Import Failed: Invalid package ZIP format.\"\nVerification: Drop invalid zip -> Red error toast displays cleanly."
-      },
-      {
         "title": "Task 4.4: Editable Packages & Version Control (Post-MVP)",
         "priority": 2,
         "note": "[Post-MVP] [Priority: Low] [Feature] [Architecture]\nTarget Files: components/PackageManagerContext.tsx\nSpec:\n1. Defer editable package sync to Post-MVP Firebase/Cloud Sync architecture.\n2. Implement primitive version control saving historical revisions of packages without complex merging."

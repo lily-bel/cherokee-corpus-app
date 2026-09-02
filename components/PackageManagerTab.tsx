@@ -28,9 +28,9 @@ const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists, onNa
     const [colorPicker, setColorPicker] = useState<{ show: boolean, pkgId: string | null }>({ show: false, pkgId: null });
     const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
 
-    const showToast = (message: string, type = 'success') => {
+    const showToast = (message: string, type = 'success', duration = type === 'error' ? 6000 : 3000) => {
         setToast({ show: true, message, type });
-        setTimeout(() => setToast(t => ({ ...t, show: false })), 3000);
+        setTimeout(() => setToast(t => ({ ...t, show: false })), duration);
     };
 
     const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,7 +45,7 @@ const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists, onNa
             await importPackage(file, color);
             showToast(`Imported ${file.name}`);
         } catch (err) {
-            console.error(err);
+            console.error("Import error:", err);
             showToast("Import failed: " + (err as Error).message, 'error');
         } finally {
             setImporting(false);
@@ -322,7 +322,9 @@ const PackageItem = ({
     const glossCount = isUser ? allGlosses.filter(g => g.source === 'user').length : (pkg.metadata?.stats?.glosses || 0);
     const listCount = pkg.metadata?.stats?.lists || 0;
 
-    const dictionaryCount = isUser ? Object.keys(customDictionaries).length : (pkg.metadata?.stats?.notebooks || 0);
+    const dictionaryCount = isUser 
+        ? Object.keys(customDictionaries).length 
+        : (pkg.metadata?.stats?.notebooks || (pkg.metadata?.source_names ? Object.keys(pkg.metadata.source_names).length : 0));
     const noteCount = isUser ? Object.keys(userNotes).length : (pkg.metadata?.stats?.notes || 0);
     const wordFormCount = isUser ? Object.keys(userWordForms).length : (pkg.metadata?.stats?.word_forms || 0);
 

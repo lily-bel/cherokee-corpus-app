@@ -20,21 +20,6 @@
     "title": "Task 3.6: Transliteration Style Explanations & Algorithm Audit"
   },
   {
-    "note": "[MVP] [Priority: High] [Feature]\nTarget Files: components/PackageManagerTab.tsx, components/PackageExportModal.tsx\nSpec:\n1. Encapsulate all user-created words, sentences, and custom dictionary entries into default package named \"My Library\".\n2. Highlight \"My Library\" in UI with a distinct Gold color badge/accent.\n3. In PackageExportModal, add a checkbox: [ ] Allow package to be edited by importer.\nVerification: User personal entries render under \"My Library\" (Gold badge). Export package modal includes Allow package to be edited checkbox option.",
-    "priority": 10,
-    "title": "Task 4.1: My Library Gold Package & Package Export Settings"
-  },
-  {
-    "note": "[MVP] [Priority: High] [Bug]\nTarget Files: components/PackageManagerContext.tsx, components/usePackageHooks.ts\nSpec:\n1. Write schema normalizer normalizePackageData() supporting legacy and updated JSON keys for word_forms, sentences, dictionary, and metadata.\nVerification: Import legacy package ZIP -> Import succeeds cleanly.",
-    "priority": 10,
-    "title": "Task 4.2: Fix Package Import Compatibility (v1 vs v2 JSON schemas)"
-  },
-  {
-    "note": "[MVP] [Priority: High] [UI] [Bug]\nTarget Files: components/PackageManagerTab.tsx, components/UI.tsx\nSpec:\n1. If imported ZIP file is corrupted or missing manifest.json, display explicit red error toast without crashing app: \"Import Failed: Invalid package ZIP format.\"\nVerification: Drop invalid zip -> Red error toast displays cleanly.",
-    "priority": 10,
-    "title": "Task 4.3: Package Import ZIP Error Banners"
-  },
-  {
     "note": "[Post-MVP] [Priority: Low] [Feature] [Architecture]\nTarget Files: components/PackageManagerContext.tsx\nSpec:\n1. Defer editable package sync to Post-MVP Firebase/Cloud Sync architecture.\n2. Implement primitive version control saving historical revisions of packages without complex merging.",
     "priority": 2,
     "title": "Task 4.4: Editable Packages & Version Control (Post-MVP)"
