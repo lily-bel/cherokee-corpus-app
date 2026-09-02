@@ -1,0 +1,15 @@
+[
+  {
+    "id": "cherokee-narratives",
+    "name": "Cherokee Narratives",
+    "author": "Durbin Feeling, et al.",
+    "description": "17 traditional and contemporary Cherokee stories and accounts with word-by-word literal translations and interlinear morpheme breakdowns.",
+    "packageFile": "cherokee_narratives.zip",
+    "stats": {
+      "sentences": 361,
+      "stories": 17,
+      "glosses": 3688
+    },
+    "color": "#10b981"
+  }
+]
