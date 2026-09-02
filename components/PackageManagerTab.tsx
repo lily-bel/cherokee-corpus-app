@@ -1,12 +1,12 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useCorpus } from './CorpusContext';
 import { usePackageManager, Package } from './PackageManagerContext';
-import { usePackageImport } from './usePackageHooks';
 import PackageExportModal from './PackageExportModal';
 import { ListData } from './ListsTab';
 import { Upload, Download, Trash2, ToggleLeft, ToggleRight, Box, Mic, StickyNote, ListIcon, SquaresPlus, Book, ListPlus, Menu } from './Icons';
 import { Toast, SourceBadge } from './UI';
 import { PackageDetailView } from './PackageDetailView';
+import { PackageImportModal } from './PackageImportModal';
 
 interface PackageManagerTabProps {
     customLists: Record<string, ListData | string[]>;
@@ -18,12 +18,10 @@ interface PackageManagerTabProps {
 const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists, onNavigate, onReadInContext, onShowSettings }) => {
     const { packages, togglePackage, removePackage } = usePackageManager();
     const { removePackageAudio, userAudioMeta, glosses } = useCorpus();
-    const { importPackage } = usePackageImport();
 
     const [showExportModal, setShowExportModal] = useState(false);
-    const [importing, setImporting] = useState(false);
+    const [showImportModal, setShowImportModal] = useState(false);
     const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [colorPicker, setColorPicker] = useState<{ show: boolean, pkgId: string | null }>({ show: false, pkgId: null });
     const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
@@ -31,26 +29,6 @@ const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists, onNa
     const showToast = (message: string, type = 'success', duration = type === 'error' ? 6000 : 3000) => {
         setToast({ show: true, message, type });
         setTimeout(() => setToast(t => ({ ...t, show: false })), duration);
-    };
-
-    const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setImporting(true);
-        try {
-            // Generate a random color for the package
-            const color = PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)];
-
-            await importPackage(file, color);
-            showToast(`Imported ${file.name}`);
-        } catch (err) {
-            console.error("Import error:", err);
-            showToast("Import failed: " + (err as Error).message, 'error');
-        } finally {
-            setImporting(false);
-            if (fileInputRef.current) fileInputRef.current.value = '';
-        }
     };
 
     if (selectedPackageId) {
@@ -79,9 +57,9 @@ const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists, onNa
                         <Upload size={20} />
                     </button>
                     <button
-                        onClick={() => fileInputRef.current?.click()}
+                        onClick={() => setShowImportModal(true)}
                         className="bg-slate-900 dark:bg-slate-700 text-white p-2 rounded-full shadow-md hover:bg-slate-800 transition-colors"
-                        title="Import Package"
+                        title="Import / Browse Packages"
                     >
                         <Download size={20} />
                     </button>
@@ -90,13 +68,6 @@ const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists, onNa
                             <Menu size={24} strokeWidth={1.5} />
                         </button>
                     )}
-                    <input
-                        type="file"
-                        ref={fileInputRef}
-                        className="hidden"
-                        accept=".zip"
-                        onChange={handleImport}
-                    />
                 </div>
             </div>
 
@@ -190,19 +161,17 @@ const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists, onNa
             </div>
 
             {showExportModal && <PackageExportModal onClose={() => setShowExportModal(false)} customLists={customLists} />}
+            {showImportModal && (
+                <PackageImportModal
+                    onClose={() => setShowImportModal(false)}
+                    onSuccess={(msg) => showToast(msg, 'success')}
+                    onError={(msg) => showToast(msg, 'error')}
+                />
+            )}
             {colorPicker.show && colorPicker.pkgId && (
                 <ColorPickerModal pkgId={colorPicker.pkgId} onClose={() => setColorPicker({ show: false, pkgId: null })} />
             )}
             <Toast show={toast.show} message={toast.message} type={toast.type} />
-
-            {importing && (
-                <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-2xl flex flex-col items-center gap-4">
-                        <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
-                        <p className="font-bold text-slate-700 dark:text-slate-200">Importing Package...</p>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

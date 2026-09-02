@@ -827,6 +827,8 @@ export const usePackageImport = () => {
                 form_name: d.form_name || d.Form_Name || '',
                 form_syllabary: d.form_syllabary || d.Form_Syllabary || '',
                 form_translit: d.form_translit || d.Form_Translit || '',
+                breakdown_cherokee: d.breakdown_cherokee || d.Breakdown_Cherokee || '',
+                breakdown_english: d.breakdown_english || d.Breakdown_English || '',
                 Sentence_ID: d.sentence_id || d.Sentence_ID,
                 Word_Index: d.word_index || d.Word_Index,
                 Entry_ID: d.base_id || d.entry_id || d.Entry_ID,

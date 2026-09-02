@@ -92,8 +92,16 @@ export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord,
                     // IGT Segments
                     let igtSegments: { c: string, e: string }[] = [];
                     if (gloss.breakdown_cherokee || gloss.breakdown_english) {
-                        const cParts = (gloss.breakdown_cherokee || '').split('-').map(s => s.trim());
-                        const eParts = (gloss.breakdown_english || '').split('-').map(s => s.trim());
+                        const cParts = (gloss.breakdown_cherokee || '').split('-').map(s => s.trim()).filter(Boolean);
+                        const eRaw = (gloss.breakdown_english || '').trim();
+                        let eParts: string[] = [];
+                        if (eRaw.includes(' ')) {
+                            eParts = eRaw.split(/\s+/).map(s => s.trim()).filter(Boolean);
+                        } else if (eRaw.includes('-')) {
+                            eParts = eRaw.split('-').map(s => s.trim()).filter(Boolean);
+                        } else if (eRaw) {
+                            eParts = [eRaw];
+                        }
                         const max = Math.max(cParts.length, eParts.length);
                         for (let k = 0; k < max; k++) {
                             igtSegments.push({ c: cParts[k] || '', e: eParts[k] || '' });
@@ -165,6 +173,20 @@ export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord,
                                     )}
                                     <div className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{entry.definition || entry.Definition}</div>
                                 </div>
+                            ) : (gloss.gloss_english || gloss.breakdown_cherokee || gloss.breakdown_english) ? (
+                                <div className="mb-3">
+                                    {gloss.gloss_syllabary && (
+                                        <div className="font-serif font-bold text-lg text-slate-900 dark:text-slate-100 mb-0.5">{gloss.gloss_syllabary}</div>
+                                    )}
+                                    {gloss.gloss_phonetic && (
+                                        <div className="text-base font-medium text-emerald-800 dark:text-emerald-400 mb-1">{gloss.gloss_phonetic}</div>
+                                    )}
+                                    {gloss.gloss_english && (
+                                        <div className="text-sm font-medium text-slate-700 dark:text-slate-300 italic mb-1">
+                                            "{gloss.gloss_english}"
+                                        </div>
+                                    )}
+                                </div>
                             ) : (
                                 <div className="text-sm text-slate-400 italic mb-3">Linked entry not found in dictionary.</div>
                             )}
@@ -222,11 +244,12 @@ export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord,
                             {/* IGT Display */}
                             {igtSegments.length > 0 && (
                                 <div className="mb-3 overflow-x-auto pb-2">
-                                    <div className="flex gap-3 min-w-max border-t border-slate-100 dark:border-slate-800 pt-3">
+                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Morpheme Breakdown</div>
+                                    <div className="flex gap-1.5 min-w-max border-t border-slate-100 dark:border-slate-800 pt-2">
                                         {igtSegments.map((seg, k) => (
-                                            <div key={k} className="flex flex-col items-center">
-                                                <span className="font-bold text-slate-700 dark:text-slate-300 text-xs border-b border-slate-200 dark:border-slate-700 pb-0.5 mb-0.5">{seg.c}</span>
-                                                <span className="text-[10px] text-slate-500 dark:text-slate-400 italic">{seg.e}</span>
+                                            <div key={k} className="flex flex-col items-center bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded border border-slate-200/60 dark:border-slate-800">
+                                                <span className="font-bold text-slate-800 dark:text-slate-200 text-xs border-b border-slate-200 dark:border-slate-700 pb-0.5 mb-0.5">{seg.c}</span>
+                                                <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium italic">{seg.e}</span>
                                             </div>
                                         ))}
                                     </div>
