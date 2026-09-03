@@ -58,11 +58,14 @@ export const InvestigationQueue: React.FC<InvestigationQueueProps> = ({
         const token = tokens[item.word_index];
         if (!token) return;
 
+        const tr = (token.tr || '').replace(/[.,!?;:"()]/g, '').trim();
+        const syl = (token.syl || '').replace(/[.,!?;:"()]/g, '').trim();
+
         setShowLinker({
             item,
             sentenceId: item.sentence_id,
             wordIndex: item.word_index,
-            initialQuery: (token.syl || token.tr || '').replace(/[.,!?;:"()]/g, '').trim(),
+            initialQuery: tr || syl,
             targetWord: { syllabary: token.syl, translit: token.tr }
         });
     };

@@ -571,10 +571,12 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                             setActivePopover(null);
                         }}
                         onAdd={() => {
+                            const tr = (targetToken.tr || '').replace(/[.,!?;:"()]/g, '').trim();
+                            const syl = (targetToken.syl || '').replace(/[.,!?;:"()]/g, '').trim();
                             setShowLinker({
                                 sentenceId: activePopover.sentenceId,
                                 wordIndex: activePopover.wordIndex,
-                                initialQuery: (targetToken.syl || targetToken.tr || '').replace(/[.,!?;:"()]/g, '').trim(),
+                                initialQuery: tr || syl,
                                 targetWord: { syllabary: targetToken.syl, translit: targetToken.tr }
                             });
                             setActivePopover(null);

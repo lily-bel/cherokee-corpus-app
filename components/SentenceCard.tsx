@@ -182,9 +182,11 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
         } else {
             // Open Linker
             const token = tokens[index];
+            const tr = (token.tr || '').replace(/[.,!?;:"()]/g, '').trim();
+            const syl = (token.syl || '').replace(/[.,!?;:"()]/g, '').trim();
             setShowLinker({
                 indices: [index],
-                initialQuery: (token.syl || token.tr || '').replace(/[.,!?;:"()]/g, '').trim(),
+                initialQuery: tr || syl,
                 targetWord: { syllabary: token.syl, translit: token.tr }
             });
         }
@@ -195,7 +197,9 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
         const sorted = [...selectedIndices].sort((a, b) => a - b);
         // Construct query from first selected word
         const firstToken = tokens[sorted[0]];
-        const query = (firstToken?.syl || firstToken?.tr || '').replace(/[.,!?;:"()]/g, '').trim();
+        const tr = (firstToken?.tr || '').replace(/[.,!?;:"()]/g, '').trim();
+        const syl = (firstToken?.syl || '').replace(/[.,!?;:"()]/g, '').trim();
+        const query = tr || syl;
 
         // Map all selected indices to tokens
         const targetWords = sorted.map(i => ({ syllabary: tokens[i].syl, translit: tokens[i].tr }));
@@ -577,9 +581,11 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                     onAdd={() => {
                         const index = activePopover.index;
                         const token = tokens[index];
+                        const tr = (token.tr || '').replace(/[.,!?;:"()]/g, '').trim();
+                        const syl = (token.syl || '').replace(/[.,!?;:"()]/g, '').trim();
                         setShowLinker({
                             indices: [index],
-                            initialQuery: (token.syl || token.tr || '').replace(/[.,!?;:"()]/g, '').trim(),
+                            initialQuery: tr || syl,
                             targetWord: { syllabary: token.syl, translit: token.tr }
                         });
                         setActivePopover(null);

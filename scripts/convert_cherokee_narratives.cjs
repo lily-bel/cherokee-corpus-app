@@ -109,7 +109,7 @@ const metadata = {
     short_name: 'NARR',
     author: 'Durbin Feeling, et al.',
     date_created: 1740000000000,
-    description: '17 traditional and contemporary Cherokee stories and accounts with word-by-word literal translations and interlinear morpheme breakdowns.',
+    description: 'Stories from Cherokee Narratives (edited by Durbin Feeling).',
     app_version: '1.0',
     stats: {
         words: 0,
@@ -137,7 +137,7 @@ const readmeText = 'Cherokee Narratives (Supplementary Materials)\n' +
 '==============================================\n' +
 'Author: Durbin Feeling, et al.\n' +
 'Source: Cherokee Narratives Corpus\n\n' +
-'This package contains 17 traditional, historical, and contemporary Cherokee stories, dialogues, and accounts transcribed and edited by Dr. Durbin Feeling and contributors.\n\n' +
+'Stories from Cherokee Narratives (edited by Durbin Feeling).\n\n' +
 'Features:\n' +
 '- Full Syllabary, Transliteration, and English translations.\n' +
 '- Word-by-word literal translations.\n' +
@@ -171,7 +171,7 @@ zip.generateAsync({ type: 'nodebuffer' }).then(buf => {
         name: 'Cherokee Narratives',
         short_name: 'NARR',
         author: 'Durbin Feeling, et al.',
-        description: '17 traditional and contemporary Cherokee stories and accounts with word-by-word literal translations and interlinear morpheme breakdowns.',
+        description: 'Stories from Cherokee Narratives (edited by Durbin Feeling).',
         packageFile: 'cherokee_narratives.zip',
         stats: {
             sentences: sentences.length,

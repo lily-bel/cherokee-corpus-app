@@ -279,7 +279,7 @@ export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord,
                     {onAddToQueue && (
                         <button
                             onClick={onAddToQueue}
-                            className="w-full py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-amber-600 hover:border-amber-200 dark:hover:border-amber-900 transition-colors flex items-center justify-center gap-2"
+                            className="w-full py-2 bg-gradient-to-r from-sky-500 to-indigo-500 hover:from-sky-600 hover:to-indigo-600 text-white rounded-lg text-sm font-bold shadow-sm transition-all flex items-center justify-center gap-2"
                         >
                             <Search size={16} /> Add to Queue
                         </button>

@@ -41,7 +41,7 @@ const FALLBACK_CATALOG: CatalogItem[] = [
         name: 'Cherokee Narratives',
         short_name: 'NARR',
         author: 'Durbin Feeling, et al.',
-        description: '17 traditional and contemporary Cherokee stories and accounts with word-by-word literal translations and interlinear morpheme breakdowns.',
+        description: 'Stories from Cherokee Narratives (edited by Durbin Feeling).',
         packageFile: 'cherokee_narratives.zip',
         stats: {
             sentences: 361,
@@ -310,7 +310,7 @@ export const PackageImportModal: React.FC<PackageImportModalProps> = ({ onClose,
                                     Click to select a Package ZIP file
                                 </div>
                                 <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
-                                    or drag and drop your exported package (.zip) here
+                                    or drag and drop your exported package (.zip) here if using web version.
                                 </p>
                                 <span className="inline-block px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 shadow-sm">
                                     Browse Device
@@ -327,10 +327,6 @@ export const PackageImportModal: React.FC<PackageImportModalProps> = ({ onClose,
                                     if (file) handleFileChosen(file);
                                 }}
                             />
-
-                            <div className="bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
-                                💡 Tip: You can import packages exported from other devices, student sets, or custom story modules created in the app.
-                            </div>
                         </div>
                     )}
                 </div>

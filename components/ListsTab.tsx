@@ -326,6 +326,9 @@ const ListsTab: React.FC<ListsTabProps> = ({
     const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
     const [renameTargetId, setRenameTargetId] = useState<string | null>(null);
     const [showAddWordsModal, setShowAddWordsModal] = useState(false);
+    const [hoveredDropFolder, setHoveredDropFolder] = useState<string | null>(null);
+    const [addExistingModalFolder, setAddExistingModalFolder] = useState<string | null>(null);
+    const [existingSearchQuery, setExistingSearchQuery] = useState('');
 
     // --- GENERATE BUILT-IN LISTS (All in "Auto Lists" folder) ---
     const builtInLists = useMemo(() => {
@@ -553,17 +556,97 @@ const ListsTab: React.FC<ListsTabProps> = ({
         setNewListFolder('');
     };
 
+    const handleMoveListToFolder = (listId: string, targetFolder: string | null, targetIndexInOrder?: number) => {
+        const currentList = customLists[listId];
+        if (!currentList) return;
+
+        const currentName = Array.isArray(currentList) ? listId : currentList.name;
+        const { name: displayName, folder: currentFolder } = parseListName(currentName);
+
+        const cleanTargetFolder = targetFolder ? sanitizeListName(targetFolder) : null;
+        if (currentFolder === cleanTargetFolder && targetIndexInOrder === undefined) return;
+
+        const newFullName = formatListName(cleanTargetFolder, displayName);
+
+        setCustomLists(prev => {
+            const item = prev[listId];
+            if (!item) return prev;
+            const listObj: ListData = Array.isArray(item)
+                ? { id: listId, items: item, type: 'user', color: 'gold', name: newFullName }
+                : { ...(item as ListData), name: newFullName };
+            return {
+                ...prev,
+                [listId]: listObj
+            };
+        });
+
+        // Update customListOrder
+        setCustomListOrder(prev => {
+            const nextOrder = prev.filter(k => k !== listId);
+
+            if (cleanTargetFolder) {
+                const folderToken = `folder:${cleanTargetFolder}`;
+                if (!nextOrder.includes(folderToken)) {
+                    nextOrder.unshift(folderToken);
+                }
+                if (targetIndexInOrder !== undefined && targetIndexInOrder >= 0) {
+                    nextOrder.splice(targetIndexInOrder, 0, listId);
+                } else {
+                    const fIdx = nextOrder.indexOf(folderToken);
+                    nextOrder.splice(fIdx + 1, 0, listId);
+                }
+            } else {
+                // Moved to root
+                if (targetIndexInOrder !== undefined && targetIndexInOrder >= 0) {
+                    nextOrder.splice(targetIndexInOrder, 0, listId);
+                } else {
+                    nextOrder.unshift(listId);
+                }
+            }
+            return nextOrder;
+        });
+
+        // Ensure target folder is expanded
+        if (cleanTargetFolder) {
+            setCollapsedFolders(prev => prev.filter(f => f !== cleanTargetFolder));
+        }
+    };
+
     const handleRenameList = (id: string, newName: string, folder: string) => {
-        const fullName = formatListName(folder, newName);
+        const cleanFolder = sanitizeListName(folder);
+        const cleanName = sanitizeListName(newName);
+        if (!cleanName) return;
+
+        const currentList = customLists[id];
+        const currentName = Array.isArray(currentList) ? id : currentList?.name || '';
+        const { folder: oldFolder } = parseListName(currentName);
+
+        const fullName = formatListName(cleanFolder || null, cleanName);
         setCustomLists(prev => ({
             ...prev,
             [id]: { ...prev[id] as ListData, name: fullName }
         }));
 
-        const cleanFolder = sanitizeListName(folder);
-        if (cleanFolder && !customListOrder.includes(`folder:${cleanFolder}`)) {
-            setCustomListOrder(prev => [`folder:${cleanFolder}`, ...prev]);
+        if (cleanFolder !== oldFolder) {
+            setCustomListOrder(prev => {
+                const nextOrder = prev.filter(k => k !== id);
+                if (cleanFolder) {
+                    const folderToken = `folder:${cleanFolder}`;
+                    if (!nextOrder.includes(folderToken)) {
+                        nextOrder.unshift(folderToken);
+                    }
+                    const fIdx = nextOrder.indexOf(folderToken);
+                    nextOrder.splice(fIdx + 1, 0, id);
+                } else {
+                    nextOrder.unshift(id);
+                }
+                return nextOrder;
+            });
+            if (cleanFolder) {
+                setCollapsedFolders(prev => prev.filter(f => f !== cleanFolder));
+            }
         }
+
         closeNewListModal();
     };
 
@@ -730,6 +813,10 @@ const ListsTab: React.FC<ListsTabProps> = ({
     const isDragTriggered = useRef<boolean>(false);
     const scrollInterval = useRef<any>(null);
     const isDraggingRef = useRef(false);
+    const hoveredDropFolderRef = useRef<string | null>(null);
+    const hoveredTargetIdRef = useRef<string | null>(null);
+    const autoExpandTimer = useRef<any>(null);
+    const autoExpandFolderRef = useRef<string | null>(null);
 
     useEffect(() => {
         const handlePointerUpWindow = () => {
@@ -739,6 +826,11 @@ const ListsTab: React.FC<ListsTabProps> = ({
             if (longPressTimer.current) {
                 clearTimeout(longPressTimer.current);
                 longPressTimer.current = null;
+            }
+            if (autoExpandTimer.current) {
+                clearTimeout(autoExpandTimer.current);
+                autoExpandTimer.current = null;
+                autoExpandFolderRef.current = null;
             }
             pendingDragRef.current = null;
         };
@@ -761,6 +853,11 @@ const ListsTab: React.FC<ListsTabProps> = ({
         window.addEventListener('touchmove', handleTouchMoveWindow, { passive: false });
 
         return () => {
+            if (autoExpandTimer.current) {
+                clearTimeout(autoExpandTimer.current);
+                autoExpandTimer.current = null;
+                autoExpandFolderRef.current = null;
+            }
             window.removeEventListener('pointerup', handlePointerUpWindow);
             window.removeEventListener('pointercancel', handlePointerUpWindow);
             window.removeEventListener('pointermove', handlePointerMoveWindow);
@@ -787,6 +884,47 @@ const ListsTab: React.FC<ListsTabProps> = ({
     };
 
     const stopDrag = () => {
+        if (autoExpandTimer.current) {
+            clearTimeout(autoExpandTimer.current);
+            autoExpandTimer.current = null;
+            autoExpandFolderRef.current = null;
+        }
+
+        const dragId = draggingId;
+        const targetFolder = hoveredDropFolderRef.current;
+        const targetId = hoveredTargetIdRef.current;
+
+        if (dragId) {
+            const isFolder = dragId.startsWith('folder:');
+            const draggedList = getList(dragId);
+
+            if (!isFolder && draggedList && draggedList.type === 'user') {
+                const { folder: currentFolder } = parseListName(draggedList.name);
+
+                if (targetFolder && targetFolder !== currentFolder) {
+                    // Dropped onto a different folder!
+                    let targetIndex: number | undefined = undefined;
+                    if (targetId) {
+                        const idx = customListOrder.indexOf(targetId);
+                        if (idx !== -1) targetIndex = idx;
+                    }
+                    handleMoveListToFolder(dragId, targetFolder, targetIndex);
+                } else if (!targetFolder && currentFolder) {
+                    // Dragged OUT of a folder onto root!
+                    let targetIndex: number | undefined = undefined;
+                    if (targetId) {
+                        const idx = customListOrder.indexOf(targetId);
+                        if (idx !== -1) targetIndex = idx;
+                    }
+                    handleMoveListToFolder(dragId, null, targetIndex);
+                }
+            }
+        }
+
+        setHoveredDropFolder(null);
+        hoveredDropFolderRef.current = null;
+        hoveredTargetIdRef.current = null;
+
         setDraggingId(null);
         setIsReordering(false);
         isDraggingRef.current = false;
@@ -919,29 +1057,122 @@ const ListsTab: React.FC<ListsTabProps> = ({
         }
 
         const elements = document.elementsFromPoint(e.clientX, e.clientY);
-        const listRow = elements.find(el => el.hasAttribute('data-list-id') && el.getAttribute('data-list-id') !== draggingId);
+        const isFolder = draggingId.startsWith('folder:');
+        const draggedList = getList(draggingId);
+        const isUserList = !isFolder && draggedList?.type === 'user';
 
-        if (listRow) {
-            const targetId = listRow.getAttribute('data-list-id');
-            if (targetId) {
-                const targetRect = listRow.getBoundingClientRect();
-                const singleH = targetRect.height + 12;
+        if (isFolder || !isUserList) {
+            // Folders, Favorites, or Built-in lists: cannot be dropped into folders, only reordered
+            if (hoveredDropFolderRef.current !== null) {
+                hoveredDropFolderRef.current = null;
+                setHoveredDropFolder(null);
+            }
+            if (autoExpandTimer.current) {
+                clearTimeout(autoExpandTimer.current);
+                autoExpandTimer.current = null;
+                autoExpandFolderRef.current = null;
+            }
 
-                setCustomListOrder(prev => {
-                    const currentIndex = prev.indexOf(draggingId);
-                    const targetIndex = prev.indexOf(targetId);
+            const listRow = elements.find(el => el.hasAttribute('data-list-id') && el.getAttribute('data-list-id') !== draggingId);
 
-                    if (currentIndex !== -1 && targetIndex !== -1 && currentIndex !== targetIndex) {
-                        const diff = targetIndex - currentIndex;
-                        const newOrder = [...prev];
-                        newOrder.splice(currentIndex, 1);
-                        newOrder.splice(targetIndex, 0, draggingId);
+            if (listRow) {
+                const targetId = listRow.getAttribute('data-list-id');
+                if (targetId) {
+                    const targetRect = listRow.getBoundingClientRect();
+                    const singleH = targetRect.height + 12;
 
-                        initialTouchPos.current!.y += (diff * singleH);
-                        return newOrder;
+                    setCustomListOrder(prev => {
+                        const currentIndex = prev.indexOf(draggingId);
+                        const targetIndex = prev.indexOf(targetId);
+
+                        if (currentIndex !== -1 && targetIndex !== -1 && currentIndex !== targetIndex) {
+                            const diff = targetIndex - currentIndex;
+                            const newOrder = [...prev];
+                            newOrder.splice(currentIndex, 1);
+                            newOrder.splice(targetIndex, 0, draggingId);
+
+                            initialTouchPos.current!.y += (diff * singleH);
+                            return newOrder;
+                        }
+                        return prev;
+                    });
+                }
+            }
+        } else {
+            // Dragging a user list: can be dropped into folders or reordered
+            const folderEl = elements.find(el => 
+                el.hasAttribute('data-folder-header') ||
+                el.hasAttribute('data-folder-dropzone') ||
+                el.hasAttribute('data-folder-body') ||
+                el.hasAttribute('data-folder-empty') ||
+                el.hasAttribute('data-folder-wrapper')
+            );
+
+            const detectedFolderName = folderEl ? (
+                folderEl.getAttribute('data-folder-header') ||
+                folderEl.getAttribute('data-folder-dropzone') ||
+                folderEl.getAttribute('data-folder-body') ||
+                folderEl.getAttribute('data-folder-empty') ||
+                folderEl.getAttribute('data-folder-wrapper')
+            ) : null;
+
+            const targetListRow = elements.find(el => 
+                el.hasAttribute('data-list-id') && 
+                el.getAttribute('data-list-id') !== draggingId
+            );
+
+            const targetListFolder = targetListRow?.getAttribute('data-folder-name') || null;
+            const effectiveFolder = detectedFolderName || (targetListFolder ? targetListFolder : null);
+
+            // Update folder drop target
+            if (effectiveFolder !== hoveredDropFolderRef.current) {
+                hoveredDropFolderRef.current = effectiveFolder;
+                setHoveredDropFolder(effectiveFolder);
+
+                // Auto-expand folder if hovering over a collapsed folder
+                if (effectiveFolder && collapsedFolders.includes(effectiveFolder)) {
+                    if (autoExpandTimer.current) clearTimeout(autoExpandTimer.current);
+                    autoExpandFolderRef.current = effectiveFolder;
+                    autoExpandTimer.current = setTimeout(() => {
+                        setCollapsedFolders(prev => prev.filter(f => f !== effectiveFolder));
+                    }, 500);
+                } else {
+                    if (autoExpandTimer.current) {
+                        clearTimeout(autoExpandTimer.current);
+                        autoExpandTimer.current = null;
+                        autoExpandFolderRef.current = null;
                     }
-                    return prev;
-                });
+                }
+            }
+
+            hoveredTargetIdRef.current = targetListRow?.getAttribute('data-list-id') || null;
+
+            // Live reorder within the same folder or root
+            const draggedList = getList(draggingId);
+            const currentListFolder = draggedList ? parseListName(draggedList.name).folder : null;
+
+            if (targetListRow && effectiveFolder === currentListFolder) {
+                const targetId = targetListRow.getAttribute('data-list-id');
+                if (targetId && !targetId.startsWith('folder:')) {
+                    const targetRect = targetListRow.getBoundingClientRect();
+                    const singleH = targetRect.height + 12;
+
+                    setCustomListOrder(prev => {
+                        const currentIndex = prev.indexOf(draggingId);
+                        const targetIndex = prev.indexOf(targetId);
+
+                        if (currentIndex !== -1 && targetIndex !== -1 && currentIndex !== targetIndex) {
+                            const diff = targetIndex - currentIndex;
+                            const newOrder = [...prev];
+                            newOrder.splice(currentIndex, 1);
+                            newOrder.splice(targetIndex, 0, draggingId);
+
+                            initialTouchPos.current!.y += (diff * singleH);
+                            return newOrder;
+                        }
+                        return prev;
+                    });
+                }
             }
         }
     };
@@ -1063,6 +1294,107 @@ const ListsTab: React.FC<ListsTabProps> = ({
                     onPerformSearch={onPerformSearch}
                     customDictionaries={propCustomDictionaries}
                 />
+
+                {addExistingModalFolder && (() => {
+                    const userLists = Array.from(allAvailableLists.values()).filter(l => l.type === 'user');
+                    const filteredLists = userLists.filter(l => {
+                        const { name: dName } = parseListName(l.name);
+                        return dName.toLowerCase().includes(existingSearchQuery.toLowerCase());
+                    });
+
+                    return (
+                        <Modal
+                            title={`Add Lists to "${addExistingModalFolder}"`}
+                            onClose={() => { setAddExistingModalFolder(null); setExistingSearchQuery(''); }}
+                        >
+                            <div className="space-y-4">
+                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                    Choose existing custom lists to move into folder <strong>"{addExistingModalFolder}"</strong>. You can also drag and drop lists directly into folders.
+                                </p>
+
+                                <div className="relative">
+                                    <Search size={16} className="absolute left-3 top-3 text-slate-400" />
+                                    <input
+                                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-2 pl-9 pr-4 text-sm text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-amber-500"
+                                        placeholder="Search custom lists..."
+                                        value={existingSearchQuery}
+                                        onChange={e => setExistingSearchQuery(e.target.value)}
+                                        autoFocus
+                                    />
+                                </div>
+
+                                <div className="max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 pr-1">
+                                    {filteredLists.length === 0 ? (
+                                        <div className="py-8 text-center text-slate-400 text-xs italic">
+                                            {userLists.length === 0 ? "No custom lists found. Create one first!" : "No matching lists found."}
+                                        </div>
+                                    ) : (
+                                        filteredLists.map(list => {
+                                            const { folder: currentFolder, name: dName } = parseListName(list.name);
+                                            const isAlreadyInFolder = currentFolder === addExistingModalFolder;
+
+                                            return (
+                                                <div
+                                                    key={list.id}
+                                                    className="py-2.5 px-2 flex items-center justify-between gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-lg transition-colors"
+                                                >
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-bold text-sm text-slate-800 dark:text-slate-200 truncate">
+                                                                {dName}
+                                                            </span>
+                                                            {currentFolder && (
+                                                                <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                                                                    isAlreadyInFolder 
+                                                                        ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' 
+                                                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                                                                }`}>
+                                                                    {isAlreadyInFolder ? 'In this folder' : `In "${currentFolder}"`}
+                                                                </span>
+                                                            )}
+                                                            {!currentFolder && (
+                                                                <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-slate-100 dark:bg-slate-800 text-slate-400">
+                                                                    Root
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-[11px] text-slate-400 mt-0.5">
+                                                            {list.items?.length || 0} items
+                                                        </p>
+                                                    </div>
+
+                                                    <div>
+                                                        {isAlreadyInFolder ? (
+                                                            <span className="text-xs text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1 px-3 py-1.5">
+                                                                <Check size={14} /> Added
+                                                            </span>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => handleMoveListToFolder(list.id, addExistingModalFolder)}
+                                                                className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm transition-all"
+                                                            >
+                                                                <Plus size={14} /> Add
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    )}
+                                </div>
+
+                                <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                                    <button
+                                        onClick={() => { setAddExistingModalFolder(null); setExistingSearchQuery(''); }}
+                                        className="w-full py-2.5 bg-slate-900 dark:bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-800 dark:hover:bg-slate-700 transition-colors text-sm"
+                                    >
+                                        Done
+                                    </button>
+                                </div>
+                            </div>
+                        </Modal>
+                    );
+                })()}
             </>
         );
     };
@@ -1280,7 +1612,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
         );
     }
 
-    const renderListRow = (list: ListData, isHidden: boolean, isInsideFolder = false) => {
+    const renderListRow = (list: ListData, isHidden: boolean, isInsideFolder = false, parentFolder?: string) => {
         if (!list) return null;
 
         const { name: displayName } = parseListName(list.name);
@@ -1308,6 +1640,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
             <div
                 key={list.id}
                 data-list-id={list.id}
+                data-folder-name={parentFolder || ''}
                 onContextMenu={(e) => e.preventDefault()}
                 onClick={() => { if (!isReordering && !draggingId && !isDragTriggered.current) { setActiveListId(list.id); setView('detail'); } }}
                 onPointerDown={e => { if (!isHidden) handlePointerDown(e, list.id); }}
@@ -1339,6 +1672,21 @@ const ListsTab: React.FC<ListsTabProps> = ({
                     </div>
                 </div>
                 <div className="flex items-center gap-1 shrink-0 ml-2">
+                    {isUser && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setRenameTargetId(list.id);
+                                setNewListName(displayName);
+                                setNewListFolder(parentFolder || '');
+                                setShowNewListModal(true);
+                            }}
+                            className="p-1.5 text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors pointer-events-auto rounded-md"
+                            title="Edit List / Move to Folder"
+                        >
+                            <Pencil size={15} />
+                        </button>
+                    )}
                     {isBuiltIn && (
                         <button
                             onClick={(e) => toggleBuiltInVisibility(list.id, e)}
@@ -1357,15 +1705,23 @@ const ListsTab: React.FC<ListsTabProps> = ({
     const renderFolderRow = (folderName: string, folderLists: ListData[]) => {
         const isCollapsed = collapsedFolders.includes(folderName);
         const folderToken = `folder:${folderName}`;
-
         const totalItems = folderLists.reduce((acc, list) => acc + (list.items?.length || 0), 0);
-
         const isUserFolder = folderLists.some(l => l.type === 'user');
+        const isDraggingUserList = !!draggingId && getList(draggingId)?.type === 'user';
+        const isDropTarget = hoveredDropFolder === folderName && isDraggingUserList;
 
         return (
-            <div key={folderToken} data-list-id={folderToken} className="space-y-2">
+            <div
+                key={folderToken}
+                data-list-id={folderToken}
+                data-folder-wrapper={folderName}
+                data-folder-name={folderName}
+                className="space-y-2"
+            >
                 {/* Folder Header */}
                 <div
+                    data-folder-header={folderName}
+                    data-folder-name={folderName}
                     onContextMenu={(e) => e.preventDefault()}
                     onClick={(e) => {
                         if (isReordering || isDragTriggered.current) return;
@@ -1378,7 +1734,11 @@ const ListsTab: React.FC<ListsTabProps> = ({
                     onPointerCancel={handlePointerUpRow}
                     style={{ touchAction: 'pan-y' }}
                     className={`
-                        relative bg-slate-100/80 dark:bg-slate-800/80 rounded-xl p-3 border border-slate-200/80 dark:border-slate-700/60 shadow-sm flex items-center justify-between cursor-pointer select-none transition-all
+                        relative rounded-xl p-3 border shadow-sm flex items-center justify-between cursor-pointer select-none transition-all
+                        ${isDropTarget 
+                            ? 'ring-2 ring-amber-500 border-amber-500 bg-amber-50/90 dark:bg-amber-950/40 shadow-md scale-[1.01]' 
+                            : 'bg-slate-100/80 dark:bg-slate-800/80 border-slate-200/80 dark:border-slate-700/60'
+                        }
                         ${draggingId === folderToken ? 'opacity-90 border-amber-500 scale-105 z-50 shadow-xl' : ''}
                     `}
                 >
@@ -1386,11 +1746,22 @@ const ListsTab: React.FC<ListsTabProps> = ({
                         <div className="text-slate-400 dark:text-slate-600 shrink-0 drag-handle pointer-events-auto cursor-grab active:cursor-grabbing">
                             <GripVertical size={18} />
                         </div>
-                        <div className="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-                            <Folder size={20} />
+                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-all ${
+                            isDropTarget 
+                                ? 'bg-amber-500 text-white scale-110 shadow-sm' 
+                                : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                        }`}>
+                            {isDropTarget ? <FolderPlus size={20} /> : <Folder size={20} />}
                         </div>
                         <div className="min-w-0 flex-1">
-                            <h3 className="font-bold text-slate-900 dark:text-slate-100 leading-tight truncate">{folderName}</h3>
+                            <div className="flex items-center gap-2">
+                                <h3 className="font-bold text-slate-900 dark:text-slate-100 leading-tight truncate">{folderName}</h3>
+                                {isDropTarget && (
+                                    <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/60 px-2 py-0.5 rounded-full animate-pulse">
+                                        Drop to add
+                                    </span>
+                                )}
+                            </div>
                             <p className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 mt-0.5">
                                 {folderLists.length} {folderLists.length === 1 ? 'list' : 'lists'} · {totalItems} items
                             </p>
@@ -1399,9 +1770,16 @@ const ListsTab: React.FC<ListsTabProps> = ({
 
                     <div className="flex items-center gap-1 shrink-0 ml-2">
                         <button
+                            onClick={(e) => { e.stopPropagation(); setAddExistingModalFolder(folderName); setExistingSearchQuery(''); }}
+                            className="p-1.5 text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors pointer-events-auto rounded-md"
+                            title="Add Existing Lists to Folder"
+                        >
+                            <ListPlus size={18} />
+                        </button>
+                        <button
                             onClick={(e) => { e.stopPropagation(); setNewListFolder(folderName); setNewListName(''); setShowNewListModal(true); }}
                             className="p-1.5 text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors pointer-events-auto rounded-md"
-                            title="Add List in Folder"
+                            title="New List in Folder"
                         >
                             <Plus size={18} />
                         </button>
@@ -1434,14 +1812,52 @@ const ListsTab: React.FC<ListsTabProps> = ({
 
                 {/* Folder Body (List Items) */}
                 {!isCollapsed && (
-                    <div className="pl-3 border-l-2 border-slate-200 dark:border-slate-800 space-y-2 py-1 ml-4">
+                    <div
+                        data-folder-body={folderName}
+                        data-folder-name={folderName}
+                        className={`pl-3 border-l-2 space-y-2 py-1 ml-4 transition-colors ${
+                            isDropTarget 
+                                ? 'border-amber-500 dark:border-amber-400 bg-amber-50/20 dark:bg-amber-950/20 rounded-lg pr-1' 
+                                : 'border-slate-200 dark:border-slate-800'
+                        }`}
+                    >
                         {folderLists.length === 0 ? (
-                            <div className="p-3 text-center text-xs text-slate-400 italic">Folder is empty</div>
+                            <div
+                                data-folder-empty={folderName}
+                                data-folder-name={folderName}
+                                className={`p-4 text-center text-xs rounded-xl border-2 border-dashed transition-colors ${
+                                    isDropTarget
+                                        ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 font-bold'
+                                        : 'border-slate-200 dark:border-slate-800 text-slate-400'
+                                }`}
+                            >
+                                <div className="flex flex-col sm:flex-row items-center justify-center gap-1.5">
+                                    <span>Folder is empty. Drag a list here, or</span>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setAddExistingModalFolder(folderName); setExistingSearchQuery(''); }}
+                                        className="text-amber-600 dark:text-amber-500 font-bold hover:underline inline-flex items-center gap-1"
+                                    >
+                                        <Plus size={12} /> Add existing lists
+                                    </button>
+                                </div>
+                            </div>
                         ) : (
-                            folderLists.map(list => {
-                                const isHidden = hiddenBuiltInLists.includes(list.id);
-                                return renderListRow(list, isHidden, true);
-                            })
+                            <>
+                                {folderLists.map(list => {
+                                    const isHidden = hiddenBuiltInLists.includes(list.id);
+                                    return renderListRow(list, isHidden, true, folderName);
+                                })}
+                                {isDropTarget && draggingId && !folderLists.some(l => l.id === draggingId) && (
+                                    <div
+                                        data-folder-dropzone={folderName}
+                                        data-folder-name={folderName}
+                                        className="p-2.5 rounded-lg border-2 border-dashed border-amber-400 dark:border-amber-500 bg-amber-50/40 dark:bg-amber-950/20 text-center text-amber-600 dark:text-amber-400 text-xs font-semibold flex items-center justify-center gap-1.5"
+                                    >
+                                        <Plus size={14} />
+                                        <span>Drop to place inside "{folderName}"</span>
+                                    </div>
+                                )}
+                            </>
                         )}
                     </div>
                 )}
@@ -1495,7 +1911,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                     renderedListIds.add(list.id);
                     const isHidden = hiddenBuiltInLists.includes(list.id);
                     if (!isHidden) {
-                        elementsToRender.push(renderListRow(list, false));
+                        elementsToRender.push(renderListRow(list, false, false, undefined));
                     }
                 }
             }
@@ -1506,10 +1922,27 @@ const ListsTab: React.FC<ListsTabProps> = ({
                 const { folder } = parseListName(list.name);
                 if (!folder && !hiddenBuiltInLists.includes(id)) {
                     renderedListIds.add(id);
-                    elementsToRender.push(renderListRow(list, false));
+                    elementsToRender.push(renderListRow(list, false, false, undefined));
                 }
             }
         });
+
+        // If dragging a list that is currently in a folder, and hovering outside any folder:
+        // Render a visual drop indicator zone at the root bottom
+        const draggedList = draggingId ? getList(draggingId) : null;
+        const isDraggingFromFolder = draggedList ? parseListName(draggedList.name).folder !== null : false;
+
+        if (isDraggingFromFolder && !hoveredDropFolder) {
+            elementsToRender.push(
+                <div
+                    key="root-dropzone"
+                    className="p-3 rounded-xl border-2 border-dashed border-amber-400/80 dark:border-amber-500/60 bg-amber-50/40 dark:bg-amber-950/20 text-center text-amber-700 dark:text-amber-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all animate-pulse"
+                >
+                    <ArrowLeft className="-rotate-90" size={14} />
+                    <span>Drop here to move out of folder to root</span>
+                </div>
+            );
+        }
 
         return elementsToRender;
     };

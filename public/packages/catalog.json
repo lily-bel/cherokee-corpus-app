@@ -19,7 +19,7 @@
     "name": "Cherokee Narratives",
     "short_name": "NARR",
     "author": "Durbin Feeling, et al.",
-    "description": "17 traditional and contemporary Cherokee stories and accounts with word-by-word literal translations and interlinear morpheme breakdowns.",
+    "description": "Stories from Cherokee Narratives (edited by Durbin Feeling).",
     "packageFile": "cherokee_narratives.zip",
     "stats": {
       "sentences": 361,
