@@ -2,7 +2,7 @@
     "id": "official-cherokee-data",
     "name": "Official Sources",
     "author": "Various Sources",
-    "description": "The core dictionary and sentence data for the application.",
+    "description": "Words and sentences from official sources.",
     "version": "1.0.0",
     "color": "Gray",
     "date": 0,

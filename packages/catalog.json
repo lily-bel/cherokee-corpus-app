@@ -1,7 +1,23 @@
 [
   {
+    "id": "cherokee-new-testament",
+    "name": "Cherokee New Testament",
+    "short_name": "BIBLE",
+    "author": "American Bible Society",
+    "description": "Full text of the Cherokee New Testament (27 books, 260 chapters).",
+    "packageFile": "cherokee_new_testament.zip",
+    "stats": {
+      "sentences": 7957,
+      "stories": 27,
+      "glosses": 0
+    },
+    "color": "#ef4444",
+    "autoInstall": true
+  },
+  {
     "id": "cherokee-narratives",
     "name": "Cherokee Narratives",
+    "short_name": "NARR",
     "author": "Durbin Feeling, et al.",
     "description": "17 traditional and contemporary Cherokee stories and accounts with word-by-word literal translations and interlinear morpheme breakdowns.",
     "packageFile": "cherokee_narratives.zip",
@@ -10,6 +26,6 @@
       "stories": 17,
       "glosses": 3688
     },
-    "color": "#10b981"
+    "color": "#14b8a6"
   }
 ]
