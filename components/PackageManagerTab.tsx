@@ -308,7 +308,14 @@ const PackageItem = ({
                         {(pkg.name.split(' ').length > 1 ? (pkg.name.split(' ')[0][0] + pkg.name.split(' ')[1][0]).toUpperCase() : pkg.name.substring(0, 2).toUpperCase())}
                     </div>
                     <div>
-                        <h3 className="font-bold text-slate-800 dark:text-slate-100 group-hover:text-amber-600 dark:group-hover:text-amber-500 transition-colors">{pkg.name}</h3>
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="font-bold text-slate-800 dark:text-slate-100 group-hover:text-amber-600 dark:group-hover:text-amber-500 transition-colors">{pkg.name}</h3>
+                            {pkg.metadata?.short_name && (
+                                <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full text-white shadow-xs" style={{ backgroundColor: pkg.color }}>
+                                    {pkg.metadata.short_name}
+                                </span>
+                            )}
+                        </div>
                         <p className="text-xs text-slate-400">{pkg.metadata?.description || (isOfficial ? "Official Cherokee Data" : "Your personal data")}</p>
                     </div>
                 </div>

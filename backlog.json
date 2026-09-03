@@ -68,5 +68,10 @@
     "note": "[Post-MVP] [Priority: Low] [Feature]\nTarget Files: scripts/export_api.ts\nSpec: Public API & Export Layer.",
     "priority": 2,
     "title": "Task 9.4: Public API & Export Layer"
+  },
+  {
+    "note": "[MVP] [Priority: High] [Feature] [Architecture]\nTarget Files: components/PackageImportModal.tsx, components/PackageManagerContext.tsx, components/PackageManagerTab.tsx, utils.tsx, public/packages/catalog.json, scripts/convert_new_testament_package.cjs\nSpec:\n1. Generate standalone Bible package ZIP (cherokee_new_testament.zip) from cherokee-new-testament.csv with 7,957 verses, color '#ef4444' (Red), short name 'BIBLE', and update sentences.json so Bible is an optional package.\n2. Update Cherokee Narratives package to turquoise ('#14b8a6') and short name 'NARR'.\n3. Update catalog.json and fallback catalog to include Bible and Cherokee Narratives with their colors, short names, and stats.\n4. Auto-import the Bible package on initial load by default unless marked as uninstalled by the user.\n5. In PackageImportModal 'Browse Packages' tab, only show uninstalled packages (installed packages disappear from the list). When an optional package is deleted in PackageManagerTab, it reappears in Browse Packages with an 'Install' button.\n6. Persist imported packages and deleted defaults in IndexedDB / localStorage so packages and uninstall state survive page reloads.\nVerification: Load app -> Bible is imported by default (Red, BIBLE) -> Delete Bible package -> Bible is removed from Imported Packages and reappears in Browse Packages -> Browse Packages only shows uninstalled packages -> Install Bible again -> re-adds correctly and disappears from Browse Packages.",
+    "priority": 10,
+    "title": "Task 4.5: Bible Optional Package & Catalog Reappear Logic"
   }
 ]

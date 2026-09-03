@@ -122,10 +122,12 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
                     <button onClick={onClose} className="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full"><ArrowLeft size={24} className="text-slate-700 dark:text-slate-200" /></button>
                 </div>
                 <div className="flex-1 overflow-y-auto p-5 pb-24">
-                                            <SentenceCard sentence={e} onSaveAudio={onSaveAudio} userAudioMeta={userAudioMeta} personalWords={personalWords} onDeleteAudio={onDeleteAudio}
-                                                favorites={favorites} customLists={customLists} onToggleFavorite={onToggleFavorite} onToggleList={onToggleList} onOpenNewListModal={onOpenNewListModal}
-                                                onReadInContext={onReadInContext}
-                                            />
+                    <SentenceCard sentence={e} onSaveAudio={onSaveAudio} userAudioMeta={userAudioMeta} personalWords={personalWords} onDeleteAudio={onDeleteAudio}
+                        favorites={favorites} customLists={customLists} onToggleFavorite={onToggleFavorite} onToggleList={onToggleList} onOpenNewListModal={onOpenNewListModal}
+                        onReadInContext={onReadInContext}
+                        onEditSentence={onEditSentence}
+                        onDeleteSentence={onDeleteSentence}
+                    />
                     <div className="mt-12 text-xs text-slate-300 font-mono text-center">Ref ID: {e.id}</div>
                 </div>
             </div>

@@ -6,6 +6,7 @@ import { Download, Upload, Check, Box, Book, BookOpen, ListIcon, X } from './Ico
 interface CatalogItem {
     id: string;
     name: string;
+    short_name?: string;
     author: string;
     description: string;
     packageFile: string;
@@ -16,12 +17,29 @@ interface CatalogItem {
         glosses?: number;
     };
     color?: string;
+    autoInstall?: boolean;
 }
 
 const FALLBACK_CATALOG: CatalogItem[] = [
     {
+        id: 'cherokee-new-testament',
+        name: 'Cherokee New Testament',
+        short_name: 'BIBLE',
+        author: 'American Bible Society',
+        description: 'Full text of the Cherokee New Testament (27 books, 260 chapters).',
+        packageFile: 'cherokee_new_testament.zip',
+        stats: {
+            sentences: 7957,
+            stories: 27,
+            glosses: 0
+        },
+        color: '#ef4444',
+        autoInstall: true
+    },
+    {
         id: 'cherokee-narratives',
-        name: 'Cherokee Narratives (Supplementary Materials)',
+        name: 'Cherokee Narratives',
+        short_name: 'NARR',
         author: 'Durbin Feeling, et al.',
         description: '17 traditional and contemporary Cherokee stories and accounts with word-by-word literal translations and interlinear morpheme breakdowns.',
         packageFile: 'cherokee_narratives.zip',
@@ -30,7 +48,7 @@ const FALLBACK_CATALOG: CatalogItem[] = [
             stories: 17,
             glosses: 3688
         },
-        color: '#10b981'
+        color: '#14b8a6'
     }
 ];
 
@@ -195,35 +213,45 @@ export const PackageImportModal: React.FC<PackageImportModalProps> = ({ onClose,
                             <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">
                                 Available Supplementary Packages & Reading Materials
                             </div>
-                            {catalog.map(item => {
-                                const installed = isInstalled(item.id);
-                                const isDownloading = downloadingId === item.id;
+                            {catalog.filter(item => !isInstalled(item.id)).length === 0 ? (
+                                <div className="text-center py-10 px-4 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
+                                    <div className="w-12 h-12 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-3">
+                                        <Check size={24} />
+                                    </div>
+                                    <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm mb-1">
+                                        All Supplementary Packages Installed
+                                    </h4>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
+                                        All built-in optional packages are currently installed. If you delete a package from the Package Manager, it will reappear here for reinstallation.
+                                    </p>
+                                </div>
+                            ) : (
+                                catalog.filter(item => !isInstalled(item.id)).map(item => {
+                                    const isDownloading = downloadingId === item.id;
 
-                                return (
-                                    <div
-                                        key={item.id}
-                                        className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/60 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col gap-3"
-                                    >
-                                        <div className="flex items-start justify-between gap-3">
-                                            <div>
-                                                <div className="flex items-center gap-2 flex-wrap">
-                                                    <h3 className="font-bold text-slate-900 dark:text-slate-100 text-base">
-                                                        {item.name}
-                                                    </h3>
-                                                    <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300">
-                                                        Narratives
-                                                    </span>
+                                    return (
+                                        <div
+                                            key={item.id}
+                                            className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/60 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col gap-3"
+                                        >
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div>
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <h3 className="font-bold text-slate-900 dark:text-slate-100 text-base">
+                                                            {item.name}
+                                                        </h3>
+                                                        <span
+                                                            className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full text-white"
+                                                            style={{ backgroundColor: item.color || '#ef4444' }}
+                                                        >
+                                                            {item.short_name || 'PKG'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                                        Author: {item.author}
+                                                    </div>
                                                 </div>
-                                                <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                                                    Author: {item.author}
-                                                </div>
-                                            </div>
 
-                                            {installed ? (
-                                                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 text-xs font-bold shrink-0 border border-emerald-200 dark:border-emerald-800">
-                                                    <Check size={14} /> Installed
-                                                </span>
-                                            ) : (
                                                 <button
                                                     onClick={() => handleInstallFromCatalog(item)}
                                                     disabled={isDownloading}
@@ -232,35 +260,35 @@ export const PackageImportModal: React.FC<PackageImportModalProps> = ({ onClose,
                                                     <Download size={14} className={isDownloading ? 'animate-bounce' : ''} />
                                                     <span>{isDownloading ? 'Installing...' : 'Install'}</span>
                                                 </button>
+                                            </div>
+
+                                            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                                {item.description}
+                                            </p>
+
+                                            {item.stats && (
+                                                <div className="flex items-center gap-3 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-[11px] text-slate-500 dark:text-slate-400">
+                                                    {item.stats.stories !== undefined && (
+                                                        <span className="flex items-center gap-1">
+                                                            <Book size={12} /> {item.stats.stories} Stories
+                                                        </span>
+                                                    )}
+                                                    {item.stats.sentences !== undefined && (
+                                                        <span className="flex items-center gap-1">
+                                                            <BookOpen size={12} /> {item.stats.sentences} Sentences
+                                                        </span>
+                                                    )}
+                                                    {item.stats.glosses !== undefined && item.stats.glosses > 0 && (
+                                                        <span className="flex items-center gap-1">
+                                                            <ListIcon size={12} /> {item.stats.glosses} Glosses
+                                                        </span>
+                                                    )}
+                                                </div>
                                             )}
                                         </div>
-
-                                        <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                                            {item.description}
-                                        </p>
-
-                                        {item.stats && (
-                                            <div className="flex items-center gap-3 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-[11px] text-slate-500 dark:text-slate-400">
-                                                {item.stats.stories !== undefined && (
-                                                    <span className="flex items-center gap-1">
-                                                        <Book size={12} /> {item.stats.stories} Stories
-                                                    </span>
-                                                )}
-                                                {item.stats.sentences !== undefined && (
-                                                    <span className="flex items-center gap-1">
-                                                        <BookOpen size={12} /> {item.stats.sentences} Sentences
-                                                    </span>
-                                                )}
-                                                {item.stats.glosses !== undefined && (
-                                                    <span className="flex items-center gap-1">
-                                                        <ListIcon size={12} /> {item.stats.glosses} Glosses
-                                                    </span>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })}
+                                    );
+                                })
+                            )}
                         </div>
                     ) : (
                         <div className="space-y-4">

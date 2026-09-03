@@ -110,6 +110,7 @@ function App() {
     const [currentNote, setCurrentNote] = useState('');
     const [noteTargetId, setNoteTargetId] = useState<string | null>(null);
     const [wordToDelete, setWordToDelete] = useState<string | null>(null);
+    const [sentenceToDelete, setSentenceToDelete] = useState<string | null>(null);
     const [showNewDictionaryModal, setShowNewDictionaryModal] = useState(false);
     const [newDictionaryName, setNewDictionaryName] = useState('');
     const [dictionaryToDelete, setDictionaryToDelete] = useState<string | null>(null);
@@ -1272,10 +1273,39 @@ function App() {
     };
 
     const handleDeleteSentence = (id: string) => {
-        if (window.confirm("Delete this sentence?")) {
-            removeUserSentence(id);
-            showToast("Sentence deleted");
+        setSentenceToDelete(id);
+    };
+
+    const confirmDeleteSentence = () => {
+        if (!sentenceToDelete) return;
+        const targetId = sentenceToDelete;
+        removeUserSentence(targetId);
+
+        // Remove associated user glosses
+        const glossesToDelete = glosses.filter(g => g.sentence_id === targetId && g.source === 'user');
+        glossesToDelete.forEach(g => { if (g.id) removeUserGloss(g.id); });
+
+        // Remove from favorites & custom lists
+        const sListId = `s_${targetId}`;
+        if (favorites.includes(sListId)) toggleFavorite(sListId);
+        setCustomLists(prev => {
+            const n: any = { ...prev };
+            Object.keys(n).forEach(k => {
+                if (Array.isArray(n[k])) {
+                    n[k] = n[k].filter((i: any) => i !== sListId);
+                } else if (n[k]?.items) {
+                    n[k] = { ...n[k], items: n[k].items.filter((i: any) => i !== sListId) };
+                }
+            });
+            return n;
+        });
+
+        if (selectedEntry?.id === targetId || selectedEntry?.Index === targetId) {
+            popNavStack('entry');
         }
+
+        setSentenceToDelete(null);
+        showToast("Sentence deleted");
     };
     const addToHistory = (txt) => { if (!txt || txt.trim().length < 2) return; const c = txt.trim(); setSearchHistory(p => [c, ...p.filter(x => x !== c)].slice(0, 20)); };
     const deleteHistoryItem = (e, txt) => { e.stopPropagation(); setSearchHistory(p => p.filter(x => x !== txt)); };
@@ -2197,6 +2227,22 @@ function App() {
 
             {wordToDelete && (<Modal title="Delete Word?" onClose={() => setWordToDelete(null)}><p className="text-slate-600 dark:text-slate-300 mb-6">Are you sure you want to delete this word? This will remove it from all your lists.</p><button onClick={confirmDeleteWord} className="w-full bg-red-600 text-white font-bold py-3 rounded-lg">Delete</button></Modal>)}
             {dictionaryToDelete && (<Modal title="Delete Custom Dictionary?" onClose={() => setDictionaryToDelete(null)}><p className="text-slate-600 dark:text-slate-300 mb-6">Are you sure you want to delete this dictionary? All words inside it will be lost.</p><button onClick={() => deleteDictionary(dictionaryToDelete)} className="w-full bg-red-600 text-white font-bold py-3 rounded-lg">Delete</button></Modal>)}
+            {sentenceToDelete && (() => {
+                const sObj = userSentences.find(s => s.id === sentenceToDelete) || sentences.find(s => s.id === sentenceToDelete);
+                const preview = sObj?.syllabary || sObj?.translit || sObj?.english;
+                return (
+                    <Modal title="Delete Sentence?" onClose={() => setSentenceToDelete(null)}>
+                        <p className="text-slate-600 dark:text-slate-300 mb-6">
+                            {preview ? (
+                                <>Are you sure you want to delete <strong>"{preview.length > 60 ? preview.slice(0, 57) + '...' : preview}"</strong>?</>
+                            ) : (
+                                "Are you sure you want to delete this sentence?"
+                            )}
+                        </p>
+                        <button onClick={confirmDeleteSentence} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition-colors">Delete</button>
+                    </Modal>
+                );
+            })()}
             {
                 showBackupConfirm && (
                     <Modal title="Restore Backup?" onClose={() => setShowBackupConfirm(false)}>

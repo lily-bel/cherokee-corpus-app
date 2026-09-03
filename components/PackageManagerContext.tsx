@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { getAllPackagesFromDB, savePackageToDB, deletePackageFromDB } from '../utils';
+import { parsePackageZip } from './packageParser';
 
 
 // --- Types ---
@@ -6,6 +8,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 export interface PackageMetadata {
     id: string;
     name: string;
+    short_name?: string;
     author: string;
     date_created: number;
     description: string;
@@ -310,40 +313,78 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                     metadata: metadata
                 };
 
-                setImportedData(prev => ({ 
-                    ...prev, 
-                    [officialPackage.id]: { 
-                        dictionary: normalizedDictionary, 
-                        sentences: normalizedSentences, 
+                // Load persisted packages from IndexedDB
+                let loadedImportedPkgs: Package[] = [];
+                const loadedImportedData: Record<string, ImportedPackageData> = {};
+
+                try {
+                    const persisted = await getAllPackagesFromDB();
+                    persisted.forEach(({ pkg, data }) => {
+                        if (pkg && pkg.id) {
+                            loadedImportedPkgs.push(pkg);
+                            loadedImportedData[pkg.id] = data;
+                        }
+                    });
+                } catch (e) {
+                    console.error("Failed to load packages from IndexedDB", e);
+                }
+
+                // Check user-uninstalled default packages
+                let uninstalledPackages: string[] = [];
+                try {
+                    const raw = localStorage.getItem('cherokee_app_uninstalled_packages');
+                    if (raw) uninstalledPackages = JSON.parse(raw);
+                } catch (e) {}
+
+                // Default auto-install packages: Bible
+                const bibleId = 'cherokee-new-testament';
+                const hasBible = loadedImportedPkgs.some(p => p.id === bibleId);
+                const bibleWasUninstalled = uninstalledPackages.includes(bibleId);
+
+                if (!hasBible && !bibleWasUninstalled) {
+                    try {
+                        const bibleRes = await fetch(`${import.meta.env.BASE_URL}packages/cherokee_new_testament.zip`);
+                        if (bibleRes.ok) {
+                            const blob = await bibleRes.blob();
+                            const parsed = await parsePackageZip(blob, '#ef4444');
+                            loadedImportedPkgs.push(parsed.pkg);
+                            loadedImportedData[parsed.pkg.id] = parsed.data;
+                            await savePackageToDB(parsed.pkg, parsed.data);
+                        }
+                    } catch (e) {
+                        console.error('Failed to auto-load Bible package', e);
+                    }
+                }
+
+                const userPkg: Package = {
+                    id: 'user',
+                    name: 'My Library',
+                    type: 'user',
+                    status: 'active',
+                    color: '#f59e0b', // Amber-500
+                    metadata: {
+                        id: 'user',
+                        name: 'My Library',
+                        author: 'Me',
+                        date_created: Date.now(),
+                        description: 'Your custom data.',
+                        app_version: '1.0',
+                        stats: { words: 0, sentences: 0, audio_files: 0, glosses: 0, lists: 0 }
+                    }
+                };
+
+                setImportedData({
+                    [officialPackage.id]: {
+                        dictionary: normalizedDictionary,
+                        sentences: normalizedSentences,
                         glosses: normalizedGlosses,
                         word_forms: normalizedWordForms,
                         lists: officialLists
-                    } 
-                }));
-
-                setPackages(prev => {
-                    // Avoid duplicates if already loaded
-                    if (prev.find(p => p.id === officialPackage.id)) return prev;
-
-                    const userPkg: Package = {
-                        id: 'user',
-                        name: 'My Library',
-                        type: 'user',
-                        status: 'active',
-                        color: '#f59e0b', // Amber-500
-                        metadata: {
-                            id: 'user',
-                            name: 'My Library',
-                            author: 'Me',
-                            date_created: Date.now(),
-                            description: 'My personal collection.',
-                            app_version: '1.0',
-                            stats: { words: 0, sentences: 0, audio_files: 0, glosses: 0, lists: 0 }
-                        }
-                    };
-
-                    return [officialPackage, userPkg, ...prev.filter(p => p.type === 'imported')];
+                    },
+                    ...loadedImportedData
                 });
+
+                setPackages([officialPackage, userPkg, ...loadedImportedPkgs]);
 
             } catch (err) {
                 console.error("Failed to load official data", err);
@@ -354,8 +395,22 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
     }, []);
 
     const installPackage = (pkg: Package, data: ImportedPackageData) => {
-        setPackages(prev => [...prev, pkg]);
+        setPackages(prev => {
+            const filtered = prev.filter(p => p.id !== pkg.id);
+            return [...filtered, pkg];
+        });
         setImportedData(prev => ({ ...prev, [pkg.id]: data }));
+        savePackageToDB(pkg, data);
+
+        // Remove from uninstalled packages list if previously uninstalled
+        try {
+            const raw = localStorage.getItem('cherokee_app_uninstalled_packages');
+            if (raw) {
+                const uninstalled: string[] = JSON.parse(raw);
+                const updated = uninstalled.filter(id => id !== pkg.id);
+                localStorage.setItem('cherokee_app_uninstalled_packages', JSON.stringify(updated));
+            }
+        } catch (e) {}
     };
 
     const removePackage = (id: string) => {
@@ -365,37 +420,74 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
             delete next[id];
             return next;
         });
+        deletePackageFromDB(id);
+
+        // Mark as uninstalled so default packages don't auto-install on reload
+        try {
+            const raw = localStorage.getItem('cherokee_app_uninstalled_packages');
+            const uninstalled: string[] = raw ? JSON.parse(raw) : [];
+            if (!uninstalled.includes(id)) {
+                uninstalled.push(id);
+                localStorage.setItem('cherokee_app_uninstalled_packages', JSON.stringify(uninstalled));
+            }
+        } catch (e) {}
     };
 
     const togglePackage = (id: string) => {
-        setPackages(prev => prev.map(p => p.id === id ? { ...p, status: p.status === 'active' ? 'inactive' : 'active' } : p));
+        setPackages(prev => {
+            const next = prev.map(p => p.id === id ? { ...p, status: p.status === 'active' ? 'inactive' : 'active' } as Package : p);
+            const updatedPkg = next.find(p => p.id === id);
+            if (updatedPkg && updatedPkg.type === 'imported' && importedData[id]) {
+                savePackageToDB(updatedPkg, importedData[id]);
+            }
+            return next;
+        });
     };
 
     const updatePackageColor = (id: string, color: string) => {
-        setPackages(prev => prev.map(p => p.id === id ? { ...p, color } : p));
+        setPackages(prev => {
+            const next = prev.map(p => p.id === id ? { ...p, color } : p);
+            const updatedPkg = next.find(p => p.id === id);
+            if (updatedPkg && updatedPkg.type === 'imported' && importedData[id]) {
+                savePackageToDB(updatedPkg, importedData[id]);
+            }
+            return next;
+        });
     };
 
     const getPackageColor = (sourceId: string) => {
-        // 1. Check if sourceId matches a package ID directly
-        const pkg = packages.find(p => p.id === sourceId);
+        if (!sourceId) return undefined;
+        const norm = sourceId.trim().toLowerCase();
+
+        // 1. Check if source matches package ID directly
+        const pkg = packages.find(p => p.id.toLowerCase() === norm);
         if (pkg) return pkg.color;
 
-        // 2. Check if sourceId is a shorthand in a package's source_names
-        // This is a bit more complex because multiple packages might have the same shorthand key if not careful,
-        // but usually shorthands are unique per package scope?
-        // Actually, the app seems to use 'source' field in data which might be a shorthand.
-        // Let's iterate packages and check metadata.source_names
+        // 2. Check if sourceId matches package metadata short_name or source_names
         for (const p of packages) {
-            if (p.metadata.source_names && p.metadata.source_names[sourceId]) {
+            if (p.metadata?.short_name && p.metadata.short_name.toLowerCase() === norm) {
                 return p.color;
             }
-            // Also check if the sourceId matches the package name or ID logic used elsewhere
-            if (p.id === sourceId) return p.color;
+            if (p.metadata?.source_names) {
+                for (const k of Object.keys(p.metadata.source_names)) {
+                    if (k.toLowerCase() === norm) {
+                        return p.color;
+                    }
+                }
+            }
         }
 
-        // 3. Fallback for specific known IDs if they aren't in packages list yet or are special
-        if (sourceId === 'official-cherokee-data') return 'slate'; // Should be in packages though
-        if (sourceId === 'user') return 'amber';
+        // 3. Known package shorthands fallback
+        if (norm === 'bible' || norm === 'cnt') {
+            const biblePkg = packages.find(p => p.id === 'cherokee-new-testament');
+            return biblePkg?.color || '#ef4444';
+        }
+        if (norm === 'narr' || norm === 'cnarr') {
+            const narrPkg = packages.find(p => p.id === 'cherokee-narratives');
+            return narrPkg?.color || '#14b8a6';
+        }
+        if (norm === 'official-cherokee-data' || norm === 'ced') return 'slate';
+        if (norm === 'user') return '#f59e0b';
 
         return undefined;
     };

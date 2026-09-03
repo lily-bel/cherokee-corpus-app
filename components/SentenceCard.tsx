@@ -3,7 +3,7 @@ import { Sentence, useCorpus } from './CorpusContext';
 import { usePackageManager } from './PackageManagerContext';
 import { GlossPopover } from './GlossPopover';
 import { LinkerModal } from './LinkerModal';
-import { AudioPlayer, SourceBadge } from './UI';
+import { AudioPlayer, SourceBadge, Modal } from './UI';
 import { Check, Plus, Mic, Pencil, MicPlus, Trash2, Pause, ListIcon, Star, X, ListPlus, BookOpen, ChevronUp } from './Icons';
 import { getAudioFromDB, renderStyledText } from '../utils';
 
@@ -41,6 +41,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
     const [activePopover, setActivePopover] = useState<{ index: number, rect: { x: number, y: number } } | null>(null);
     const [showRecorder, setShowRecorder] = useState(false);
     const [showListSheet, setShowListSheet] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
     const audioRef = useRef(new Audio());
     const [showLinker, setShowLinker] = useState<{
@@ -80,12 +81,10 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
 
     const handleDelete = (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (window.confirm("Delete this sentence?")) {
-            if (onDeleteSentence) {
-                onDeleteSentence(sentence.id);
-            } else {
-                removeUserSentence(sentence.id);
-            }
+        if (onDeleteSentence) {
+            onDeleteSentence(sentence.id);
+        } else {
+            setShowDeleteModal(true);
         }
     };
 
@@ -334,7 +333,11 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                         </button>
                     )}
 
-                    <SourceBadge source={sentence.source} name={customDictionaries?.[sentence.source]?.name || sourceMap?.[sentence.source] || sentence.source} />
+                    <SourceBadge
+                        source={sentence.source}
+                        name={customDictionaries?.[sentence.source]?.name || sourceMap?.[sentence.source] || sentence.source}
+                        customColor={getPackageColor(sentence.source)}
+                    />
 
                     {/* Collapse Button (in Reader context) */}
                     {onCollapse && (
@@ -743,6 +746,27 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                         )}
                     </div>
                 </div>
+            )}
+            {showDeleteModal && (
+                <Modal title="Delete Sentence?" onClose={() => setShowDeleteModal(false)}>
+                    <p className="text-slate-600 dark:text-slate-300 mb-6">
+                        {sentence.syllabary || sentence.translit || sentence.english ? (
+                            <>Are you sure you want to delete <strong>"{((sentence.syllabary || sentence.translit || sentence.english) as string).length > 60 ? ((sentence.syllabary || sentence.translit || sentence.english) as string).slice(0, 57) + '...' : (sentence.syllabary || sentence.translit || sentence.english)}"</strong>?</>
+                        ) : (
+                            "Are you sure you want to delete this sentence?"
+                        )}
+                    </p>
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            removeUserSentence(sentence.id);
+                            setShowDeleteModal(false);
+                        }}
+                        className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition-colors"
+                    >
+                        Delete
+                    </button>
+                </Modal>
             )}
         </div>
     );

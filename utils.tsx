@@ -218,11 +218,12 @@ export const importDictionaryFromCSV = (file: File, callback: (data: any[]) => v
 const DB_NAME = 'cherokee_dict_db';
 const STORE_NAME = 'files';
 const AUDIO_STORE_NAME = 'user_audio';
+const PACKAGE_STORE_NAME = 'packages_data';
 const CSV_KEY = 'dictionary_csv';
 
 export const initDB = () => {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, 2);
+    const request = indexedDB.open(DB_NAME, 3);
     request.onupgradeneeded = (event: any) => {
       const db = event.target.result;
       if (!db.objectStoreNames.contains(STORE_NAME)) {
@@ -231,10 +232,61 @@ export const initDB = () => {
       if (!db.objectStoreNames.contains(AUDIO_STORE_NAME)) {
         db.createObjectStore(AUDIO_STORE_NAME);
       }
+      if (!db.objectStoreNames.contains(PACKAGE_STORE_NAME)) {
+        db.createObjectStore(PACKAGE_STORE_NAME);
+      }
     };
     request.onsuccess = (event: any) => resolve(event.target.result);
     request.onerror = (event: any) => reject(event.target.error);
   });
+};
+
+export const savePackageToDB = async (pkg: any, data: any): Promise<boolean> => {
+  try {
+    const db = await initDB() as IDBDatabase;
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(PACKAGE_STORE_NAME, 'readwrite');
+      const store = transaction.objectStore(PACKAGE_STORE_NAME);
+      const request = store.put({ pkg, data }, pkg.id);
+      request.onsuccess = () => resolve(true);
+      request.onerror = (e: any) => reject(e.target.error);
+    });
+  } catch (e) {
+    console.error('Failed to save package to IndexedDB', e);
+    return false;
+  }
+};
+
+export const getAllPackagesFromDB = async (): Promise<{ pkg: any, data: any }[]> => {
+  try {
+    const db = await initDB() as IDBDatabase;
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(PACKAGE_STORE_NAME, 'readonly');
+      const store = transaction.objectStore(PACKAGE_STORE_NAME);
+      const request = store.getAll();
+      request.onsuccess = (event: any) => resolve(event.target.result || []);
+      request.onerror = (event: any) => reject(event.target.error);
+    });
+  } catch (e) {
+    console.error('Failed to get packages from IndexedDB', e);
+    return [];
+  }
+};
+
+export const deletePackageFromDB = async (pkgId: string): Promise<boolean> => {
+  try {
+    const db = await initDB() as IDBDatabase;
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(PACKAGE_STORE_NAME, 'readwrite');
+      const store = transaction.objectStore(PACKAGE_STORE_NAME);
+      const request = store.delete(pkgId);
+      request.onsuccess = () => resolve(true);
+      request.onerror = (e: any) => reject(e.target.error);
+    });
+  } catch (e) {
+    console.error('Failed to delete package from IndexedDB', e);
+    return false;
+  }
 };
 
 export const saveToDB = async (data: any) => {

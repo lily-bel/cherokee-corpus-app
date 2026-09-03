@@ -7,6 +7,16 @@
 
 ## 🏆 Completed Task Log
 
+### Task 4.4: Sentence Deletion Confirmation Modal
+- **Completion Date:** 2026-09-02
+- **Status:** `[Completed]`
+- **Target Files:** [`App.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/App.tsx), [`components/SentenceCard.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/SentenceCard.tsx), [`components/EntryDetail.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/EntryDetail.tsx)
+- **Implementation Summary:**
+  1. Replaced browser `window.confirm` alerts on sentence deletion with a styled confirmation `Modal` matching dictionary, word, chapter, and book deletion modals.
+  2. Implemented `sentenceToDelete` state in `App.tsx` with a confirm dialog displaying a preview snippet of the sentence, a red `Delete` action button, and a `Cancel` button.
+  3. Integrated full cascade cleanup on confirmed sentence deletion: removes associated user glosses, removes references in favorites/custom lists, and pops the navigation stack if the deleted sentence was open in detail view.
+  4. Added fallback modal in `SentenceCard.tsx` and wired `onDeleteSentence` through `EntryDetail.tsx`.
+
 ### Task 4.1: My Library Gold Package & Package Export Settings
 - **Completion Date:** 2026-09-02
 - **Status:** `[Completed]` (User Approved)

@@ -54,7 +54,7 @@ parsed.data.forEach((row, rowIdx) => {
         audio: '',
         speaker: '',
         notes: '',
-        source: 'cnarr',
+        source: 'NARR',
         'source file': 'cherokee-narratives.csv',
         story: storyName,
         chapter: chapterNum,
@@ -89,7 +89,7 @@ parsed.data.forEach((row, rowIdx) => {
                 sentence_id: sentence_id,
                 word_index: String(i),
                 entry_id: '',
-                source: 'cnarr',
+                source: 'NARR',
                 'source file': 'cherokee-narratives.csv',
                 gloss_syllabary: sylWord,
                 gloss_phonetic: trWord,
@@ -106,6 +106,7 @@ console.log('Generated ' + sentences.length + ' sentences and ' + glosses.length
 const metadata = {
     id: 'cherokee-narratives',
     name: 'Cherokee Narratives',
+    short_name: 'NARR',
     author: 'Durbin Feeling, et al.',
     date_created: 1740000000000,
     description: '17 traditional and contemporary Cherokee stories and accounts with word-by-word literal translations and interlinear morpheme breakdowns.',
@@ -120,12 +121,14 @@ const metadata = {
         notes: 0
     },
     source_names: {
+        NARR: 'Cherokee Narratives',
         cnarr: 'Cherokee Narratives'
     },
     source_meta: {
+        NARR: 'other',
         cnarr: 'other'
     },
-    color: '#10b981',
+    color: '#14b8a6',
     locked: 'no',
     editable: 'Yes'
 };
@@ -158,21 +161,27 @@ zip.generateAsync({ type: 'nodebuffer' }).then(buf => {
         console.log('Saved package ZIP to dist: ' + distZipPath);
     }
 
-    const catalog = [
-        {
-            id: 'cherokee-narratives',
-            name: 'Cherokee Narratives',
-            author: 'Durbin Feeling, et al.',
-            description: '17 traditional and contemporary Cherokee stories and accounts with word-by-word literal translations and interlinear morpheme breakdowns.',
-            packageFile: 'cherokee_narratives.zip',
-            stats: {
-                sentences: sentences.length,
-                stories: storyOrderMap.size,
-                glosses: glosses.length
-            },
-            color: '#10b981'
-        }
-    ];
+    const catalogPath = path.join(PACKAGES_DIR, 'catalog.json');
+    let existingCatalog = [];
+    if (fs.existsSync(catalogPath)) {
+        try { existingCatalog = JSON.parse(fs.readFileSync(catalogPath, 'utf-8')); } catch (e) {}
+    }
+    const narrCatalogItem = {
+        id: 'cherokee-narratives',
+        name: 'Cherokee Narratives',
+        short_name: 'NARR',
+        author: 'Durbin Feeling, et al.',
+        description: '17 traditional and contemporary Cherokee stories and accounts with word-by-word literal translations and interlinear morpheme breakdowns.',
+        packageFile: 'cherokee_narratives.zip',
+        stats: {
+            sentences: sentences.length,
+            stories: storyOrderMap.size,
+            glosses: glosses.length
+        },
+        color: '#14b8a6'
+    };
+    const catalog = existingCatalog.filter(c => c.id !== narrCatalogItem.id);
+    catalog.push(narrCatalogItem);
 
     fs.writeFileSync(path.join(PACKAGES_DIR, 'catalog.json'), JSON.stringify(catalog, null, 2));
     if (fs.existsSync(DIST_PACKAGES_DIR)) {

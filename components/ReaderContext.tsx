@@ -159,11 +159,14 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 title = userDictionaries[source].name;
             } else {
                 for (const p of packages) {
-                    if (p.metadata.source_names && p.metadata.source_names[source]) {
-                        title = p.metadata.source_names[source];
-                        break;
+                    if (p.metadata.source_names) {
+                        const matchKey = Object.keys(p.metadata.source_names).find(k => k.toLowerCase() === source.toLowerCase());
+                        if (matchKey) {
+                            title = p.metadata.source_names[matchKey];
+                            break;
+                        }
                     }
-                    if (p.id === source) {
+                    if (p.id === source || p.metadata.id === source || p.metadata?.short_name?.toLowerCase() === source.toLowerCase()) {
                         title = p.name;
                         break;
                     }
