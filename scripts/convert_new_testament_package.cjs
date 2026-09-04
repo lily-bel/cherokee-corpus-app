@@ -91,17 +91,14 @@ const metadata = {
         glosses: 0,
         lists: 0,
         word_forms: 0,
-        notes: 0
+        notes: 0,
+        notebooks: 0
     },
     source_names: {
-        BIBLE: 'Cherokee New Testament',
-        bible: 'Cherokee New Testament Full Text',
-        cnt: 'Cherokee New Testament'
+        BIBLE: 'Cherokee New Testament'
     },
     source_meta: {
-        BIBLE: 'other',
-        bible: 'other',
-        cnt: 'other'
+        BIBLE: 'other'
     },
     color: '#ef4444',
     locked: 'no',

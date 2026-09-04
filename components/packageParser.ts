@@ -434,7 +434,8 @@ export async function parsePackageZip(
         glosses: normalizedGlosses.length,
         lists: lists.length,
         word_forms: normalizedWordForms.length,
-        notes: importedNotes.length
+        notes: importedNotes.length,
+        notebooks: meta.stats?.notebooks !== undefined ? meta.stats.notebooks : (normalizedDictionary.length === 0 ? 0 : undefined)
     };
 
     const pkg: Package = {

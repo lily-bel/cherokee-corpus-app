@@ -123,7 +123,7 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             let mappedSource = sentence.source;
             const lowerSource = mappedSource ? mappedSource.toLowerCase() : '';
             if (officialSources.includes(lowerSource)) {
-                if (!['ced', 'rrd', 'bible'].includes(lowerSource)) {
+                if (!['ced', 'rrd'].includes(lowerSource)) {
                     mappedSource = 'other_official';
                 }
             }

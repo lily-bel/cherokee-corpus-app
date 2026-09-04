@@ -46,6 +46,11 @@ async function verify() {
     if (bSents.length !== 7957) throw new Error(`Expected 7957 Bible verses, got ${bSents.length}`);
     if (bSents[0].source !== 'BIBLE') throw new Error(`Expected Bible sentence source 'BIBLE', got ${bSents[0].source}`);
     if (bMeta.short_name !== 'BIBLE') throw new Error(`Expected Bible metadata short_name 'BIBLE'`);
+    if (bMeta.name !== 'Cherokee New Testament') throw new Error(`Expected Bible name 'Cherokee New Testament', got '${bMeta.name}'`);
+    if (bMeta.description !== 'Full text of the Cherokee New Testament (27 books, 260 chapters).') throw new Error(`Expected Bible description 'Full text of the Cherokee New Testament (27 books, 260 chapters).', got '${bMeta.description}'`);
+    if (bMeta.stats.notebooks !== 0) throw new Error(`Expected Bible notebooks 0, got ${bMeta.stats.notebooks}`);
+    if (bMeta.source_names?.bible || bMeta.source_names?.cnt) throw new Error(`Bible source_names should not contain bible or cnt`);
+    if (bMeta.source_names?.BIBLE !== 'Cherokee New Testament') throw new Error(`Expected Bible source_names.BIBLE to be 'Cherokee New Testament'`);
 
     // 4. Inspect Narratives ZIP contents
     const nZip = await JSZip.loadAsync(fs.readFileSync(narrZipPath));
@@ -57,6 +62,7 @@ async function verify() {
     if (nSents.length !== 361) throw new Error(`Expected 361 narratives sentences, got ${nSents.length}`);
     if (nSents[0].source !== 'NARR') throw new Error(`Expected Narratives sentence source 'NARR', got ${nSents[0].source}`);
     if (nMeta.short_name !== 'NARR') throw new Error(`Expected Narratives metadata short_name 'NARR'`);
+    if (nMeta.stats.notebooks !== 0) throw new Error(`Expected Narratives notebooks 0, got ${nMeta.stats.notebooks}`);
 
     // 5. Check core sentences.json
     const coreSentsPath = path.join(__dirname, '../public/data/sentences.json');

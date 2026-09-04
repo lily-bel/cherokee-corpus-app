@@ -1386,8 +1386,14 @@ function App() {
 
         packages.forEach(p => {
             if (p.type === 'imported' && p.status === 'active') {
+                if (p.metadata.stats?.notebooks === 0) return;
                 if (p.metadata.source_names) {
                     Object.entries(p.metadata.source_names).forEach(([code, name]) => {
+                        const countWords = allData.filter(d => d.Source === code).length;
+                        const countSentences = sentences.filter(s => s.source === code).length;
+                        if (countWords === 0 && countSentences === 0) return;
+                        if (countWords === 0 && sentences.some(s => s.source === code && s.story)) return;
+
                         list.push({
                             id: code,
                             name: name,
@@ -1395,8 +1401,8 @@ function App() {
                             type: 'imported',
                             packageId: p.id,
                             color: p.color,
-                            countWords: allData.filter(d => d.Source === code).length,
-                            countSentences: sentences.filter(s => s.source === code).length
+                            countWords,
+                            countSentences
                         });
                     });
                 }

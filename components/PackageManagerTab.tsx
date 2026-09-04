@@ -293,7 +293,11 @@ const PackageItem = ({
 
     const dictionaryCount = isUser 
         ? Object.keys(customDictionaries).length 
-        : (pkg.metadata?.stats?.notebooks || (pkg.metadata?.source_names ? Object.keys(pkg.metadata.source_names).length : 0));
+        : (pkg.metadata?.stats?.notebooks !== undefined
+            ? pkg.metadata.stats.notebooks
+            : (pkg.metadata?.stats?.words === 0
+                ? 0
+                : (pkg.metadata?.source_names ? Object.keys(pkg.metadata.source_names).length : 0)));
     const noteCount = isUser ? Object.keys(userNotes).length : (pkg.metadata?.stats?.notes || 0);
     const wordFormCount = isUser ? Object.keys(userWordForms).length : (pkg.metadata?.stats?.word_forms || 0);
 

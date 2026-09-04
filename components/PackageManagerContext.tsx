@@ -336,24 +336,28 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                     if (raw) uninstalledPackages = JSON.parse(raw);
                 } catch (e) {}
 
-                // Default auto-install packages: Bible
-                const bibleId = 'cherokee-new-testament';
-                const hasBible = loadedImportedPkgs.some(p => p.id === bibleId);
-                const bibleWasUninstalled = uninstalledPackages.includes(bibleId);
-
-                if (!hasBible && !bibleWasUninstalled) {
-                    try {
-                        const bibleRes = await fetch(`${import.meta.env.BASE_URL}packages/cherokee_new_testament.zip`);
-                        if (bibleRes.ok) {
-                            const blob = await bibleRes.blob();
-                            const parsed = await parsePackageZip(blob, '#ef4444');
-                            loadedImportedPkgs.push(parsed.pkg);
-                            loadedImportedData[parsed.pkg.id] = parsed.data;
-                            await savePackageToDB(parsed.pkg, parsed.data);
+                // Auto-install packages marked with autoInstall in catalog
+                try {
+                    const catalogRes = await fetch(`${import.meta.env.BASE_URL}packages/catalog.json`);
+                    if (catalogRes.ok) {
+                        const catalog = await catalogRes.json();
+                        if (Array.isArray(catalog)) {
+                            for (const item of catalog) {
+                                if (item.autoInstall && !loadedImportedPkgs.some(p => p.id === item.id) && !uninstalledPackages.includes(item.id)) {
+                                    const pkgRes = await fetch(`${import.meta.env.BASE_URL}packages/${item.packageFile}`);
+                                    if (pkgRes.ok) {
+                                        const blob = await pkgRes.blob();
+                                        const parsed = await parsePackageZip(blob, item.color);
+                                        loadedImportedPkgs.push(parsed.pkg);
+                                        loadedImportedData[parsed.pkg.id] = parsed.data;
+                                        await savePackageToDB(parsed.pkg, parsed.data);
+                                    }
+                                }
+                            }
                         }
-                    } catch (e) {
-                        console.error('Failed to auto-load Bible package', e);
                     }
+                } catch (e) {
+                    console.error('Failed to auto-install packages from catalog', e);
                 }
 
                 const userPkg: Package = {
@@ -464,7 +468,14 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
         if (pkg) return pkg.color;
 
         // 2. Check if sourceId matches package metadata short_name or source_names
-        for (const p of packages) {
+        // Prioritize imported and user packages so specific package colors take precedence over official package
+        const sortedPackages = [...packages].sort((a, b) => {
+            if (a.type === 'imported' && b.type !== 'imported') return -1;
+            if (a.type !== 'imported' && b.type === 'imported') return 1;
+            return 0;
+        });
+
+        for (const p of sortedPackages) {
             if (p.metadata?.short_name && p.metadata.short_name.toLowerCase() === norm) {
                 return p.color;
             }
@@ -477,15 +488,6 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
             }
         }
 
-        // 3. Known package shorthands fallback
-        if (norm === 'bible' || norm === 'cnt') {
-            const biblePkg = packages.find(p => p.id === 'cherokee-new-testament');
-            return biblePkg?.color || '#ef4444';
-        }
-        if (norm === 'narr' || norm === 'cnarr') {
-            const narrPkg = packages.find(p => p.id === 'cherokee-narratives');
-            return narrPkg?.color || '#14b8a6';
-        }
         if (norm === 'official-cherokee-data' || norm === 'ced') return 'slate';
         if (norm === 'user') return '#f59e0b';
 

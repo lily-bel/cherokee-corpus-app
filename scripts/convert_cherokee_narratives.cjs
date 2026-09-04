@@ -118,15 +118,14 @@ const metadata = {
         glosses: glosses.length,
         lists: 0,
         word_forms: 0,
-        notes: 0
+        notes: 0,
+        notebooks: 0
     },
     source_names: {
-        NARR: 'Cherokee Narratives',
-        cnarr: 'Cherokee Narratives'
+        NARR: 'Cherokee Narratives'
     },
     source_meta: {
-        NARR: 'other',
-        cnarr: 'other'
+        NARR: 'other'
     },
     color: '#14b8a6',
     locked: 'no',
