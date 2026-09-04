@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Search, Book, Menu, X, Filter, Sliders, Clock, ListIcon, Folder, BookOpen, Download, ArrowLeft, Pencil, ChevronDown, Share, Trash2, Plus, ChevronUp, Minus, Check, ToggleLeft, ToggleRight, Box, Layout } from './components/Icons';
+import { Search, Book, Menu, X, Filter, Sliders, Clock, ListIcon, Folder, BookOpen, Download, ArrowLeft, Pencil, ChevronDown, Share, Trash2, Plus, ChevronUp, Minus, Check, ToggleLeft, ToggleRight, Box, Layout, UserIcon } from './components/Icons';
 import { Toast, Modal } from './components/UI';
 import EntryCard from './components/EntryCard';
 import EntryDetail from './components/EntryDetail';
@@ -22,6 +22,9 @@ import { TextImporter } from './components/TextImporter';
 import { useReader } from './components/ReaderContext';
 import RootView from './components/RootView';
 import ClassView from './components/ClassView';
+import { useAuth, CloudLibraryData } from './components/AuthContext';
+import { AuthModal } from './components/AuthModal';
+import { PackageLinkImportView } from './components/PackageLinkImportView';
 
 const DEFAULT_SETTINGS = {
     darkMode: false,
@@ -40,7 +43,7 @@ export type NavItem =
 
 function App() {
     const { packages, importedData } = usePackageManager();
-    const { dictionary, sentences, userSentences, glosses, loading, entryToSentencesMap, addUserSentence, removeUserSentence, removeUserSentences, removeUserGloss, customDictionaries, personalWords, setCustomDictionaries, setPersonalWords, userAudioMeta, saveAudio, deleteAudio, sentenceMap, userWordForms, setUserWordForms, userNotes, setUserNotes, rootMap } = useCorpus();
+    const { dictionary, sentences, userSentences, glosses, loading, entryToSentencesMap, addUserSentence, removeUserSentence, removeUserSentences, removeUserGloss, customDictionaries, personalWords, setCustomDictionaries, setPersonalWords, userAudioMeta, saveAudio, deleteAudio, sentenceMap, userWordForms, setUserWordForms, userNotes, setUserNotes, rootMap, setUserSentences, setUserGlosses } = useCorpus();
     const { findBookAndChapterForSentence } = useReader();
 
     // Legacy state replacements
@@ -97,6 +100,157 @@ function App() {
     const [settings, setSettings] = useState(DEFAULT_SETTINGS);
     const [showSettingsModal, setShowSettingsModal] = useState(false);
     const [showSearchSettingsPopover, setShowSearchSettingsPopover] = useState(false);
+
+    // Auth & Cloud Sync State
+    const { user, syncStatus, syncLibraryToCloud, loadAndMergeCloudData } = useAuth();
+    const [showAuthModal, setShowAuthModal] = useState(false);
+    const [urlPackageId, setUrlPackageId] = useState<string | null>(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('package')) return params.get('package');
+        if (params.get('pkg')) return params.get('pkg');
+        if (window.location.hash) {
+            const h = window.location.hash.replace(/^#\/?/, '').trim();
+            if (h && !h.includes('/')) return h;
+        }
+        const base = import.meta.env.BASE_URL || '/';
+        let p = window.location.pathname;
+        if (p.startsWith(base)) p = p.slice(base.length);
+        p = p.replace(/^\/+|\/+$/g, '').trim();
+        const known = ['', 'index.html', 'search', 'reader', 'lists', 'widgets', 'packages'];
+        if (p && !known.includes(p.toLowerCase()) && !p.includes('/')) return p;
+        return null;
+    });
+
+    useEffect(() => {
+        const handlePopState = () => {
+            const params = new URLSearchParams(window.location.search);
+            let id = params.get('package') || params.get('pkg') || null;
+            if (!id && window.location.hash) {
+                const h = window.location.hash.replace(/^#\/?/, '').trim();
+                if (h && !h.includes('/')) id = h;
+            }
+            if (!id) {
+                const base = import.meta.env.BASE_URL || '/';
+                let p = window.location.pathname;
+                if (p.startsWith(base)) p = p.slice(base.length);
+                p = p.replace(/^\/+|\/+$/g, '').trim();
+                const known = ['', 'index.html', 'search', 'reader', 'lists', 'widgets', 'packages'];
+                if (p && !known.includes(p.toLowerCase()) && !p.includes('/')) id = p;
+            }
+            setUrlPackageId(id);
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, []);
+
+    const isMergingRef = useRef(false);
+    const hasInitialMergedRef = useRef(false);
+    const prevUserIdRef = useRef<string | null>(null);
+
+    // Merge cloud data on login
+    useEffect(() => {
+        if (!user) {
+            prevUserIdRef.current = null;
+            hasInitialMergedRef.current = false;
+            return;
+        }
+
+        if (prevUserIdRef.current === user.uid && hasInitialMergedRef.current) {
+            return;
+        }
+
+        prevUserIdRef.current = user.uid;
+        const doMerge = async () => {
+            isMergingRef.current = true;
+            try {
+                const currentLocal: CloudLibraryData = {
+                    customDictionaries,
+                    personalWords,
+                    userSentences,
+                    userGlosses: glosses.filter(g => g.source === 'user'),
+                    userWordForms,
+                    userNotes,
+                    customLists,
+                    customListOrder,
+                    favorites
+                };
+                const installedIds = packages.filter(p => p.type === 'imported').map(p => p.id);
+                const { mergedLibrary } = await loadAndMergeCloudData(currentLocal, installedIds);
+
+                if (mergedLibrary.customDictionaries) setCustomDictionaries(mergedLibrary.customDictionaries);
+                if (mergedLibrary.personalWords) setPersonalWords(mergedLibrary.personalWords);
+                if (mergedLibrary.userSentences) setUserSentences(mergedLibrary.userSentences);
+                if (mergedLibrary.userGlosses) setUserGlosses(mergedLibrary.userGlosses);
+                if (mergedLibrary.userWordForms) setUserWordForms(mergedLibrary.userWordForms);
+                if (mergedLibrary.userNotes) setUserNotes(mergedLibrary.userNotes);
+                if (mergedLibrary.customLists) setCustomLists(mergedLibrary.customLists);
+                if (mergedLibrary.customListOrder) setCustomListOrder(mergedLibrary.customListOrder);
+                if (mergedLibrary.favorites) setFavorites(mergedLibrary.favorites);
+
+                hasInitialMergedRef.current = true;
+            } catch (err) {
+                console.error("Failed to merge cloud data on login:", err);
+            } finally {
+                setTimeout(() => {
+                    isMergingRef.current = false;
+                }, 1000);
+            }
+        };
+
+        doMerge();
+    }, [user]);
+
+    // Debounced auto-sync to cloud when local data changes
+    useEffect(() => {
+        if (!user || isMergingRef.current || !hasInitialMergedRef.current) return;
+
+        const timer = setTimeout(() => {
+            const currentLibrary: CloudLibraryData = {
+                customDictionaries,
+                personalWords,
+                userSentences,
+                userGlosses: glosses.filter(g => g.source === 'user'),
+                userWordForms,
+                userNotes,
+                customLists,
+                customListOrder,
+                favorites
+            };
+            const installedIds = packages.filter(p => p.type === 'imported').map(p => p.id);
+            syncLibraryToCloud(currentLibrary, installedIds);
+        }, 2500);
+
+        return () => clearTimeout(timer);
+    }, [
+        user,
+        customDictionaries,
+        personalWords,
+        userSentences,
+        glosses,
+        userWordForms,
+        userNotes,
+        customLists,
+        customListOrder,
+        favorites,
+        packages
+    ]);
+
+    const handleManualSync = async () => {
+        if (!user) return;
+        const currentLibrary: CloudLibraryData = {
+            customDictionaries,
+            personalWords,
+            userSentences,
+            userGlosses: glosses.filter(g => g.source === 'user'),
+            userWordForms,
+            userNotes,
+            customLists,
+            customListOrder,
+            favorites
+        };
+        const installedIds = packages.filter(p => p.type === 'imported').map(p => p.id);
+        await syncLibraryToCloud(currentLibrary, installedIds);
+    };
 
     const [showNewListModal, setShowNewListModal] = useState(false);
     const [newListName, setNewListName] = useState('');
@@ -1521,15 +1675,50 @@ function App() {
     // if (showManualUpload) ...
     // if (loading) ...
 
+    if (urlPackageId) {
+        return (
+            <PackageLinkImportView
+                packageId={urlPackageId}
+                onImportSuccess={() => {
+                    setUrlPackageId(null);
+                    window.history.replaceState(null, '', import.meta.env.BASE_URL);
+                    setActiveTab('packages');
+                }}
+                onDismiss={() => {
+                    setUrlPackageId(null);
+                    window.history.replaceState(null, '', import.meta.env.BASE_URL);
+                }}
+            />
+        );
+    }
+
     return (
         <div className="h-screen w-full bg-[#F9F9F7] dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans flex flex-col overflow-hidden relative">
             <RainbowGradient />
             {!selectedEntry && !activeWidgetName && activeTab === 'search' && (
                 <header className="bg-white dark:bg-slate-900 px-4 border-b border-slate-200 dark:border-slate-800 shadow-sm z-10 flex items-center justify-between shrink-0 h-12">
                     <h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 flex items-baseline gap-2 truncate">ᏣᎳᎩ-English Dictionary<span className="text-xs font-sans font-medium text-slate-400 dark:text-slate-500 tracking-wide shrink-0">(BETA)</span></h1>
-                    <button onClick={() => setShowSettingsModal(true)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors">
-                        <Menu size={22} strokeWidth={1.5} />
-                    </button>
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={() => setShowAuthModal(true)}
+                            className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors relative"
+                            title={user ? `${user.displayName || user.email || 'Account'} (${syncStatus === 'synced' ? 'Backed Up' : syncStatus === 'syncing' ? 'Backing Up...' : 'Online'})` : "Sign In / Cloud Backup"}
+                        >
+                            {user?.photoURL ? (
+                                <img src={user.photoURL} alt="User" className="w-5 h-5 rounded-full object-cover border border-amber-500" />
+                            ) : (
+                                <UserIcon size={20} />
+                            )}
+                            {user && (
+                                <span className={`absolute top-1 right-1 w-2 h-2 rounded-full ring-2 ring-white dark:ring-slate-900 ${
+                                    syncStatus === 'syncing' ? 'bg-amber-500 animate-pulse' : syncStatus === 'error' ? 'bg-red-500' : 'bg-emerald-500'
+                                }`} />
+                            )}
+                        </button>
+                        <button onClick={() => setShowSettingsModal(true)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors">
+                            <Menu size={22} strokeWidth={1.5} />
+                        </button>
+                    </div>
                 </header>
             )}
             <main className={`flex-1 overflow-hidden relative flex flex-col ${(selectedEntry || activeWidgetName) ? 'z-50' : 'z-0'}`}>
@@ -2109,6 +2298,7 @@ function App() {
                                 }
                             }}
                             onShowSettings={() => setShowSettingsModal(true)}
+                            onShowAuth={() => setShowAuthModal(true)}
                         />}
                         {
                             activeTab === 'personal' && (!activeDictionaryId ? (<div className="flex flex-col h-full"><div className="px-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0 h-12"><h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">Custom Dictionaries</h1><div className="flex gap-1.5 items-center"><button onClick={() => setShowNewDictionaryModal(true)} className="bg-slate-900 dark:bg-slate-700 text-white p-1.5 rounded-full shadow-sm hover:bg-slate-800 transition-colors"><Plus size={18} /></button><button onClick={() => setShowSettingsModal(true)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300"><Menu size={22} strokeWidth={1.5} /></button></div></div><div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-4 content-start">{dictionaryList.map((nb: any) => {
@@ -2210,6 +2400,13 @@ function App() {
                             <div>
                                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Data Management</h4>
                                 <div className="space-y-3">
+                                    <button
+                                        onClick={() => { setShowSettingsModal(false); setShowAuthModal(true); }}
+                                        className="w-full flex items-center justify-center gap-2 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 font-bold py-3 rounded-xl hover:bg-amber-100 dark:hover:bg-amber-900/40 border border-amber-200 dark:border-amber-800 transition-colors"
+                                    >
+                                        <UserIcon size={20} />
+                                        <span>Cloud Account & Backup</span>
+                                    </button>
                                     <button onClick={handleBackup} className="w-full flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold py-3 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700"><Download size={20} /> Backup Data (JSON)</button>
                                     <label className="w-full flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold py-3 rounded-xl cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700"><Share size={20} /><span>Restore Data</span><input type="file" className="hidden" accept=".json" onChange={(e) => { setShowSettingsModal(false); setShowBackupConfirm(true); restoreInputRef.current = e; }} /></label>
                                 </div>
@@ -2305,6 +2502,13 @@ function App() {
             }
 
             <Toast show={toast.show} message={toast.message} type={toast.type} />
+
+            {showAuthModal && (
+                <AuthModal
+                    onClose={() => setShowAuthModal(false)}
+                    onSyncNow={handleManualSync}
+                />
+            )}
 
             {navStack.map((item, index) => {
                 const baseZIndex = 10000 + index;

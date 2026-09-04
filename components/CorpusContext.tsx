@@ -144,6 +144,8 @@ interface CorpusContextType {
     personalWords: PersonalWord[];
     setCustomDictionaries: React.Dispatch<React.SetStateAction<Record<string, CustomDictionary>>>;
     setPersonalWords: React.Dispatch<React.SetStateAction<PersonalWord[]>>;
+    setUserSentences: React.Dispatch<React.SetStateAction<Sentence[]>>;
+    setUserGlosses: React.Dispatch<React.SetStateAction<Gloss[]>>;
 
     // Actions
     addUserGloss: (gloss: Gloss) => void;
@@ -617,6 +619,8 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             personalWords,
             setCustomDictionaries,
             setPersonalWords,
+            setUserSentences,
+            setUserGlosses,
             userAudioMeta,
             saveAudio,
             deleteAudio,

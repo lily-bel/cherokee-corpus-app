@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { usePackageManager } from './PackageManagerContext';
 import { usePackageImport } from './usePackageHooks';
-import { Download, Upload, Check, Box, Book, BookOpen, ListIcon, X } from './Icons';
+import { Download, Upload, Check, Box, Book, BookOpen, ListIcon, X, LinkIcon } from './Icons';
+import { DictionaryDB } from '../firebase';
 
 interface CatalogItem {
     id: string;
@@ -60,13 +61,20 @@ interface PackageImportModalProps {
 
 export const PackageImportModal: React.FC<PackageImportModalProps> = ({ onClose, onSuccess, onError }) => {
     const { packages } = usePackageManager();
-    const { importPackage } = usePackageImport();
+    const { importPackage, importPackageFromJson } = usePackageImport();
 
-    const [activeTab, setActiveTab] = useState<'catalog' | 'file'>('catalog');
+    const [activeTab, setActiveTab] = useState<'catalog' | 'file' | 'link'>('catalog');
     const [catalog, setCatalog] = useState<CatalogItem[]>(FALLBACK_CATALOG);
     const [downloadingId, setDownloadingId] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Link import state
+    const [linkInput, setLinkInput] = useState('');
+    const [fetchingLink, setFetchingLink] = useState(false);
+    const [fetchedPackage, setFetchedPackage] = useState<any | null>(null);
+    const [linkError, setLinkError] = useState<string | null>(null);
+    const [installingLink, setInstallingLink] = useState(false);
 
     // Fetch catalog on mount if available
     useEffect(() => {
@@ -155,6 +163,52 @@ export const PackageImportModal: React.FC<PackageImportModalProps> = ({ onClose,
         }
     };
 
+    const handleFetchLink = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!linkInput.trim()) return;
+        setFetchingLink(true);
+        setLinkError(null);
+        setFetchedPackage(null);
+
+        try {
+            let pkgId = linkInput.trim();
+            // Clean up URL if full link pasted
+            if (pkgId.includes('/')) {
+                const clean = pkgId.split('?')[0].split('#')[0].replace(/\/+$/, '');
+                pkgId = clean.split('/').pop() || pkgId;
+            }
+            if (linkInput.includes('package=')) {
+                const m = linkInput.match(/[?&]package=([^&]+)/);
+                if (m) pkgId = m[1];
+            }
+
+            const result = await DictionaryDB.getPublicPackageWithData(pkgId);
+            if (!result) {
+                throw new Error(`Package "${pkgId}" was not found or has not been made public.`);
+            }
+            setFetchedPackage(result.packageData);
+        } catch (err: any) {
+            setLinkError(err.message || 'Failed to find package from link');
+        } finally {
+            setFetchingLink(false);
+        }
+    };
+
+    const handleInstallFetched = async () => {
+        if (!fetchedPackage) return;
+        setInstallingLink(true);
+        try {
+            const color = fetchedPackage.metadata?.color || '#ef4444';
+            const installed = await importPackageFromJson(fetchedPackage, color);
+            onSuccess(`Installed "${installed.name}" from public link!`);
+            onClose();
+        } catch (err: any) {
+            setLinkError(err.message || 'Installation failed');
+        } finally {
+            setInstallingLink(false);
+        }
+    };
+
     return (
         <div className="fixed inset-0 z-[20000] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in" onClick={onClose}>
             <div
@@ -203,6 +257,17 @@ export const PackageImportModal: React.FC<PackageImportModalProps> = ({ onClose,
                     >
                         <Upload size={16} />
                         <span>Upload File</span>
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('link')}
+                        className={`flex items-center gap-2 py-3 px-4 font-bold text-sm border-b-2 transition-all ${
+                            activeTab === 'link'
+                                ? 'border-amber-500 text-amber-600 dark:text-amber-400'
+                                : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
+                        }`}
+                    >
+                        <LinkIcon size={16} />
+                        <span>From Link</span>
                     </button>
                 </div>
 
@@ -290,7 +355,7 @@ export const PackageImportModal: React.FC<PackageImportModalProps> = ({ onClose,
                                 })
                             )}
                         </div>
-                    ) : (
+                    ) : activeTab === 'file' ? (
                         <div className="space-y-4">
                             <div
                                 onDragOver={handleDragOver}
@@ -327,6 +392,106 @@ export const PackageImportModal: React.FC<PackageImportModalProps> = ({ onClose,
                                     if (file) handleFileChosen(file);
                                 }}
                             />
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                Import Shared Package via Public Link or ID
+                            </div>
+
+                            <form onSubmit={handleFetchLink} className="space-y-3">
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={linkInput}
+                                        onChange={e => setLinkInput(e.target.value)}
+                                        placeholder="e.g. https://site/.../packageId or packageId"
+                                        className="flex-1 px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl outline-none focus:border-amber-500 dark:text-white font-mono"
+                                    />
+                                    <button
+                                        type="submit"
+                                        disabled={fetchingLink || !linkInput.trim()}
+                                        className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold text-xs rounded-xl transition-colors disabled:opacity-50 shrink-0"
+                                    >
+                                        {fetchingLink ? 'Fetching...' : 'Find Package'}
+                                    </button>
+                                </div>
+                            </form>
+
+                            {linkError && (
+                                <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/40 text-red-700 dark:text-red-300 text-xs">
+                                    {linkError}
+                                </div>
+                            )}
+
+                            {fetchedPackage && (
+                                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 shadow-sm space-y-4">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div>
+                                            <h4 className="font-bold text-slate-900 dark:text-slate-100 text-base">
+                                                {fetchedPackage.metadata?.name || 'Untitled Package'}
+                                            </h4>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                                Author: <span className="font-semibold">{fetchedPackage.metadata?.author || 'Unknown'}</span>
+                                            </p>
+                                        </div>
+                                        <span
+                                            className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full text-white shrink-0"
+                                            style={{ backgroundColor: fetchedPackage.metadata?.color || '#ef4444' }}
+                                        >
+                                            {fetchedPackage.metadata?.short_name || 'PKG'}
+                                        </span>
+                                    </div>
+
+                                    {fetchedPackage.metadata?.description && (
+                                        <p className="text-xs text-slate-600 dark:text-slate-300">
+                                            {fetchedPackage.metadata.description}
+                                        </p>
+                                    )}
+
+                                    <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                                        <div className="p-2 bg-slate-50 dark:bg-slate-900 rounded-lg">
+                                            <span className="block font-bold text-slate-800 dark:text-slate-200 font-mono">
+                                                {fetchedPackage.base_forms?.length || 0}
+                                            </span>
+                                            <span className="text-[10px] text-slate-400 uppercase">Words</span>
+                                        </div>
+                                        <div className="p-2 bg-slate-50 dark:bg-slate-900 rounded-lg">
+                                            <span className="block font-bold text-slate-800 dark:text-slate-200 font-mono">
+                                                {fetchedPackage.sentences?.length || 0}
+                                            </span>
+                                            <span className="text-[10px] text-slate-400 uppercase">Sentences</span>
+                                        </div>
+                                        <div className="p-2 bg-slate-50 dark:bg-slate-900 rounded-lg">
+                                            <span className="block font-bold text-slate-800 dark:text-slate-200 font-mono">
+                                                {fetchedPackage.sentence_joins?.length || 0}
+                                            </span>
+                                            <span className="text-[10px] text-slate-400 uppercase">Glosses</span>
+                                        </div>
+                                        <div className="p-2 bg-slate-50 dark:bg-slate-900 rounded-lg">
+                                            <span className="block font-bold text-slate-800 dark:text-slate-200 font-mono">
+                                                {fetchedPackage.conjugations?.length || 0}
+                                            </span>
+                                            <span className="text-[10px] text-slate-400 uppercase">Forms</span>
+                                        </div>
+                                    </div>
+
+                                    {isInstalled(fetchedPackage.metadata?.id) ? (
+                                        <div className="text-center py-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                            This package is already installed.
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={handleInstallFetched}
+                                            disabled={installingLink}
+                                            className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold rounded-xl text-xs shadow-sm transition-colors flex items-center justify-center gap-1.5"
+                                        >
+                                            <Download size={14} />
+                                            <span>{installingLink ? 'Installing...' : 'Install This Package'}</span>
+                                        </button>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

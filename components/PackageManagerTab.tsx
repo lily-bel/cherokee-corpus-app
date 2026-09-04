@@ -3,7 +3,7 @@ import { useCorpus } from './CorpusContext';
 import { usePackageManager, Package } from './PackageManagerContext';
 import PackageExportModal from './PackageExportModal';
 import { ListData } from './ListsTab';
-import { Upload, Download, Trash2, ToggleLeft, ToggleRight, Box, Mic, StickyNote, ListIcon, SquaresPlus, Book, ListPlus, Menu } from './Icons';
+import { Upload, Download, Trash2, ToggleLeft, ToggleRight, Box, Mic, StickyNote, ListIcon, SquaresPlus, Book, ListPlus, Menu, UserIcon } from './Icons';
 import { Toast, SourceBadge } from './UI';
 import { PackageDetailView } from './PackageDetailView';
 import { PackageImportModal } from './PackageImportModal';
@@ -13,9 +13,10 @@ interface PackageManagerTabProps {
     onNavigate: (type: 'dictionary' | 'list' | 'word' | 'sentence', payload: any) => void;
     onReadInContext?: (sentenceId: string) => void;
     onShowSettings: () => void;
+    onShowAuth?: () => void;
 }
 
-const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists, onNavigate, onReadInContext, onShowSettings }) => {
+const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists, onNavigate, onReadInContext, onShowSettings, onShowAuth }) => {
     const { packages, togglePackage, removePackage } = usePackageManager();
     const { removePackageAudio, userAudioMeta, glosses } = useCorpus();
 
@@ -63,6 +64,11 @@ const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists, onNa
                     >
                         <Download size={20} />
                     </button>
+                    {onShowAuth && (
+                        <button onClick={onShowAuth} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300" title="Account & Backup">
+                            <UserIcon size={22} />
+                        </button>
+                    )}
                     {onShowSettings && (
                         <button onClick={onShowSettings} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
                             <Menu size={24} strokeWidth={1.5} />

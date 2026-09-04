@@ -458,3 +458,248 @@ export async function parsePackageZip(
 
     return { pkg, data, audioMeta: newAudioMeta };
 }
+
+export function parsePackageJsonData(
+    packageData: any,
+    color?: string
+): { pkg: Package; data: ImportedPackageData; audioMeta: Record<string, any[]> } {
+    if (!packageData || typeof packageData !== 'object') {
+        throw new Error("Invalid package data: Root content must be an object");
+    }
+
+    const meta: PackageMetadata = packageData.metadata || {
+        id: packageData.id || generateId(),
+        name: packageData.name || 'Untitled Package',
+        author: 'Unknown',
+        date_created: Date.now(),
+        description: '',
+        app_version: '1.0',
+        stats: { words: 0, sentences: 0, audio_files: 0, glosses: 0, lists: 0 }
+    };
+
+    const rawBaseForms: any[] = Array.isArray(packageData.base_forms) ? packageData.base_forms : [];
+    const rawSentences: any[] = Array.isArray(packageData.sentences) ? packageData.sentences : [];
+    const rawGlosses: any[] = Array.isArray(packageData.sentence_joins) ? packageData.sentence_joins : [];
+    const rawConjugations: any[] = Array.isArray(packageData.conjugations) ? packageData.conjugations : [];
+    
+    let importedNotes: any[] = [];
+    let importedWordFormsFromEntryData: any[] = [];
+    if (packageData.entry_data && typeof packageData.entry_data === 'object') {
+        if (Array.isArray(packageData.entry_data.notes)) importedNotes = packageData.entry_data.notes;
+        if (Array.isArray(packageData.entry_data.word_forms)) importedWordFormsFromEntryData = packageData.entry_data.word_forms;
+    }
+
+    const lists: ListData[] = [];
+    if (Array.isArray(packageData.lists)) {
+        packageData.lists.forEach((l: any) => {
+            const items = [...(l.words || []), ...(l.sentences || []).map((id: string) => `s_${id}`)];
+            lists.push({
+                id: l.id || generateId(),
+                name: l.name || 'Untitled List',
+                items: items,
+                type: 'imported',
+                packageId: meta.id,
+                color: color || meta.color || '#ef4444'
+            });
+        });
+    }
+
+    const audioByBaseForm: Record<string, string> = {};
+    const audioBySentence: Record<string, string> = {};
+    const audioByConjugation: Record<string, string> = {};
+    const newAudioMeta: Record<string, any[]> = {};
+
+    // 5.1 Dictionary normalization
+    const normalizedDictionary = rawBaseForms.map((d: any) => {
+        let translit = '';
+        let syllabary = '';
+        let definition = '';
+        let PoS = '';
+        let Entry_Tone = '';
+
+        const sources = d.sources || {};
+        const sourceKeys = Object.keys(sources);
+        let sourceStr = sourceKeys.length > 0 ? sourceKeys[0].replace(/\.csv$/i, '') : meta.id;
+
+        for (const key of sourceKeys) {
+            const s = sources[key];
+            if (!s) continue;
+            if (!translit) translit = s.Practical || s.Entry || s.practical || s.Cherokee || s.translit || '';
+            if (!syllabary) syllabary = s.Syllabary || s.syllabary || s.Headword || '';
+            if (!definition) definition = s.Translations || s.Definition || s.definition || s.English || '';
+            if (!PoS) PoS = s['Part of speech'] || s['Part of speech ch'] || s.PoS || s.Part_of_Speech || '';
+            if (!Entry_Tone) Entry_Tone = s['Tone and length 1'] || s['Tone and length 2'] || s.Entry_Tone || s.Tone || '';
+        }
+
+        // Direct field fallbacks
+        if (!translit) translit = d.translit || d.Entry || d.practical || d.Cherokee || '';
+        if (!syllabary) syllabary = d.syllabary || d.Syllabary || '';
+        if (!definition) definition = d.definition || d.Definition || d.Translations || d.english || '';
+        if (!PoS) PoS = d.PoS || d.pos || d['Part of speech'] || 'Noun';
+        if (!Entry_Tone) Entry_Tone = d.Entry_Tone || d.tone || d['Tone and length 1'] || '';
+
+        const id = d.merged_id || d.id || d.Index || generateId();
+        const Source_Long = sourceKeys.map(k => meta.source_names?.[k.replace(/\.csv$/i, '')] || meta.source_names?.[k] || k).join(', ') || meta.name;
+
+        return {
+            ...d,
+            id: id,
+            merged_id: id,
+            syllabary,
+            translit,
+            definition,
+            source: sourceStr,
+            audio: audioByBaseForm[id] || d.audio || '',
+            Index: id,
+            Entry: translit,
+            Syllabary: syllabary,
+            Definition: definition,
+            Source: sourceStr,
+            Entry_Tone,
+            PoS: PoS || 'Noun',
+            Source_Long: Source_Long || sourceStr,
+            sources: d.sources || {}
+        };
+    });
+
+    // 5.2 Sentences normalization
+    const normalizedSentences = rawSentences.map((d: any) => {
+        const id = d.sentence_id || d.id || d.ID || generateId();
+        let source = d.source || d.Source || (meta as any).short_name || meta.id;
+        if (source.endsWith('.csv')) source = source.replace(/\.csv$/i, '');
+
+        return {
+            id: id,
+            sentence_id: id,
+            syllabary: d.syllabary || d.Syllabary || '',
+            translit: d.phonetic || d.translit || d.Transliteration || '',
+            english: d.english || d.English || '',
+            source: source,
+            audio: audioBySentence[id] || d.audio || d.Audio || '',
+            speaker: d.speaker || d.Speaker || undefined,
+            notes: d.notes || d.Notes || undefined,
+            story: d.story || d.Story || undefined,
+            chapter: d.chapter || d.Chapter || undefined,
+            line: d.line !== undefined && d.line !== '' ? parseInt(String(d.line), 10) : (d.Line ? parseInt(String(d.Line), 10) : undefined),
+            story_order: d.story_order !== undefined && d.story_order !== '' ? parseInt(String(d.story_order), 10) : undefined,
+            chapter_order: d.chapter_order !== undefined && d.chapter_order !== '' ? parseInt(String(d.chapter_order), 10) : undefined,
+            author: d.author || d.Author || undefined,
+            tone: d.tone || d.Tone || undefined,
+            ID: id,
+            Syllabary: d.syllabary || d.Syllabary || '',
+            Transliteration: d.phonetic || d.translit || d.Transliteration || '',
+            English: d.english || d.English || '',
+            Source: source
+        };
+    });
+
+    // 5.3 Glosses normalization
+    const normalizedGlosses = rawGlosses.map((d: any) => {
+        let source = d.source || d.Source || (meta as any).short_name || meta.id;
+        if (source.endsWith('.csv')) source = source.replace(/\.csv$/i, '');
+
+        return {
+            sentence_id: d.sentence_id || d.Sentence_ID,
+            base_id: d.base_id || d.entry_id || d.Entry_ID,
+            entry_id: d.base_id || d.entry_id || d.Entry_ID,
+            word_index: d.word_index !== undefined ? String(d.word_index) : (d.Word_Index !== undefined ? String(d.Word_Index) : undefined),
+            notes: d.notes || d.Notes || '',
+            source: source,
+            gloss_syllabary: d.gloss_syllabary || d.Gloss_Syllabary || '',
+            gloss_phonetic: d.gloss_phonetic || d.Gloss_Phonetic || '',
+            gloss_english: d.gloss_english || d.Gloss_English || '',
+            form_name: d.form_name || d.Form_Name || '',
+            form_syllabary: d.form_syllabary || d.Form_Syllabary || '',
+            form_translit: d.form_translit || d.Form_Translit || '',
+            breakdown_cherokee: d.breakdown_cherokee || d.Breakdown_Cherokee || '',
+            breakdown_english: d.breakdown_english || d.Breakdown_English || '',
+            Sentence_ID: d.sentence_id || d.Sentence_ID,
+            Word_Index: d.word_index || d.Word_Index,
+            Entry_ID: d.base_id || d.entry_id || d.Entry_ID,
+            Notes: d.notes || d.Notes || '',
+            Source: source
+        };
+    });
+
+    // 5.4 Word forms normalization
+    const normalizedWordForms = [
+        ...rawConjugations.map((c: any) => {
+            let source = '';
+            let syllabary = '';
+            let translit = '';
+            let tone = '';
+            let notes = '';
+
+            Object.keys(c).forEach(k => {
+                if (k.endsWith('_Syllabary') && c[k] && !syllabary) {
+                    syllabary = c[k];
+                    source = k.replace('_Syllabary', '').replace(/\.csv$/i, '');
+                }
+                if ((k.endsWith('_Practical') || k.endsWith('_Cherokee')) && c[k] && !translit) {
+                    translit = c[k];
+                }
+                if ((k.endsWith('_Tone and length 1') || k.endsWith('_Tone')) && c[k] && !tone) {
+                    tone = c[k];
+                }
+                if ((k.endsWith('_Translations') || k.endsWith('_English') || k.endsWith('_Notes')) && c[k] && !notes) {
+                    notes = c[k];
+                }
+            });
+
+            if (!syllabary && c.syllabary) syllabary = c.syllabary;
+            if (!translit && (c.translit || c.phonetic)) translit = c.translit || c.phonetic;
+            if (!tone && c.tone) tone = c.tone;
+            if (!notes && (c.notes || c.definition)) notes = c.notes || c.definition;
+            if (!source && c.source) source = c.source;
+
+            const wordIdx = c.merged_id || c.word_index;
+            const formKey = c.normalized_key || c.form_name;
+
+            return {
+                word_index: wordIdx,
+                merged_id: wordIdx,
+                form_name: formKey,
+                normalized_key: formKey,
+                syllabary,
+                translit,
+                tone,
+                notes,
+                source: source || (meta as any).short_name || meta.id,
+                audio: audioByConjugation[`${wordIdx}_${formKey}`] || c.audio || ''
+            };
+        }),
+        ...importedWordFormsFromEntryData
+    ];
+
+    meta.stats = {
+        words: normalizedDictionary.length,
+        sentences: normalizedSentences.length,
+        audio_files: 0,
+        glosses: normalizedGlosses.length,
+        lists: lists.length,
+        word_forms: normalizedWordForms.length,
+        notes: importedNotes.length,
+        notebooks: meta.stats?.notebooks !== undefined ? meta.stats.notebooks : (normalizedDictionary.length === 0 ? 0 : undefined)
+    };
+
+    const pkg: Package = {
+        id: meta.id,
+        name: meta.name,
+        type: 'imported',
+        status: 'active',
+        color: color || meta.color || '#ef4444',
+        metadata: meta
+    };
+
+    const data: ImportedPackageData = {
+        dictionary: normalizedDictionary,
+        sentences: normalizedSentences,
+        glosses: normalizedGlosses,
+        lists,
+        notes: importedNotes,
+        word_forms: normalizedWordForms
+    };
+
+    return { pkg, data, audioMeta: newAudioMeta };
+}
+

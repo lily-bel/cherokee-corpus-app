@@ -4,12 +4,13 @@ import { useCorpus } from './CorpusContext';
 import {
     ArrowLeft, Folder, Mic, StickyNote,
     ChevronDown, ChevronRight, ListIcon, ListPlus, SquaresPlus,
-    Search, Pause, Volume2, Menu
+    Search, Pause, Volume2, Menu, Upload, LinkIcon, Check
 } from './Icons';
 import { SourceBadge } from './UI';
 import EntryCard from './EntryCard';
 import EntryDetail from './EntryDetail';
 import { getAudioFromDB, renderStyledText, parseListName } from '../utils';
+import PackageExportModal from './PackageExportModal';
 
 interface PackageDetailViewProps {
     packageId: string;
@@ -93,6 +94,8 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({
     } = useCorpus();
 
     const [selectedEntry, setSelectedEntry] = useState<any | null>(null);
+    const [showExportModal, setShowExportModal] = useState(false);
+    const [copiedLink, setCopiedLink] = useState(false);
 
     const pkg = packages.find(p => p.id === packageId);
     if (!pkg) return null;
@@ -363,12 +366,50 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({
                 <div className="flex-1 min-w-0">
                     <h2 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">{pkg.name}</h2>
                 </div>
-                {onShowSettings && (
-                    <button onClick={onShowSettings} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
-                        <Menu size={24} strokeWidth={1.5} />
-                    </button>
-                )}
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                    {pkg.type !== 'official' && (
+                        <button
+                            onClick={() => setShowExportModal(true)}
+                            className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5"
+                            title="Export New Version of this Package"
+                        >
+                            <Upload size={14} />
+                            <span className="hidden sm:inline">Export New Version</span>
+                        </button>
+                    )}
+                    {pkg.type !== 'official' && (
+                        <button
+                            onClick={() => {
+                                const origin = window.location.origin;
+                                const base = import.meta.env.BASE_URL || '/';
+                                const cleanBase = base.endsWith('/') ? base : `${base}/`;
+                                navigator.clipboard.writeText(`${origin}${cleanBase}${pkg.id}`);
+                                setCopiedLink(true);
+                                setTimeout(() => setCopiedLink(false), 2000);
+                            }}
+                            className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-500 hover:text-amber-600 dark:text-slate-400 dark:hover:text-amber-400 transition-colors"
+                            title={copiedLink ? "Link Copied!" : "Copy Public Link"}
+                        >
+                            {copiedLink ? <Check size={18} className="text-emerald-500" /> : <LinkIcon size={18} />}
+                        </button>
+                    )}
+                    {onShowSettings && (
+                        <button onClick={onShowSettings} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
+                            <Menu size={24} strokeWidth={1.5} />
+                        </button>
+                    )}
+                </div>
             </div>
+
+            {showExportModal && (
+                <PackageExportModal
+                    onClose={() => setShowExportModal(false)}
+                    customLists={customLists}
+                    initialUpdateOf={pkg.id}
+                    initialMetadata={pkg.metadata}
+                />
+            )}
 
             {/* Content Stats List */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3">

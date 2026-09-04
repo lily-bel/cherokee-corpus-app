@@ -3,7 +3,8 @@ import { usePackageManager, PackageMetadata } from './PackageManagerContext';
 import { ListData } from './ListsTab';
 import JSZip from 'jszip';
 import { downloadFile, getAudioFromDB } from '../utils';
-import { parsePackageZip } from './packageParser';
+import { parsePackageZip, parsePackageJsonData } from './packageParser';
+import { auth, DictionaryDB } from '../firebase';
 
 const generateId = () => {
     try {
@@ -22,7 +23,9 @@ export const usePackageExport = () => {
         listsToExport: { list: ListData, includeDependencies: boolean }[] = [],
         dependencyAudioIds: string[] = [],
         dependencyEntryIds: string[] = [],
-        exportAllNotesAndForms: boolean = false
+        exportAllNotesAndForms: boolean = false,
+        shareViaLink: boolean = false,
+        updateOf: string | null = null
     ) => {
         try {
             const zip = new JSZip();
@@ -86,6 +89,7 @@ export const usePackageExport = () => {
 
             const listsFolder = zip.folder('lists');
             let exportedListCount = 0;
+            const exportedListsPayload: any[] = [];
 
             listsToExport.forEach(({ list, includeDependencies }) => {
                 if (list.type === 'user' && list.items) {
@@ -105,6 +109,12 @@ export const usePackageExport = () => {
 
                     listsFolder?.file(`${list.name.replace(/[^a-z0-9\-_]/gi, '_')}.json`, JSON.stringify(listJson, null, 2));
                     exportedListCount++;
+                    exportedListsPayload.push({
+                        id: list.id,
+                        name: list.name,
+                        words: wIds,
+                        sentences: sIds
+                    });
                 }
 
                 if (list.items) {
@@ -459,6 +469,42 @@ export const usePackageExport = () => {
 
             const content = await zip.generateAsync({ type: 'blob' });
             downloadFile(content, `${(meta.name || 'export').replace(/[^a-z0-9]/gi, '_')}.zip`, 'application/zip');
+
+            let publicUrl = '';
+            if (shareViaLink) {
+                if (!auth.currentUser) {
+                    throw new Error("You must be logged in to share a package via public link.");
+                }
+
+                const origin = window.location.origin;
+                const base = import.meta.env.BASE_URL || '/';
+                const cleanBase = base.endsWith('/') ? base : `${base}/`;
+                publicUrl = `${origin}${cleanBase}${meta.id}`;
+
+                const cloudPackagePayload = {
+                    public: true,
+                    updateOf: updateOf || null,
+                    metadata: meta,
+                    base_forms: baseFormsExport,
+                    sentences: sentencesExport,
+                    sentence_joins: joinsExport,
+                    conjugations: formsExport,
+                    entry_data: notesExport.length > 0 ? { notes: notesExport } : null,
+                    lists: exportedListsPayload,
+                    date_exported: Date.now()
+                };
+
+                await DictionaryDB.saveUserPackage(auth.currentUser.uid, meta.id, cloudPackagePayload);
+                await DictionaryDB.setPublicPackagePointer(meta.id, auth.currentUser.uid);
+                await DictionaryDB.setInstalledPackage(auth.currentUser.uid, meta.id, true);
+            }
+
+            return {
+                packageId: meta.id,
+                name: meta.name,
+                publicUrl,
+                shared: !!shareViaLink
+            };
         } catch (e) {
             console.error("Export Failed Critical", e);
             throw e;
@@ -478,7 +524,43 @@ export const usePackageImport = () => {
             importAudioMeta(audioMeta);
         }
         installPackage(pkg, data);
+        if (auth.currentUser) {
+            await DictionaryDB.setInstalledPackage(auth.currentUser.uid, pkg.id, true);
+        }
+        return pkg;
     };
 
-    return { importPackage };
+    const importPackageFromJson = async (packageData: any, color?: string) => {
+        const { pkg, data, audioMeta } = parsePackageJsonData(packageData, color);
+        if (audioMeta && Object.keys(audioMeta).length > 0) {
+            importAudioMeta(audioMeta);
+        }
+        installPackage(pkg, data);
+        if (auth.currentUser) {
+            await DictionaryDB.setInstalledPackage(auth.currentUser.uid, pkg.id, true);
+        }
+        return pkg;
+    };
+
+    const importPackageFromLinkOrId = async (linkOrId: string, color?: string) => {
+        let pkgId = linkOrId.trim();
+        // If it's a full URL, extract the ID from the end of path or query
+        if (pkgId.includes('/')) {
+            const clean = pkgId.split('?')[0].split('#')[0].replace(/\/+$/, '');
+            pkgId = clean.split('/').pop() || pkgId;
+        }
+        if (linkOrId.includes('package=')) {
+            const m = linkOrId.match(/[?&]package=([^&]+)/);
+            if (m) pkgId = m[1];
+        }
+
+        const result = await DictionaryDB.getPublicPackageWithData(pkgId);
+        if (!result) {
+            throw new Error(`Package "${pkgId}" was not found or has not been made public.`);
+        }
+
+        return await importPackageFromJson(result.packageData, color);
+    };
+
+    return { importPackage, importPackageFromJson, importPackageFromLinkOrId };
 };

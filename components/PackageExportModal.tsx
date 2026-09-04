@@ -1,45 +1,48 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Modal } from './UI';
 import { useCorpus } from './CorpusContext';
 import { usePackageExport } from './usePackageHooks';
-import { Download, Check, ListIcon, Mic, Box } from './Icons'; // Check imports
+import { Download, Check, ListIcon, Mic, Box, LinkIcon } from './Icons'; // Check imports
 import { parseListName } from '../utils';
 import { ListData } from './ListsTab';
+import { useAuth } from './AuthContext';
+import { DictionaryDB } from '../firebase';
+import { PackageMetadata, usePackageManager } from './PackageManagerContext';
 
 interface PackageExportModalProps {
     onClose: () => void;
     customLists: Record<string, ListData | string[]>;
+    initialUpdateOf?: string | null;
+    initialMetadata?: Partial<PackageMetadata>;
 }
 
-const PackageExportModal: React.FC<PackageExportModalProps> = ({ onClose, customLists }) => {
+const PackageExportModal: React.FC<PackageExportModalProps> = ({ 
+    onClose, 
+    customLists,
+    initialUpdateOf = null,
+    initialMetadata
+}) => {
+    const { user } = useAuth();
+    const { packages } = usePackageManager();
     const { customDictionaries, userAudioMeta, personalWords, userSentences, glosses } = useCorpus(); // Added glosses
     const { exportPackage } = usePackageExport();
-    // userNotes needed for built-in lists? The hook uses them but they are in App.tsx... 
-    // Wait, ListsTab uses userNotes passed from App.tsx. 
-    // PackageExportModal uses useCorpus. 
-    // CorpusContext DOES NOT have userNotes. App.tsx manages them.
-    // So I need to pass userNotes to PackageExportModal too?
-    // Or I can just skip "Custom Notes" built-in list if I don't have userNotes.
-    // Or I assume userNotes are not critical for "dependency" calculation?
-    // "Custom Notes" list just contains IDs of items with notes.
-    // If I can't calculate it, I can't show it.
-    // I should probably pass userNotes too if I want full parity.
-    // Let's assume for now I skip "Custom Notes" list generation or pass it.
-    // Passing it requires updating App -> PackageManagerTab -> PackageExportModal chain. 
-    // I already updated the chain for customLists.
-    // The prompt didn't explicitly ask for Custom Notes export parity but "The built-in dynamic lists ... can appear".
-    // I'll skip "Custom Notes" for now to save complexity, or try to get it if easy.
-    // Actually, `userNotes` are just strings in a record. 
-    // I'll stick to what I have in CorpusContext.
 
     const [selectedDictionaries, setSelectedDictionaries] = useState<string[]>([]);
     const [selectedLists, setSelectedLists] = useState<Record<string, { selected: boolean, includeDependencies: boolean }>>({});
     const [metadata, setMetadata] = useState({
-        name: '',
-        author: '',
-        description: ''
+        name: initialMetadata?.name || '',
+        author: initialMetadata?.author || user?.displayName || '',
+        description: initialMetadata?.description || ''
     });
     const [isExporting, setIsExporting] = useState(false);
+
+    // Sharing & Versioning state
+    const [shareViaLink, setShareViaLink] = useState(!!user);
+    const [isUpdate, setIsUpdate] = useState(!!initialUpdateOf);
+    const [selectedUpdateOf, setSelectedUpdateOf] = useState<string | null>(initialUpdateOf);
+    const [userCloudPackages, setUserCloudPackages] = useState<any[]>([]);
+    const [shareResult, setShareResult] = useState<{ packageId: string; publicUrl: string; name: string } | null>(null);
+    const [copiedLink, setCopiedLink] = useState(false);
     
     // Global Includes
     const [includeAllAudio, setIncludeAllAudio] = useState(false);
@@ -156,6 +159,33 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({ onClose, custom
     }, [selectedDictionaries, selectedLists, includeAllAudio, includeAllGlosses, displayableLists, userSentences, personalWords, userAudioMeta, glosses]);
 
 
+    useEffect(() => {
+        const loadUserPackages = async () => {
+            const list: { id: string; name: string }[] = [];
+            // From local packages
+            packages.forEach(p => {
+                if (p.type === 'user' || p.type === 'imported') {
+                    list.push({ id: p.id, name: p.name });
+                }
+            });
+            // From Firebase user packages
+            if (user) {
+                try {
+                    const cloudPkgs = await DictionaryDB.getUserPackages(user.uid);
+                    Object.entries(cloudPkgs).forEach(([id, data]: [string, any]) => {
+                        if (!list.some(item => item.id === id)) {
+                            list.push({ id, name: data.metadata?.name || id });
+                        }
+                    });
+                } catch (e) {
+                    console.warn("Failed to load user packages from cloud:", e);
+                }
+            }
+            setUserCloudPackages(list);
+        };
+        loadUserPackages();
+    }, [user, packages]);
+
     const toggleDictionary = (id: string) => {
         setSelectedDictionaries(prev =>
             prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
@@ -176,6 +206,11 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({ onClose, custom
 
     const handleExport = async () => {
         if (!metadata.name || (selectedDictionaries.length === 0 && !Object.values(selectedLists).some(l => l.selected) && !includeAllAudio && !includeAllGlosses)) return;
+
+        if (shareViaLink && !user) {
+            alert("Please sign in first to share this package via a public link.");
+            return;
+        }
 
         setIsExporting(true);
         console.log("Starting export...");
@@ -201,8 +236,22 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({ onClose, custom
             const depEntryIds = includeDependencies ? dependencyEntries.map(d => d.id) : [];
 
             console.log("Calling exportPackage with:", { selectedDictionaries, metadata, finalListsConfig, depAudioIds, depEntryIds, includeAllNotesAndForms });
-            await exportPackage(selectedDictionaries, metadata, finalListsConfig, depAudioIds, depEntryIds, includeAllNotesAndForms);
-            onClose();
+            const result = await exportPackage(
+                selectedDictionaries, 
+                metadata, 
+                finalListsConfig, 
+                depAudioIds, 
+                depEntryIds, 
+                includeAllNotesAndForms,
+                shareViaLink,
+                isUpdate ? selectedUpdateOf : null
+            );
+
+            if (result && result.shared && result.publicUrl) {
+                setShareResult(result);
+            } else {
+                onClose();
+            }
         } catch (e) {
             console.error("Export failed detailed:", e);
             alert("Export failed: " + (e as Error).message);
@@ -210,6 +259,54 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({ onClose, custom
             setIsExporting(false);
         }
     };
+
+    if (shareResult) {
+        return (
+            <Modal title="Package Shared Successfully!" onClose={onClose}>
+                <div className="space-y-5 text-center py-2">
+                    <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto">
+                        <Check size={28} />
+                    </div>
+                    <div>
+                        <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
+                            {shareResult.name} is now live!
+                        </h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
+                            Anyone with this link can view details and import this package into their dictionary.
+                        </p>
+                    </div>
+
+                    <div className="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-2">
+                        <input
+                            type="text"
+                            readOnly
+                            value={shareResult.publicUrl}
+                            className="bg-transparent text-xs font-mono text-slate-700 dark:text-slate-200 flex-1 outline-none truncate"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => {
+                                navigator.clipboard.writeText(shareResult.publicUrl);
+                                setCopiedLink(true);
+                                setTimeout(() => setCopiedLink(false), 2000);
+                            }}
+                            className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold rounded-lg text-xs transition-colors shrink-0 flex items-center gap-1"
+                        >
+                            {copiedLink ? <><Check size={14} /> Copied</> : 'Copy Link'}
+                        </button>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-bold rounded-xl text-sm transition-colors"
+                    >
+                        Done
+                    </button>
+                </div>
+            </Modal>
+        );
+    }
 
     return (
         <Modal title="Export Package" onClose={onClose}>
@@ -237,6 +334,77 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({ onClose, custom
                         rows={3}
                         className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 outline-none focus:border-amber-500 resize-none dark:text-white"
                     />
+                </div>
+
+                {/* Package Versioning (updateOf) */}
+                <div className="space-y-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <label className="flex items-center gap-2.5 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={isUpdate}
+                            onChange={e => {
+                                setIsUpdate(e.target.checked);
+                                if (!e.target.checked) setSelectedUpdateOf(null);
+                            }}
+                            className="accent-amber-600 w-4 h-4 rounded"
+                        />
+                        <div>
+                            <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider block">
+                                Update of Existing Package
+                            </span>
+                            <span className="text-xs text-slate-400">
+                                Track versioning history for an earlier package
+                            </span>
+                        </div>
+                    </label>
+
+                    {isUpdate && (
+                        <div className="pt-2">
+                            <select
+                                value={selectedUpdateOf || ''}
+                                onChange={e => {
+                                    setSelectedUpdateOf(e.target.value || null);
+                                    const matched = userCloudPackages.find(p => p.id === e.target.value);
+                                    if (matched && !metadata.name) {
+                                        setMetadata(m => ({ ...m, name: matched.name }));
+                                    }
+                                }}
+                                className="w-full text-sm border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg px-3 py-2 outline-none focus:border-amber-500 dark:text-white"
+                            >
+                                <option value="">-- Select package being updated --</option>
+                                {userCloudPackages.map(pkg => (
+                                    <option key={pkg.id} value={pkg.id}>
+                                        {pkg.name} ({pkg.id.substring(0, 8)}...)
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+                </div>
+
+                {/* Public Link Sharing */}
+                <div className="space-y-2 p-3 bg-amber-50/60 dark:bg-amber-950/20 rounded-xl border border-amber-200/60 dark:border-amber-900/40">
+                    <label className="flex items-center gap-2.5 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={shareViaLink}
+                            onChange={e => setShareViaLink(e.target.checked)}
+                            className="accent-amber-600 w-4 h-4 rounded"
+                        />
+                        <div className="flex-1">
+                            <span className="text-xs font-bold text-amber-900 dark:text-amber-200 uppercase tracking-wider flex items-center gap-1.5">
+                                <LinkIcon size={14} /> Share Package via Public Link
+                            </span>
+                            <span className="text-xs text-amber-800/80 dark:text-amber-300/80 block mt-0.5">
+                                Creates a public link (/packageId) on this site so others can preview and install it.
+                            </span>
+                        </div>
+                    </label>
+                    {shareViaLink && !user && (
+                        <p className="text-xs text-red-500 dark:text-red-400 font-medium pl-6">
+                            Note: You are not signed in. You must sign in to publish this package online.
+                        </p>
+                    )}
                 </div>
 
                         {/* Custom Dictionaries */}
