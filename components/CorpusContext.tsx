@@ -335,8 +335,8 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
             // Extract Root Info from hierarchical-dict
             const hd = (d as any).sources?.['hierarchical-dict.json'];
-            if (hd && (hd.class_name || hd.h_grade_root || hd.glottal_grade_root)) {
-                const rootSlug = hd.h_grade_root || hd.glottal_grade_root || hd.class_name;
+            if (hd && (hd.class_name || hd.h_grade_root || hd.glottal_grade_root || hd.root_slug || hd.slug || (d as any).root_slug)) {
+                const rootSlug = hd.slug || hd.root_slug || (d as any).root_slug || hd.h_grade_root || hd.glottal_grade_root || hd.class_name;
                 
                 const rootEntry: RootEntry = {
                     entry_id: id || lilyIndex || '',
