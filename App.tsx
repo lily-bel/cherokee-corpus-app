@@ -116,7 +116,7 @@ function App() {
         let p = window.location.pathname;
         if (p.startsWith(base)) p = p.slice(base.length);
         p = p.replace(/^\/+|\/+$/g, '').trim();
-        const known = ['', 'index.html', 'search', 'reader', 'lists', 'widgets', 'packages'];
+        const known = ['', 'index.html', 'search', 'reader', 'lists', 'widgets', 'packages', 'cherokee-corpus-app'];
         if (p && !known.includes(p.toLowerCase()) && !p.includes('/')) return p;
         return null;
     });
@@ -134,7 +134,7 @@ function App() {
                 let p = window.location.pathname;
                 if (p.startsWith(base)) p = p.slice(base.length);
                 p = p.replace(/^\/+|\/+$/g, '').trim();
-                const known = ['', 'index.html', 'search', 'reader', 'lists', 'widgets', 'packages'];
+                const known = ['', 'index.html', 'search', 'reader', 'lists', 'widgets', 'packages', 'cherokee-corpus-app'];
                 if (p && !known.includes(p.toLowerCase()) && !p.includes('/')) id = p;
             }
             setUrlPackageId(id);
