@@ -1,3 +1,5 @@
+import React, { useContext } from 'react';
+import { CorpusContext, type SurfaceSegment } from './components/CorpusContext';
 
 export const parseCSV = (csvText: string) => {
   const lines: string[] = csvText.split('\n').filter((line: string) => line.trim() !== '');
@@ -101,7 +103,7 @@ const OBJ_MAP: Record<string, string> = {
     '1p-ex': '1st person plural exclusive',
 };
 
-export const getFriendlyLabel = (key: string, showObject = false) => {
+export const getFriendlyLabel = (key: string, showObject = false, hasAnimateContrast = false) => {
     if (!key) return '';
     const parts = key.split('|');
     if (parts.length >= 3) {
@@ -114,7 +116,11 @@ export const getFriendlyLabel = (key: string, showObject = false) => {
         
         let label = `${subj} ${tense}`;
         if (showObject && parts[1] && parts[1] !== 'none') {
-            const objStr = OBJ_MAP[parts[1]] || parts[1];
+            let objStr = OBJ_MAP[parts[1]] || parts[1];
+            if (hasAnimateContrast) {
+                if (parts[1] === '3s') objStr = 'inanimate';
+                else if (parts[1] === '3p') objStr = 'inanimate plural';
+            }
             label += ` (${objStr} object)`;
         }
         return label;
@@ -146,15 +152,19 @@ export const processFormsContextually = (forms: any[]) => {
         
         const parts = key.split('|');
         let showObject = false;
+        let hasAnimateContrast = false;
         if (parts.length >= 3 && parts[0] !== 'noun') {
             const subjTense = `${parts[0]}|${parts[2]}`;
             const objects = subjectTenseMap.get(subjTense);
             if (objects && objects.size > 1 && parts[1] && parts[1] !== 'none') {
                 showObject = true;
+                if (objects.has('3a') || objects.has('3pa')) {
+                    hasAnimateContrast = true;
+                }
             }
         }
         
-        return { ...f, displayLabel: getFriendlyLabel(key, showObject) };
+        return { ...f, displayLabel: getFriendlyLabel(key, showObject, hasAnimateContrast) };
     });
 };
 
@@ -434,7 +444,12 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
     const seenSentences = new Set(textMatches.map(m => m.item.id));
 
     dictMatches.forEach(entry => {
-      const linkedSentences = entryToSentencesMap.get(entry.id) || [];
+      const linkedSentences = Array.from(new Set([
+        ...(entryToSentencesMap.get(entry.id) || []),
+        ...(entryToSentencesMap.get(entry.Index) || []),
+        ...(entryToSentencesMap.get((entry as any).merged_id) || []),
+        ...((entry as any).sources?.['lily-dict.csv']?.Index ? (entryToSentencesMap.get((entry as any).sources['lily-dict.csv'].Index) || []) : [])
+      ]));
       linkedSentences.forEach(sId => {
         if (!seenSentences.has(sId)) {
           const s = sentences.find(x => x.id === sId);
@@ -564,13 +579,17 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
 
     let rootScore = 0;
     if (activeScopes.roots) {
-      const id = entry.id || entry.Index;
+      const id = entry.id || entry.Index || entry.merged_id;
       const rootEntry = rootMap.get(id);
       if (rootEntry) {
         if (activeLangs.translit) {
+          if (isEmptyRoot(rootEntry)) {
+            rootScore = Math.max(rootScore, testMatchScore('∅'));
+          }
           if (rootEntry.root_h) rootScore = Math.max(rootScore, testMatchScore(rootEntry.root_h));
           if (rootEntry.root_g) rootScore = Math.max(rootScore, testMatchScore(rootEntry.root_g));
           if (rootEntry.root_slug) rootScore = Math.max(rootScore, testMatchScore(rootEntry.root_slug));
+          if (rootEntry.slug && rootEntry.slug !== rootEntry.root_slug) rootScore = Math.max(rootScore, testMatchScore(rootEntry.slug));
         }
         if (activeLangs.english && rootEntry.definition) {
           rootScore = Math.max(rootScore, testMatchScore(rootEntry.definition));
@@ -1047,5 +1066,1118 @@ export function getAllFormsForEntry(
 
     return forms;
 }
+
+// --- Cherokee Word Segmentation & Colorization Helpers ---
+
+export const POST_ROOT_MORPHEME_SYMBOLS = new Set([
+  'change-out',
+  'change-out[flexible]',
+  'change-alt',
+  'leaving',
+  'long',
+  'long[no-a]',
+  'hitting',
+  'hitting[il]',
+  'hitting[hil]',
+  'iterative',
+  'iterative[no-i]',
+  'repetitive',
+  'be-at',
+  'spin',
+  'hit-on',
+  'hit-on[t]',
+  'hit-on[no-t]',
+  'become-long',
+  'become-long[a]',
+  'become-long[i]',
+  'become-long[o]',
+  'in'
+]);
+
+export interface PostRootMorphemeData {
+  name: string;
+  subcase: string | null;
+  key: string;
+  form: string;
+  classes: string[];
+}
+
+export const POST_ROOT_MORPHEMES: PostRootMorphemeData[] = [
+  { name: 'change-out', subcase: null, key: 'change-out', form: 'iy', classes: ['v-vhs'] },
+  { name: 'change-out', subcase: 'flexible', key: 'change-out[flexible]', form: "a'iy", classes: ['v-vhs'] },
+  { name: 'change-alt', subcase: null, key: 'change-alt', form: 'hs', classes: ['ih-vh[inf2]', 'ih-vh[imperf2-inf2]'] },
+  { name: 'leaving', subcase: null, key: 'leaving', form: 'iy', classes: ['a'] },
+  { name: 'long', subcase: null, key: 'long', form: 'at', classes: ['i-a-i'] },
+  { name: 'long', subcase: 'no-a', key: 'long[no-a]', form: 't', classes: ['i-a-i'] },
+  { name: 'hitting', subcase: 'il', key: 'hitting[il]', form: 'vn', classes: ['ih-il'] },
+  { name: 'hitting', subcase: 'hil', key: 'hitting[hil]', form: 'vn', classes: ['hih-hil', 'hih-hil[imp2]'] },
+  { name: 'iterative', subcase: null, key: 'iterative', form: 'ihs', classes: ['ih-ohd[perf2]'] },
+  { name: 'iterative', subcase: 'no-i', key: 'iterative[no-i]', form: 'hs', classes: ['ih-ohd[perf2]'] },
+  { name: 'repetitive', subcase: null, key: 'repetitive', form: 'il', classes: ['o'] },
+  { name: 'be-at', subcase: null, key: 'be-at', form: 'it', classes: ['oh-ol-a'] },
+  { name: 'spin', subcase: null, key: 'spin', form: 'tey', classes: ['oh-ol', 'oh-ol[inf2]', 'oh-ol[inf3]'] },
+  { name: 'hit-on', subcase: 't', key: 'hit-on[t]', form: 'telu', classes: ['hvsg-hn'] },
+  { name: 'hit-on', subcase: 'no-t', key: 'hit-on[no-t]', form: 'elu', classes: ['hvsg-hn'] },
+  { name: 'become-long', subcase: 'a', key: 'become-long[a]', form: 'a', classes: ['g-ts[*]'] },
+  { name: 'become-long', subcase: 'i', key: 'become-long[i]', form: 'i', classes: ['g-ts[*]'] },
+  { name: 'become-long', subcase: 'o', key: 'become-long[o]', form: 'o', classes: ['g-ts[*]'] },
+  { name: 'in', subcase: null, key: 'in', form: 'in', classes: ['eg-vs'] }
+];
+
+const POST_ROOT_MORPHEMES_MAP = new Map<string, PostRootMorphemeData>();
+POST_ROOT_MORPHEMES.forEach(m => {
+  POST_ROOT_MORPHEMES_MAP.set(m.key.toLowerCase(), m);
+  if (!POST_ROOT_MORPHEMES_MAP.has(m.name.toLowerCase())) {
+    POST_ROOT_MORPHEMES_MAP.set(m.name.toLowerCase(), m);
+  }
+});
+
+export function getPostRootMorpheme(keyOrName: string): { form: string; name: string } | null {
+  if (!keyOrName) return null;
+  const clean = keyOrName.trim();
+  const lower = clean.toLowerCase();
+  const found = POST_ROOT_MORPHEMES_MAP.get(lower);
+  if (found) {
+    return { form: found.form, name: clean };
+  }
+  const baseName = lower.split('[')[0];
+  const byBase = POST_ROOT_MORPHEMES_MAP.get(baseName);
+  if (byBase) {
+    return { form: byBase.form, name: clean };
+  }
+  return { form: '', name: clean };
+}
+
+export function unrespellConsonants(s: string): string {
+  if (!s) return '';
+  const trimmed = s.trim().toLowerCase();
+  if (POST_ROOT_MORPHEME_SYMBOLS.has(trimmed)) {
+    return s;
+  }
+
+  // Protect symbols occurring inside s
+  const placeholders: { [ph: string]: string } = {};
+  let processed = s;
+  let phIndex = 0;
+  const sortedSymbols = Array.from(POST_ROOT_MORPHEME_SYMBOLS).sort((a, b) => b.length - a.length);
+  for (const sym of sortedSymbols) {
+    const escaped = sym.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(?<![a-zA-Z])${escaped}(?![a-zA-Z])`, 'gi');
+    if (regex.test(processed)) {
+      processed = processed.replace(regex, (match) => {
+        const ph = `__PRMSYM_${phIndex++}__`;
+        placeholders[ph.toLowerCase()] = match;
+        return ph;
+      });
+    }
+  }
+
+  processed = processed.toLowerCase();
+  processed = processed.replace(/(^|[aeiouv])hs/g, '$1s');
+  const rules: [string, string][] = [
+    ['tsh', 'ch'], ['ts', 'j'], ['k', 'g'], ['gh', 'k'],
+    ['t', 'd'], ['dh', 't'], ['nh', 'hn'], ['lh', 'hl'],
+    ['yh', 'hy'], ['wh', 'hw'], ['slh', 'sl']
+  ];
+  for (const [oldStr, rep] of rules) {
+    processed = processed.split(oldStr).join(rep);
+  }
+
+  for (const [ph, orig] of Object.entries(placeholders)) {
+    processed = processed.split(ph).join(orig);
+  }
+
+  return processed;
+}
+
+export function preventGlottalCluster(s: string): string {
+  return s ? s.replace(/([^aeiouv']+)'/g, "'$1") : '';
+}
+
+export interface SegmentGroup {
+  role: number; // 0: root, 1: pronoun, 2: aspect, 3: prepronominal, 4: final, 5: post_root
+  roleType: 'root' | 'pronoun' | 'aspect' | 'prepronominal' | 'final' | 'post_root';
+  text: string;
+}
+
+export function segmentVerbForm(
+  segForm: string | undefined,
+  formName: string = 'present',
+  config?: any,
+  className?: string
+): SegmentGroup[] | null {
+  if (!segForm || segForm === '---') return null;
+  const parts = segForm.split(/(->|-)/);
+  const segments = parts.filter((_, i) => i % 2 === 0);
+
+  let numPre = (config?.pre?.translocutive ? 1 : 0) + (config?.pre?.partitive ? 1 : 0) + (config?.pre?.distributive ? 1 : 0);
+  if (formName === 'imperative' && config?.pre?.translocutiveImpOnly && !config?.pre?.translocutive) numPre++;
+
+  // Defensive check: if prepronominal prefix exists in segments but not in config
+  if (numPre === 0 && segments.length > 3 && /^(w|wi|te|de|ti|ni)$/i.test(segments[0])) {
+    numPre = 1;
+  }
+
+  const pronounIdx = numPre;
+  let aspectIdx: number | null = formName === 'imperative' ? segments.length - 1 : segments.length - 2;
+  if (className === 'stative') aspectIdx = null;
+
+  // Check if there is an empty root segment between pronoun and aspect
+  let emptyRootIdx = -1;
+  for (let i = pronounIdx + 1; i < (aspectIdx !== null ? aspectIdx : segments.length); i++) {
+    if (segments[i] === '') {
+      emptyRootIdx = i;
+      break;
+    }
+  }
+
+  const chars: { char: string; role: number; roleType: 'root' | 'pronoun' | 'aspect' | 'prepronominal' | 'final' | 'post_root' }[] = [];
+  segments.forEach((seg, i) => {
+    let role = 0;
+    let roleType: 'root' | 'pronoun' | 'aspect' | 'prepronominal' | 'final' | 'post_root' = 'root';
+    if (i < pronounIdx) { role = 3; roleType = 'prepronominal'; }
+    else if (i === pronounIdx) { role = 1; roleType = 'pronoun'; }
+    else if (aspectIdx !== null && i === aspectIdx) { role = 2; roleType = 'aspect'; }
+    else if (aspectIdx !== null && i > aspectIdx) { role = 4; roleType = 'final'; }
+    else if (emptyRootIdx !== -1) {
+      if (i === emptyRootIdx) {
+        role = 0;
+        roleType = 'root';
+      } else if (i > emptyRootIdx) {
+        // Any segment between empty root and aspect is post-root
+        role = 5;
+        roleType = 'post_root';
+      }
+    }
+    for (const c of seg) chars.push({ char: c, role, roleType });
+  });
+
+  // Drop dropped phones
+  let i = 0;
+  while (i < chars.length) {
+    if (chars[i].char === '>') {
+      chars.splice(i, 2);
+      continue;
+    }
+    i++;
+  }
+  i = 0;
+  while (i < chars.length) {
+    if (chars[i].char === '@') {
+      chars.splice(i, 1);
+      if (i > 0) { chars.splice(i - 1, 1); i--; }
+      if (i > 0) { chars.splice(i - 1, 1); i--; }
+      continue;
+    }
+    i++;
+  }
+  i = 0;
+  while (i < chars.length) {
+    if (chars[i].char === '*') {
+      chars.splice(i, 1);
+      if (i > 0) { chars.splice(i - 1, 1); i--; }
+      continue;
+    }
+    i++;
+  }
+  i = 0;
+  while (i < chars.length) {
+    if (chars[i].char === ':') {
+      chars.splice(i, 1);
+      continue;
+    }
+    i++;
+  }
+
+  const groups: { role: number; roleType: 'root' | 'pronoun' | 'aspect' | 'prepronominal' | 'final' | 'post_root'; text: string }[] = [];
+  chars.forEach(item => {
+    if (groups.length > 0 && groups[groups.length - 1].role === item.role) {
+      groups[groups.length - 1].text += item.char;
+    } else {
+      groups.push({ role: item.role, roleType: item.roleType, text: item.char });
+    }
+  });
+
+  return groups.map(g => ({
+    role: g.role,
+    roleType: g.roleType,
+    text: unrespellConsonants(preventGlottalCluster(g.text))
+  }));
+}
+
+export function normalizeForMatch(str: string): string {
+  return (str || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f:0-9\.\'\?]/g, '')
+    .toLowerCase()
+    .replace(/t/g, 'd')
+    .replace(/k/g, 'g')
+    .replace(/p/g, 'b')
+    .replace(/ch/g, 'j')
+    .replace(/ts/g, 'j')
+    .replace(/hw|wh/g, 'w')
+    .replace(/hl|lh/g, 'l')
+    .replace(/hn|nh/g, 'n')
+    .replace(/hy|yh/g, 'y');
+}
+
+export interface ColorChunk {
+  role: number;
+  roleType: 'root' | 'pronoun' | 'aspect' | 'prepronominal' | 'final' | 'post_root';
+  text: string;
+}
+
+export function colorizeSurface(surface: string, groups: SegmentGroup[] | null): ColorChunk[] {
+  if (!groups || groups.length === 0 || !surface) {
+    return [{ role: 0, roleType: 'root', text: surface || '' }];
+  }
+
+  const normGroups = groups.map(g => normalizeForMatch(g.text));
+  const cleanChar = (c: string) => normalizeForMatch(c);
+
+  let groupIdx = 0;
+  let charInGroup = 0;
+  const result: ColorChunk[] = [];
+  let curRole = groups[0].role;
+  let curRoleType = groups[0].roleType;
+  let curChunk = '';
+
+  for (let i = 0; i < surface.length; i++) {
+    const rawChar = surface[i];
+    const c = cleanChar(rawChar);
+
+    if (!c) {
+      curChunk += rawChar;
+      continue;
+    }
+
+    while (groupIdx < groups.length && charInGroup >= normGroups[groupIdx].length) {
+      groupIdx++;
+      charInGroup = 0;
+    }
+
+    if (groupIdx < groups.length) {
+      const expected = normGroups[groupIdx][charInGroup];
+      if (c === expected) {
+        if (groups[groupIdx].role !== curRole) {
+          if (curChunk) result.push({ role: curRole, roleType: curRoleType, text: curChunk });
+          curRole = groups[groupIdx].role;
+          curRoleType = groups[groupIdx].roleType;
+          curChunk = '';
+        }
+        curChunk += rawChar;
+        charInGroup++;
+      } else {
+        curChunk += rawChar;
+      }
+    } else {
+      curChunk += rawChar;
+    }
+  }
+
+  if (curChunk) result.push({ role: curRole, roleType: curRoleType, text: curChunk });
+  return result;
+}
+
+export function getFormPronominalSet(key: string, verbConfig?: any): 'A' | 'B' | 'P2P' {
+  if (!key) return (verbConfig?.pron?.set_type === 'b' || verbConfig?.pron?.set_type === 'B') ? 'B' : 'A';
+  const k = key.toLowerCase();
+  if (k.includes('3a') || k.includes('1s|2') || k.includes('2s|1') || k.includes('animate')) {
+    return 'P2P';
+  }
+  if (k.includes('infinitive') || k.includes('past') || k.includes('perfective')) {
+    return 'B';
+  }
+  if (verbConfig?.pron?.set_type === 'b' || verbConfig?.pron?.set_type === 'B') {
+    return 'B';
+  }
+  return 'A';
+}
+
+export function deriveSegmentedForm(
+  form: any,
+  _allForms: any[] = [],
+  rootEntry?: any
+): string | undefined {
+  if (!rootEntry || !rootEntry.segmented_forms) return undefined;
+  if (form?.segmented_form) return form.segmented_form;
+  const key = (form?.normalized_key || form?.form_name || form?.label || '').toLowerCase();
+
+  const presSeg = rootEntry.segmented_forms.present;
+  const impSeg = rootEntry.segmented_forms.imperative;
+
+  if ((key === '1s|3a|present' || (key.includes('animate') && key.includes('1st'))) && presSeg && !key.includes('imperative')) {
+    let seg = 'tsiy-' + presSeg.replace(/^([a-z0-9>@*:]+->|[a-z0-9>@*:]+-)/, '');
+    if (seg.startsWith('tsiy-al') || seg.startsWith('tsiy->al')) {
+      seg = 'tsiy-atlawitht-ih-a';
+    }
+    return seg;
+  }
+
+  if ((key === '2s|3a|imperative' || (key.includes('imperative') && key.includes('animate'))) && impSeg) {
+    return impSeg;
+  }
+
+  if (key === '1s|3s|present' || key === '1s|present' || key.includes('1st person singular present') || key.includes('1st person singular with inanimate')) {
+    const rawSeg = rootEntry.segmented_forms.present_1sg;
+    if (rawSeg && rawSeg.startsWith('tsiy-') && (form?.translit?.startsWith('ga') || form?.tone?.startsWith('ga') || form?.tone2?.startsWith('ga'))) {
+      return 'k-' + rawSeg.slice(5);
+    }
+    return rawSeg;
+  }
+
+  if (key === '2s|3s|imperative' || key === '2s|imperative' || (key.includes('imperative') && !key.includes('animate'))) {
+    const rawSeg = impSeg;
+    if (form?.translit?.startsWith('hahl') || form?.tone?.startsWith('hahl') || form?.tone2?.startsWith('hahl')) {
+      return 'ha-hlawitht-a';
+    }
+    return rawSeg;
+  }
+
+  if (key === '3s|3s|present' || key === '3s|present' || key.includes('3rd person singular present') || key === 'present') {
+    return presSeg;
+  }
+
+  if (key.includes('habitual') || key.includes('imperfective')) {
+    return rootEntry.segmented_forms.imperfective;
+  }
+
+  if (key.includes('infinitive') || key.includes('deverbative')) {
+    return rootEntry.segmented_forms.infinitive;
+  }
+
+  if (key.includes('past') || key.includes('perfective')) {
+    return rootEntry.segmented_forms.perfective;
+  }
+
+  return undefined;
+}
+
+// Consonant equivalences in Cherokee for phonetic alignment
+const equivMap = new Map([
+  ['t', new Set(['d', 't'])],
+  ['d', new Set(['t', 'd'])],
+  ['k', new Set(['g', 'k'])],
+  ['g', new Set(['k', 'g'])],
+  ['p', new Set(['b', 'p'])],
+  ['b', new Set(['p', 'b'])],
+  ['j', new Set(['j', 's', 'ts', 'ch'])],
+  ['s', new Set(['s', 'j', 'ts'])],
+  ['w', new Set(['w', 'v', 'wh', 'hw'])],
+  ['v', new Set(['v', 'w'])],
+  ['\'', new Set(['\'', '?', 'h'])],
+  ['?', new Set(['\'', '?', 'h'])],
+  ['h', new Set(['h', '\'', '?'])]
+]);
+
+function isToneMarkOrPunct(ch: string): boolean {
+  if (!ch) return false;
+  const code = ch.charCodeAt(0);
+  if (ch === '¹' || ch === '²' || ch === '³' || ch === '⁴') return true;
+  if (code >= 48 && code <= 57) return true;
+  if (/[\.\:\?\-_\s\',\"\u0241\u0242\u0294]/.test(ch)) return true;
+  if (code >= 0x0300 && code <= 0x036f) return true;
+  return false;
+}
+
+function charMatchScore(r: string, t: string): number {
+  const rNorm = r.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const tNorm = t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  if (rNorm === tNorm) return 3;
+  if (equivMap.get(rNorm)?.has(tNorm)) return 2;
+  return -2;
+}
+
+/**
+ * Projects morphological segments (or groups) onto a surface tone string,
+ * transferring the segment boundaries, roles, and colors to the tone representation
+ * while preserving all diacritics, superscripts, numbers, and punctuation.
+ */
+export function projectSegmentsOntoTone(
+  segments: SurfaceSegment[] | null | undefined,
+  tone: string | undefined
+): SurfaceSegment[] {
+  if (!tone) return [];
+  if (!segments || segments.length === 0) {
+    return [{ role: 'root', text: tone }];
+  }
+  if (segments.length === 1) {
+    return [{ ...segments[0], text: tone }];
+  }
+
+  // Build regular characters with segment indices
+  const regChars: { char: string; segIdx: number }[] = [];
+  for (let sIdx = 0; sIdx < segments.length; sIdx++) {
+    const text = segments[sIdx].text || '';
+    for (let cIdx = 0; cIdx < text.length; cIdx++) {
+      regChars.push({
+        char: text[cIdx],
+        segIdx: sIdx
+      });
+    }
+  }
+
+  if (regChars.length === 0) {
+    return segments.map((s, idx) => ({ ...s, text: idx === 0 ? tone : '' }));
+  }
+
+  const M = regChars.length;
+  const N = tone.length;
+
+  const dp = Array.from({ length: M + 1 }, () => new Int32Array(N + 1));
+  const traceback = Array.from({ length: M + 1 }, () => new Int8Array(N + 1));
+
+  // Initialize DP
+  for (let i = 1; i <= M; i++) {
+    dp[i][0] = dp[i - 1][0] - 2;
+    traceback[i][0] = 2;
+  }
+  for (let j = 1; j <= N; j++) {
+    const isPunct = isToneMarkOrPunct(tone[j - 1]);
+    dp[0][j] = dp[0][j - 1] + (isPunct ? 0 : -2);
+    traceback[0][j] = 3;
+  }
+
+  for (let i = 1; i <= M; i++) {
+    const rChar = regChars[i - 1].char;
+    for (let j = 1; j <= N; j++) {
+      const tChar = tone[j - 1];
+      const isPunct = isToneMarkOrPunct(tChar);
+
+      if (isPunct) {
+        // Tone mark, superscript, diacritic, or punct attaches to current alignment at zero penalty
+        dp[i][j] = dp[i][j - 1];
+        traceback[i][j] = 3;
+        continue;
+      }
+
+      const scoreMatch = dp[i - 1][j - 1] + charMatchScore(rChar, tChar);
+      const scoreDelReg = dp[i - 1][j] - 2;
+      const scoreInsTone = dp[i][j - 1] - 2;
+
+      let best = scoreMatch;
+      let tb = 1;
+      if (scoreDelReg > best) {
+        best = scoreDelReg;
+        tb = 2;
+      }
+      if (scoreInsTone > best) {
+        best = scoreInsTone;
+        tb = 3;
+      }
+
+      dp[i][j] = best;
+      traceback[i][j] = tb;
+    }
+  }
+
+  // Backtrack to assign each character in tone to a segment
+  const toneSegAssignments = new Int32Array(N);
+  let i = M;
+  let j = N;
+  let lastAssignedSeg = segments.length - 1;
+
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && traceback[i][j] === 1) {
+      lastAssignedSeg = regChars[i - 1].segIdx;
+      toneSegAssignments[j - 1] = lastAssignedSeg;
+      i--;
+      j--;
+    } else if (j > 0 && (i === 0 || traceback[i][j] === 3)) {
+      const seg = (i > 0) ? regChars[i - 1].segIdx : (i === 0 ? 0 : lastAssignedSeg);
+      toneSegAssignments[j - 1] = seg;
+      lastAssignedSeg = seg;
+      j--;
+    } else if (i > 0) {
+      lastAssignedSeg = regChars[i - 1].segIdx;
+      i--;
+    } else {
+      j--;
+    }
+  }
+
+  const result: SurfaceSegment[] = segments.map(s => ({ ...s, text: '' }));
+  for (let k = 0; k < N; k++) {
+    const sIdx = Math.max(0, Math.min(segments.length - 1, toneSegAssignments[k]));
+    result[sIdx].text += tone[k];
+  }
+
+  return result;
+}
+
+export function segmentGroupsToSegments(
+  groups: SegmentGroup[] | null | undefined,
+  pronominalSet: 'A' | 'B' | 'P2P' | string = 'A'
+): SurfaceSegment[] {
+  if (!groups || groups.length === 0) return [];
+  return groups.map(g => ({
+    role: (g.role === 3 || g.roleType === 'prepronominal') ? 'prepronominal'
+        : (g.role === 1 || g.roleType === 'pronoun') ? 'pronoun'
+        : (g.role === 5 || g.roleType === 'post_root') ? 'post_root'
+        : (g.role === 2 || g.roleType === 'aspect') ? 'aspect'
+        : (g.role === 4 || g.roleType === 'final') ? 'final'
+        : 'root',
+    text: g.text,
+    set: (pronominalSet === 'B' ? 'B' : pronominalSet === 'P2P' ? 'P2P' : 'A') as any
+  }));
+}
+
+export function renderColorizedCherokee(
+  surface: string | undefined,
+  groups: SegmentGroup[] | null | undefined,
+  pronominalSet: 'A' | 'B' | 'P2P' | string = 'A',
+  isColored: boolean = true
+): React.ReactNode {
+  if (!surface) return null;
+  if (!isColored || !groups || groups.length === 0) {
+    return <span className="font-bold">{surface}</span>;
+  }
+
+  const segments = segmentGroupsToSegments(groups, pronominalSet);
+  const projected = projectSegmentsOntoTone(segments, surface);
+  return renderSegmentedSurface(projected, isColored);
+}
+
+export function renderSegmentedSurface(
+  segments: SurfaceSegment[] | null | undefined,
+  isColored: boolean = true
+): React.ReactNode {
+  if (!segments || segments.length === 0) return null;
+  const fullText = segments.map(s => s.text).join('');
+  if (!isColored) {
+    return <span className="font-bold">{fullText}</span>;
+  }
+
+  return (
+    <span className="font-bold">
+      {segments.map((seg, idx) => {
+        if (!seg.text) return null;
+        if (seg.role === 'prepronominal') {
+          return (
+            <span key={idx} className="text-emerald-500 dark:text-emerald-300 font-bold" title="Prepronominal prefix">
+              {seg.text}
+            </span>
+          );
+        }
+        if (seg.role === 'pronoun') {
+          const setType = seg.set || (seg.color === 'RoyalBlue' ? 'B' : seg.color === 'Purple' ? 'P2P' : 'A');
+          let colorClass = "text-red-600 dark:text-red-400 font-bold";
+          if (setType === 'B') {
+            colorClass = "text-blue-600 dark:text-blue-400 font-bold";
+          } else if (setType === 'P2P') {
+            colorClass = "text-purple-600 dark:text-purple-400 font-bold";
+          }
+          return (
+            <span key={idx} className={colorClass} title={`Pronoun (${setType})`}>
+              {seg.text}
+            </span>
+          );
+        }
+        if (seg.role === 'middle_voice') {
+          return (
+            <span key={idx} className="text-slate-700 dark:text-slate-300 font-bold" title="Middle voice">
+              {seg.text}
+            </span>
+          );
+        }
+        if (seg.role === 'root') {
+          return (
+            <span key={idx} className="text-slate-700 dark:text-slate-300 font-bold underline underline-offset-2" title="Root">
+              {seg.text}
+            </span>
+          );
+        }
+        if (seg.role === 'post_root') {
+          return (
+            <span key={idx} className="text-slate-700 dark:text-slate-300 font-bold" title="Post-root morpheme">
+              {seg.text}
+            </span>
+          );
+        }
+        if (seg.role === 'aspect') {
+          return (
+            <span key={idx} className="text-emerald-500 dark:text-emerald-300 font-bold" title="Aspect suffix / Class ending">
+              {seg.text}
+            </span>
+          );
+        }
+        if (seg.role === 'final') {
+          return (
+            <span key={idx} className="text-slate-700 dark:text-slate-300 font-bold" title="Final suffix">
+              {seg.text}
+            </span>
+          );
+        }
+        return (
+          <span key={idx} className="text-inherit font-bold">
+            {seg.text}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
+export function resolveHdFormName(keyOrLabel: string | undefined): string | null {
+  if (!keyOrLabel) return null;
+  const k = keyOrLabel.toLowerCase().trim();
+
+  // 1. Present 3sg / Base
+  if (
+    k === 'present' ||
+    k === '3s|3s|present' ||
+    k === '3s|present' ||
+    k === 'present 3sg' ||
+    k === 'base' ||
+    k === 'base form' ||
+    k === '3rd person singular present' ||
+    k === '3rd person present' ||
+    k === '3rd present'
+  ) {
+    return 'present';
+  }
+
+  // 2. Present 1sg
+  if (
+    k === 'present_1sg' ||
+    k === '1s|3s|present' ||
+    k === '1s|present' ||
+    k === '1st present' ||
+    k.includes('1st person singular present') ||
+    k.includes('1st person singular with inanimate')
+  ) {
+    return 'present_1sg';
+  }
+
+  // 3. Imperfective / Habitual
+  if (
+    k === 'imperfective' ||
+    k === 'habitual' ||
+    k === '3s|3s|habitual' ||
+    k === '3s|habitual' ||
+    k === '3rd habitual' ||
+    k.includes('present habitual') ||
+    k.includes('habitual') ||
+    k.includes('imperfective')
+  ) {
+    return 'imperfective';
+  }
+
+  // 4. Perfective / Past
+  if (
+    k === 'perfective' ||
+    k === 'past' ||
+    k === '3s|3s|past' ||
+    k === '3s|past' ||
+    k === '3s|3s|completive past' ||
+    k === 'completive past' ||
+    k === '3rd past' ||
+    k.includes('remote past') ||
+    k.includes('completive past') ||
+    k.includes('perfective') ||
+    (k.includes('past') && !k.includes('habitual past'))
+  ) {
+    return 'perfective';
+  }
+
+  // 5. Imperative
+  if (
+    k === 'imperative' ||
+    k === '2s|3s|imperative' ||
+    k === '2s|imperative' ||
+    k === '2nd imperative' ||
+    k.includes('immediate imperative') ||
+    k.includes('2nd person singular imperative') ||
+    k.includes('2nd person imperative') ||
+    k.includes('imperative')
+  ) {
+    if (!k.includes('3a') && !k.includes('animate')) {
+      return 'imperative';
+    }
+  }
+
+  // 6. Infinitive
+  if (
+    k === 'infinitive' ||
+    k === '3s|3s|infinitive' ||
+    k === '3s|infinitive' ||
+    k === '3rd infinitive' ||
+    k.includes('infinitive') ||
+    k.includes('deverbative')
+  ) {
+    return 'infinitive';
+  }
+
+  return null;
+}
+
+export function getColorWordSegmentsSetting(settings?: any): boolean {
+  if (settings?.colorWordSegments !== undefined) {
+    return settings.colorWordSegments !== false;
+  }
+  try {
+    const s = localStorage.getItem('cherokee_app_settings');
+    if (s) {
+      const parsed = JSON.parse(s);
+      if (parsed.colorWordSegments !== undefined) {
+        return parsed.colorWordSegments !== false;
+      }
+    }
+  } catch {
+    // Ignore localStorage errors
+  }
+  return true;
+}
+
+export interface ColorizedCherokeeWordProps {
+  word?: string;
+  form?: any;
+  formKey?: string;
+  entry?: any;
+  rootEntry?: any;
+  allForms?: any[];
+  isColored?: boolean;
+  settings?: any;
+  className?: string;
+}
+
+export const ColorizedCherokeeWord: React.FC<ColorizedCherokeeWordProps> = ({
+  word,
+  form,
+  formKey,
+  entry,
+  rootEntry,
+  allForms,
+  isColored,
+  settings,
+  className = ""
+}) => {
+  const corpus = useContext(CorpusContext);
+  const rootMap = corpus?.rootMap;
+
+  const text = word ?? form?.translit ?? form?.tone ?? entry?.translit ?? entry?.Entry ?? '';
+  if (!text) return null;
+
+  const colored = isColored !== undefined
+    ? isColored
+    : getColorWordSegmentsSetting(settings);
+
+  if (!colored) {
+    return <span className={`font-bold ${className}`.trim()}>{text}</span>;
+  }
+
+  let rEntry = rootEntry;
+  if (!rEntry && entry) {
+    rEntry = entry.rootEntry;
+    if (!rEntry && rootMap) {
+      rEntry = rootMap.get(entry.Index) ||
+               rootMap.get(entry.id) ||
+               rootMap.get(entry.merged_id) ||
+               rootMap.get(entry.sources?.['lily-dict.csv']?.Index);
+    }
+    if (!rEntry && (entry.surface_segments || entry.segmented_forms)) {
+      rEntry = entry;
+    }
+  } else if (!rEntry && form && rootMap) {
+    if (form.word_index) {
+      rEntry = rootMap.get(form.word_index);
+    }
+  }
+
+  if (!rEntry) {
+    return <span className={`font-bold ${className}`.trim()}>{text}</span>;
+  }
+
+  const candidateKey = formKey ||
+    form?.normalized_key ||
+    form?.form_name ||
+    form?.label ||
+    form?.slotKey ||
+    (entry && !form ? 'present' : undefined);
+
+  const hdSlot = resolveHdFormName(candidateKey);
+
+  // 1. Exact match in surface_segments
+  if (hdSlot && rEntry.surface_segments?.[hdSlot]) {
+    let segments = rEntry.surface_segments[hdSlot];
+    if (isEmptyRoot(rEntry)) {
+      segments = segments.map(s => s.role === 'root' ? { ...s, role: (rEntry.post_root_morpheme ? 'post_root' : 'aspect') as any } : s);
+    }
+    const projected = projectSegmentsOntoTone(segments, text);
+    return (
+      <span className={className}>
+        {renderSegmentedSurface(projected, colored)}
+      </span>
+    );
+  }
+
+  // 2. Derive segmented form if available
+  if (rEntry.segmented_forms) {
+    const derivedSeg = deriveSegmentedForm(
+      form || { normalized_key: candidateKey || 'present', translit: text },
+      allForms || [],
+      rEntry
+    );
+
+    if (derivedSeg) {
+      const slotName = (candidateKey || '').split('|')[2] || hdSlot || 'present';
+      const groups = segmentVerbForm(derivedSeg, slotName, rEntry.config, rEntry.class_name);
+      const pSet = getFormPronominalSet(candidateKey || '', rEntry.config);
+      return (
+        <span className={className}>
+          {renderColorizedCherokee(text, groups, pSet, colored)}
+        </span>
+      );
+    }
+
+    // If headword or present
+    if ((!form || hdSlot === 'present') && rEntry.segmented_forms.present) {
+      const groups = segmentVerbForm(rEntry.segmented_forms.present, 'present', rEntry.config, rEntry.class_name);
+      const pSet = rEntry.config?.pron?.set_type === 'b' ? 'B' : 'A';
+      return (
+        <span className={className}>
+          {renderColorizedCherokee(text, groups, pSet, colored)}
+        </span>
+      );
+    }
+  }
+
+  return <span className={`font-bold ${className}`.trim()}>{text}</span>;
+};
+
+export function formatCommunityRoot(rootRaw: string): string {
+  if (!rootRaw) return '';
+  if (rootRaw === '∅') return '∅';
+  return unrespellConsonants(rootRaw)
+    .replace(/(?<!\\)(kh|Kh|hs)/gi, (m) => m.toLowerCase() === 'hs' ? 'sh' : 'k')
+    .replace(/\s+/g, '');
+}
+
+export function isEmptyRoot(rootEntry?: any): boolean {
+  if (!rootEntry) return false;
+  const h = rootEntry.root_h;
+  const g = rootEntry.root_g;
+  if (h === '∅' || g === '∅' || h === '--' || g === '--') return true;
+  const slug = (rootEntry.slug || rootEntry.root_slug || '').toLowerCase();
+  if (slug === 'bg9uzw' || slug === 'fc1zb2xpza' || slug === 'agl0') return true;
+  if (!h && !g) return true;
+  return false;
+}
+
+export function sanitizeEmptyRootSurfaceSegments(
+  surfaceSegments: Record<string, SurfaceSegment[]> | undefined,
+  postRootMorpheme?: string | null
+): Record<string, SurfaceSegment[]> | undefined {
+  if (!surfaceSegments || typeof surfaceSegments !== 'object') return surfaceSegments;
+  const sanitized: Record<string, SurfaceSegment[]> = {};
+  for (const [key, val] of Object.entries(surfaceSegments)) {
+    if (!Array.isArray(val)) {
+      sanitized[key] = val;
+      continue;
+    }
+    sanitized[key] = val.map(seg => {
+      if (seg.role === 'root') {
+        return {
+          ...seg,
+          role: (postRootMorpheme ? 'post_root' : 'aspect') as any
+        };
+      }
+      return seg;
+    });
+  }
+  return sanitized;
+}
+
+export interface VerbMorphologyTemplateProps {
+  rootEntry: any;
+  onViewRoot: (slug: string) => void;
+  onViewClass: (className: string) => void;
+  showMascot?: boolean;
+  className?: string;
+}
+
+export const VerbMorphologyTemplate: React.FC<VerbMorphologyTemplateProps> = ({
+  rootEntry,
+  onViewRoot,
+  onViewClass,
+  showMascot = false,
+  className = ''
+}) => {
+  if (!rootEntry) return null;
+
+  const config = rootEntry.config;
+  const elements: React.ReactNode[] = [];
+
+  // 1. Prepronominals
+  if (config?.pre?.translocutive) {
+    elements.push(
+      <span key="pre-wi" className="font-semibold text-emerald-500 dark:text-emerald-300" title="Translocutive prefix">
+        wi
+      </span>
+    );
+  }
+  if (config?.pre?.partitive) {
+    elements.push(
+      <span key="pre-ni" className="font-semibold text-emerald-500 dark:text-emerald-300" title="Partitive prefix">
+        ni
+      </span>
+    );
+  }
+  if (config?.pre?.distributive) {
+    elements.push(
+      <span key="pre-te" className="font-semibold text-emerald-500 dark:text-emerald-300" title="Distributive prefix">
+        te
+      </span>
+    );
+  }
+
+  // 2. Pronominal set
+  let setLabel = 'Set A';
+  const setType = (config?.pron?.set_type || '').toLowerCase();
+  let setClass = 'text-red-600 dark:text-red-500 font-semibold';
+
+  if (setType === 'b') {
+    setLabel = config?.pron?.plural_pronouns ? 'Set B (pl)' : 'Set B';
+    setClass = 'text-blue-600 dark:text-blue-400 font-semibold';
+  } else if (setType === 'p2p' || setType === 'person_to_person') {
+    setLabel = 'Person-to-person';
+    setClass = 'text-purple-600 dark:text-purple-400 font-semibold';
+  } else {
+    setLabel = config?.pron?.use_ka_variant ? 'Set A (ga)' : 'Set A';
+    if (config?.pron?.plural_pronouns) setLabel += ' (pl)';
+  }
+
+  elements.push(
+    <span key="pron-set" className={setClass} title={`Pronominal Set ${setLabel}`}>
+      {setLabel}
+    </span>
+  );
+
+  // 3. Middle voice
+  const mv = config?.pron?.middle_voice;
+  if (mv && mv !== 'none') {
+    const mvClean = mv.replace(/_/g, '/').toLowerCase();
+    elements.push(
+      <span key="mv" className="text-slate-500 dark:text-slate-400 italic font-medium" title="Middle voice">
+        {mvClean}
+      </span>
+    );
+  }
+
+  // 4. Root in Community Orthography
+  let rootLines: string[] = [];
+  if (isEmptyRoot(rootEntry)) {
+    rootLines = ['∅'];
+  } else {
+    const commH = rootEntry.root_h ? formatCommunityRoot(rootEntry.root_h) : '';
+    const commG = rootEntry.root_g ? formatCommunityRoot(rootEntry.root_g) : '';
+
+    if (commH && commG && commH !== commG) {
+      rootLines = [commH, commG];
+    } else {
+      const raw = commH || commG || (rootEntry.slug || rootEntry.root_slug ? formatCommunityRoot(rootEntry.slug || rootEntry.root_slug) : '');
+      if (raw.includes('/')) {
+        rootLines = raw.split('/').map(s => s.trim()).filter(Boolean);
+      } else if (raw.includes('|')) {
+        rootLines = raw.split('|').map(s => s.trim()).filter(Boolean);
+      } else if (raw) {
+        rootLines = [raw];
+      }
+    }
+
+    if (rootLines.length === 0) {
+      rootLines = ['Root'];
+    }
+  }
+
+  if (rootLines.length > 1) {
+    elements.push(
+      <button
+        key="root"
+        type="button"
+        onClick={() => onViewRoot(rootEntry.slug || rootEntry.root_slug)}
+        className="font-bold text-slate-900 dark:text-slate-100 hover:text-amber-600 dark:hover:text-amber-400 transition-colors inline-flex flex-col items-center align-middle leading-tight"
+        title="View Root"
+      >
+        {rootLines.map((line, rIdx) => (
+          <span key={rIdx} className="underline decoration-dotted underline-offset-2 select-text leading-tight">
+            {line}
+          </span>
+        ))}
+      </button>
+    );
+  } else {
+    elements.push(
+      <button
+        key="root"
+        type="button"
+        onClick={() => onViewRoot(rootEntry.slug || rootEntry.root_slug)}
+        className="font-bold text-slate-900 dark:text-slate-100 hover:text-amber-600 dark:hover:text-amber-400 transition-colors underline decoration-dotted underline-offset-4"
+        title="View Root"
+      >
+        {rootLines[0]}
+      </button>
+    );
+  }
+
+  // 5. Post-root morpheme
+  if (rootEntry.post_root_morpheme) {
+    const prm = getPostRootMorpheme(rootEntry.post_root_morpheme);
+    const prmForm = prm?.form || '';
+    const prmName = prm?.name || rootEntry.post_root_morpheme;
+
+    elements.push(
+      <div key="prm" className="inline-flex flex-col items-center align-middle leading-tight" title={`Post-root morpheme: ${prmName}`}>
+        {prmForm ? (
+          <>
+            <span className="font-semibold text-slate-800 dark:text-slate-200 leading-none underline decoration-transparent decoration-dotted underline-offset-4">
+              {prmForm}
+            </span>
+            <span className="text-[11px] font-sans font-normal text-slate-400 dark:text-slate-500 leading-none mt-1 select-text">
+              {prmName}
+            </span>
+          </>
+        ) : (
+          <span className="text-slate-500 dark:text-slate-400 font-medium select-text">
+            {prmName}
+          </span>
+        )}
+      </div>
+    );
+  }
+
+  // 6. Aspect class & mascot
+  if (rootEntry.class_name) {
+    const mascot = rootEntry.class_mascot;
+    elements.push(
+      <div key="class" className="inline-flex flex-col items-center align-middle leading-tight">
+        <button
+          type="button"
+          onClick={() => onViewClass(rootEntry.class_name)}
+          className="font-normal text-emerald-500 dark:text-emerald-300 hover:text-emerald-400 dark:hover:text-emerald-200 transition-colors leading-none underline decoration-dotted underline-offset-4"
+          title="View Class"
+        >
+          [{rootEntry.class_name}]
+        </button>
+        {showMascot && mascot && (
+          <span className="text-[11px] font-sans italic font-normal text-slate-400 dark:text-slate-500 leading-none mt-1 select-text" title="Class mascot verb">
+            {mascot}
+          </span>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className={`flex flex-wrap items-center gap-x-1.5 gap-y-1 text-base sm:text-lg font-medium pb-1 select-text ${className}`}>
+      {elements.map((el, idx) => (
+        <React.Fragment key={idx}>
+          {idx > 0 && <span className="text-slate-400 dark:text-slate-600 font-sans select-none">-</span>}
+          {el}
+        </React.Fragment>
+      ))}
+    </div>
+  );
+};
 
 

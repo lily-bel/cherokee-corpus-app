@@ -1,0 +1,177 @@
+[
+  {
+    "name": "change-out",
+    "subcase": null,
+    "key": "change-out",
+    "form": "iy",
+    "classes": [
+      "v-vhs"
+    ]
+  },
+  {
+    "name": "change-out",
+    "subcase": "flexible",
+    "key": "change-out[flexible]",
+    "form": "a'iy",
+    "classes": [
+      "v-vhs"
+    ]
+  },
+  {
+    "name": "change-alt",
+    "subcase": null,
+    "key": "change-alt",
+    "form": "hs",
+    "classes": [
+      "ih-vh[inf2]",
+      "ih-vh[imperf2-inf2]"
+    ]
+  },
+  {
+    "name": "leaving",
+    "subcase": null,
+    "key": "leaving",
+    "form": "iy",
+    "classes": [
+      "a"
+    ]
+  },
+  {
+    "name": "long",
+    "subcase": null,
+    "key": "long",
+    "form": "at",
+    "classes": [
+      "i-a-i"
+    ]
+  },
+  {
+    "name": "long",
+    "subcase": "no-a",
+    "key": "long[no-a]",
+    "form": "t",
+    "classes": [
+      "i-a-i"
+    ]
+  },
+  {
+    "name": "hitting",
+    "subcase": "il",
+    "key": "hitting[il]",
+    "form": "vn",
+    "classes": [
+      "ih-il"
+    ]
+  },
+  {
+    "name": "hitting",
+    "subcase": "hil",
+    "key": "hitting[hil]",
+    "form": "vn",
+    "classes": [
+      "hih-hil",
+      "hih-hil[imp2]"
+    ]
+  },
+  {
+    "name": "iterative",
+    "subcase": null,
+    "key": "iterative",
+    "form": "ihs",
+    "classes": [
+      "ih-ohd[perf2]"
+    ]
+  },
+  {
+    "name": "iterative",
+    "subcase": "no-i",
+    "key": "iterative[no-i]",
+    "form": "hs",
+    "classes": [
+      "ih-ohd[perf2]"
+    ]
+  },
+  {
+    "name": "repetitive",
+    "subcase": null,
+    "key": "repetitive",
+    "form": "il",
+    "classes": [
+      "o"
+    ]
+  },
+  {
+    "name": "be-at",
+    "subcase": null,
+    "key": "be-at",
+    "form": "it",
+    "classes": [
+      "oh-ol-a"
+    ]
+  },
+  {
+    "name": "spin",
+    "subcase": null,
+    "key": "spin",
+    "form": "tey",
+    "classes": [
+      "oh-ol",
+      "oh-ol[inf2]",
+      "oh-ol[inf3]"
+    ]
+  },
+  {
+    "name": "hit-on",
+    "subcase": "t",
+    "key": "hit-on[t]",
+    "form": "telu",
+    "classes": [
+      "hvsg-hn"
+    ]
+  },
+  {
+    "name": "hit-on",
+    "subcase": "no-t",
+    "key": "hit-on[no-t]",
+    "form": "elu",
+    "classes": [
+      "hvsg-hn"
+    ]
+  },
+  {
+    "name": "become-long",
+    "subcase": "a",
+    "key": "become-long[a]",
+    "form": "a",
+    "classes": [
+      "g-ts[*]"
+    ]
+  },
+  {
+    "name": "become-long",
+    "subcase": "i",
+    "key": "become-long[i]",
+    "form": "i",
+    "classes": [
+      "g-ts[*]"
+    ]
+  },
+  {
+    "name": "become-long",
+    "subcase": "o",
+    "key": "become-long[o]",
+    "form": "o",
+    "classes": [
+      "g-ts[*]"
+    ]
+  },
+  {
+    "name": "in",
+    "subcase": null,
+    "key": "in",
+    "form": "in",
+    "classes": [
+      "eg-vs"
+    ]
+  }
+]

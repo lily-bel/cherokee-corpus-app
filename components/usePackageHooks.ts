@@ -165,6 +165,8 @@ export const usePackageExport = () => {
 
                 return {
                     merged_id: w.id || w.Index,
+                    root_slug: (w as any).root_slug || (w as any).slug || undefined,
+                    slug: (w as any).slug || (w as any).root_slug || undefined,
                     sources: {
                         [sourceKey]: {
                             "Practical": w.translit || w.Entry || '',

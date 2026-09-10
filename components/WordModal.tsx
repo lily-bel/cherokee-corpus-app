@@ -179,7 +179,7 @@ export const WordModal: React.FC<WordModalProps> = ({
                                     value={formData?.Entry_Tone || ''}
                                     onChange={e => setFormData(prev => ({ ...(prev || {} as WordFormData), Entry_Tone: formatToneInput(e.target.value), Entry: prev?.Entry || '', Syllabary: prev?.Syllabary || '', Definition: prev?.Definition || '', PoS: prev?.PoS || '', Notes: prev?.Notes || '', customDictionaryId: prev?.customDictionaryId || '' }))}
                                     placeholder="e.g. tsa2la2gi"
-                                    className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 outline-none focus:border-amber-500 font-sans dark:text-white"
+                                    className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 outline-none focus:border-amber-500 font-serif dark:text-white"
                                 />
                             </div>
                         </div>

@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Pencil, ListPlus, Star, ListIcon, X, Plus, Folder, Pause, MicPlus, Trash2, Mic, Menu } from './Icons';
 import { AudioPlayer, SourceBadge } from './UI';
-import { renderStyledText, getAudioFromDB, processFormsContextually, parseListName } from '../utils';
+import { renderStyledText, getAudioFromDB, processFormsContextually, parseListName, renderColorizedCherokee, renderSegmentedSurface, projectSegmentsOntoTone, segmentVerbForm, VerbMorphologyTemplate } from '../utils';
 import { usePackageManager } from './PackageManagerContext';
 import AudioRecorder from './AudioRecorder';
 import { useCorpus } from './CorpusContext';
 import { SentenceCard } from './SentenceCard';
 import { WordFormsModal } from './WordFormsModal';
+import ReferenceFormsPreview, { getReferencePreviewMatchedForms } from './ReferenceFormsPreview';
 
 const getHexColor = (col: string) => {
   const COLORS: Record<string, string> = {
@@ -27,7 +28,7 @@ const getHexColor = (col: string) => {
   return COLORS[col] || COLORS.slate;
 };
 
-const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, userWordForms, onSaveAudio, onDeleteAudio, favorites, customLists, customListOrder, onClose, onEdit, onToggleFavorite, onToggleList, onDelete, onSearchTerm, onOpenNewListModal, onMove, personalWords, onEditSentence, onDeleteSentence, onCreateWord, onManageForms, onReadInContext, onShowSettings, onViewRoot, onViewClass, style }: any) => {
+const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudioMeta, userWordForms, onSaveAudio, onDeleteAudio, favorites, customLists, customListOrder, onClose, onEdit, onToggleFavorite, onToggleList, onDelete, onSearchTerm, onOpenNewListModal, onMove, personalWords, onEditSentence, onDeleteSentence, onCreateWord, onManageForms, onReadInContext, onShowSettings, onViewRoot, onViewClass, style }: any) => {
     const [showListSheet, setShowListSheet] = useState(false);
     const [showRecorder, setShowRecorder] = useState(false);
     const [recorderTarget, setRecorderTarget] = useState<'entry' | 'sentence' | string>('entry');
@@ -47,7 +48,8 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
     const { entryToSentencesMap, sentenceMap, rootMap } = useCorpus();
 
     // Check if linked to a root
-    const rootEntry = rootMap.get(entry.Index);
+    const rootEntry = (entry.Index ? rootMap.get(entry.Index) : null) || (entry.id ? rootMap.get(entry.id) : null) || (entry.merged_id ? rootMap.get(entry.merged_id) : null);
+    const showMascots = settings?.showClassMascots ?? false;
 
     // Determine audio color based on package
     const { getPackageColor, packages, importedData } = usePackageManager();
@@ -110,7 +112,12 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
     const noteContent = isPersonal ? e.Notes : (userNotes[e.Index] || '');
 
     // Get linked sentences
-    const linkedSentenceIds = entryToSentencesMap.get(e.Index) || [];
+    const linkedSentenceIds = Array.from(new Set([
+        ...(entryToSentencesMap.get(e.Index) || []),
+        ...(entryToSentencesMap.get(e.id) || []),
+        ...(entryToSentencesMap.get((e as any).merged_id) || []),
+        ...((e as any).sources?.['lily-dict.csv']?.Index ? (entryToSentencesMap.get((e as any).sources['lily-dict.csv'].Index) || []) : [])
+    ]));
     const linkedSentences = linkedSentenceIds.map(id => sentenceMap.get(id)).filter(Boolean);
 
 
@@ -159,7 +166,13 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
             if (p.status === 'active' && importedData[p.id]?.word_forms) {
                 const forms = importedData[p.id].word_forms!.filter((f: any) => f.word_index === e.Index);
                 if (forms.length > 0) {
-                    forms.forEach(f => list.push({ ...f, color: p.color, pkgName: p.name, pkgType: p.type }));
+                    forms.forEach((f, idx) => list.push({
+                        ...f,
+                        _uid: f.id || `${p.id}_${f.word_index}_${f.normalized_key || f.form_name || ''}_${idx}`,
+                        color: p.color,
+                        pkgName: p.name,
+                        pkgType: p.type
+                    }));
                 }
             }
         });
@@ -178,12 +191,46 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
     }, [rawImportedForms]);
 
     const otherImportedForms = importedForms.filter(f => f.source !== 'ced' && f.pkgType !== 'official');
-    const extraOfficialForms = importedForms.filter(f => f.source !== 'ced' && f.pkgType === 'official');
     
     // User created forms count
     const userFormsCount = userWordForms && userWordForms[e.Index] ? userWordForms[e.Index].split('|').length : 0;
     const legacyOfficialFormsCount = e.Other_Forms ? e.Other_Forms.split('|').length : 0;
-    const totalMoreForms = extraOfficialForms.length + otherImportedForms.length + userFormsCount + legacyOfficialFormsCount;
+
+    const { hasMiniPreview, matchedForms: miniMatchedForms } = React.useMemo(() => {
+        if (!cedForms || cedForms.length === 0) {
+            return { hasMiniPreview: false, matchedForms: new Set<any>() };
+        }
+        return getReferencePreviewMatchedForms(cedForms, e, rootEntry);
+    }, [cedForms, e, rootEntry]);
+
+    const totalFormsCount = rawImportedForms.length + legacyOfficialFormsCount + userFormsCount;
+
+    const otherFormsCount = React.useMemo(() => {
+        if (hasMiniPreview) {
+            const countInMini = rawImportedForms.filter(rawForm => {
+                return Array.from(miniMatchedForms).some((mf: any) => {
+                    if (!mf) return false;
+                    if (rawForm._uid && mf._uid && rawForm._uid === mf._uid) return true;
+                    const k1 = (rawForm.normalized_key || rawForm.form_name || '').toLowerCase();
+                    const k2 = (mf.normalized_key || mf.form_name || '').toLowerCase();
+                    const s1 = (rawForm.syllabary || '').trim();
+                    const s2 = (mf.syllabary || '').trim();
+                    const t1 = (rawForm.translit || '').trim().toLowerCase();
+                    const t2 = (mf.translit || '').trim().toLowerCase();
+                    if (k1 && k2 && k1 === k2) return true;
+                    if (s1 && s2 && s1 === s2 && t1 && t2 && t1 === t2) return true;
+                    return false;
+                });
+            }).length;
+            return Math.max(0, totalFormsCount - countInMini);
+        } else {
+            return Math.max(0, totalFormsCount > 0 ? totalFormsCount - 1 : 0);
+        }
+    }, [hasMiniPreview, rawImportedForms, miniMatchedForms, totalFormsCount]);
+
+    const formsButtonLabel = otherFormsCount > 0
+        ? `View ${otherFormsCount} other form${otherFormsCount === 1 ? '' : 's'}`
+        : 'No other forms';
 
 
 
@@ -249,6 +296,13 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
         return list.find(f => f.index === targetIndex) || null;
     }, [recorderTarget, e, importedForms, userWordForms]);
 
+    const mainPresSeg = rootEntry?.segmented_forms?.present;
+    const mainVerbConfig = rootEntry?.config;
+    const mainPresGroups = React.useMemo(() => {
+        if (!rootEntry || !mainPresSeg) return null;
+        return segmentVerbForm(mainPresSeg, 'present', mainVerbConfig, rootEntry?.class_name);
+    }, [mainPresSeg, mainVerbConfig, rootEntry]);
+    const mainPronounSet = mainVerbConfig?.pron?.set_type === 'b' ? 'B' : 'A';
 
     return (
         <div style={style} className="fixed inset-0 z-[10000] bg-[#F9F9F7] dark:bg-slate-950 flex flex-col overflow-hidden">
@@ -286,8 +340,26 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
                                 )}
                             </div>
                             <div className="flex items-baseline gap-3 flex-wrap">
-                                <h2 className="font-noto-serif text-2xl text-amber-800 dark:text-amber-400 font-medium">{e.Entry}</h2>
-                                {e.Entry_Tone && <span className="font-sans text-base text-slate-400 dark:text-slate-500 italic">{e.Entry_Tone}</span>}
+                                <h2 className="font-noto-serif text-2xl text-amber-800 dark:text-amber-400 font-bold">
+                                    {rootEntry?.surface_segments?.present
+                                        ? renderSegmentedSurface(rootEntry.surface_segments.present, settings?.colorWordSegments !== false)
+                                        : (rootEntry && mainPresGroups
+                                            ? renderColorizedCherokee(e.Entry, mainPresGroups, mainPronounSet, settings?.colorWordSegments !== false)
+                                            : e.Entry)}
+                                </h2>
+                                {e.Entry_Tone && (
+                                    <span className="font-serif text-base text-slate-500 dark:text-slate-400 font-bold italic">
+                                        {rootEntry?.surface_segments?.present
+                                            ? renderSegmentedSurface(
+                                                projectSegmentsOntoTone(rootEntry.surface_segments.present, e.Entry_Tone),
+                                                settings?.colorWordSegments !== false
+                                              )
+                                            : (rootEntry && mainPresGroups
+                                                ? renderColorizedCherokee(e.Entry_Tone, mainPresGroups, mainPronounSet, settings?.colorWordSegments !== false)
+                                                : e.Entry_Tone)}
+                                    </span>
+                                )}
+
                             </div>
                         </div>
                         <div className="shrink-0 pt-1">
@@ -355,46 +427,19 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
                         </button>
                     </div>
 
-                    {/* ROOT & CLASS INFO */}
+                    {/* MORPHOLOGY BREAKDOWN TEMPLATE */}
                     {rootEntry && (
-                        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-slate-500 dark:text-slate-400 font-medium pb-2">
-                            <div className="flex items-center gap-2">
-                                <span className="uppercase text-[10px] tracking-wider text-slate-400">Root:</span>
-                                <button
-                                    onClick={() => onViewRoot(rootEntry.root_slug)}
-                                    className="hover:text-amber-600 dark:hover:text-amber-400 transition-colors font-noto-cherokee text-base"
-                                >
-                                    -{rootEntry.root_h || rootEntry.root_g || 'Root'}-
-                                </button>
-                            </div>
-                            {rootEntry.class_name && (
-                                <div className="flex items-center gap-2">
-                                    <span className="uppercase text-[10px] tracking-wider text-slate-400">Class:</span>
-                                    <button
-                                        onClick={() => onViewClass(rootEntry.class_name)}
-                                        className="hover:text-amber-600 dark:hover:text-amber-400 transition-colors font-mono"
-                                    >
-                                        [{rootEntry.class_name}]
-                                    </button>
-                                </div>
-                            )}
-                            {rootEntry.config?.pron?.set_type && (
-                                <span className="font-bold text-[11px] bg-slate-100 dark:bg-slate-800/60 px-2 py-0.5 rounded text-slate-600 dark:text-slate-300 border border-slate-200/30 dark:border-slate-700/30 tracking-wide">
-                                    Set {rootEntry.config.pron.set_type.toUpperCase()}
-                                </span>
-                            )}
-                            {rootEntry.config?.pre?.distributive && (
-                                <span className="font-mono font-bold text-[11px] text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/30 px-2 py-0.5 rounded border border-sky-100/30 dark:border-sky-900/30" title="Distributive prefix active">
-                                    de-/d-
-                                </span>
-                            )}
-                            {rootEntry.config?.pre?.translocutive && (
-                                <span className="font-mono font-bold text-[11px] text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded border border-emerald-100/30 dark:border-emerald-900/30" title="Translocutive prefix active">
-                                    wi-/w-
-                                </span>
-                            )}
+                        <div className="pb-2">
+                            <VerbMorphologyTemplate
+                                rootEntry={rootEntry}
+                                onViewRoot={onViewRoot}
+                                onViewClass={onViewClass}
+                                showMascot={showMascots}
+                            />
                         </div>
                     )}
+
+
 
                     {/* TAGS & ACTIONS (Subtle) */}
                     {(isFav || Object.keys(customLists).some(k => {
@@ -433,57 +478,46 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
                         {e.Definition_Long && <p className="mt-3 text-slate-600 dark:text-slate-400 text-base leading-relaxed">{renderStyledText(e.Definition_Long)}</p>}
                     </div>
 
-                    {/* Word Forms List (New) */}
-                    {(cedForms.length > 0 || otherImportedForms.length > 0 || userFormsCount > 0 || legacyOfficialFormsCount > 0) && (
-                        <div className="pt-4 -mx-5 px-5">
-                            <h3 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-3">Conjugations / Forms</h3>
-                            
-                            {cedForms.length > 0 && (
-                                <div 
-                                    onClick={() => setShowWordFormsModal(true)}
-                                    className="grid grid-cols-[minmax(80px,auto)_auto_1fr] gap-x-4 md:gap-x-8 gap-y-2 mb-3 bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-100 dark:border-slate-800 items-center overflow-x-auto cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors"
-                                    title="Click to view all word forms"
-                                >
-                                    {cedForms.map(f => (
-                                        <React.Fragment key={f.form_name}>
-                                             <div className="text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider pr-1 leading-tight py-1" title={f.displayLabel}>
-                                                 {f.displayLabel}:
-                                             </div>
-                                             <div className="font-noto-cherokee text-base text-slate-800 dark:text-slate-200 font-medium whitespace-nowrap">
-                                                 {f.syllabary}
-                                             </div>
-                                             <div className="text-[15px] text-amber-800 dark:text-amber-400 italic font-semibold whitespace-nowrap">
-                                                 {f.translit}
-                                             </div>
-                                        </React.Fragment>
-                                    ))}
-                                </div>
-                            )}
+                    {/* Word Forms List */}
+                    <div className="pt-4 -mx-5 px-5">
+                        <h3 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-3">Conjugations / Forms</h3>
+                        
+                        {hasMiniPreview && (
+                            <div className="mb-3">
+                                <ReferenceFormsPreview
+                                    forms={cedForms}
+                                    entry={e}
+                                    rootEntry={rootEntry}
+                                    settings={settings}
+                                    onPlayAudio={handlePlayUserAudio}
+                                    onOpenAllForms={() => setShowWordFormsModal(true)}
+                                />
+                            </div>
+                        )}
 
-                            <button 
-                                onClick={() => setShowWordFormsModal(true)}
-                                className="px-4 py-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-900/50 rounded-lg text-amber-700 dark:text-amber-500 text-xs font-bold hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors flex items-center gap-2 flex-wrap mt-2"
-                            >
-                                <span>{totalMoreForms > 0 ? `+ View ${totalMoreForms} More` : 'View all forms'}</span>
-                                {userFormsCount > 0 && (
-                                    <span className="bg-amber-400 text-amber-900 px-1.5 py-0.5 rounded text-[10px]">{userFormsCount} Custom</span>
-                                )}
-                                    {/* Aggregate remaining imported forms by color */}
-                                    {Object.values(
-                                        otherImportedForms.reduce((acc: any, f) => {
-                                            const c = f.color || 'slate';
-                                            if (!acc[c]) acc[c] = { count: 0, color: c };
-                                            acc[c].count++;
-                                            return acc;
-                                        }, {})
-                                    ).map((pkg: any, idx) => (
-                                        <span key={idx} style={{ backgroundColor: getHexColor(pkg.color) }} className="px-1.5 py-0.5 rounded text-[10px] text-white font-medium">
-                                            {pkg.count} Imported
-                                        </span>
-                                    ))}
-                                </button>
-                        </div>
-                    )}
+                        <button 
+                            onClick={() => setShowWordFormsModal(true)}
+                            className="px-4 py-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-900/50 rounded-lg text-amber-700 dark:text-amber-500 text-xs font-bold hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors flex items-center gap-2 flex-wrap mt-2"
+                        >
+                            <span>{formsButtonLabel}</span>
+                            {userFormsCount > 0 && (
+                                <span className="bg-amber-400 text-amber-900 px-1.5 py-0.5 rounded text-[10px]">{userFormsCount} Custom</span>
+                            )}
+                            {/* Aggregate remaining imported forms by color */}
+                            {otherFormsCount > 0 && Object.values(
+                                otherImportedForms.reduce((acc: any, f) => {
+                                    const c = f.color || 'slate';
+                                    if (!acc[c]) acc[c] = { count: 0, color: c };
+                                    acc[c].count++;
+                                    return acc;
+                                }, {})
+                            ).map((pkg: any, idx) => (
+                                <span key={idx} style={{ backgroundColor: getHexColor(pkg.color) }} className="px-1.5 py-0.5 rounded text-[10px] text-white font-medium">
+                                    {pkg.count} Imported
+                                </span>
+                            ))}
+                        </button>
+                    </div>
 
                     {(e.Sentence_Syllabary || e.Sentence_English) && (
                         <div className="bg-amber-50/50 dark:bg-amber-900/10 p-4 rounded-2xl border border-amber-100/50 dark:border-amber-900/20">
@@ -644,6 +678,8 @@ const EntryDetail = ({ entry, customDictionaries, userNotes, userAudioMeta, user
                 packages={packages}
                 importedData={importedData}
                 onReadInContext={onReadInContext}
+                rootEntry={rootEntry}
+                settings={settings}
             />
         </div>
     );

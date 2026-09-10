@@ -2,7 +2,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { X, Mic, Trash2, Pause, Volume2, Plus } from './Icons';
-import { getFriendlyLabel, processFormsContextually, renderStyledText } from '../utils';
+import { getFriendlyLabel, processFormsContextually, renderStyledText, ColorizedCherokeeWord, getColorWordSegmentsSetting } from '../utils';
 import { useCorpus } from './CorpusContext';
 
 interface WordFormsModalProps {
@@ -20,6 +20,8 @@ interface WordFormsModalProps {
     getPackageColor: (id: string) => string | undefined | any;
     packages: any[];
     onReadInContext?: (sentenceId: string) => void;
+    rootEntry?: any;
+    settings?: any;
 }
 
 const MiniAudioButton = ({ audio, isOfficial = false, color, isPlaying, onPlay, onDelete }: { audio: any, isOfficial?: boolean, color?: string, isPlaying: boolean, onPlay: () => void, onDelete?: () => void }) => {
@@ -84,11 +86,15 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
     getPackageColor,
     packages,
     importedData,
-    onReadInContext
+    onReadInContext,
+    rootEntry,
+    settings
 }) => {
     if (!isOpen || !entry) return null;
 
-    const { glosses, sentenceMap } = useCorpus();
+    const { glosses, sentenceMap, rootMap } = useCorpus();
+    const isColored = getColorWordSegmentsSetting(settings);
+    const effectiveRootEntry = rootEntry || (entry ? rootMap?.get(entry.Index || entry.id || entry.merged_id) : undefined);
     const entryGlosses = glosses.filter((g: any) => g.entry_id === entry.Index && (g.gloss_syllabary || g.gloss_phonetic));
 
     // Helper to tokenize sentence for context view
@@ -116,6 +122,7 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
                 allForms.push({
                     type: 'official',
                     label: parts[0],
+                    form_name: parts[0],
                     translit: values[0],
                     syllabary: values[1],
                     tone: values[2],
@@ -144,6 +151,8 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
         allForms.push({
             type: 'imported',
             label: f.displayLabel || getFriendlyLabel(f.form_name),
+            form_name: f.form_name,
+            normalized_key: f.normalized_key,
             translit: f.translit,
             syllabary: f.syllabary,
             tone: f.tone,
@@ -164,6 +173,7 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
                 allForms.push({
                     type: 'custom',
                     label: parts[0],
+                    form_name: parts[0],
                     translit: values[0],
                     syllabary: values[1],
                     tone: values[2],
@@ -257,8 +267,28 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
                                         <td className="p-3 align-top">
                                             <div className="flex flex-col gap-0.5 overflow-hidden">
                                                 <div className="font-noto-cherokee text-lg text-slate-800 dark:text-slate-100 break-words leading-snug">{form.syllabary}</div>
-                                                <div className="font-noto-serif text-sm text-amber-700 dark:text-amber-400 font-medium break-words leading-snug">{form.translit}</div>
-                                                {form.tone && <div className="text-[10px] text-slate-400 dark:text-slate-500 italic break-words">{form.tone}</div>}
+                                                <div className="font-noto-serif text-sm text-amber-700 dark:text-amber-400 font-bold break-words leading-snug">
+                                                    <ColorizedCherokeeWord
+                                                        word={form.translit}
+                                                        form={form}
+                                                        entry={entry}
+                                                        rootEntry={effectiveRootEntry}
+                                                        allForms={allForms}
+                                                        isColored={isColored}
+                                                    />
+                                                </div>
+                                                {form.tone && (
+                                                    <div className="font-serif text-xs text-slate-500 dark:text-slate-400 font-bold italic break-words">
+                                                        <ColorizedCherokeeWord
+                                                            word={form.tone}
+                                                            form={form}
+                                                            entry={entry}
+                                                            rootEntry={effectiveRootEntry}
+                                                            allForms={allForms}
+                                                            isColored={isColored}
+                                                        />
+                                                    </div>
+                                                )}
                                                 {form.notes && <div className="text-[10px] text-slate-400 mt-1 border-t border-slate-100 dark:border-slate-800 pt-1 break-words leading-tight">{form.notes}</div>}
                                             </div>
                                         </td>

@@ -1,0 +1,487 @@
+{
+  "a": {
+    "present": "ahiya'a",
+    "definition": "he/she is leaving it behind",
+    "corpus_id": 165
+  },
+  "g-ts": {
+    "present": "ugohniyoga",
+    "definition": "he/she is late",
+    "corpus_id": 1523
+  },
+  "hg-hts": {
+    "present": "ga'luhga",
+    "definition": "he/she is arriving",
+    "corpus_id": 858
+  },
+  "go-gots": {
+    "present": "asuligoga",
+    "definition": "he/she is quitting",
+    "corpus_id": 449
+  },
+  "sg-s-hi-hihst": {
+    "present": "galosga",
+    "definition": "he/she is passing by without stopping",
+    "corpus_id": 856
+  },
+  "sg-s": {
+    "present": "galosga",
+    "definition": "he/she is passing by without stopping",
+    "corpus_id": 856
+  },
+  "sg-s-a": {
+    "present": "uwakewsga",
+    "definition": "he/she is forgetting it",
+    "corpus_id": 1698
+  },
+  "sg-s-hst": {
+    "present": "ahwisga",
+    "definition": "he/she is planting it",
+    "corpus_id": 210
+  },
+  "sg-s-la": {
+    "present": "adanvsga",
+    "definition": "he/she is ordering it",
+    "corpus_id": 46
+  },
+  "sg-h": {
+    "present": "galuysga",
+    "definition": "he/she is chopping it",
+    "corpus_id": 862
+  },
+  "sg-h-hy": {
+    "present": "dasdlusga",
+    "definition": "he/she is splitting it",
+    "corpus_id": 605
+  },
+  "hvsg-han": {
+    "present": "dalasuhlvsga",
+    "definition": "he/she is putting on shoes",
+    "corpus_id": 582
+  },
+  "hvsg": {
+    "present": "dalasuhlvsga",
+    "definition": "he/she is putting on shoes",
+    "corpus_id": 582
+  },
+  "hvsg-hn": {
+    "present": "dalehvsga",
+    "definition": "he/she is getting up (from sitting or from involuntarily assumed prone position)",
+    "corpus_id": 587
+  },
+  "hvsg-n": {
+    "present": "wigakahvsga",
+    "definition": "he/she is sending it",
+    "corpus_id": 1774
+  },
+  "husg": {
+    "present": "alsdvhlusga",
+    "definition": "he/she is taking a seat",
+    "corpus_id": 334
+  },
+  "vhvsg": {
+    "present": "alsdayvhvsga",
+    "definition": "he/she is eating a meal",
+    "corpus_id": 327
+  },
+  "ohvsg": {
+    "present": "agohvsga",
+    "definition": "it's burning",
+    "corpus_id": 136
+  },
+  "ohvsg-no-o": {
+    "present": "asvhvsga",
+    "definition": "he/she is drinking it up",
+    "corpus_id": 459
+  },
+  "e-aka": {
+    "present": "gahye'a",
+    "definition": "he/she is eating it (refers to a flexible object)",
+    "corpus_id": 818
+  },
+  "e-a": {
+    "present": "agoliye'a",
+    "definition": "he/she is reading",
+    "corpus_id": 138
+  },
+  "eh-eh": {
+    "present": "asuyeha",
+    "definition": "he/she is stirring it",
+    "corpus_id": 453
+  },
+  "eh": {
+    "present": "asuyeha",
+    "definition": "he/she is stirring it",
+    "corpus_id": 453
+  },
+  "eh-hehl": {
+    "present": "kanoheha",
+    "definition": "he/she is telling it",
+    "corpus_id": 1246
+  },
+  "eh-ehl": {
+    "present": "alasda'eha",
+    "definition": "he/she is tromping on him/her",
+    "corpus_id": 296
+  },
+  "eh-a": {
+    "present": "alsduleha",
+    "definition": "he/she is washing his/her hair",
+    "corpus_id": 331
+  },
+  "eh-el": {
+    "present": "ganvneha",
+    "definition": "he/she is giving him/her an object (refers to a flexible object)",
+    "corpus_id": 950
+  },
+  "eg-vs": {
+    "present": "asdawadega",
+    "definition": "he/she is following him/her",
+    "corpus_id": 381
+  },
+  "eg": {
+    "present": "asdawadega",
+    "definition": "he/she is following him/her",
+    "corpus_id": 381
+  },
+  "eg-invs": {
+    "present": "udega",
+    "definition": "he/she is throwing it",
+    "corpus_id": 1471
+  },
+  "ih-ohd": {
+    "present": "anehldiha",
+    "definition": "he/she is attempting it",
+    "corpus_id": 361
+  },
+  "ih-il": {
+    "present": "dasihtvniha",
+    "definition": "he/she is clapping his/her hands",
+    "corpus_id": 609
+  },
+  "hih-hil": {
+    "present": "adlohyiha",
+    "definition": "he/she is crying",
+    "corpus_id": 98
+  },
+  "hih": {
+    "present": "adlohyiha",
+    "definition": "he/she is crying",
+    "corpus_id": 98
+  },
+  "hih-hilh": {
+    "present": "gatiha",
+    "definition": "he/she is stabbing him/her",
+    "corpus_id": 973
+  },
+  "hih-lh": {
+    "present": "daliyohiha",
+    "definition": "he/she is putting on his/her socks",
+    "corpus_id": 592
+  },
+  "ih-vh": {
+    "present": "uduliha",
+    "definition": "he/she wants it",
+    "corpus_id": 1507
+  },
+  "vnh-ih-a": {
+    "present": "adiha",
+    "definition": "he/she is saying it",
+    "corpus_id": 77
+  },
+  "vnh": {
+    "present": "adiha",
+    "definition": "he/she is saying it",
+    "corpus_id": 77
+  },
+  "vnh-vsk": {
+    "present": "ajelvsga",
+    "definition": "he/she is acting like him/her",
+    "corpus_id": 242
+  },
+  "i-vka": {
+    "present": "gohweli'a",
+    "definition": "he/she is writing it",
+    "corpus_id": 1027
+  },
+  "i-a-i": {
+    "present": "agi'a",
+    "definition": "he/she is eating it (refers to a single solid food)",
+    "corpus_id": 127
+  },
+  "i-a": {
+    "present": "agi'a",
+    "definition": "he/she is eating it (refers to a single solid food)",
+    "corpus_id": 127
+  },
+  "i-a-ihsk": {
+    "present": "asuhwisga",
+    "definition": "he/she is painting it",
+    "corpus_id": 445
+  },
+  "ih-ihi": {
+    "present": "gawoniha",
+    "definition": "he/she is speaking",
+    "corpus_id": 983
+  },
+  "o": {
+    "present": "ahnawo'a",
+    "definition": "he/she is putting on a shirt",
+    "corpus_id": 189
+  },
+  "oh-ol-a": {
+    "present": "edoha",
+    "definition": "he/she is walking around",
+    "corpus_id": 742
+  },
+  "oh-al": {
+    "present": "uhyoha",
+    "definition": "he/she is looking for it",
+    "corpus_id": 1563
+  },
+  "oh": {
+    "present": "uhyoha",
+    "definition": "he/she is looking for it",
+    "corpus_id": 1563
+  },
+  "oh-ol": {
+    "present": "asdeyoha",
+    "definition": "he/she is braiding it",
+    "corpus_id": 383
+  },
+  "v-vhs": {
+    "present": "ganedliyv'a",
+    "definition": "he/she is changing it",
+    "corpus_id": 880
+  },
+  "vsk": {
+    "present": "ahliyvhgwidvsga",
+    "definition": "it's bending",
+    "corpus_id": 175
+  },
+  "vsk-long": {
+    "present": "ganolv'vsga",
+    "definition": "it is blowing (refers to wind)",
+    "corpus_id": 924
+  },
+  "vsk-post-v": {
+    "present": "atsgo'vsga",
+    "definition": "he/she is lying",
+    "corpus_id": 490
+  },
+  "rev-gi": {
+    "present": "dekanogi'a",
+    "definition": "he/she is singing",
+    "corpus_id": 631
+  },
+  "rev": {
+    "present": "dekanogi'a",
+    "definition": "he/she is singing",
+    "corpus_id": 631
+  },
+  "rev-i": {
+    "present": "aja'i'a",
+    "definition": "it's hatching",
+    "corpus_id": 238
+  },
+  "rev-'i": {
+    "present": "asdu'i'a",
+    "definition": "he/she is opening it",
+    "corpus_id": 390
+  },
+  "rev-e": {
+    "present": "dalasule'a",
+    "definition": "he/she is taking off his/her shoes",
+    "corpus_id": 584
+  },
+  "stative": {
+    "present": "ganela",
+    "definition": "he/she lives (in sense of resides now)",
+    "corpus_id": 893
+  },
+  "stative-k": {
+    "present": "gadoga",
+    "definition": "he/she is standing",
+    "corpus_id": 772
+  },
+  "stative-h": {
+    "present": "dulasuhla",
+    "definition": "he/she is wearing shoes",
+    "corpus_id": 730
+  },
+  "stative-s": {
+    "present": "uwohiyuha",
+    "definition": "he/she is confident",
+    "corpus_id": 1729
+  },
+  "stative-a'": {
+    "present": "una'a",
+    "definition": "he/she has an object (refers to a flexible object)",
+    "corpus_id": 1629
+  },
+  "stative-eh": {
+    "present": "ahyeha",
+    "definition": "he/she is holding it in his/her hand",
+    "corpus_id": 217
+  },
+  "hih-hil[imp2]": {
+    "present": "gvhniha",
+    "definition": "he/she is hitting him/her",
+    "corpus_id": 1070
+  },
+  "ih-ohd[perf2]": {
+    "present": "gahlisiha",
+    "definition": "he/she is gathering it",
+    "corpus_id": 804
+  },
+  "sg-s-hst[imp2]": {
+    "present": "dugwenotisga",
+    "definition": "he/she is getting a rash",
+    "corpus_id": 725
+  },
+  "g-ts[inf2]": {
+    "present": "ayega",
+    "definition": "he/she is waking up",
+    "corpus_id": 507
+  },
+  "hih-lh[imp2]": {
+    "present": "ayvhiha",
+    "definition": "he/she is entering it",
+    "corpus_id": 529
+  },
+  "vnh-vsk[inf2]": {
+    "present": "gakwenvsga",
+    "definition": "he/she is wrapping him/her",
+    "corpus_id": 829
+  },
+  "hvsg-hn[inf2]": {
+    "present": "danelohvsga",
+    "definition": "he/she is playing",
+    "corpus_id": 600
+  },
+  "sg-s-a[inf2]": {
+    "present": "asgwalsga",
+    "definition": "he/she is breaking it (refers to a long object)",
+    "corpus_id": 424
+  },
+  "oh-ol[inf2]": {
+    "present": "adeyoha",
+    "definition": "he/she is going around a curve",
+    "corpus_id": 70
+  },
+  "ih-vh[inf2]": {
+    "present": "ahwahtiha",
+    "definition": "he/she is finding him/her",
+    "corpus_id": 207
+  },
+  "vsk[imp2]": {
+    "present": "guhlvsga",
+    "definition": "he/she is covering it",
+    "corpus_id": 1055
+  },
+  "ih-ohd[pres2]": {
+    "present": "aktosdi",
+    "definition": "he/she is looking at him/her",
+    "corpus_id": 288
+  },
+  "ih-ohd[perf3]": {
+    "present": "ahlawitdiha",
+    "definition": "he/she is making him/her fly",
+    "corpus_id": 169
+  },
+  "eh-el[imp3]": {
+    "present": "adeha",
+    "definition": "he/she is giving him/her it (refers to a long object)",
+    "corpus_id": 59
+  },
+  "ih-vh[imperf2-inf2]": {
+    "present": "daliyosiha",
+    "definition": "he/she is changing his/her socks",
+    "corpus_id": 593
+  },
+  "eg-invs[perf2]": {
+    "present": "adadega",
+    "definition": "he/she is limping",
+    "corpus_id": 5
+  },
+  "vhvsg[inf2]": {
+    "present": "adananesvhvsga",
+    "definition": "he/she is shopping",
+    "corpus_id": 30
+  },
+  "eh-el[imp4]": {
+    "present": "adahyoneha",
+    "definition": "he/she is committing adultery",
+    "corpus_id": 22
+  },
+  "eg-vs[pres2]": {
+    "present": "atihni",
+    "definition": "he/she is leading him/her",
+    "corpus_id": 479
+  },
+  "g-ts[inf3]": {
+    "present": "ayoga",
+    "definition": "it's breaking",
+    "corpus_id": 515
+  },
+  "sg-h[imp2]": {
+    "present": "aditasga",
+    "definition": "he/she is drinking it",
+    "corpus_id": 82
+  },
+  "i-a-i[perf2]": {
+    "present": "eli'a",
+    "definition": "he/she thinks so",
+    "corpus_id": 752
+  },
+  "hvsg-hn[inf3]": {
+    "present": "gehluhvsga",
+    "definition": "he/she is howling",
+    "corpus_id": 993
+  },
+  "vnh-vsk[inf4]": {
+    "present": "asonvsga",
+    "definition": "he/she is wounding him/her",
+    "corpus_id": 441
+  },
+  "eh-el[imp2]": {
+    "present": "ulsdahneha",
+    "definition": "it's happening to him",
+    "corpus_id": 1616
+  },
+  "oh-ol[inf3]": {
+    "present": "aktenoha",
+    "definition": "he/she is looking around",
+    "corpus_id": 280
+  },
+  "vnh-vsk[inf3]": {
+    "present": "gohlvsga",
+    "definition": "he/she is making it",
+    "corpus_id": 1022
+  },
+  "hvsg-hn[inf4]": {
+    "present": "ahlahvsga",
+    "definition": "he/she is placing it on something",
+    "corpus_id": 166
+  },
+  "vsk-long[imp2]": {
+    "present": "wiganv'vsga",
+    "definition": "he/she is sending it (refers to a flexible object)",
+    "corpus_id": 1776
+  },
+  "vhvsg[imp2]": {
+    "present": "atelvhvsga",
+    "definition": "he/she is shaking him/her",
+    "corpus_id": 477
+  },
+  "hvsg-han[inf2]": {
+    "present": "ajvstvsga",
+    "definition": "he/she is turning on a light",
+    "corpus_id": 255
+  },
+  "oh-al[imp2]": {
+    "present": "ahyehloha",
+    "definition": "he/she is making an incision",
+    "corpus_id": 219
+  }
+}

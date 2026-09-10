@@ -1,19 +1,27 @@
 import React, { useMemo } from 'react';
 import { ArrowLeft, Menu } from './Icons';
 import { useCorpus } from './CorpusContext';
-import { renderStyledText } from '../utils';
+import VerbPreview from './VerbPreview';
+
 
 interface ClassViewProps {
     className: string;
     onClose: () => void;
     onViewClass: (className: string) => void;
     onViewEntry: (entry: any) => void;
+    onViewRoot?: (slug: string) => void;
     onShowSettings?: () => void;
+    settings?: {
+        showToneInForms?: boolean;
+        colorWordSegments?: boolean;
+        showClassMascots?: boolean;
+        [key: string]: any;
+    };
     style?: React.CSSProperties;
 }
 
-const ClassView: React.FC<ClassViewProps> = ({ className, onClose, onViewEntry, onShowSettings, style }) => {
-    const { roots, dictionaryMap } = useCorpus();
+const ClassView: React.FC<ClassViewProps> = ({ className, onClose, onViewClass, onViewEntry, onViewRoot, onShowSettings, settings, style }) => {
+    const { roots } = useCorpus();
 
     const mainClassName = className.includes('[') ? className.split('[')[0] : className;
 
@@ -125,10 +133,21 @@ const ClassView: React.FC<ClassViewProps> = ({ className, onClose, onViewEntry, 
                     <div className="absolute left-0 top-1 bottom-1 w-1 bg-amber-500 dark:bg-amber-400 rounded-full"></div>
                     <div>
                         <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-1">Verb Superclass</div>
-                        <div className="text-2xl font-bold text-slate-800 dark:text-slate-200 font-mono">[{mainClassName}]</div>
+                        <div className="flex items-baseline gap-3 flex-wrap">
+                            <div className="text-2xl font-bold text-slate-800 dark:text-slate-200 font-mono">[{mainClassName}]</div>
+                            {(() => {
+                                const mascot = roots.find(r => r.class_name === mainClassName || r.class_name?.split('[')[0] === mainClassName)?.class_mascot;
+                                return mascot ? (
+                                    <div className="text-sm italic font-normal text-amber-700 dark:text-amber-400 font-serif" title="Class mascot verb">
+                                        mascot: {mascot}
+                                    </div>
+                                ) : null;
+                            })()}
+                        </div>
                         <div className="mt-2 text-slate-500 dark:text-slate-400 italic text-xs">
                             {allVerbsInSuperclass.length} verbs across {variations.length + 1} variations
                         </div>
+
                     </div>
                 </div>
 
@@ -208,33 +227,17 @@ const ClassView: React.FC<ClassViewProps> = ({ className, onClose, onViewEntry, 
                 {/* All Verbs Section */}
                 <div>
                     <h3 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-6">All Verbs</h3>
-                    <div className="space-y-5">
-                        {allVerbsInSuperclass.map((r, i) => {
-                            const entry = dictionaryMap.get(r.entry_id);
-                            if (!entry) return null;
-                            return (
-                                <div 
-                                    key={i} 
-                                    onClick={() => onViewEntry(entry)}
-                                    className="flex items-start justify-between gap-4 group cursor-pointer border-b border-slate-100 dark:border-slate-800 pb-4 hover:bg-white dark:hover:bg-slate-900 -mx-2 px-2 rounded-lg transition-colors"
-                                >
-                                    <div className="flex-1 min-w-0">
-                                        <h4 className="text-base font-bold text-slate-800 dark:text-slate-200 mb-0.5 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors leading-tight">
-                                            {renderStyledText(entry.Definition || '')}
-                                        </h4>
-                                        <div className="flex items-baseline gap-2">
-                                            <span className="font-noto-cherokee text-sm text-slate-500 dark:text-slate-400">{entry.Syllabary}</span>
-                                            <span className="text-[11px] text-slate-400 dark:text-slate-500 italic">({entry.Entry})</span>
-                                        </div>
-                                    </div>
-                                    {r.class_name !== mainClassName && (
-                                        <div className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 rounded text-[8px] font-mono font-bold text-slate-600 dark:text-slate-300 mt-1 shrink-0 uppercase tracking-wider">
-                                            {r.class_name}
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
+                    <div className="space-y-6">
+                        {allVerbsInSuperclass.map((r) => (
+                            <VerbPreview
+                                key={r.entry_id}
+                                rootEntry={r}
+                                onViewEntry={onViewEntry}
+                                onViewRoot={onViewRoot}
+                                onViewClass={onViewClass}
+                                settings={settings}
+                            />
+                        ))}
                     </div>
                 </div>
             </div>

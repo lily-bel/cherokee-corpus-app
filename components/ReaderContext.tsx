@@ -66,24 +66,27 @@ export const useReader = () => {
 };
 
 // Helper: Create a stable book ID from source
-const createBookId = (source: string): string => {
-    return `book_${source.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`;
+const createBookId = (source: string | undefined): string => {
+    const safeSource = source && typeof source === 'string' && source.trim() ? source.trim() : 'unknown';
+    return `book_${safeSource.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`;
 };
 
 // Helper: Create a stable story ID
-const createStoryId = (bookId: string, story: string | undefined): string => {
-    const storyName = story && story.trim() ? story : 'Individual Sentences';
-    return `${bookId}_st_${storyName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`;
+const createStoryId = (bookId: string | undefined, story: string | undefined): string => {
+    const safeBookId = bookId && typeof bookId === 'string' && bookId.trim() ? bookId.trim() : 'book_unknown';
+    const storyName = story && typeof story === 'string' && story.trim() ? story.trim() : 'Individual Sentences';
+    return `${safeBookId}_st_${storyName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`;
 };
 
 // Helper: Create a stable chapter ID
-const createChapterId = (storyId: string, chapter: string | undefined): string => {
-    const chapterName = chapter && chapter.trim() ? chapter : '1';
-    return `${storyId}_ch_${chapterName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`;
+const createChapterId = (storyId: string | undefined, chapter: string | undefined): string => {
+    const safeStoryId = storyId && typeof storyId === 'string' && storyId.trim() ? storyId.trim() : 'story_unknown';
+    const chapterName = chapter && typeof chapter === 'string' && chapter.trim() ? chapter.trim() : '1';
+    return `${safeStoryId}_ch_${chapterName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`;
 };
 
 export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const { sentences, userSentences, customDictionaries: userDictionaries } = useCorpus();
+    const { sentences, userSentences, customDictionaries: userDictionaries = {} } = useCorpus();
     const { packages } = usePackageManager();
 
     const [investigationQueue, setInvestigationQueue] = useState<InvestigationItem[]>(() => {
@@ -120,8 +123,11 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             : [];
 
         allSentences.forEach(sentence => {
-            let mappedSource = sentence.source;
-            const lowerSource = mappedSource ? mappedSource.toLowerCase() : '';
+            if (!sentence) return;
+            let mappedSource = (sentence.source && typeof sentence.source === 'string' && sentence.source.trim())
+                ? sentence.source.trim()
+                : 'other_official';
+            const lowerSource = mappedSource.toLowerCase();
             if (officialSources.includes(lowerSource)) {
                 if (!['ced', 'rrd'].includes(lowerSource)) {
                     mappedSource = 'other_official';
@@ -135,8 +141,8 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         });
 
         // Ensure all user-created BOOKS are represented, even if empty
-        Object.entries(userDictionaries).forEach(([id, nb]) => {
-            if (nb.type === 'book' && !sourceMap.has(id)) {
+        Object.entries(userDictionaries || {}).forEach(([id, nb]) => {
+            if (nb?.type === 'book' && id && !sourceMap.has(id)) {
                 sourceMap.set(id, []);
             }
         });
@@ -147,26 +153,27 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const sentencesByChapter = new Map<string, string[]>();
 
         sourceMap.forEach((sourceSentences, source) => {
-            const bookId = createBookId(source);
+            const safeSource = source && typeof source === 'string' && source.trim() ? source.trim() : 'unknown';
+            const bookId = createBookId(safeSource);
 
             // Find title from metadata or custom dictionaries
-            let title = source;
-            let author = sourceSentences.length > 0 ? sourceSentences[0].author : undefined;
+            let title = safeSource;
+            let author = sourceSentences.length > 0 ? sourceSentences[0]?.author : undefined;
 
-            if (source === 'other_official') {
+            if (safeSource === 'other_official') {
                 title = 'Other Official Sentences';
-            } else if (userDictionaries[source]) {
-                title = userDictionaries[source].name;
+            } else if (userDictionaries && userDictionaries[safeSource]) {
+                title = userDictionaries[safeSource].name || safeSource;
             } else {
                 for (const p of packages) {
-                    if (p.metadata.source_names) {
-                        const matchKey = Object.keys(p.metadata.source_names).find(k => k.toLowerCase() === source.toLowerCase());
+                    if (p.metadata?.source_names) {
+                        const matchKey = Object.keys(p.metadata.source_names).find(k => k.toLowerCase() === safeSource.toLowerCase());
                         if (matchKey) {
                             title = p.metadata.source_names[matchKey];
                             break;
                         }
                     }
-                    if (p.id === source || p.metadata.id === source || p.metadata?.short_name?.toLowerCase() === source.toLowerCase()) {
+                    if (p.id === safeSource || p.metadata?.id === safeSource || p.metadata?.short_name?.toLowerCase() === safeSource.toLowerCase()) {
                         title = p.name;
                         break;
                     }
@@ -176,7 +183,8 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             // Group sentences in this source by STORY
             const storyMap = new Map<string, Sentence[]>();
             sourceSentences.forEach(s => {
-                const storyName = s.story && s.story.trim() ? s.story : 'Individual Sentences';
+                if (!s) return;
+                const storyName = s.story && typeof s.story === 'string' && s.story.trim() ? s.story.trim() : 'Individual Sentences';
                 if (!storyMap.has(storyName)) {
                     storyMap.set(storyName, []);
                 }
@@ -191,7 +199,8 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 // Group story sentences by CHAPTER
                 const chapterMap = new Map<string, Sentence[]>();
                 storySentences.forEach(s => {
-                    const chapterName = s.chapter && s.chapter.trim() ? s.chapter : '1';
+                    if (!s) return;
+                    const chapterName = s.chapter && typeof s.chapter === 'string' && s.chapter.trim() ? s.chapter.trim() : '1';
                     if (!chapterMap.has(chapterName)) {
                         chapterMap.set(chapterName, []);
                     }
@@ -207,7 +216,7 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                         if (a.line !== undefined && b.line !== undefined) {
                             return a.line - b.line;
                         }
-                        return a.id.localeCompare(b.id);
+                        return String(a.id || '').localeCompare(String(b.id || ''));
                     });
 
                     let chapterOrder: number | undefined = undefined;
@@ -235,10 +244,12 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                     if (a.order !== undefined && b.order !== undefined) return a.order - b.order;
                     if (a.order !== undefined) return -1;
                     if (b.order !== undefined) return 1;
-                    const aNum = parseInt(a.name.replace(/\D/g, ''), 10);
-                    const bNum = parseInt(b.name.replace(/\D/g, ''), 10);
+                    const aName = a.name || '';
+                    const bName = b.name || '';
+                    const aNum = parseInt(aName.replace(/\D/g, ''), 10);
+                    const bNum = parseInt(bName.replace(/\D/g, ''), 10);
                     if (!isNaN(aNum) && !isNaN(bNum)) return aNum - bNum;
-                    return a.name.localeCompare(b.name);
+                    return aName.localeCompare(bName);
                 });
 
                 chaptersByStory.set(storyId, chapters);
@@ -266,40 +277,44 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
             // Sort stories: by story_order if available, otherwise alphabetically
             stories.sort((a, b) => {
-                if (a.title === 'Individual Sentences') return 1;
-                if (b.title === 'Individual Sentences') return -1;
+                const aTitle = a.title || '';
+                const bTitle = b.title || '';
+                if (aTitle === 'Individual Sentences') return 1;
+                if (bTitle === 'Individual Sentences') return -1;
                 // If both have order, sort by order
                 if (a.order !== undefined && b.order !== undefined) return a.order - b.order;
                 // If only one has order, it comes first
                 if (a.order !== undefined) return -1;
                 if (b.order !== undefined) return 1;
-                return a.title.localeCompare(b.title);
+                return aTitle.localeCompare(bTitle);
             });
 
             storiesByBook.set(bookId, stories);
 
-            const isCollection = (stories.length === 1 && !stories[0].isSequential) || (stories.length === 0 && userDictionaries[source]?.type !== 'book');
+            const isCollection = (stories.length === 1 && !stories[0].isSequential) || (stories.length === 0 && userDictionaries[safeSource]?.type !== 'book');
 
             books.push({
                 id: bookId,
                 title: title,
                 author: author,
-                source: source,
+                source: safeSource,
                 storyCount: stories.length,
                 chapterCount: stories.reduce((acc, s) => acc + s.chapterCount, 0),
                 sentenceCount: sourceSentences.length,
                 isCollection,
-                userType: userDictionaries[source]?.type
+                userType: userDictionaries[safeSource]?.type
             });
         });
 
         // Sort books: user sources first, then alphabetically
         books.sort((a, b) => {
-            const aUser = a.source === 'user' || a.source.startsWith('nb_');
-            const bUser = b.source === 'user' || b.source.startsWith('nb_');
+            const aSrc = a.source || '';
+            const bSrc = b.source || '';
+            const aUser = aSrc === 'user' || aSrc.startsWith('nb_');
+            const bUser = bSrc === 'user' || bSrc.startsWith('nb_');
             if (aUser && !bUser) return -1;
             if (!aUser && bUser) return 1;
-            return a.title.localeCompare(b.title);
+            return (a.title || '').localeCompare(b.title || '');
         });
 
         return { books, storiesByBook, chaptersByStory, sentencesByChapter };

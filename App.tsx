@@ -7,7 +7,7 @@ import EntryDetail from './components/EntryDetail';
 
 import PackageManagerTab from './components/PackageManagerTab';
 import { useCorpus } from './components/CorpusContext';
-import { downloadFile, performSearch, buildWordFormsLookupMap } from './utils';
+import { downloadFile, performSearch, buildWordFormsLookupMap, isEmptyRoot } from './utils';
 import { SentenceCard } from './components/SentenceCard';
 import WidgetsTab from './components/WidgetsTab';
 
@@ -34,7 +34,11 @@ const DEFAULT_SETTINGS = {
     searchScopes: { main: true, otherForms: true, sentences: false, notes: false, roots: true },
     showRootHeaders: true,
     transliterationStyle: 'classic' as 'classic' | 'aspiration' | 'reverse_aspiration',
+    showToneInForms: true,
+    colorWordSegments: true,
+    showClassMascots: false,
 };
+
 
 export type NavItem =
     | { type: 'root'; slug: string }
@@ -435,14 +439,14 @@ function App() {
                 // Build Source Meta Map from all active packages
                 const sourceMeta: Record<string, "prioritize" | "filter"> = {};
                 packages.forEach(p => {
-                    if (p.status === 'active' && p.metadata.source_meta) {
+                    if (p.status === 'active' && p.metadata?.source_meta) {
                         Object.assign(sourceMeta, p.metadata.source_meta);
                     }
                 });
 
                 sources.forEach((s) => {
                     const src = s as string;
-                    if (!src) return;
+                    if (!src || typeof src !== 'string') return;
                     if (newFilters[src] === undefined) {
                         // Default to true unless metadata says "filter"
                         newFilters[src] = sourceMeta[src.toLowerCase()] !== 'filter';
@@ -458,15 +462,10 @@ function App() {
         if (sentences.length > 0) {
             setSentenceFilters(prev => {
                 const newFilters: Record<string, boolean> = { ...prev };
-                const sources = new Set([...sentences, ...userSentences].map(s => s.source));
+                const sources = new Set([...sentences, ...userSentences].map(s => s?.source).filter(Boolean));
                 sources.forEach((s) => {
-                    if (!s) return;
+                    if (!s || typeof s !== 'string') return;
                     if (newFilters[s] === undefined) {
-                        // Default CED and CNT (Cherokee New Testament) to false for sentences if desired, or all true
-                        // User said: "filter out sentence sources such as CED and Cherokee New Testament when you are on the sentence tab"
-                        // This implies they want to be ABLE to filter them, or maybe default them to false?
-                        // "read from the sentences csv... so we can filter out sentence sources... when you are on the sentence tab"
-                        // I'll default all to true for now, unless user specified defaults.
                         newFilters[s] = true;
                     }
                 });
@@ -726,12 +725,13 @@ function App() {
         // Build Metadata Map
         const sourceMeta: Record<string, string> = {};
         packages.forEach(p => {
-            if (p.status === 'active' && p.metadata.source_meta) {
+            if (p.status === 'active' && p.metadata?.source_meta) {
                 Object.assign(sourceMeta, p.metadata.source_meta);
             }
         });
 
         Object.keys(counts).forEach(src => {
+            if (!src || typeof src !== 'string') return;
             if (src.startsWith('nb_') || src === 'pd') return; // Always main
 
             const meta = sourceMeta[src.toLowerCase()];
@@ -746,7 +746,7 @@ function App() {
     const sourceNames = useMemo(() => {
         const names: Record<string, string> = {};
         packages.forEach(p => {
-            if (p.status === 'active' && p.metadata.source_names) {
+            if (p.status === 'active' && p.metadata?.source_names) {
                 Object.assign(names, p.metadata.source_names);
             }
         });
@@ -763,8 +763,8 @@ function App() {
 
                 if (sourceStats.smallSourceCodes.includes(d.Source)) return;
 
-                let code = d.Source;
-                let name = sourceNames[code.toLowerCase()] || sourceNames[code] || d.Source_Long || d.Source.toUpperCase();
+                let code = String(d.Source);
+                let name = sourceNames[code.toLowerCase()] || sourceNames[code] || d.Source_Long || code.toUpperCase();
                 let badge = code.substring(0, 3).toUpperCase();
                 let packageId: string | undefined = undefined;
                 let packageDate = 0;
@@ -776,10 +776,10 @@ function App() {
                 } else {
                     badge = code.toUpperCase();
                     // Find which package this source belongs to (heuristic: check metadata)
-                    const pkg = packages.find(p => p.status === 'active' && p.metadata.source_names && p.metadata.source_names[code]);
+                    const pkg = packages.find(p => p.status === 'active' && p.metadata?.source_names && p.metadata.source_names[code]);
                     if (pkg) {
                         packageId = pkg.id;
-                        packageDate = pkg.metadata.date_created || 0;
+                        packageDate = pkg.metadata?.date_created || 0;
                     }
                 }
                 sources.push({ code, name, badge, count: sourceStats.counts[code] || 0, packageId, packageDate });
@@ -805,7 +805,7 @@ function App() {
             // 3. Sort by Metadata Order (for official sources)
             const sourceOrder: string[] = [];
             packages.forEach(p => {
-                if (p.status === 'active' && p.metadata.source_names) {
+                if (p.status === 'active' && p.metadata?.source_names) {
                     sourceOrder.push(...Object.keys(p.metadata.source_names));
                 }
             });
@@ -818,7 +818,7 @@ function App() {
             if (idxB !== -1) return -1;
 
             // 4. Alphabetical by Name (Fallback)
-            return a.name.localeCompare(b.name);
+            return (a.name || '').localeCompare(b.name || '');
         });
 
         // Always add "Other" if small sources exist
@@ -849,19 +849,19 @@ function App() {
                 badge = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
             } else {
                 // Try to find in packages - Check by source_names shorthand
-                const pkgBySource = packages.find(p => p.status === 'active' && p.metadata.source_names && p.metadata.source_names[code]);
+                const pkgBySource = packages.find(p => p.status === 'active' && p.metadata?.source_names && p.metadata.source_names[code]);
                 // Check by Package ID direct match
                 const pkgById = packages.find(p => p.status === 'active' && p.id === code);
 
                 if (pkgBySource) {
-                    name = pkgBySource.metadata.source_names?.[code] || code;
+                    name = pkgBySource.metadata?.source_names?.[code] || code;
                     badge = code.substring(0, 3).toUpperCase();
                 } else if (pkgById) {
                     name = pkgById.name;
                     // Use initials for badge
-                    const parts = pkgById.name.split(' ');
+                    const parts = (pkgById.name || '').split(' ');
                     if (parts.length >= 2) badge = (parts[0][0] + parts[1][0]).toUpperCase();
-                    else badge = pkgById.name.substring(0, 2).toUpperCase();
+                    else badge = (pkgById.name || '').substring(0, 2).toUpperCase();
                 } else if (code === 'user') {
                     name = 'My Library';
                     badge = 'MY';
@@ -879,12 +879,12 @@ function App() {
             const isUserB = b.code === 'user' || !!customDictionaries[b.code];
             if (isUserA && !isUserB) return -1;
             if (!isUserA && isUserB) return 1;
-            if (isUserA && isUserB) return a.name.localeCompare(b.name); // Sort user sources by name
+            if (isUserA && isUserB) return (a.name || '').localeCompare(b.name || ''); // Sort user sources by name
 
             // Sort by Metadata Order
             const sourceOrder: string[] = [];
             packages.forEach(p => {
-                if (p.status === 'active' && p.metadata.source_names) {
+                if (p.status === 'active' && p.metadata?.source_names) {
                     sourceOrder.push(...Object.keys(p.metadata.source_names));
                 }
             });
@@ -907,7 +907,7 @@ function App() {
         // Build Metadata Map
         const sourceMeta: Record<string, string> = {};
         packages.forEach(p => {
-            if (p.status === 'active' && p.metadata.source_meta) {
+            if (p.status === 'active' && p.metadata?.source_meta) {
                 Object.assign(sourceMeta, p.metadata.source_meta);
             }
         });
@@ -918,7 +918,7 @@ function App() {
                 return;
             }
 
-            const meta = sourceMeta[s.code.toLowerCase()];
+            const meta = s.code ? sourceMeta[s.code.toLowerCase()] : undefined;
             if (meta === 'other') {
                 s.name = `[${s.code}] ${s.name}`;
                 otherSources.push(s);
@@ -934,7 +934,7 @@ function App() {
             // Sort otherSources by metadata order
             const sourceOrder: string[] = [];
             packages.forEach(p => {
-                if (p.status === 'active' && p.metadata.source_names) {
+                if (p.status === 'active' && p.metadata?.source_names) {
                     sourceOrder.push(...Object.keys(p.metadata.source_names));
                 }
             });
@@ -968,7 +968,7 @@ function App() {
         // Get source order from metadata
         const sourceOrder: string[] = [];
         packages.forEach(p => {
-            if (p.status === 'active' && p.metadata.source_names) {
+            if (p.status === 'active' && p.metadata?.source_names) {
                 sourceOrder.push(...Object.keys(p.metadata.source_names));
             }
         });
@@ -978,8 +978,8 @@ function App() {
             const name = sourceNames[code.toLowerCase()] || sourceNames[code] || sample?.Source_Long || code;
             return { code, name, count: sourceStats.counts[code] };
         }).sort((a, b) => {
-            const idxA = sourceOrder.indexOf(a.code.toLowerCase());
-            const idxB = sourceOrder.indexOf(b.code.toLowerCase());
+            const idxA = sourceOrder.indexOf((a.code || '').toLowerCase());
+            const idxB = sourceOrder.indexOf((b.code || '').toLowerCase());
             if (idxA !== -1 && idxB !== -1) return idxA - idxB;
             if (idxA !== -1) return -1;
             if (idxB !== -1) return 1;
@@ -1540,8 +1540,8 @@ function App() {
 
         packages.forEach(p => {
             if (p.type === 'imported' && p.status === 'active') {
-                if (p.metadata.stats?.notebooks === 0) return;
-                if (p.metadata.source_names) {
+                if (p.metadata?.stats?.notebooks === 0) return;
+                if (p.metadata?.source_names) {
                     Object.entries(p.metadata.source_names).forEach(([code, name]) => {
                         const countWords = allData.filter(d => d.Source === code).length;
                         const countSentences = sentences.filter(s => s.source === code).length;
@@ -1551,7 +1551,7 @@ function App() {
                         list.push({
                             id: code,
                             name: name,
-                            date: p.metadata.date_created,
+                            date: p.metadata?.date_created,
                             type: 'imported',
                             packageId: p.id,
                             color: p.color,
@@ -1588,7 +1588,7 @@ function App() {
     const prioritizedSources = useMemo(() => {
         const prioritized = new Set<string>();
         packages.forEach(p => {
-            if (p.metadata.source_meta) {
+            if (p.metadata?.source_meta) {
                 Object.entries(p.metadata.source_meta).forEach(([src, action]) => {
                     if (action === 'prioritize') prioritized.add(src);
                 });
@@ -2048,39 +2048,43 @@ function App() {
                                             />
                                         );
                                     } else {
-                                        const rootEntry = item.Index ? rootMap?.get(item.Index) : null;
+                                        const itemId = item.id || item.Index || (item as any).merged_id;
+                                        const rootEntry = itemId ? rootMap?.get(itemId) : null;
                                         
                                         // Look back to see if same root was rendered
                                         let showRootHeader = false;
                                         if (rootEntry && settings.showRootHeaders !== false) {
                                             const prevItem = index > 0 ? array[index - 1] : null;
-                                            const prevIsSentence = prevItem ? (prevItem.item || (prevItem.id && !prevItem.Index)) : true;
-                                            const prevEntry = prevIsSentence ? null : prevItem;
-                                            const prevRootEntry = prevEntry?.Index ? rootMap?.get(prevEntry.Index) : null;
+                                            const prevIsSentence = prevItem ? (prevItem.item || (prevItem.id && !prevItem.Index && !prevItem.merged_id)) : true;
+                                            const prevEntry = prevIsSentence ? null : (prevItem?.item || prevItem);
+                                            const prevEntryId = prevEntry?.id || prevEntry?.Index || prevEntry?.merged_id;
+                                            const prevRootEntry = prevEntryId ? rootMap?.get(prevEntryId) : null;
+                                            const prevSlug = prevRootEntry?.slug || prevRootEntry?.root_slug;
+                                            const currSlug = rootEntry.slug || rootEntry.root_slug;
                                             
-                                            if (!prevRootEntry || prevRootEntry.root_slug !== rootEntry.root_slug) {
+                                            if (!prevRootEntry || prevSlug !== currSlug) {
                                                 showRootHeader = true;
                                             }
                                         }
 
                                         return (
-                                            <React.Fragment key={item.Index}>
+                                            <React.Fragment key={item.Index || item.id || (item as any).merged_id}>
                                                 {showRootHeader && rootEntry && (
                                                     <div className="flex items-center gap-2.5 px-4 py-2 mt-4 mb-1">
                                                         <div className="w-1.5 h-5 bg-amber-500 dark:bg-amber-400 rounded-full shrink-0" />
                                                         <div className="flex items-center gap-2">
                                                             <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em]">Root:</span>
                                                             <button 
-                                                                onClick={() => handleViewRoot(rootEntry.root_slug)}
+                                                                onClick={() => handleViewRoot(rootEntry.slug || rootEntry.root_slug)}
                                                                 className="text-sm font-bold font-noto-cherokee text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1 bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 rounded shadow-sm border border-amber-100/40 dark:border-amber-900/40"
                                                             >
-                                                                -{rootEntry.root_h || rootEntry.root_g}-
+                                                                {isEmptyRoot(rootEntry) ? '∅' : `-${rootEntry.root_h || rootEntry.root_g}-`}
                                                             </button>
                                                         </div>
                                                     </div>
                                                 )}
                                                 <div className={(rootEntry && settings.showRootHeaders !== false) ? "ml-4 pl-2 border-l-2 border-amber-500/20 dark:border-amber-400/20" : ""}>
-                                                    <EntryCard entry={item} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} />
+                                                    <EntryCard entry={item} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} settings={settings} />
                                                 </div>
                                             </React.Fragment>
                                         );
@@ -2101,37 +2105,41 @@ function App() {
                                             />;
                                         }
                                         
-                                        const rootEntry = entry.Index ? rootMap?.get(entry.Index) : null;
+                                        const entryId = entry.id || entry.Index || (entry as any).merged_id;
+                                        const rootEntry = entryId ? rootMap?.get(entryId) : null;
                                         let showRootHeader = false;
                                         if (rootEntry) {
                                             const prevItem = index > 0 ? array[index - 1] : null;
                                             const prevIsSentence = prevItem ? (prevItem.item && (prevItem.type === 'text' || prevItem.type === 'deep')) : true;
-                                            const prevEntry = prevIsSentence ? null : prevItem;
-                                            const prevRootEntry = prevEntry?.Index ? rootMap?.get(prevEntry.Index) : null;
+                                            const prevEntry = prevIsSentence ? null : (prevItem?.item || prevItem);
+                                            const prevEntryId = prevEntry?.id || prevEntry?.Index || prevEntry?.merged_id;
+                                            const prevRootEntry = prevEntryId ? rootMap?.get(prevEntryId) : null;
+                                            const prevSlug = prevRootEntry?.slug || prevRootEntry?.root_slug;
+                                            const currSlug = rootEntry.slug || rootEntry.root_slug;
                                             
-                                            if (!prevRootEntry || prevRootEntry.root_slug !== rootEntry.root_slug) {
+                                            if (!prevRootEntry || prevSlug !== currSlug) {
                                                 showRootHeader = true;
                                             }
                                         }
 
                                         return (
-                                            <React.Fragment key={entry.Index}>
+                                            <React.Fragment key={entry.Index || entry.id || (entry as any).merged_id}>
                                                 {showRootHeader && rootEntry && (
                                                     <div className="flex items-center gap-2.5 px-4 py-2 mt-4 mb-1 opacity-60">
                                                         <div className="w-1.5 h-5 bg-amber-500/60 dark:bg-amber-400/60 rounded-full shrink-0" />
                                                         <div className="flex items-center gap-2">
                                                             <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em]">Root:</span>
                                                             <button 
-                                                                onClick={() => handleViewRoot(rootEntry.root_slug)}
+                                                                onClick={() => handleViewRoot(rootEntry.slug || rootEntry.root_slug)}
                                                                 className="text-sm font-bold font-noto-cherokee text-amber-600/80 dark:text-amber-400/80 hover:underline flex items-center gap-1 bg-amber-50/50 dark:bg-amber-950/30 px-2 py-0.5 rounded border border-amber-100/20 dark:border-amber-900/20"
                                                             >
-                                                                -{rootEntry.root_h || rootEntry.root_g}-
+                                                                {isEmptyRoot(rootEntry) ? '∅' : `-${rootEntry.root_h || rootEntry.root_g}-`}
                                                             </button>
                                                         </div>
                                                     </div>
                                                 )}
                                                 <div className={rootEntry ? "ml-4 pl-2 border-l-2 border-amber-500/10 dark:border-amber-400/10" : ""}>
-                                                    <EntryCard entry={entry} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} isDimmed={true} />
+                                                    <EntryCard entry={entry} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} isDimmed={true} settings={settings} />
                                                 </div>
                                             </React.Fragment>
                                         );
@@ -2323,7 +2331,7 @@ function App() {
                             </div>
                                 <div className="flex-1 overflow-y-auto p-4" key={activeDictionaryId + '-' + dictionaryMode}>
                                     {dictionaryMode === 'words' ? (
-                                        sortedDictionaryWords.length === 0 ? <div className="text-center py-12 text-slate-400">Empty dictionary.<br />Tap + to add a word.</div> : sortedDictionaryWords.map(entry => <EntryCard key={entry.Index} entry={entry} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} />)
+                                        sortedDictionaryWords.length === 0 ? <div className="text-center py-12 text-slate-400">Empty dictionary.<br />Tap + to add a word.</div> : sortedDictionaryWords.map(entry => <EntryCard key={entry.Index} entry={entry} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} settings={settings} />)
                                     ) : (
                                         (customDictionaries[activeDictionaryId] ? userSentences : sentences).filter(s => s.source === activeDictionaryId).length === 0 ? <div className="text-center py-12 text-slate-400">No sentences yet.<br />Tap + to add one.</div> : (customDictionaries[activeDictionaryId] ? userSentences : sentences).filter(s => s.source === activeDictionaryId).map(s => <SentenceCard key={s.id} sentence={s} customDictionaries={customDictionaries} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} personalWords={personalWords} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} onDeleteAudio={deleteAudio}
                                             favorites={favorites}
@@ -2395,6 +2403,34 @@ function App() {
                                     <option value="aspiration">Aspiration (Uchihara t/th)</option>
                                     <option value="reverse_aspiration">Reverse Aspiration (d/dh)</option>
                                 </select>
+                            </div>
+                            <hr className="border-slate-100 dark:border-slate-800" />
+                            <div className="flex items-center justify-between">
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Show Tone in Reference Forms</span>
+                                    <span className="text-xs text-slate-400">Display tone diacritics in mini forms preview</span>
+                                </div>
+                                <button onClick={() => setSettings(s => ({ ...s, showToneInForms: s.showToneInForms === false ? true : false }))} className={`transition-colors ${settings.showToneInForms !== false ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}>
+                                    {settings.showToneInForms !== false ? <ToggleRight size={32} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={32} />}
+                                </button>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Color-Code Word Segments</span>
+                                    <span className="text-xs text-slate-400">Highlight prefixes (green), pronouns, and aspect endings</span>
+                                </div>
+                                <button onClick={() => setSettings(s => ({ ...s, colorWordSegments: s.colorWordSegments === false ? true : false }))} className={`transition-colors ${settings.colorWordSegments !== false ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}>
+                                    {settings.colorWordSegments !== false ? <ToggleRight size={32} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={32} />}
+                                </button>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Show Aspect Class Mascots</span>
+                                    <span className="text-xs text-slate-400">Display the mascot verb under class names in verb breakdowns</span>
+                                </div>
+                                <button onClick={() => setSettings(s => ({ ...s, showClassMascots: !s.showClassMascots }))} className={`transition-colors ${settings.showClassMascots ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}>
+                                    {settings.showClassMascots ? <ToggleRight size={32} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={32} />}
+                                </button>
                             </div>
                             <hr className="border-slate-100 dark:border-slate-800" />
                             <div>
@@ -2517,9 +2553,11 @@ function App() {
                         <RootView
                             key={`root-${item.slug}-${index}`}
                             slug={item.slug}
+                            settings={settings}
                             onClose={() => popNavStack('root')}
                             onViewEntry={(entry) => handleEntryClick(entry)}
                             onViewClass={(cls) => handleViewClass(cls)}
+                            onViewRoot={(slug) => handleViewRoot(slug)}
                             onShowSettings={() => setShowSettingsModal(true)}
                             style={{ zIndex: baseZIndex }}
                         />
@@ -2530,8 +2568,10 @@ function App() {
                         <ClassView
                             key={`class-${item.className}-${index}`}
                             className={item.className}
+                            settings={settings}
                             onClose={() => popNavStack('class')}
                             onViewClass={(cls) => handleViewClass(cls)}
+                            onViewRoot={(slug) => handleViewRoot(slug)}
                             onViewEntry={(entry) => handleEntryClick(entry)}
                             onShowSettings={() => setShowSettingsModal(true)}
                             style={{ zIndex: baseZIndex }}
@@ -2543,6 +2583,7 @@ function App() {
                         <EntryDetail
                             key={`entry-${item.entry.Index || item.entry.id}-${index}`}
                             entry={item.entry}
+                            settings={settings}
                             onClose={() => popNavStack('entry')}
                             onViewRoot={(slug) => handleViewRoot(slug)}
                             onViewClass={(cls) => handleViewClass(cls)}

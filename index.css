@@ -2,4 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'Charis SIL';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/CharisSIL-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Charis SIL';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/CharisSIL-Bold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Charis SIL';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/CharisSIL-Italic.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Charis SIL';
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/CharisSIL-BoldItalic.woff2') format('woff2');
+}
+
 .pb-safe { padding-bottom: env(safe-area-inset-bottom); }

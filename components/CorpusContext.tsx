@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 
 import { usePackageManager } from './PackageManagerContext';
+import { isEmptyRoot, sanitizeEmptyRootSurfaceSegments, saveAudioToDB, deleteAudioFromDB, cleanStr } from '../utils';
 
 // --- Types ---
 
@@ -28,6 +29,16 @@ export interface DictionaryEntry {
     Sentence_Audio?: string;
     Definition_Long?: string;
     Cross_Reference?: string;
+    surface_spelling?: string;
+    surface_forms?: Record<string, string>;
+    surface_segments?: Record<string, SurfaceSegment[]>;
+}
+
+export interface SurfaceSegment {
+    role: 'prepronominal' | 'pronoun' | 'middle_voice' | 'root' | 'post_root' | 'aspect' | 'final';
+    text: string;
+    color?: string;
+    set?: 'A' | 'B' | 'P2P';
 }
 
 export interface Sentence {
@@ -98,8 +109,13 @@ export interface RootEntry {
     root_h: string;
     root_g: string;
     root_slug: string;
+    slug?: string;
     definition: string;
     class_name: string;
+    class_mascot?: string;
+    surface_spelling?: string;
+    surface_forms?: Record<string, string>;
+    surface_segments?: Record<string, SurfaceSegment[]>;
     is_derivation?: boolean;
     parent_entry_no?: number;
     segmented_forms?: {
@@ -114,11 +130,20 @@ export interface RootEntry {
         pre?: {
             distributive?: boolean;
             translocutive?: boolean;
+            translocutiveImpOnly?: boolean;
+            partitive?: boolean;
         };
         pron?: {
             set_type?: string;
+            stem_type?: string;
+            use_ka_variant?: boolean;
+            plural_pronouns?: boolean;
+            middle_voice?: string;
+            use_3rd_person_object?: boolean;
         };
     };
+    post_root_morpheme?: string | null;
+    _is_transitive?: boolean;
     [key: string]: any;
 }
 
@@ -174,7 +199,7 @@ interface CorpusContextType {
     setUserNotes: React.Dispatch<React.SetStateAction<Record<string, string>>>;
 }
 
-const CorpusContext = createContext<CorpusContextType | undefined>(undefined);
+export const CorpusContext = createContext<CorpusContextType | undefined>(undefined);
 
 export const useCorpus = () => {
     const context = useContext(CorpusContext);
@@ -212,7 +237,16 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             }
 
             const savedSentences = localStorage.getItem('cherokee_app_user_sentences');
-            if (savedSentences) setUserSentences(JSON.parse(savedSentences));
+            if (savedSentences) {
+                const parsed = JSON.parse(savedSentences);
+                if (Array.isArray(parsed)) {
+                    setUserSentences(parsed.map((s: any) => ({
+                        ...s,
+                        id: s.id || String(Date.now()),
+                        source: s.source || 'user'
+                    })));
+                }
+            }
 
             // Load Custom Dictionaries and Personal Words
             const savedDictionaries = localStorage.getItem('cherokee_app_notebooks');
@@ -326,49 +360,98 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
         // Index Dictionary & Extract Roots
         dictionary.forEach(d => {
-            const id = d.id || d.Index;
+            const id = d.id || d.Index || (d as any).merged_id;
             if (id) dMap.set(id, d);
+            if (d.id) dMap.set(d.id, d);
+            if (d.Index) dMap.set(d.Index, d);
+            if ((d as any).merged_id) dMap.set((d as any).merged_id, d);
 
             // Also index by lily-dict Index for root mapping
             const lilyIndex = (d as any).sources?.['lily-dict.csv']?.Index;
             if (lilyIndex) dMap.set(lilyIndex, d);
 
-            // Extract Root Info from hierarchical-dict
+            // Extract Root Info from hierarchical-dict or direct slug
             const hd = (d as any).sources?.['hierarchical-dict.json'];
-            if (hd && (hd.class_name || hd.h_grade_root || hd.glottal_grade_root || hd.root_slug || hd.slug || (d as any).root_slug)) {
-                const rootSlug = hd.slug || hd.root_slug || (d as any).root_slug || hd.h_grade_root || hd.glottal_grade_root || hd.class_name;
+            const slugVal = hd?.slug || (d as any).slug || hd?.root_slug || (d as any).root_slug;
+            const rootH = hd?.h_grade_root || (d as any).root_h || (d as any).h_grade_root || '';
+            const rootG = hd?.glottal_grade_root || (d as any).root_g || (d as any).glottal_grade_root || '';
+            const className = hd?.class_name || (d as any).class_name || '';
+            const classMascot = hd?.class_mascot || (d as any).class_mascot || '';
+            const surfaceSpelling = (d as any).surface_spelling || hd?.surface_spelling || '';
+            const surfaceForms = (d as any).surface_forms || hd?.surface_forms || undefined;
+            const surfaceSegments = (d as any).surface_segments || hd?.surface_segments || undefined;
+
+            if (slugVal || rootH || rootG || className || surfaceSpelling || surfaceSegments) {
+                const rootSlug = slugVal || rootH || rootG || className;
                 
                 const rootEntry: RootEntry = {
                     entry_id: id || lilyIndex || '',
-                    root_h: hd.h_grade_root || '',
-                    root_g: hd.glottal_grade_root || '',
+                    root_h: rootH,
+                    root_g: rootG,
                     root_slug: rootSlug,
-                    definition: hd.definition || d.Definition || '',
-                    class_name: hd.class_name || '',
+                    slug: rootSlug,
+                    definition: hd?.definition || d.Definition || (d as any).definition || '',
+                    class_name: className,
+                    class_mascot: classMascot,
+                    surface_spelling: surfaceSpelling,
+                    surface_forms: surfaceForms,
+                    surface_segments: surfaceSegments,
                     segmented_forms: {
-                        present: hd['segmented_forms.present'] || '',
-                        present_1sg: hd['segmented_forms.present_1sg'] || '',
-                        imperfective: hd['segmented_forms.imperfective'] || '',
-                        perfective: hd['segmented_forms.perfective'] || '',
-                        imperative: hd['segmented_forms.imperative'] || '',
-                        infinitive: hd['segmented_forms.infinitive'] || ''
+                        present: hd?.['segmented_forms.present'] || '',
+                        present_1sg: hd?.['segmented_forms.present_1sg'] || '',
+                        imperfective: hd?.['segmented_forms.imperfective'] || '',
+                        perfective: hd?.['segmented_forms.perfective'] || '',
+                        imperative: hd?.['segmented_forms.imperative'] || '',
+                        infinitive: hd?.['segmented_forms.infinitive'] || ''
                     },
                     config: {
                         pre: {
-                            distributive: hd['config.pre.distributive'] === true || hd['config.pre.distributive'] === 'true',
-                            translocutive: hd['config.pre.translocutive'] === true || hd['config.pre.translocutive'] === 'true'
+                            distributive: hd?.['config.pre.distributive'] === true || hd?.['config.pre.distributive'] === 'true',
+                            translocutive: hd?.['config.pre.translocutive'] === true || hd?.['config.pre.translocutive'] === 'true',
+                            translocutiveImpOnly: hd?.['config.pre.translocutiveImpOnly'] === true || hd?.['config.pre.translocutiveImpOnly'] === 'true',
+                            partitive: hd?.['config.pre.partitive'] === true || hd?.['config.pre.partitive'] === 'true'
                         },
                         pron: {
-                            set_type: hd['config.pron.set_type'] || ''
+                            set_type: hd?.['config.pron.set_type'] || '',
+                            stem_type: hd?.['config.pron.stem_type'] || '',
+                            use_ka_variant: hd?.['config.pron.use_ka_variant'] === true || hd?.['config.pron.use_ka_variant'] === 'true',
+                            plural_pronouns: hd?.['config.pron.plural_pronouns'] === true || hd?.['config.pron.plural_pronouns'] === 'true',
+                            middle_voice: hd?.['config.pron.middle_voice'] || 'none',
+                            use_3rd_person_object: hd?.['config.pron.use_3rd_person_object'] === true || hd?.['config.pron.use_3rd_person_object'] === 'true'
                         }
-                    }
+                    },
+                    post_root_morpheme: hd?.['post_root_morpheme'] || hd?.['morphology.post_root_morpheme'] || null,
+                    _is_transitive: hd?.['_is_transitive'] === true || hd?.['_is_transitive'] === 'true'
                 };
+
+                if (isEmptyRoot(rootEntry)) {
+                    if (rootEntry.surface_segments) {
+                        rootEntry.surface_segments = sanitizeEmptyRootSurfaceSegments(
+                            rootEntry.surface_segments,
+                            rootEntry.post_root_morpheme
+                        );
+                    }
+                    if ((d as any).surface_segments) {
+                        (d as any).surface_segments = sanitizeEmptyRootSurfaceSegments(
+                            (d as any).surface_segments,
+                            rootEntry.post_root_morpheme
+                        );
+                    }
+                    if (hd?.surface_segments) {
+                        hd.surface_segments = sanitizeEmptyRootSurfaceSegments(
+                            hd.surface_segments,
+                            rootEntry.post_root_morpheme
+                        );
+                    }
+                }
                 
                 rootsArr.push(rootEntry);
-                rMap.set(rootEntry.entry_id, rootEntry);
-                if (lilyIndex && lilyIndex !== id) {
-                    rMap.set(lilyIndex, rootEntry);
-                }
+                if (rootEntry.entry_id) rMap.set(rootEntry.entry_id, rootEntry);
+                if (id && !rMap.has(id)) rMap.set(id, rootEntry);
+                if (d.id && !rMap.has(d.id)) rMap.set(d.id, rootEntry);
+                if (d.Index && !rMap.has(d.Index)) rMap.set(d.Index, rootEntry);
+                if ((d as any).merged_id && !rMap.has((d as any).merged_id)) rMap.set((d as any).merged_id, rootEntry);
+                if (lilyIndex && !rMap.has(lilyIndex)) rMap.set(lilyIndex, rootEntry);
                 
                 if (!grMap.has(rootSlug)) {
                     grMap.set(rootSlug, []);
@@ -391,11 +474,27 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             gMap.get(g.sentence_id)!.push(g);
 
             // 2. Reverse Map (Entry -> Sentences)
-            if (g.entry_id) {
-                if (!eToSMap.has(g.entry_id)) {
-                    eToSMap.set(g.entry_id, new Set());
+            const targetId = g.entry_id || (g as any).base_form_id || (g as any).base_id;
+            if (targetId) {
+                const addLink = (entId: string) => {
+                    if (!entId) return;
+                    if (!eToSMap.has(entId)) {
+                        eToSMap.set(entId, new Set());
+                    }
+                    eToSMap.get(entId)!.add(g.sentence_id);
+                };
+
+                addLink(targetId);
+
+                // If dictionaryMap has this entry, also link by its alias IDs
+                const ent = dMap.get(targetId);
+                if (ent) {
+                    if (ent.id) addLink(ent.id);
+                    if (ent.Index) addLink(ent.Index);
+                    if ((ent as any).merged_id) addLink((ent as any).merged_id);
+                    const lilyIndex = (ent as any).sources?.['lily-dict.csv']?.Index;
+                    if (lilyIndex) addLink(lilyIndex);
                 }
-                eToSMap.get(g.entry_id)!.add(g.sentence_id);
             }
         });
 
@@ -497,8 +596,6 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     // Audio Actions
     const saveAudio = async (targetId: string, blob: Blob, speaker: string, formIndex?: number, wordSlug?: string) => {
-        const { saveAudioToDB, cleanStr } = await import('../utils');
-
         let type = 'W';
         let id = targetId;
 
@@ -531,7 +628,6 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
 
     const deleteAudio = async (targetId: string, audioId: string) => {
-        const { deleteAudioFromDB } = await import('../utils');
         try {
             await deleteAudioFromDB(audioId);
             setUserAudioMeta(prev => {

@@ -190,10 +190,14 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                     }
 
                     const Source_Long = sourceKeys.map(k => metadata.source_names?.[k] || k).join(', ');
+                    const slug = d.slug || d.root_slug || sources['hierarchical-dict.json']?.slug || sources['hierarchical-dict.json']?.root_slug;
+                    const root_slug = d.root_slug || d.slug || sources['hierarchical-dict.json']?.root_slug || sources['hierarchical-dict.json']?.slug;
 
                     return {
                         ...d,
                         id: d.merged_id,
+                        slug: slug || undefined,
+                        root_slug: root_slug || undefined,
                         syllabary,
                         translit,
                         definition,
@@ -215,19 +219,34 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                     let source = d.source;
                     if (source === 'Cherokee Dictionary 1975 Durbin Feeling') {
                         source = 'ced';
-                    } else if (!source || source.trim() === '') {
-                        if (d['source file'] === 'cn-app-dictionary.csv') {
+                    } else if (source === 'Cherokee New Testament' || source === 'CNT') {
+                        source = 'cnt';
+                    } else if (!source || (typeof source === 'string' && source.trim() === '')) {
+                        const file = d['source file'] || (Array.isArray(d.sources) && d.sources[0]) || '';
+                        if (file === 'cn-app-dictionary.csv') {
                             source = 'ced';
-                        } else if (d['source file'] === 'learning-to-use-the-cherokee-verb.csv') {
+                        } else if (file === 'learning-to-use-the-cherokee-verb.csv') {
                             source = 'ltu';
+                        } else if (file === 'cherokee-new-testament.csv') {
+                            source = 'cnt';
+                        } else if (file === 'lily-dict.csv') {
+                            source = 'rrd';
+                        } else if (file && typeof file === 'string') {
+                            source = file.replace(/\.csv$/i, '');
+                        } else {
+                            source = 'official';
                         }
                     }
 
+                    if (!source || typeof source !== 'string' || source.trim() === '') {
+                        source = 'official';
+                    }
+
                     return {
-                        id: d.sentence_id,
-                        syllabary: d.syllabary,
-                        translit: d.phonetic,
-                        english: d.english,
+                        id: d.sentence_id || d.id || '',
+                        syllabary: d.syllabary || '',
+                        translit: d.phonetic || d.translit || '',
+                        english: d.english || '',
                         source: source,
                         audio: audioBySentence[d.sentence_id] || d.audio || '',
                         // Reader fields
@@ -248,34 +267,54 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
 
                 const mergedGlossesMap = new Map<string, any>();
                 glosses.forEach((d: any) => {
-                    const key = `${d.sentence_id}_${d.base_id}`;
+                    const baseId = d.base_form_id || d.base_id || d.entry_id || d.merged_id;
+                    const wordIdx = d.word_index !== undefined ? String(d.word_index) : undefined;
+                    const key = `${d.sentence_id}_${baseId}_${wordIdx !== undefined ? wordIdx : ''}`;
                     if (!mergedGlossesMap.has(key)) {
-                        let wordIndex: string | undefined = undefined;
-                        const matchSent = sentLookup.get(d.sentence_id);
-                        if (matchSent) {
-                            const txt = matchSent.phonetic || matchSent.syllabary || '';
-                            const parts = txt.split(' ');
-                            const idx = parts.findIndex((p: string) => p.includes('*'));
-                            if (idx !== -1) {
-                                wordIndex = idx.toString();
+                        let wordIndex = wordIdx;
+                        if (wordIndex === undefined) {
+                            const matchSent = sentLookup.get(d.sentence_id);
+                            if (matchSent) {
+                                const txt = matchSent.phonetic || matchSent.syllabary || '';
+                                const parts = txt.split(' ');
+                                const idx = parts.findIndex((p: string) => p.includes('*'));
+                                if (idx !== -1) {
+                                    wordIndex = idx.toString();
+                                }
                             }
                         }
 
                         let source = d.source;
                         if (source === 'Cherokee Dictionary 1975 Durbin Feeling') {
                             source = 'ced';
-                        } else if (!source || source.trim() === '') {
-                            if (d['source file'] === 'cn-app-dictionary.csv') {
+                        } else if (source === 'Cherokee New Testament' || source === 'CNT') {
+                            source = 'cnt';
+                        } else if (!source || (typeof source === 'string' && source.trim() === '')) {
+                            const file = d['source file'] || (Array.isArray(d.sources) && d.sources[0]) || '';
+                            if (file === 'cn-app-dictionary.csv') {
                                 source = 'ced';
-                            } else if (d['source file'] === 'learning-to-use-the-cherokee-verb.csv') {
+                            } else if (file === 'learning-to-use-the-cherokee-verb.csv') {
                                 source = 'ltu';
+                            } else if (file === 'cherokee-new-testament.csv') {
+                                source = 'cnt';
+                            } else if (file === 'lily-dict.csv') {
+                                source = 'rrd';
+                            } else if (file && typeof file === 'string') {
+                                source = file.replace(/\.csv$/i, '');
+                            } else {
+                                source = 'ced';
                             }
+                        }
+
+                        if (!source || typeof source !== 'string' || source.trim() === '') {
+                            source = 'ced';
                         }
 
                         mergedGlossesMap.set(key, {
                             sentence_id: d.sentence_id,
                             word_index: wordIndex,
-                            entry_id: d.base_id,
+                            entry_id: baseId,
+                            base_id: baseId,
                             source: source,
                             gloss_syllabary: d.gloss_syllabary,
                             gloss_phonetic: d.gloss_phonetic,
@@ -300,7 +339,9 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                         tone: c['cn-app-dictionary.csv_Tone and length 1'] || c['lily-dict.csv_Tone'] || c['kirk-book-data.csv_Tone'] || '',
                         notes: c['cn-app-dictionary.csv_Translations'] || c['learning-to-use-the-cherokee-verb.csv_English'] || c['kirk-book-data.csv_English'] || '',
                         source: source,
-                        audio: audioByConjugation[`${c.merged_id}_${c.normalized_key}`] || ''
+                        audio: audioByConjugation[`${c.merged_id}_${c.normalized_key}`] || '',
+                        root_slug: c.root_slug || c.slug || undefined,
+                        slug: c.slug || c.root_slug || undefined
                     };
                 });
 

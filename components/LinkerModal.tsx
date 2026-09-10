@@ -3,7 +3,10 @@ import { DictionaryEntry, useCorpus } from './CorpusContext';
 import { usePackageManager } from './PackageManagerContext';
 import { Search, Check, Trash2 } from './Icons';
 import { Modal, SourceBadge } from './UI';
-import { performSearch, buildWordFormsLookupMap, getAllFormsForEntry } from '../utils';
+
+import { performSearch, buildWordFormsLookupMap, getAllFormsForEntry, renderColorizedCherokee, renderSegmentedSurface, projectSegmentsOntoTone, segmentVerbForm, deriveSegmentedForm, getFormPronominalSet, SegmentGroup, isEmptyRoot } from '../utils';
+
+
 
 interface LinkerModalProps {
     initialQuery: string;
@@ -53,6 +56,15 @@ export const LinkerModal: React.FC<LinkerModalProps> = ({ initialQuery, targetWo
 
     const { sentences, entryToSentencesMap, rootMap, userWordForms } = useCorpus();
     const { packages, importedData, getPackageColor } = usePackageManager();
+
+    const isColored = (() => {
+        try {
+            const s = localStorage.getItem('cherokee_app_settings');
+            return s ? JSON.parse(s).colorWordSegments !== false : true;
+        } catch {
+            return true;
+        }
+    })();
 
     const wordFormsLookupMap = useMemo(() => {
         return buildWordFormsLookupMap(importedData, userWordForms);
@@ -193,14 +205,17 @@ export const LinkerModal: React.FC<LinkerModalProps> = ({ initialQuery, targetWo
 
                     <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 -mr-2 pr-2">
                         {results.map((entry: any, index: number, array: any[]) => {
-                            const rootEntry = (entry.Index || entry.id) ? rootMap?.get(entry.Index || entry.id) : null;
+                            const entryId = entry.id || entry.Index || entry.merged_id;
+                            const rootEntry = entryId ? rootMap?.get(entryId) : null;
                             
                             let showRootHeader = false;
                             if (rootEntry) {
                                 const prevItem = index > 0 ? array[index - 1] : null;
-                                const prevEntryId = prevItem ? (prevItem.Index || prevItem.id) : null;
+                                const prevEntryId = prevItem ? (prevItem.id || prevItem.Index || prevItem.merged_id) : null;
                                 const prevRootEntry = prevEntryId ? rootMap?.get(prevEntryId) : null;
-                                if (!prevRootEntry || prevRootEntry.root_slug !== rootEntry.root_slug) {
+                                const prevSlug = prevRootEntry?.slug || prevRootEntry?.root_slug;
+                                const currSlug = rootEntry.slug || rootEntry.root_slug;
+                                if (!prevRootEntry || prevSlug !== currSlug) {
                                     showRootHeader = true;
                                 }
                             }
@@ -215,38 +230,85 @@ export const LinkerModal: React.FC<LinkerModalProps> = ({ initialQuery, targetWo
                                             <div className="flex items-center gap-2">
                                                 <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em]">Root:</span>
                                                 <span className="text-xs font-bold font-noto-cherokee text-amber-600 dark:text-amber-400 bg-amber-100/60 dark:bg-amber-900/40 px-2 py-0.5 rounded border border-amber-200/50 dark:border-amber-800/40">
-                                                    -{rootEntry.root_h || rootEntry.root_g}-
+                                                    {isEmptyRoot(rootEntry) ? '∅' : `-${rootEntry.root_h || rootEntry.root_g}-`}
                                                 </span>
                                                 {rootEntry.definition && <span className="text-xs text-slate-500 dark:text-slate-400 italic">({rootEntry.definition})</span>}
                                             </div>
                                         </div>
                                     )}
                                     <div className={rootEntry ? "ml-3 pl-2 border-l-2 border-amber-500/20 dark:border-amber-400/20" : ""}>
-                                        <button
-                                            className="w-full text-left p-3 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors flex flex-col gap-1 group"
-                                            onClick={() => handleEntrySelect(entry)}
-                                        >
-                                            <div className="flex justify-between items-center">
-                                                <span className="font-serif font-bold text-slate-900 dark:text-slate-100 group-hover:text-amber-700 transition-colors">{entry.syllabary || entry.Syllabary}</span>
-                                                <SourceBadge source={entry.source || entry.Source} name={customDictionaries?.[entry.source || entry.Source]?.name || entry.source} customColor={srcColor} />
-                                            </div>
-                                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{entry.translit || entry.Entry}</span>
-                                            {entry.matchedForm && (
-                                                <div className="text-xs text-amber-600 dark:text-amber-400 italic font-medium flex items-center flex-wrap gap-x-1.5 gap-y-0.5">
-                                                    <span className="text-slate-400 dark:text-slate-500 not-italic">matched form:</span>
-                                                    {entry.matchedForm.syllabary && (
-                                                        <span className="font-serif font-semibold">{entry.matchedForm.syllabary}</span>
+                                        {(() => {
+                                            const mainPresGroups = rootEntry?.segmented_forms?.present
+                                                ? segmentVerbForm(rootEntry.segmented_forms.present, 'present', rootEntry.config, rootEntry.class_name)
+                                                : null;
+                                            const mainPronounSet = rootEntry?.config?.pron?.set_type === 'b' ? 'B' : 'A';
+
+                                            let matchedFormGroups: SegmentGroup[] | null = null;
+                                            let matchedPronounSet: 'A' | 'B' | 'P2P' = 'A';
+                                            if (rootEntry && entry.matchedForm) {
+                                                const derivedSeg = deriveSegmentedForm(entry.matchedForm, [], rootEntry);
+                                                if (derivedSeg) {
+                                                    const formName = (entry.matchedForm.normalized_key || entry.matchedForm.form_name || '').split('|')[2] || 'present';
+                                                    matchedFormGroups = segmentVerbForm(derivedSeg, formName, rootEntry.config, rootEntry.class_name);
+                                                    matchedPronounSet = getFormPronominalSet(entry.matchedForm.normalized_key || entry.matchedForm.form_name, rootEntry.config);
+                                                }
+                                            }
+
+                                            return (
+                                                <button
+                                                    className="w-full text-left p-3 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors flex flex-col gap-1 group"
+                                                    onClick={() => handleEntrySelect(entry)}
+                                                >
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="font-serif font-bold text-slate-900 dark:text-slate-100 group-hover:text-amber-700 transition-colors">{entry.syllabary || entry.Syllabary}</span>
+                                                        <SourceBadge source={entry.source || entry.Source} name={customDictionaries?.[entry.source || entry.Source]?.name || entry.source} customColor={srcColor} />
+                                                    </div>
+                                                    <span className="font-serif text-sm font-bold text-slate-700 dark:text-slate-300">
+                                                        {rootEntry?.surface_segments?.present
+                                                            ? renderSegmentedSurface(rootEntry.surface_segments.present, isColored)
+                                                            : (rootEntry && mainPresGroups
+                                                                ? renderColorizedCherokee(entry.translit || entry.Entry, mainPresGroups, mainPronounSet, isColored)
+                                                                : (entry.translit || entry.Entry))}
+                                                    </span>
+                                                    {entry.matchedForm && (
+                                                        <div className="text-xs text-amber-600 dark:text-amber-400 italic font-medium flex items-center flex-wrap gap-x-1.5 gap-y-0.5">
+                                                            <span className="text-slate-400 dark:text-slate-500 not-italic">matched form:</span>
+                                                            {entry.matchedForm.syllabary && (
+                                                                <span className="font-noto-cherokee font-semibold">{entry.matchedForm.syllabary}</span>
+                                                            )}
+                                                            {entry.matchedForm.translit && (
+                                                                <span className="font-serif font-bold">
+                                                                    {(() => {
+                                                                        const k = (entry.matchedForm.normalized_key || entry.matchedForm.form_name || '').toLowerCase();
+                                                                        const map: Record<string, string> = {
+                                                                            'present': 'present', '3s|3s|present': 'present', '3s|present': 'present',
+                                                                            '1s|3s|present': 'present_1sg', '1s|present': 'present_1sg',
+                                                                            'imperfective': 'imperfective', 'habitual': 'imperfective', '3s|3s|habitual': 'imperfective',
+                                                                            'perfective': 'perfective', 'past': 'perfective', '3s|3s|past': 'perfective', '3s|3s|completive past': 'perfective',
+                                                                            'imperative': 'imperative', '2s|3s|imperative': 'imperative', '2s|imperative': 'imperative',
+                                                                            'infinitive': 'infinitive', '3s|3s|infinitive': 'infinitive'
+                                                                        };
+                                                                        const fn = map[k];
+                                                                        const matchedHd = fn && rootEntry?.surface_segments ? rootEntry.surface_segments[fn] : undefined;
+                                                                        if (matchedHd) return renderSegmentedSurface(
+                                                                            entry.matchedForm.translit ? projectSegmentsOntoTone(matchedHd, entry.matchedForm.translit) : matchedHd,
+                                                                            isColored
+                                                                        );
+                                                                        return rootEntry && matchedFormGroups
+                                                                            ? renderColorizedCherokee(entry.matchedForm.translit, matchedFormGroups, matchedPronounSet, isColored)
+                                                                            : entry.matchedForm.translit;
+                                                                    })()}
+                                                                </span>
+                                                            )}
+                                                            {entry.matchedForm.label && (
+                                                                <span className="text-slate-400 not-italic">({entry.matchedForm.label})</span>
+                                                            )}
+                                                        </div>
                                                     )}
-                                                    {entry.matchedForm.translit && (
-                                                        <span className="font-sans">{entry.matchedForm.translit}</span>
-                                                    )}
-                                                    {entry.matchedForm.label && (
-                                                        <span className="text-slate-400 not-italic">({entry.matchedForm.label})</span>
-                                                    )}
-                                                </div>
-                                            )}
-                                            <span className="text-sm text-slate-500 dark:text-slate-400 line-clamp-1">{entry.definition || entry.Definition}</span>
-                                        </button>
+                                                    <span className="text-sm text-slate-500 dark:text-slate-400 line-clamp-1">{entry.definition || entry.Definition}</span>
+                                                </button>
+                                            );
+                                        })()}
                                     </div>
                                 </React.Fragment>
                             );

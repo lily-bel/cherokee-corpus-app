@@ -3,7 +3,10 @@ import { Gloss, DictionaryEntry, useCorpus } from './CorpusContext';
 import { SourceBadge } from './UI';
 import { ChevronRight, Trash2, Pencil, Plus, Search } from './Icons';
 import { usePackageManager } from './PackageManagerContext';
-import { buildWordFormsLookupMap, getAllFormsForEntry } from '../utils';
+import { buildWordFormsLookupMap, getAllFormsForEntry, renderColorizedCherokee, renderSegmentedSurface, projectSegmentsOntoTone, segmentVerbForm, deriveSegmentedForm, getFormPronominalSet, SegmentGroup } from '../utils';
+
+
+
 
 interface GlossPopoverProps {
     glosses: Gloss[];
@@ -23,11 +26,21 @@ interface GlossPopoverProps {
 
 export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord, dictionaryMap, position, onClose, onEntryClick, onEdit, onDelete, onAdd, onAddToQueue, personalWords, customDictionaries, sourceMap }) => {
     const { getPackageColor, packages, importedData } = usePackageManager();
-    const { userWordForms } = useCorpus();
+    const { userWordForms, rootMap } = useCorpus();
+
     const popoverRef = useRef<HTMLDivElement>(null);
     const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
     const [showActionsFor, setShowActionsFor] = useState<string | null>(null); // gloss entry_id
     const [expandedForms, setExpandedForms] = useState<Record<string, boolean>>({});
+
+    const isColored = (() => {
+        try {
+            const s = localStorage.getItem('cherokee_app_settings');
+            return s ? JSON.parse(s).colorWordSegments !== false : true;
+        } catch {
+            return true;
+        }
+    })();
 
     const wordFormsLookupMap = useMemo(() => {
         return buildWordFormsLookupMap(importedData, userWordForms);
@@ -151,29 +164,82 @@ export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord,
                                 </div>
                             </div>
 
-                            {entry ? (
-                                <div className="mb-3">
-                                    <div className="font-serif font-bold text-lg text-slate-900 dark:text-slate-100 mb-0.5">{entry.syllabary || entry.Syllabary}</div>
-                                    <div className="text-base font-medium text-amber-800 dark:text-amber-500 mb-1">{entry.translit || entry.Entry}</div>
-                                    {((gloss.form_syllabary && gloss.form_syllabary !== (entry.syllabary || entry.Syllabary)) ||
-                                      (gloss.form_translit && gloss.form_translit !== (entry.translit || entry.Entry)) ||
-                                      (gloss.form_name && gloss.form_name !== 'Base Form' && gloss.form_name !== 'Present 3sg')) && (
-                                        <div className="text-xs text-amber-600 dark:text-amber-400 italic mb-1.5 font-medium flex items-center flex-wrap gap-x-1.5 gap-y-0.5">
-                                            <span className="text-slate-400 dark:text-slate-500 not-italic">matched form:</span>
-                                            {gloss.form_syllabary && (
-                                                <span className="font-serif font-semibold">{gloss.form_syllabary}</span>
-                                            )}
-                                            {gloss.form_translit && (
-                                                <span className="font-sans">{gloss.form_translit}</span>
-                                            )}
-                                            {gloss.form_name && (
-                                                <span className="text-slate-400 not-italic">({gloss.form_name})</span>
-                                            )}
+                            {entry ? (() => {
+                                const entryId = entry.id || entry.Index || (entry as any).merged_id;
+                                const rootEntry = entryId ? rootMap?.get(entryId) : null;
+                                const mainPresGroups = rootEntry?.segmented_forms?.present
+                                    ? segmentVerbForm(rootEntry.segmented_forms.present, 'present', rootEntry.config, rootEntry.class_name)
+                                    : null;
+                                const mainPronounSet = rootEntry?.config?.pron?.set_type === 'b' ? 'B' : 'A';
+
+                                let matchedFormGroups: SegmentGroup[] | null = null;
+
+                                let matchedPronounSet: 'A' | 'B' | 'P2P' = 'A';
+                                if (rootEntry && (gloss.form_translit || gloss.form_name)) {
+                                    const fakeForm = {
+                                        normalized_key: gloss.form_name,
+                                        form_name: gloss.form_name,
+                                        translit: gloss.form_translit
+                                    };
+                                    const derivedSeg = deriveSegmentedForm(fakeForm, [], rootEntry);
+                                    if (derivedSeg) {
+                                        const formName = (gloss.form_name || '').split('|')[2] || 'present';
+                                        matchedFormGroups = segmentVerbForm(derivedSeg, formName, rootEntry.config, rootEntry.class_name);
+                                        matchedPronounSet = getFormPronominalSet(gloss.form_name || '', rootEntry.config);
+                                    }
+                                }
+
+                                return (
+                                    <div className="mb-3">
+                                        <div className="font-serif font-bold text-lg text-slate-900 dark:text-slate-100 mb-0.5">{entry.syllabary || entry.Syllabary}</div>
+                                        <div className="text-base font-bold text-amber-800 dark:text-amber-500 mb-1">
+                                            {rootEntry?.surface_segments?.present
+                                                ? renderSegmentedSurface(rootEntry.surface_segments.present, isColored)
+                                                : (rootEntry && mainPresGroups
+                                                    ? renderColorizedCherokee(entry.translit || entry.Entry, mainPresGroups, mainPronounSet, isColored)
+                                                    : (entry.translit || entry.Entry))}
                                         </div>
-                                    )}
-                                    <div className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{entry.definition || entry.Definition}</div>
-                                </div>
-                            ) : (gloss.gloss_english || gloss.breakdown_cherokee || gloss.breakdown_english) ? (
+                                        {((gloss.form_syllabary && gloss.form_syllabary !== (entry.syllabary || entry.Syllabary)) ||
+                                          (gloss.form_translit && gloss.form_translit !== (entry.translit || entry.Entry)) ||
+                                          (gloss.form_name && gloss.form_name !== 'Base Form' && gloss.form_name !== 'Present 3sg')) && (
+                                            <div className="text-xs text-amber-600 dark:text-amber-400 italic mb-1.5 font-medium flex items-center flex-wrap gap-x-1.5 gap-y-0.5">
+                                                <span className="text-slate-400 dark:text-slate-500 not-italic">matched form:</span>
+                                                {gloss.form_syllabary && (
+                                                    <span className="font-noto-cherokee font-semibold">{gloss.form_syllabary}</span>
+                                                )}
+                                                {gloss.form_translit && (
+                                                    <span className="font-serif font-bold">
+                                                        {(() => {
+                                                            const k = (gloss.form_name || '').toLowerCase();
+                                                            const map: Record<string, string> = {
+                                                                'present': 'present', '3s|3s|present': 'present', '3s|present': 'present',
+                                                                '1s|3s|present': 'present_1sg', '1s|present': 'present_1sg',
+                                                                'imperfective': 'imperfective', 'habitual': 'imperfective', '3s|3s|habitual': 'imperfective',
+                                                                'perfective': 'perfective', 'past': 'perfective', '3s|3s|past': 'perfective', '3s|3s|completive past': 'perfective',
+                                                                'imperative': 'imperative', '2s|3s|imperative': 'imperative', '2s|imperative': 'imperative',
+                                                                'infinitive': 'infinitive', '3s|3s|infinitive': 'infinitive'
+                                                            };
+                                                            const fn = map[k];
+                                                            const matchedHd = fn && rootEntry?.surface_segments ? rootEntry.surface_segments[fn] : undefined;
+                                                            if (matchedHd) return renderSegmentedSurface(
+                                                                gloss.form_translit ? projectSegmentsOntoTone(matchedHd, gloss.form_translit) : matchedHd,
+                                                                isColored
+                                                            );
+                                                            return rootEntry && matchedFormGroups
+                                                                ? renderColorizedCherokee(gloss.form_translit, matchedFormGroups, matchedPronounSet, isColored)
+                                                                : gloss.form_translit;
+                                                        })()}
+                                                    </span>
+                                                )}
+                                                {gloss.form_name && (
+                                                    <span className="text-slate-400 not-italic">({gloss.form_name})</span>
+                                                )}
+                                            </div>
+                                        )}
+                                        <div className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{entry.definition || entry.Definition}</div>
+                                    </div>
+                                );
+                            })() : (gloss.gloss_english || gloss.breakdown_cherokee || gloss.breakdown_english) ? (
                                 <div className="mb-3">
                                     {gloss.gloss_syllabary && (
                                         <div className="font-serif font-bold text-lg text-slate-900 dark:text-slate-100 mb-0.5">{gloss.gloss_syllabary}</div>

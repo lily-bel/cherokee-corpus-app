@@ -68,7 +68,7 @@ async function verify() {
     const coreSentsPath = path.join(__dirname, '../public/data/sentences.json');
     const coreSents = JSON.parse(fs.readFileSync(coreSentsPath, 'utf-8'));
     console.log(`\nCore sentences count in public/data/sentences.json: ${coreSents.length}`);
-    const remainingNT = coreSents.filter(s => s['source file'] === 'cherokee-new-testament.csv');
+    const remainingNT = coreSents.filter(s => s['source file'] === 'cherokee-new-testament.csv' || (Array.isArray(s.sources) && s.sources.includes('cherokee-new-testament.csv')));
     console.log(`Remaining NT verses in core: ${remainingNT.length}`);
     if (remainingNT.length !== 0) throw new Error('Core sentences.json still has NT verses!');
 

@@ -173,7 +173,8 @@ zip.generateAsync({ type: 'nodebuffer' }).then(buf => {
             const raw = fs.readFileSync(filePath, 'utf-8');
             const data = JSON.parse(raw);
             const beforeCount = data.length;
-            const cleaned = data.filter(s => s['source file'] !== 'cherokee-new-testament.csv');
+            const isNT = (s) => s['source file'] === 'cherokee-new-testament.csv' || (Array.isArray(s.sources) && s.sources.includes('cherokee-new-testament.csv'));
+            const cleaned = data.filter(s => !isNT(s));
             const removed = beforeCount - cleaned.length;
             if (removed > 0) {
                 fs.writeFileSync(filePath, JSON.stringify(cleaned, null, 2));

@@ -9,7 +9,7 @@ import {
 import { SourceBadge } from './UI';
 import EntryCard from './EntryCard';
 import EntryDetail from './EntryDetail';
-import { getAudioFromDB, renderStyledText, parseListName } from '../utils';
+import { getAudioFromDB, renderStyledText, parseListName, ColorizedCherokeeWord } from '../utils';
 import PackageExportModal from './PackageExportModal';
 
 interface PackageDetailViewProps {
@@ -635,7 +635,12 @@ const EntryPreview = ({ entry, onNavigate }: { entry: any, onNavigate?: (type: '
             className="mb-2 px-3 py-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-800 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm cursor-pointer hover:border-amber-400 dark:hover:border-amber-700 transition-colors"
         >
             <span className="font-noto-cherokee font-bold text-slate-900 dark:text-slate-100">{entry.syllabary || entry.Syllabary}</span>
-            <span className="font-noto-serif italic text-slate-600 dark:text-slate-400 border-r border-slate-300 dark:border-slate-700 pr-3">{entry.translit || entry.Entry || entry.entry}</span>
+            <span className="font-noto-serif italic text-slate-600 dark:text-slate-400 border-r border-slate-300 dark:border-slate-700 pr-3">
+                <ColorizedCherokeeWord
+                    word={entry.translit || entry.Entry || entry.entry}
+                    entry={entry}
+                />
+            </span>
             <span className="text-slate-500 dark:text-slate-500">{entry.definition || entry.english || entry.Definition}</span>
         </div>
     );

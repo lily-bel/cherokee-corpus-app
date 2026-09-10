@@ -320,8 +320,9 @@ export async function parsePackageZip(
     // 5.2 Sentences normalization
     const normalizedSentences = rawSentences.map((d: any) => {
         const id = d.sentence_id || d.id || d.ID || generateId();
-        let source = d.source || d.Source || (meta as any).short_name || meta.id;
-        if (source.endsWith('.csv')) source = source.replace(/\.csv$/i, '');
+        let source = d.source || d.Source || (meta as any).short_name || meta.id || 'imported';
+        if (typeof source === 'string' && source.endsWith('.csv')) source = source.replace(/\.csv$/i, '');
+        source = typeof source === 'string' && source.trim() ? source.trim() : 'imported';
 
         return {
             id: id,
@@ -350,13 +351,15 @@ export async function parsePackageZip(
 
     // 5.3 Glosses normalization
     const normalizedGlosses = rawGlosses.map((d: any) => {
-        let source = d.source || d.Source || (meta as any).short_name || meta.id;
-        if (source.endsWith('.csv')) source = source.replace(/\.csv$/i, '');
+        let source = d.source || d.Source || (meta as any).short_name || meta.id || 'imported';
+        if (typeof source === 'string' && source.endsWith('.csv')) source = source.replace(/\.csv$/i, '');
+        source = typeof source === 'string' && source.trim() ? source.trim() : 'imported';
 
+        const baseId = d.base_form_id || d.base_id || d.entry_id || d.Entry_ID || d.merged_id;
         return {
             sentence_id: d.sentence_id || d.Sentence_ID,
-            base_id: d.base_id || d.entry_id || d.Entry_ID,
-            entry_id: d.base_id || d.entry_id || d.Entry_ID,
+            base_id: baseId,
+            entry_id: baseId,
             word_index: d.word_index !== undefined ? String(d.word_index) : (d.Word_Index !== undefined ? String(d.Word_Index) : undefined),
             notes: d.notes || d.Notes || '',
             source: source,
@@ -370,7 +373,7 @@ export async function parsePackageZip(
             breakdown_english: d.breakdown_english || d.Breakdown_English || '',
             Sentence_ID: d.sentence_id || d.Sentence_ID,
             Word_Index: d.word_index || d.Word_Index,
-            Entry_ID: d.base_id || d.entry_id || d.Entry_ID,
+            Entry_ID: baseId,
             Notes: d.notes || d.Notes || '',
             Source: source
         };
@@ -540,11 +543,15 @@ export function parsePackageJsonData(
 
         const id = d.merged_id || d.id || d.Index || generateId();
         const Source_Long = sourceKeys.map(k => meta.source_names?.[k.replace(/\.csv$/i, '')] || meta.source_names?.[k] || k).join(', ') || meta.name;
+        const slug = d.slug || d.root_slug || d.sources?.['hierarchical-dict.json']?.slug || d.sources?.['hierarchical-dict.json']?.root_slug;
+        const root_slug = d.root_slug || d.slug || d.sources?.['hierarchical-dict.json']?.root_slug || d.sources?.['hierarchical-dict.json']?.slug;
 
         return {
             ...d,
             id: id,
             merged_id: id,
+            slug: slug || undefined,
+            root_slug: root_slug || undefined,
             syllabary,
             translit,
             definition,
@@ -598,10 +605,11 @@ export function parsePackageJsonData(
         let source = d.source || d.Source || (meta as any).short_name || meta.id;
         if (source.endsWith('.csv')) source = source.replace(/\.csv$/i, '');
 
+        const baseId = d.base_form_id || d.base_id || d.entry_id || d.Entry_ID || d.merged_id;
         return {
             sentence_id: d.sentence_id || d.Sentence_ID,
-            base_id: d.base_id || d.entry_id || d.Entry_ID,
-            entry_id: d.base_id || d.entry_id || d.Entry_ID,
+            base_id: baseId,
+            entry_id: baseId,
             word_index: d.word_index !== undefined ? String(d.word_index) : (d.Word_Index !== undefined ? String(d.Word_Index) : undefined),
             notes: d.notes || d.Notes || '',
             source: source,
@@ -627,6 +635,9 @@ export function parsePackageJsonData(
             let source = '';
             let syllabary = '';
             let translit = '';
+            let tone2 = '';
+            let tone1 = '';
+            let genTone = '';
             let tone = '';
             let notes = '';
 
@@ -638,17 +649,24 @@ export function parsePackageJsonData(
                 if ((k.endsWith('_Practical') || k.endsWith('_Cherokee')) && c[k] && !translit) {
                     translit = c[k];
                 }
-                if ((k.endsWith('_Tone and length 1') || k.endsWith('_Tone')) && c[k] && !tone) {
-                    tone = c[k];
+                if (k.endsWith('_Tone and length 2') && c[k] && !tone2) {
+                    tone2 = c[k];
+                }
+                if (k.endsWith('_Tone and length 1') && c[k] && !tone1) {
+                    tone1 = c[k];
+                }
+                if (k.endsWith('_Tone') && c[k] && !genTone) {
+                    genTone = c[k];
                 }
                 if ((k.endsWith('_Translations') || k.endsWith('_English') || k.endsWith('_Notes')) && c[k] && !notes) {
                     notes = c[k];
                 }
             });
 
+            tone = tone2 || tone1 || genTone || c.tone || '';
+
             if (!syllabary && c.syllabary) syllabary = c.syllabary;
             if (!translit && (c.translit || c.phonetic)) translit = c.translit || c.phonetic;
-            if (!tone && c.tone) tone = c.tone;
             if (!notes && (c.notes || c.definition)) notes = c.notes || c.definition;
             if (!source && c.source) source = c.source;
 
@@ -663,9 +681,15 @@ export function parsePackageJsonData(
                 syllabary,
                 translit,
                 tone,
+                tone2: tone2 || undefined,
+                tone1: tone1 || undefined,
                 notes,
                 source: source || (meta as any).short_name || meta.id,
-                audio: audioByConjugation[`${wordIdx}_${formKey}`] || c.audio || ''
+                audio: audioByConjugation[`${wordIdx}_${formKey}`] || c.audio || '',
+                root_slug: c.root_slug || c.slug || undefined,
+                slug: c.slug || c.root_slug || undefined,
+                segmented_form: c['hierarchical-dict.json_Cherokee'] || c.segmented_form || undefined,
+                segmented_name: c['hierarchical-dict.json_Segmented Form'] || c.segmented_name || undefined
             };
         }),
         ...importedWordFormsFromEntryData

@@ -147,7 +147,7 @@ export const WordFormsEditor: React.FC<WordFormsEditorProps> = ({ forms, setForm
                                     value={row.tone}
                                     onChange={e => updateFormRow(row.id, 'tone', formatToneInput(e.target.value))}
                                     placeholder="e.g. tsa2la2gi"
-                                    className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-amber-500 dark:text-white"
+                                    className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-amber-500 dark:text-white font-serif"
                                 />
                             </div>
 

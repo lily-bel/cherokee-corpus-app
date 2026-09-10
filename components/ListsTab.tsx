@@ -3,7 +3,7 @@ import { Star, ListIcon, Trash2, Pencil, ChevronRight, ChevronDown, GripVertical
 import { Modal, SourceBadge } from './UI';
 import { usePackageManager } from './PackageManagerContext';
 import { useCorpus } from './CorpusContext';
-import { getAudioFromDB, renderStyledText, parseListName, formatListName, sanitizeListName } from '../utils';
+import { getAudioFromDB, renderStyledText, parseListName, formatListName, sanitizeListName, ColorizedCherokeeWord } from '../utils';
 
 export interface ListData {
     id: string;
@@ -200,8 +200,13 @@ const AddWordsModal = ({
                                             />
                                         )}
                                     </div>
-                                    <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                        {isSentenceResult ? (data.translit || '') : (data.Entry || data.translit)}
+                                    <div className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                                        {isSentenceResult ? (data.translit || '') : (
+                                            <ColorizedCherokeeWord
+                                                word={data.Entry || data.translit}
+                                                entry={data}
+                                            />
+                                        )}
                                     </div>
                                     <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
                                         {isSentenceResult ? (data.english || '') : (data.Definition || data.definition)}
@@ -261,7 +266,8 @@ const ListsTab: React.FC<ListsTabProps> = ({
     view: propView,
     setView: propSetView,
     onReadInContext,
-    onShowSettings
+    onShowSettings,
+    settings
 }) => {
     const { getPackageColor, packages, importedData } = usePackageManager();
     const { userAudioMeta, personalWords, glosses } = useCorpus();
@@ -1487,7 +1493,13 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                                 <tr key={word.Index} onClick={() => onEntryClick(word)} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors active:bg-amber-50 dark:active:bg-amber-900/20">
                                                     <td className="p-3 align-middle">
                                                         <div className="font-noto-cherokee text-lg text-slate-800 dark:text-slate-100 leading-tight">{word?.Syllabary || ''}</div>
-                                                        <div className="font-noto-serif text-sm text-slate-500 dark:text-slate-400 font-medium">{word?.Entry || ''}</div>
+                                                        <div className="font-noto-serif text-sm text-slate-700 dark:text-slate-300 font-bold">
+                                                            <ColorizedCherokeeWord
+                                                                word={word?.Entry || word?.translit}
+                                                                entry={word}
+                                                                settings={settings}
+                                                            />
+                                                        </div>
                                                         <div className="md:hidden mt-2 font-noto-serif text-slate-600 dark:text-slate-300 text-sm line-clamp-2">
                                                             {word?.Definition || ''}
                                                         </div>
@@ -1612,7 +1624,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
         );
     }
 
-    const renderListRow = (list: ListData, isHidden: boolean, isInsideFolder = false, parentFolder?: string) => {
+    const renderListRow = (list: ListData, isHidden: boolean, _isInsideFolder = false, parentFolder?: string) => {
         if (!list) return null;
 
         const { name: displayName } = parseListName(list.name);
@@ -1649,10 +1661,9 @@ const ListsTab: React.FC<ListsTabProps> = ({
                 onPointerCancel={handlePointerUpRow}
                 style={{ touchAction: 'pan-y' }}
                 className={`
-                    relative bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between cursor-pointer active:scale-[0.98] select-none
+                    relative bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between cursor-pointer active:scale-[0.98] select-none min-w-0 w-full
                     ${draggingId === list.id ? 'opacity-90 border-amber-500 scale-105 z-50 transition-none shadow-xl' : 'transition-all'}
                     ${isHidden ? 'opacity-60 grayscale' : ''}
-                    ${isInsideFolder ? 'ml-2' : ''}
                 `}
             >
                 <div className="flex items-center gap-3 pointer-events-none min-w-0 flex-1">
@@ -1716,7 +1727,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                 data-list-id={folderToken}
                 data-folder-wrapper={folderName}
                 data-folder-name={folderName}
-                className="space-y-2"
+                className="space-y-2 min-w-0 w-full"
             >
                 {/* Folder Header */}
                 <div
@@ -1815,7 +1826,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                     <div
                         data-folder-body={folderName}
                         data-folder-name={folderName}
-                        className={`pl-3 border-l-2 space-y-2 py-1 ml-4 transition-colors ${
+                        className={`pl-2 sm:pl-3 border-l-2 space-y-2 py-1 ml-2 sm:ml-4 min-w-0 transition-colors ${
                             isDropTarget 
                                 ? 'border-amber-500 dark:border-amber-400 bg-amber-50/20 dark:bg-amber-950/20 rounded-lg pr-1' 
                                 : 'border-slate-200 dark:border-slate-800'
@@ -1974,7 +1985,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 content-start grid gap-3" ref={dragContainerRef}>
+            <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 content-start grid gap-3 min-w-0 w-full" ref={dragContainerRef}>
                 {renderOrderedContent()}
 
                 {/* Hidden Built-in Lists */}

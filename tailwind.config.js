@@ -2,7 +2,8 @@
 export default {
   content: [
     "./index.html",
-    "./**/*.{js,ts,jsx,tsx}",
+    "./components/**/*.{js,ts,jsx,tsx}",
+    "./*.{js,ts,jsx,tsx}",
   ],
   darkMode: 'class',
   theme: {
@@ -14,7 +15,9 @@ export default {
       },
       fontFamily: {
         'noto-cherokee': ['"Noto Sans Cherokee"', 'sans-serif'],
-        'noto-serif': ['"Noto Serif"', 'serif'],
+        'noto-serif': ['"Charis SIL"', '"Noto Serif"', 'serif'],
+        'serif': ['"Charis SIL"', '"Noto Serif"', 'serif'],
+        'tone': ['"Charis SIL"', '"Noto Serif"', 'serif'],
         'sans': ['Inter', 'sans-serif'],
       },
       animation: {

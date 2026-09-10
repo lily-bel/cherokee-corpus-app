@@ -1,8 +1,10 @@
 import { useMemo } from 'react';
 import { StickyNote, ListIcon, Mic, SquaresPlus } from './Icons';
 import { SourceBadge } from './UI';
-
+import { useCorpus } from './CorpusContext';
+import { renderColorizedCherokee, renderSegmentedSurface, projectSegmentsOntoTone, segmentVerbForm, deriveSegmentedForm, getFormPronominalSet } from '../utils';
 import { usePackageManager } from './PackageManagerContext';
+
 
 const getHexColor = (col: string) => {
   const COLORS: Record<string, string> = {
@@ -50,10 +52,72 @@ const MultiSourceIcon = ({ Icon, colors, size = 14 }: { Icon: any, colors: strin
   );
 };
 
-const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWordForms, favorites, customLists, onClick, isDimmed = false, showPos = false }: any) => {
+const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWordForms, favorites, customLists, onClick, isDimmed = false, showPos = false, settings }: any) => {
   const { getPackageColor, packages, importedData } = usePackageManager();
+  const { rootMap } = useCorpus();
+
+  const isColored = (settings?.colorWordSegments !== undefined)
+    ? settings.colorWordSegments !== false
+    : (() => {
+        try {
+          const s = localStorage.getItem('cherokee_app_settings');
+          return s ? JSON.parse(s).colorWordSegments !== false : true;
+        } catch {
+          return true;
+        }
+      })();
+
+  const entryId = entry.id || entry.Index || entry.merged_id;
+  const rootEntry = entry.rootEntry || (entryId ? rootMap?.get(entryId) : null);
+
+  const mainPresSeg = rootEntry?.segmented_forms?.present;
+  const mainPresGroups = useMemo(() => {
+    if (!rootEntry || !mainPresSeg) return null;
+    return segmentVerbForm(mainPresSeg, 'present', rootEntry.config, rootEntry.class_name);
+  }, [rootEntry, mainPresSeg]);
+  const mainPronounSet = rootEntry?.config?.pron?.set_type === 'b' ? 'B' : 'A';
+
+  const matchedHdSegments = useMemo(() => {
+    if (!rootEntry?.surface_segments || !entry.matchedForm) return null;
+    const k = (entry.matchedForm.normalized_key || entry.matchedForm.form_name || '').toLowerCase();
+    const map: Record<string, string> = {
+      'present': 'present',
+      '3s|3s|present': 'present',
+      '3s|present': 'present',
+      '1s|3s|present': 'present_1sg',
+      '1s|present': 'present_1sg',
+      'imperfective': 'imperfective',
+      'habitual': 'imperfective',
+      '3s|3s|habitual': 'imperfective',
+      'perfective': 'perfective',
+      'past': 'perfective',
+      '3s|3s|past': 'perfective',
+      '3s|3s|completive past': 'perfective',
+      'imperative': 'imperative',
+      '2s|3s|imperative': 'imperative',
+      '2s|imperative': 'imperative',
+      'infinitive': 'infinitive',
+      '3s|3s|infinitive': 'infinitive',
+    };
+    const fn = map[k];
+    if (fn && rootEntry.surface_segments[fn]) return rootEntry.surface_segments[fn];
+    return null;
+  }, [rootEntry, entry.matchedForm]);
+
+  const matchedFormGroups = useMemo(() => {
+    if (!rootEntry || !entry.matchedForm || matchedHdSegments) return null;
+    const derivedSeg = deriveSegmentedForm(entry.matchedForm, [], rootEntry);
+    if (!derivedSeg) return null;
+    const formName = (entry.matchedForm.normalized_key || entry.matchedForm.form_name || '').split('|')[2] || 'present';
+    return segmentVerbForm(derivedSeg, formName, rootEntry.config, rootEntry.class_name);
+  }, [rootEntry, entry.matchedForm, matchedHdSegments]);
+  const matchedPronounSet = useMemo(() => {
+    if (!entry.matchedForm) return 'A';
+    return getFormPronominalSet(entry.matchedForm.normalized_key || entry.matchedForm.form_name, rootEntry?.config);
+  }, [entry.matchedForm, rootEntry]);
 
   // --- Audio Colors ---
+
   const audioColors = useMemo(() => {
     const cols = new Set<string>();
 
@@ -132,7 +196,13 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
       <div className="flex justify-between items-start mb-2 gap-3">
         <div className="flex-1 min-w-0 flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
           {entry.Syllabary && <span className="font-noto-cherokee text-lg font-bold text-slate-800 dark:text-slate-100">{entry.Syllabary}</span>}
-          <span className="font-noto-serif text-base text-amber-700 dark:text-amber-400 font-medium [overflow-wrap:anywhere] [word-break:normal]">{entry.Entry}</span>
+          <span className="font-noto-serif text-base text-amber-700 dark:text-amber-400 font-bold [overflow-wrap:anywhere] [word-break:normal]">
+            {rootEntry?.surface_segments?.present
+              ? renderSegmentedSurface(rootEntry.surface_segments.present, isColored)
+              : (rootEntry && mainPresGroups
+                ? renderColorizedCherokee(entry.Entry, mainPresGroups, mainPronounSet, isColored)
+                : entry.Entry)}
+          </span>
         </div>
         <div className="shrink-0 flex flex-col items-end gap-1">
           <div className="flex items-center gap-2">
@@ -151,7 +221,18 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
             <span className="font-noto-cherokee font-semibold">{entry.matchedForm.syllabary}</span>
           )}
           {entry.matchedForm.translit && (
-            <span className="font-noto-serif">{entry.matchedForm.translit}</span>
+            <span className="font-noto-serif font-bold">
+              {matchedHdSegments
+                ? renderSegmentedSurface(
+                    entry.matchedForm.translit
+                      ? projectSegmentsOntoTone(matchedHdSegments, entry.matchedForm.translit)
+                      : matchedHdSegments,
+                    isColored
+                  )
+                : (rootEntry && matchedFormGroups
+                  ? renderColorizedCherokee(entry.matchedForm.translit, matchedFormGroups, matchedPronounSet, isColored)
+                  : entry.matchedForm.translit)}
+            </span>
           )}
         </div>
       )}

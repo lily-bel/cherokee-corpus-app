@@ -58,8 +58,8 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
         });
 
         // Sort both groups by title
-        groups.sequential.sort((a, b) => a.title.localeCompare(b.title));
-        groups.collections.sort((a, b) => a.title.localeCompare(b.title));
+        groups.sequential.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+        groups.collections.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
 
         return groups;
     }, [books]);
@@ -83,9 +83,10 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
             handleStoryClick(stories[0]);
         } else if (stories.length === 0) {
             // Empty book - open chapters view so user can add chapter
+            const safeTitle = book.title || 'Untitled';
             const emptyStory: Story = {
-                id: `${book.id}_st_${book.title.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`,
-                title: book.title,
+                id: `${book.id}_st_${safeTitle.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`,
+                title: safeTitle,
                 bookId: book.id,
                 chapterCount: 0,
                 sentenceCount: 0,
@@ -114,7 +115,8 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
         }
     };
 
-    const getSourceColor = (source: string) => {
+    const getSourceColor = (source: string | undefined) => {
+        if (!source) return '#64748b';
         if (source === 'user' || source.startsWith('nb_')) {
             return '#f59e0b'; // Gold
         }

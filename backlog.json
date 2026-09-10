@@ -5,6 +5,11 @@
     "title": "Task 1.4: [DATA] Pre-packaged Cherokee Narratives & Stories Catalog (Post-MVP)"
   },
   {
+    "note": "",
+    "priority": 3,
+    "title": "Task 2.1: Fix official audio not showing in list view"
+  },
+  {
     "note": "[DATA] [MVP] [Priority: Medium] [Data Cleanup]\nTarget: Corpus Word Form & Part of Speech Data\nNote: Data cleanup task - all data edits must be done manually by a human, not via code implementation.\nSpec:\n1. Manually review entries with solitary word forms and update labeling (label as Base Form rather than Singular in the corpus dataset).\n2. Audit, clean up, and format part of speech tags across solitary form entries in the dictionary data.",
     "priority": 5,
     "title": "Task 3.4: [DATA] Solitary Form Labeling & Part of Speech Data Cleanup"

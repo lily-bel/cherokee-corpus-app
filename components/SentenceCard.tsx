@@ -388,7 +388,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                             {/* Syllabary Row */}
                             <div className={`relative flex flex-col items-center justify-end ${hasAnySyllabary ? 'min-h-[2.5rem]' : ''}`}>
                                 <span
-                                    className="font-serif text-xl text-slate-900 dark:text-slate-100 leading-none pb-2 block"
+                                    className="font-noto-cherokee text-xl text-slate-900 dark:text-slate-100 leading-none pb-2 block"
                                 >
                                     {token.syl}
                                 </span>
@@ -400,7 +400,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                             {/* Transliteration Row */}
                             <div className="relative flex flex-col items-center justify-start min-h-[1.75rem]">
                                 <span
-                                    className="text-lg text-slate-500 dark:text-slate-400 font-medium pb-2 block"
+                                    className="font-serif text-lg text-slate-500 dark:text-slate-400 font-medium pb-2 block"
                                 >
                                     {token.tr}
                                 </span>

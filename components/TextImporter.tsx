@@ -66,7 +66,7 @@ export const TextImporter: React.FC<TextImporterProps> = ({
 
     // Filter available books for appending (user created or notebooks)
     const appendableBooks = useMemo(() => {
-        return books.filter(b => b.source === 'user' || b.source.startsWith('nb_') || customDictionaries[b.source]);
+        return books.filter(b => b.source === 'user' || (b.source && b.source.startsWith('nb_')) || (b.source && customDictionaries[b.source]));
     }, [books, customDictionaries]);
 
     // If appendable books change or initial selection
