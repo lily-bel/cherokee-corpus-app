@@ -10813,6 +10813,21 @@
     "source file": "cn-app-dictionary.csv"
   },
   {
+    "sentence_id": "23859b139234",
+    "syllabary": "\u13e9\u13a6 \u13a0\u13a9\u13be \u13a4\u13cd\u13d4\u13d3 * \u13da\u13c5\u13e0\u13e2\u13a2.*",
+    "phonetic": "wahga agi\u030b:na \u00f9:sl\u00e1'da * d\u00f9:nv\u0301:hlo:hlv\u030c:'i *",
+    "english": "When he roped the calf\u201a *he tied up its legs.*",
+    "audio": "Sentence_for_entry_0976_01.m4a",
+    "speaker": "Anna Sixkiller",
+    "notes": "Cherokee National Treasure.",
+    "source": "Cherokee Dictionary 1975 Durbin Feeling",
+    "source file": "cn-app-dictionary.csv",
+    "sentence_notes": "",
+    "sources": [
+      "cn-app-dictionary.csv"
+    ]
+  },
+  {
     "sentence_id": "4ec2f236c2fb",
     "syllabary": "*ᏘᏅᏠᎦ!*",
     "phonetic": "*tinv́:hlò:ga*",
@@ -10987,6 +11002,21 @@
     "notes": "Cherokee National Treasure.",
     "source": "Cherokee Dictionary 1975 Durbin Feeling",
     "source file": "cn-app-dictionary.csv"
+  },
+  {
+    "sentence_id": "4331d23b0d71",
+    "syllabary": "\u13a0\u13cd\u13d8 * \u13a6\u13cc\u13c1\u13be\u13db\u13cd\u13a6 * \u13f4\u13a9\u13a2.",
+    "phonetic": "asti * g\u00e1:san\u011b:n\u00e1dvsga * yv:gi\u030b:'i",
+    "english": "*She's threading *a needle.",
+    "audio": "Sentence_for_entry_0990_01.m4a",
+    "speaker": "Anna Sixkiller",
+    "notes": "Cherokee National Treasure.",
+    "source": "Cherokee Dictionary 1975 Durbin Feeling",
+    "source file": "cn-app-dictionary.csv",
+    "sentence_notes": "",
+    "sources": [
+      "cn-app-dictionary.csv"
+    ]
   },
   {
     "sentence_id": "c463e0f5e941",
@@ -12263,6 +12293,21 @@
     "notes": "Cherokee National Treasure.",
     "source": "Cherokee Dictionary 1975 Durbin Feeling",
     "source file": "cn-app-dictionary.csv"
+  },
+  {
+    "sentence_id": "52a6af875a0e",
+    "syllabary": "\u13e3\u13b3\u13a9 * \u13ac\u13d7 * \u13da\u13df\u13c3\u13ae\u13d4\u13c5\u13a2",
+    "phonetic": "jalagi * gv\u030bhdi * d\u00f9:hlino:hehtanv\u030c:'i",
+    "english": "She conversed *by means of * Cherokee.",
+    "audio": "Sentence_for_entry_1096_02.m4a",
+    "speaker": "Anna Sixkiller",
+    "notes": "Cherokee National Treasure.",
+    "source": "Cherokee Dictionary 1975 Durbin Feeling",
+    "source file": "cn-app-dictionary.csv",
+    "sentence_notes": "",
+    "sources": [
+      "cn-app-dictionary.csv"
+    ]
   },
   {
     "sentence_id": "8e0cbf90f95d",
@@ -17378,6 +17423,21 @@
     "notes": "Cherokee National Treasure.",
     "source": "Cherokee Dictionary 1975 Durbin Feeling",
     "source file": "cn-app-dictionary.csv"
+  },
+  {
+    "sentence_id": "a00966e8b5d4",
+    "syllabary": "* \u13a4\u13a8\u13f3\u13ad * \u13e9\u13e5 \u13dd\u13b4 \u13a9\u13b6 \u13f4\u13ac\u13d9\u13b5\u13cd\u13d3.",
+    "phonetic": "* u:ge:yuh\u00e1 * wa:j\u00ee tlal\u00e9 kil\u0151 yv:gv\u0301:to:lsd\u00e2",
+    "english": "*He's stingy* with his watch and won't loan it to anyone.",
+    "audio": "Sentence_for_entry_1582_01.m4a",
+    "speaker": "Durbin Feeling",
+    "notes": "Cherokee National Treasure. Renowned Cherokee linguist.",
+    "source": "Cherokee Dictionary 1975 Durbin Feeling",
+    "source file": "cn-app-dictionary.csv",
+    "sentence_notes": "",
+    "sources": [
+      "cn-app-dictionary.csv"
+    ]
   },
   {
     "sentence_id": "41296ab747f7",
