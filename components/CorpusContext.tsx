@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 
 import { usePackageManager } from './PackageManagerContext';
-import { isEmptyRoot, sanitizeEmptyRootSurfaceSegments, saveAudioToDB, deleteAudioFromDB, cleanStr } from '../utils';
 
 // --- Types ---
 
@@ -423,27 +422,6 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                     post_root_morpheme: hd?.['post_root_morpheme'] || hd?.['morphology.post_root_morpheme'] || null,
                     _is_transitive: hd?.['_is_transitive'] === true || hd?.['_is_transitive'] === 'true'
                 };
-
-                if (isEmptyRoot(rootEntry)) {
-                    if (rootEntry.surface_segments) {
-                        rootEntry.surface_segments = sanitizeEmptyRootSurfaceSegments(
-                            rootEntry.surface_segments,
-                            rootEntry.post_root_morpheme
-                        );
-                    }
-                    if ((d as any).surface_segments) {
-                        (d as any).surface_segments = sanitizeEmptyRootSurfaceSegments(
-                            (d as any).surface_segments,
-                            rootEntry.post_root_morpheme
-                        );
-                    }
-                    if (hd?.surface_segments) {
-                        hd.surface_segments = sanitizeEmptyRootSurfaceSegments(
-                            hd.surface_segments,
-                            rootEntry.post_root_morpheme
-                        );
-                    }
-                }
                 
                 rootsArr.push(rootEntry);
                 if (rootEntry.entry_id) rMap.set(rootEntry.entry_id, rootEntry);
@@ -596,6 +574,8 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     // Audio Actions
     const saveAudio = async (targetId: string, blob: Blob, speaker: string, formIndex?: number, wordSlug?: string) => {
+        const { saveAudioToDB, cleanStr } = await import('../utils');
+
         let type = 'W';
         let id = targetId;
 
@@ -628,6 +608,7 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
 
     const deleteAudio = async (targetId: string, audioId: string) => {
+        const { deleteAudioFromDB } = await import('../utils');
         try {
             await deleteAudioFromDB(audioId);
             setUserAudioMeta(prev => {

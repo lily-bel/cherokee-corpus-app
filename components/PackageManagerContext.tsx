@@ -337,11 +337,15 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                         syllabary: c['cn-app-dictionary.csv_Syllabary'] || c['lily-dict.csv_Syllabary'] || c['learning-to-use-the-cherokee-verb.csv_Syllabary'] || '',
                         translit: c['cn-app-dictionary.csv_Practical'] || c['lily-dict.csv_Cherokee'] || c['kirk-book-data.csv_Cherokee'] || c['learning-to-use-the-cherokee-verb.csv_Cherokee'] || '',
                         tone: c['cn-app-dictionary.csv_Tone and length 1'] || c['lily-dict.csv_Tone'] || c['kirk-book-data.csv_Tone'] || '',
+                        tone2: c['cn-app-dictionary.csv_Tone and length 2'] || c.tone2 || undefined,
+                        tone1: c['cn-app-dictionary.csv_Tone and length 1'] || c.tone1 || undefined,
                         notes: c['cn-app-dictionary.csv_Translations'] || c['learning-to-use-the-cherokee-verb.csv_English'] || c['kirk-book-data.csv_English'] || '',
                         source: source,
                         audio: audioByConjugation[`${c.merged_id}_${c.normalized_key}`] || '',
                         root_slug: c.root_slug || c.slug || undefined,
-                        slug: c.slug || c.root_slug || undefined
+                        slug: c.slug || c.root_slug || undefined,
+                        segmented_form: c['hierarchical-dict.json_Cherokee'] || c.segmented_form || undefined,
+                        segmented_name: c['hierarchical-dict.json_Segmented Form'] || c.segmented_name || undefined
                     };
                 });
 

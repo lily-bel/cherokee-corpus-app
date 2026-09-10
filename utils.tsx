@@ -1244,7 +1244,6 @@ export function segmentVerbForm(
         role = 0;
         roleType = 'root';
       } else if (i > emptyRootIdx) {
-        // Any segment between empty root and aspect is post-root
         role = 5;
         roleType = 'post_root';
       }
@@ -1899,10 +1898,7 @@ export const ColorizedCherokeeWord: React.FC<ColorizedCherokeeWordProps> = ({
 
   // 1. Exact match in surface_segments
   if (hdSlot && rEntry.surface_segments?.[hdSlot]) {
-    let segments = rEntry.surface_segments[hdSlot];
-    if (isEmptyRoot(rEntry)) {
-      segments = segments.map(s => s.role === 'root' ? { ...s, role: (rEntry.post_root_morpheme ? 'post_root' : 'aspect') as any } : s);
-    }
+    const segments = rEntry.surface_segments[hdSlot];
     const projected = projectSegmentsOntoTone(segments, text);
     return (
       <span className={className}>
@@ -1957,35 +1953,11 @@ export function isEmptyRoot(rootEntry?: any): boolean {
   if (!rootEntry) return false;
   const h = rootEntry.root_h;
   const g = rootEntry.root_g;
-  if (h === '∅' || g === '∅' || h === '--' || g === '--') return true;
+  if (h === '∅' || g === '∅') return true;
   const slug = (rootEntry.slug || rootEntry.root_slug || '').toLowerCase();
   if (slug === 'bg9uzw' || slug === 'fc1zb2xpza' || slug === 'agl0') return true;
   if (!h && !g) return true;
   return false;
-}
-
-export function sanitizeEmptyRootSurfaceSegments(
-  surfaceSegments: Record<string, SurfaceSegment[]> | undefined,
-  postRootMorpheme?: string | null
-): Record<string, SurfaceSegment[]> | undefined {
-  if (!surfaceSegments || typeof surfaceSegments !== 'object') return surfaceSegments;
-  const sanitized: Record<string, SurfaceSegment[]> = {};
-  for (const [key, val] of Object.entries(surfaceSegments)) {
-    if (!Array.isArray(val)) {
-      sanitized[key] = val;
-      continue;
-    }
-    sanitized[key] = val.map(seg => {
-      if (seg.role === 'root') {
-        return {
-          ...seg,
-          role: (postRootMorpheme ? 'post_root' : 'aspect') as any
-        };
-      }
-      return seg;
-    });
-  }
-  return sanitized;
 }
 
 export interface VerbMorphologyTemplateProps {
