@@ -45,6 +45,5 @@ conj_id [cn-app-dictionary.csv, hierarchical-dict.json, kirk-book-data.csv, lear
 practical [hierarchical-dict.json]
 screenshot name [kirk-book-data.csv]
 source file [cn-app-dictionary.csv, hierarchical-dict.json, kirk-book-data.csv, learning-to-use-the-cherokee-verb.csv, lily-dict.csv]
-surface_segments [hierarchical-dict.json]
 surface_spelling [hierarchical-dict.json]
 ﻿Entry No. [cn-app-dictionary.csv]
