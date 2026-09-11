@@ -366,10 +366,13 @@ export const getAllUserAudioKeys = async () => {
   });
 };
 
-// Helper to normalize strings for robust matching (ignores tone numbers, glottal stops, apostrophes, spaces)
+// Helper to normalize strings for robust matching (ignores tone numbers, glottal stops, apostrophes, colons, accents, spaces, punctuation)
 export const cleanStr = (s?: string) => {
   if (!s) return '';
-  return s.toLowerCase().replace(/[1234¹²³⁴ʔ’'ʼ\s\-_]/g, '');
+  return s.toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[1234¹²³⁴ʔ’'ʼ\s\-:_.,!?;:"()\[\]]/g, '');
 };
 
 // --- SEARCH ALGORITHM ---
@@ -511,10 +514,63 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
 
     // 1. Check Main Entry Fields
     if (activeScopes.main) {
-      if (activeLangs.translit && entry.Entry) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.Entry));
-      if (activeLangs.syllabary && entry.Syllabary) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.Syllabary));
-      if (activeLangs.english && entry.Definition) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.Definition));
-      if (activeLangs.tone && entry.Entry_Tone) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.Entry_Tone));
+      if (activeLangs.translit) {
+        if (entry.Entry) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.Entry));
+        if (entry.translit) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.translit));
+        if (entry.surface_spelling) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.surface_spelling));
+        if (entry.practical) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.practical));
+        if (entry.surface_forms) {
+          for (const val of Object.values(entry.surface_forms)) {
+            if (typeof val === 'string') mainMatchScore = Math.max(mainMatchScore, testMatchScore(val));
+          }
+        }
+        if (entry.sources) {
+          for (const s of Object.values(entry.sources as Record<string, any>)) {
+            if (s.Practical) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.Practical));
+            if (s.Entry) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.Entry));
+            if (s.Cherokee) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.Cherokee));
+            if (s.practical) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.practical));
+            if (s.surface_spelling) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.surface_spelling));
+            if (s.Simple_phonetics) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.Simple_phonetics));
+          }
+        }
+      }
+      if (activeLangs.syllabary) {
+        if (entry.Syllabary) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.Syllabary));
+        if (entry.syllabary) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.syllabary));
+        if (entry.sources) {
+          for (const s of Object.values(entry.sources as Record<string, any>)) {
+            if (s.Syllabary) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.Syllabary));
+            if (s.Headword) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.Headword));
+          }
+        }
+      }
+      if (activeLangs.english) {
+        if (entry.Definition) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.Definition));
+        if (entry.definition) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.definition));
+        if (entry.Definition_Long) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.Definition_Long));
+        if (entry.sources) {
+          for (const s of Object.values(entry.sources as Record<string, any>)) {
+            if (s.Translations) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.Translations));
+            if (s.Definition) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.Definition));
+            if (s.English) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.English));
+            if (s['English gloss 1']) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s['English gloss 1']));
+            if (s['English gloss 2']) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s['English gloss 2']));
+          }
+        }
+      }
+      if (activeLangs.tone) {
+        if (entry.Entry_Tone) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.Entry_Tone));
+        if (entry.tone) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.tone));
+        if (entry.sources) {
+          for (const s of Object.values(entry.sources as Record<string, any>)) {
+            if (s['Tone and length 1']) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s['Tone and length 1']));
+            if (s['Tone and length 2']) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s['Tone and length 2']));
+            if (s.Entry_Tone) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.Entry_Tone));
+            if (s.Tone) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.Tone));
+          }
+        }
+      }
     }
 
     // 2. Check Other Forms (Inflections / Conjugations)
@@ -545,8 +601,11 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
       }
 
       // Imported word_forms
-      const id1 = entry.id != null ? String(entry.id) : null;
-      const id2 = entry.Index != null ? String(entry.Index) : null;
+      const idSet = new Set<string>();
+      if (entry.id != null) idSet.add(String(entry.id));
+      if (entry.Index != null) idSet.add(String(entry.Index));
+      if ((entry as any).merged_id != null) idSet.add(String((entry as any).merged_id));
+      if ((entry as any).sources?.['lily-dict.csv']?.Index != null) idSet.add(String((entry as any).sources['lily-dict.csv'].Index));
 
       const extractMatchedForms = (idStr: string | null) => {
         if (!idStr) return;
@@ -554,20 +613,27 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
         if (entryForms) {
           entryForms.forEach((f: any) => {
             let fScore = 0;
-            if (activeLangs.translit && f.translit) fScore = Math.max(fScore, testMatchScore(f.translit));
+            if (activeLangs.translit) {
+              if (f.translit) fScore = Math.max(fScore, testMatchScore(f.translit));
+              if (f.surface_spelling) fScore = Math.max(fScore, testMatchScore(f.surface_spelling));
+              if (f.segmented_form) fScore = Math.max(fScore, testMatchScore(f.segmented_form.replace(/[-–—>]/g, '')));
+            }
             if (activeLangs.syllabary && f.syllabary) fScore = Math.max(fScore, testMatchScore(f.syllabary));
-            if (activeLangs.tone && f.tone) fScore = Math.max(fScore, testMatchScore(f.tone));
+            if (activeLangs.tone) {
+              if (f.tone) fScore = Math.max(fScore, testMatchScore(f.tone));
+              if (f.tone1) fScore = Math.max(fScore, testMatchScore(f.tone1));
+              if (f.tone2) fScore = Math.max(fScore, testMatchScore(f.tone2));
+            }
 
             if (fScore > otherFormMatchScore) {
               otherFormMatchScore = fScore;
-              matchedForm = { translit: f.translit, syllabary: f.syllabary, label: f.form_name || f.label || f.name };
+              matchedForm = { translit: f.surface_spelling || f.translit, syllabary: f.syllabary, label: f.form_name || f.label || f.name };
             }
           });
         }
       };
 
-      extractMatchedForms(id1);
-      if (id2 && id2 !== id1) extractMatchedForms(id2);
+      idSet.forEach(idStr => extractMatchedForms(idStr));
     }
 
     // 3. Notes & Roots
@@ -623,8 +689,15 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
         const matchedT = mf.translit;
         const matchedS = mf.syllabary;
         const isIdenticalToMain = 
-          (matchedT && entry.Entry && cleanStr(matchedT) === cleanStr(entry.Entry)) ||
-          (matchedS && entry.Syllabary && cleanStr(matchedS) === cleanStr(entry.Syllabary));
+          (matchedT && (
+            (entry.Entry && cleanStr(matchedT) === cleanStr(entry.Entry)) ||
+            (entry.surface_spelling && cleanStr(matchedT) === cleanStr(entry.surface_spelling)) ||
+            (entry.translit && cleanStr(matchedT) === cleanStr(entry.translit))
+          )) ||
+          (matchedS && (
+            (entry.Syllabary && cleanStr(matchedS) === cleanStr(entry.Syllabary)) ||
+            (entry.syllabary && cleanStr(matchedS) === cleanStr(entry.syllabary))
+          ));
         if (!isIdenticalToMain) {
           activeMatchedForm = mf;
         }
@@ -1398,55 +1471,12 @@ export function deriveSegmentedForm(
   _allForms: any[] = [],
   rootEntry?: any
 ): string | undefined {
-  if (!rootEntry || !rootEntry.segmented_forms) return undefined;
   if (form?.segmented_form) return form.segmented_form;
+  if (!rootEntry || !rootEntry.segmented_forms) return undefined;
+
   const key = (form?.normalized_key || form?.form_name || form?.label || '').toLowerCase();
-
-  const presSeg = rootEntry.segmented_forms.present;
-  const impSeg = rootEntry.segmented_forms.imperative;
-
-  if ((key === '1s|3a|present' || (key.includes('animate') && key.includes('1st'))) && presSeg && !key.includes('imperative')) {
-    let seg = 'tsiy-' + presSeg.replace(/^([a-z0-9>@*:]+->|[a-z0-9>@*:]+-)/, '');
-    if (seg.startsWith('tsiy-al') || seg.startsWith('tsiy->al')) {
-      seg = 'tsiy-atlawitht-ih-a';
-    }
-    return seg;
-  }
-
-  if ((key === '2s|3a|imperative' || (key.includes('imperative') && key.includes('animate'))) && impSeg) {
-    return impSeg;
-  }
-
-  if (key === '1s|3s|present' || key === '1s|present' || key.includes('1st person singular present') || key.includes('1st person singular with inanimate')) {
-    const rawSeg = rootEntry.segmented_forms.present_1sg;
-    if (rawSeg && rawSeg.startsWith('tsiy-') && (form?.translit?.startsWith('ga') || form?.tone?.startsWith('ga') || form?.tone2?.startsWith('ga'))) {
-      return 'k-' + rawSeg.slice(5);
-    }
-    return rawSeg;
-  }
-
-  if (key === '2s|3s|imperative' || key === '2s|imperative' || (key.includes('imperative') && !key.includes('animate'))) {
-    const rawSeg = impSeg;
-    if (form?.translit?.startsWith('hahl') || form?.tone?.startsWith('hahl') || form?.tone2?.startsWith('hahl')) {
-      return 'ha-hlawitht-a';
-    }
-    return rawSeg;
-  }
-
   if (key === '3s|3s|present' || key === '3s|present' || key.includes('3rd person singular present') || key === 'present') {
-    return presSeg;
-  }
-
-  if (key.includes('habitual') || key.includes('imperfective')) {
-    return rootEntry.segmented_forms.imperfective;
-  }
-
-  if (key.includes('infinitive') || key.includes('deverbative')) {
-    return rootEntry.segmented_forms.infinitive;
-  }
-
-  if (key.includes('past') || key.includes('perfective')) {
-    return rootEntry.segmented_forms.perfective;
+    return rootEntry.segmented_forms.present || undefined;
   }
 
   return undefined;
@@ -1896,10 +1926,10 @@ export const ColorizedCherokeeWord: React.FC<ColorizedCherokeeWordProps> = ({
 
   const hdSlot = resolveHdFormName(candidateKey);
 
-  // 1. Exact match in surface_segments
-  if (hdSlot && rEntry.surface_segments?.[hdSlot]) {
-    const segments = rEntry.surface_segments[hdSlot];
-    const projected = projectSegmentsOntoTone(segments, text);
+  // 1. Exact match in surface_segments (either directly on form, or on rEntry)
+  const exactSegs = form?.surface_segments || (hdSlot && rEntry.surface_segments?.[hdSlot]);
+  if (exactSegs) {
+    const projected = projectSegmentsOntoTone(exactSegs, text);
     return (
       <span className={className}>
         {renderSegmentedSurface(projected, colored)}

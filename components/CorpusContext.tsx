@@ -616,6 +616,11 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 if (newMeta[targetId]) {
                     newMeta[targetId] = newMeta[targetId].filter(a => a.id !== audioId);
                 }
+                Object.keys(newMeta).forEach(k => {
+                    if (k !== targetId && newMeta[k].some(a => a.id === audioId)) {
+                        newMeta[k] = newMeta[k].filter(a => a.id !== audioId);
+                    }
+                });
                 return newMeta;
             });
         } catch (e) {

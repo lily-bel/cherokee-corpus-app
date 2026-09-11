@@ -296,6 +296,8 @@ export async function parsePackageZip(
         const id = d.merged_id || d.id || d.Index || generateId();
         const Source_Long = sourceKeys.map(k => meta.source_names?.[k.replace(/\.csv$/i, '')] || meta.source_names?.[k] || k).join(', ') || meta.name;
 
+        const surfaceSpelling = d.surface_spelling || translit;
+
         return {
             ...d,
             id: id,
@@ -305,6 +307,9 @@ export async function parsePackageZip(
             definition,
             source: sourceStr,
             audio: audioByBaseForm[id] || d.audio || '',
+            surface_spelling: surfaceSpelling || undefined,
+            surface_forms: d.surface_forms,
+            surface_segments: d.surface_segments,
             Index: id,
             Entry: translit,
             Syllabary: syllabary,
@@ -406,12 +411,25 @@ export async function parsePackageZip(
 
             if (!syllabary && c.syllabary) syllabary = c.syllabary;
             if (!translit && (c.translit || c.phonetic)) translit = c.translit || c.phonetic;
+            const surfaceSpelling = c['hierarchical-dict.json_surface_spelling'] || c['hierarchical-dict.json_practical'] || c.surface_spelling || undefined;
+            if (!translit && surfaceSpelling) translit = surfaceSpelling;
+            if (!translit && c['hierarchical-dict.json_Cherokee']) translit = c['hierarchical-dict.json_Cherokee'].replace(/[-–—>]/g, '');
+
             if (!tone && c.tone) tone = c.tone;
             if (!notes && (c.notes || c.definition)) notes = c.notes || c.definition;
-            if (!source && c.source) source = c.source;
+            if (!source && (c.source || surfaceSpelling || c['hierarchical-dict.json_Cherokee'])) source = c.source || 'ced';
 
             const wordIdx = c.merged_id || c.word_index;
             const formKey = c.normalized_key || c.form_name;
+
+            let surfaceSegments = c['hierarchical-dict.json_surface_segments'] || c.surface_segments || undefined;
+            if (typeof surfaceSegments === 'string' && surfaceSegments.trim()) {
+                try {
+                    surfaceSegments = JSON.parse(surfaceSegments);
+                } catch {
+                    surfaceSegments = undefined;
+                }
+            }
 
             return {
                 word_index: wordIdx,
@@ -420,10 +438,16 @@ export async function parsePackageZip(
                 normalized_key: formKey,
                 syllabary,
                 translit,
+                surface_spelling: surfaceSpelling,
                 tone,
                 notes,
                 source: source || (meta as any).short_name || meta.id,
-                audio: audioByConjugation[`${wordIdx}_${formKey}`] || c.audio || ''
+                audio: audioByConjugation[`${wordIdx}_${formKey}`] || c.audio || '',
+                root_slug: c.root_slug || c.slug || undefined,
+                slug: c.slug || c.root_slug || undefined,
+                segmented_form: c['hierarchical-dict.json_Cherokee'] || c.segmented_form || undefined,
+                segmented_name: c['hierarchical-dict.json_Segmented Form'] || c.segmented_name || undefined,
+                surface_segments: surfaceSegments
             };
         }),
         ...importedWordFormsFromEntryData
@@ -673,6 +697,15 @@ export function parsePackageJsonData(
             const wordIdx = c.merged_id || c.word_index;
             const formKey = c.normalized_key || c.form_name;
 
+            let surfaceSegments = c['hierarchical-dict.json_surface_segments'] || c.surface_segments || undefined;
+            if (typeof surfaceSegments === 'string' && surfaceSegments.trim()) {
+                try {
+                    surfaceSegments = JSON.parse(surfaceSegments);
+                } catch {
+                    surfaceSegments = undefined;
+                }
+            }
+
             return {
                 word_index: wordIdx,
                 merged_id: wordIdx,
@@ -689,7 +722,8 @@ export function parsePackageJsonData(
                 root_slug: c.root_slug || c.slug || undefined,
                 slug: c.slug || c.root_slug || undefined,
                 segmented_form: c['hierarchical-dict.json_Cherokee'] || c.segmented_form || undefined,
-                segmented_name: c['hierarchical-dict.json_Segmented Form'] || c.segmented_name || undefined
+                segmented_name: c['hierarchical-dict.json_Segmented Form'] || c.segmented_name || undefined,
+                surface_segments: surfaceSegments
             };
         }),
         ...importedWordFormsFromEntryData

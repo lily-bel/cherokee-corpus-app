@@ -65,14 +65,16 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
     const glosses = glossMap.get(sentence.id) || [];
 
     const tokens = useMemo(() => {
-        const syl = sentence.syllabary ? sentence.syllabary.split(' ') : [];
-        const tr = sentence.translit ? sentence.translit.split(' ') : [];
+        const cleanSyl = (sentence.syllabary || '').replace(/\*/g, '').trim();
+        const cleanTr = (sentence.translit || (sentence as any).phonetic || '').replace(/\*/g, '').trim();
+        const syl = cleanSyl ? cleanSyl.split(/\s+/) : [];
+        const tr = cleanTr ? cleanTr.split(/\s+/) : [];
         const max = Math.max(syl.length, tr.length);
         const res: { syl: string, tr: string, index: number }[] = [];
         for (let i = 0; i < max; i++) {
             res.push({
-                syl: (syl[i] || '').replace(/\*/g, ''),
-                tr: (tr[i] || '').replace(/\*/g, ''),
+                syl: syl[i] || '',
+                tr: tr[i] || '',
                 index: i
             });
         }
@@ -115,7 +117,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
 
     const getGlossMeta = (index: number): { uniqueColors: string[], isMultiple: boolean } | null => {
         const wordGlosses = glosses.filter(g => {
-            const indices = g.word_index ? g.word_index.split(',').map(Number) : [];
+            const indices = g.word_index != null && g.word_index !== '' ? String(g.word_index).split(',').map(Number) : [];
             return indices.includes(index);
         });
 
@@ -173,7 +175,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
             return;
         }
 
-        const wordGlosses = glosses.filter(g => g.word_index ? g.word_index.split(',').map(Number).includes(index) : false);
+        const wordGlosses = glosses.filter(g => (g.word_index != null && g.word_index !== '') ? String(g.word_index).split(',').map(Number).includes(index) : false);
 
         if (wordGlosses.length > 0) {
             // Open Popover
@@ -556,7 +558,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
             {/* Modals/Popovers */}
             {activePopover && (
                 <GlossPopover
-                    glosses={glosses.filter(g => g.word_index ? g.word_index.split(',').map(Number).includes(activePopover.index) : false)}
+                    glosses={glosses.filter(g => (g.word_index != null && g.word_index !== '') ? String(g.word_index).split(',').map(Number).includes(activePopover.index) : false)}
                     targetWord={{ syllabary: tokens[activePopover.index].syl, translit: tokens[activePopover.index].tr }}
                     dictionaryMap={dictionaryMap}
                     position={activePopover.rect}
@@ -598,7 +600,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                         }
 
                         if (entry) {
-                            const indices = gloss.word_index ? gloss.word_index.split(',').map(Number) : [];
+                            const indices = (gloss.word_index != null && gloss.word_index !== '') ? String(gloss.word_index).split(',').map(Number) : [];
                             const targetWords = indices.map(i => ({ syllabary: tokens[i]?.syl || '', translit: tokens[i]?.tr || '' }));
 
                             setShowLinker({

@@ -821,14 +821,16 @@ const GlossCard = ({ gloss, onNavigate }: { gloss: any, onNavigate?: (type: 'dic
     if (!sentence) return <div className="p-4 text-xs text-red-400">Orphaned Gloss</div>;
 
     const tokens = useMemo(() => {
-        const syl = (sentence.syllabary || "").split(' ');
-        const tr = (sentence.translit || "").split(' ');
+        const cleanSyl = (sentence.syllabary || '').replace(/\*/g, '').trim();
+        const cleanTr = (sentence.translit || (sentence as any).phonetic || '').replace(/\*/g, '').trim();
+        const syl = cleanSyl ? cleanSyl.split(/\s+/) : [];
+        const tr = cleanTr ? cleanTr.split(/\s+/) : [];
         const max = Math.max(syl.length, tr.length);
         const res: { syl: string, tr: string, index: number }[] = [];
         for (let i = 0; i < max; i++) {
             res.push({
-                syl: (syl[i] || '').replace(/\*/g, ''),
-                tr: (tr[i] || '').replace(/\*/g, ''),
+                syl: syl[i] || '',
+                tr: tr[i] || '',
                 index: i
             });
         }

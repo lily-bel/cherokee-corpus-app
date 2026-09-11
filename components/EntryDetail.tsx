@@ -28,6 +28,8 @@ const getHexColor = (col: string) => {
   return COLORS[col] || COLORS.slate;
 };
 
+const isFormAudioId = (id: string) => /(?:_F|\.)\d+(?:_|$)/.test(id);
+
 const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudioMeta, userWordForms, onSaveAudio, onDeleteAudio, favorites, customLists, customListOrder, onClose, onEdit, onToggleFavorite, onToggleList, onDelete, onSearchTerm, onOpenNewListModal, onMove, personalWords, onEditSentence, onDeleteSentence, onCreateWord, onManageForms, onReadInContext, onShowSettings, onViewRoot, onViewClass, style }: any) => {
     const [showListSheet, setShowListSheet] = useState(false);
     const [showRecorder, setShowRecorder] = useState(false);
@@ -55,32 +57,42 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
     const { getPackageColor, packages, importedData } = usePackageManager();
 
     const handlePlayUserAudio = async (audio: any) => {
-        if (playingAudioId === audio.id) {
+        const audioId = audio?.id || audio?.audio || audio?.Word_Audio || (typeof audio === 'string' ? audio : '');
+        if (!audioId && !audio?.src) return;
+
+        if (playingAudioId === audioId || (audio?.id && playingAudioId === audio.id)) {
             audioRef.current.pause();
             setPlayingAudioId(null);
             return;
         }
 
         try {
-            if (audio.src) {
+            if (audio?.src) {
                 audioRef.current.src = audio.src;
                 audioRef.current.onended = () => setPlayingAudioId(null);
                 audioRef.current.play();
-                setPlayingAudioId(audio.id);
+                setPlayingAudioId(audioId || audio.src);
                 return;
             }
 
             // Official Audio (File-based)
-            if (audio.packageId === 'official-cherokee-data' || audio.packageId?.startsWith('official')) {
-                const url = `https://cherokeenationdictionary.net/Audio/word/${audio.id}`;
+            const isOfficial = audio?.packageId === 'official-cherokee-data' || 
+                               audio?.packageId?.startsWith('official') || 
+                               audio?.pkgType === 'official' ||
+                               audioId.startsWith('Word_') || 
+                               audioId.match(/^\d{4}\./) || 
+                               audioId.endsWith('.m4a');
+
+            if (isOfficial) {
+                const url = `https://cherokeenationdictionary.net/Audio/word/${audioId}`;
                 audioRef.current.src = url;
                 audioRef.current.onended = () => setPlayingAudioId(null);
                 audioRef.current.play();
-                setPlayingAudioId(audio.id);
+                setPlayingAudioId(audioId);
                 return;
             }
 
-            const data = await getAudioFromDB(audio.id);
+            const data = await getAudioFromDB(audioId);
             if (data) {
                 const blob = new Blob([data as Blob], { type: 'audio/mp3' });
                 const url = URL.createObjectURL(blob);
@@ -90,7 +102,7 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                     URL.revokeObjectURL(url);
                 };
                 audioRef.current.play();
-                setPlayingAudioId(audio.id);
+                setPlayingAudioId(audioId);
             }
         } catch (e) {
             console.error("Failed to play audio", e);
@@ -162,22 +174,29 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
 
     const rawImportedForms = React.useMemo(() => {
         const list: any[] = [];
+        const entryIndex = e.Index || e.id;
         packages.forEach(p => {
             if (p.status === 'active' && importedData[p.id]?.word_forms) {
-                const forms = importedData[p.id].word_forms!.filter((f: any) => f.word_index === e.Index);
+                const forms = importedData[p.id].word_forms!.filter((f: any) => f.word_index === entryIndex);
                 if (forms.length > 0) {
                     forms.forEach((f, idx) => list.push({
                         ...f,
                         _uid: f.id || `${p.id}_${f.word_index}_${f.normalized_key || f.form_name || ''}_${idx}`,
                         color: p.color,
                         pkgName: p.name,
-                        pkgType: p.type
+                        pkgType: p.type,
+                        packageId: p.id
                     }));
                 }
             }
         });
-        return list.sort((a, b) => (a.order || 0) - (b.order || 0));
-    }, [packages, importedData, e.Index]);
+        const sorted = list.sort((a, b) => (a.order || 0) - (b.order || 0));
+        const legacyOfficialFormsCount = e.Other_Forms ? e.Other_Forms.split('|').length : 0;
+        return sorted.map((f, idx) => ({
+            ...f,
+            index: legacyOfficialFormsCount + idx + 1
+        }));
+    }, [packages, importedData, e.Index, e.id, e.Other_Forms]);
 
     // For standard uses and counting (preserves full global overlap context)
     const importedForms = React.useMemo(() => {
@@ -271,7 +290,7 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                 translit: f.translit,
                 syllabary: f.syllabary,
                 tone: f.tone,
-                notes: f.notes
+                notes: f.notes || f.translations || f.translation || f.english || f.definition || ''
             });
         });
 
@@ -371,7 +390,7 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                 <div className="space-y-4">
                     {/* AUDIO ROW */}
                     <div className="flex items-center gap-2 flex-wrap min-h-[40px]">
-                        {(!userAudioMeta?.[e.Index]?.some(a => !a.id.includes(`${e.Index}.`)) || (e.audio && (pkg?.type === 'official' || e.audio.startsWith('Word_') || e.audio.match(/^\d{4}\./) || e.audio.endsWith('.m4a')))) && (
+                        {(!userAudioMeta?.[e.Index]?.some(a => !isFormAudioId(a.id)) || (e.audio && (pkg?.type === 'official' || e.audio.startsWith('Word_') || e.audio.match(/^\d{4}\./) || e.audio.endsWith('.m4a')))) && (
                             <AudioPlayer
                                 src={e.audio && (pkg?.type === 'official' || e.audio.startsWith('Word_') || e.audio.match(/^\d{4}\./) || e.audio.endsWith('.m4a')) ? `https://cherokeenationdictionary.net/Audio/word/${e.audio}` : undefined}
                                 label="Official"
@@ -384,7 +403,7 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                         {userAudioMeta && userAudioMeta[e.Index] && userAudioMeta[e.Index]
                             .filter(audio => {
                                 if (audio.packageId === 'official-cherokee-data' || audio.id.endsWith('.m4a')) return false;
-                                if (audio.id.includes(`${e.Index}.`)) return false;
+                                if (isFormAudioId(audio.id)) return false;
                                 if (!audio.packageId) {
                                     const userPkg = packages.find(p => p.id === 'user');
                                     return userPkg ? userPkg.status === 'active' : true;
@@ -490,7 +509,9 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                                     rootEntry={rootEntry}
                                     settings={settings}
                                     onPlayAudio={handlePlayUserAudio}
+                                    playingAudioId={playingAudioId}
                                     onOpenAllForms={() => setShowWordFormsModal(true)}
+                                    userAudioMeta={userAudioMeta}
                                 />
                             </div>
                         )}
@@ -643,7 +664,7 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                     formLabel={recorderTarget === 'entry' ? 'Base Form' : (recorderTarget === 'sentence' ? 'Sentence' : (activeFormData?.label || 'Word Form'))}
                     syllabary={recorderTarget === 'entry' ? e.Syllabary : (recorderTarget === 'sentence' ? e.Sentence_Syllabary : (activeFormData ? activeFormData.syllabary : null))}
                     title={recorderTarget === 'entry' ? (e.Entry_Tone || e.Entry) : (recorderTarget === 'sentence' ? (e.Sentence_Tone || e.Sentence_Transliteration) : (activeFormData ? (activeFormData.tone || activeFormData.translit) : `Form Audio`))}
-                    transliteration={recorderTarget === 'entry' ? (e.Definition || e.English || null) : (recorderTarget === 'sentence' ? e.Sentence_English : (activeFormData ? (e.Definition || e.English || activeFormData.notes || null) : null))}
+                    transliteration={recorderTarget === 'entry' ? (e.Definition || e.English || null) : (recorderTarget === 'sentence' ? e.Sentence_English : (activeFormData ? (activeFormData.notes || activeFormData.definition || activeFormData.english || e.Definition || e.English || null) : null))}
                     onSave={(blob, speaker) => {
                         if (typeof recorderTarget === 'string' && recorderTarget.startsWith('form_')) {
                             const formIndex = parseInt(recorderTarget.split('_')[1]);

@@ -256,14 +256,16 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
     }, [scrollToSentenceId, visibleRange]); // Re-run if range changes (might reveal target)
 
     const tokenizeSentence = (sentence: Sentence) => {
-        const syl = sentence.syllabary ? sentence.syllabary.split(' ') : [];
-        const tr = sentence.translit ? sentence.translit.split(' ') : [];
+        const cleanSyl = (sentence.syllabary || '').replace(/\*/g, '').trim();
+        const cleanTr = (sentence.translit || (sentence as any).phonetic || '').replace(/\*/g, '').trim();
+        const syl = cleanSyl ? cleanSyl.split(/\s+/) : [];
+        const tr = cleanTr ? cleanTr.split(/\s+/) : [];
         const max = Math.max(syl.length, tr.length);
         const tokens: { syl: string; tr: string; index: number }[] = [];
         for (let i = 0; i < max; i++) {
             tokens.push({
-                syl: (syl[i] || '').replace(/\*/g, ''),
-                tr: (tr[i] || '').replace(/\*/g, ''),
+                syl: syl[i] || '',
+                tr: tr[i] || '',
                 index: i
             });
         }
@@ -291,7 +293,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
     const getGlossColor = (sentenceId: string, wordIndex: number): string | null => {
         const glosses = glossMap.get(sentenceId) || [];
         const wordGlosses = glosses.filter(g =>
-            g.word_index ? g.word_index.split(',').map(Number).includes(wordIndex) : false
+            (g.word_index != null && g.word_index !== '') ? String(g.word_index).split(',').map(Number).includes(wordIndex) : false
         );
         if (wordGlosses.length === 0) return null;
 
@@ -549,7 +551,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                 const targetToken = tokens[activePopover.wordIndex];
                 const glosses = glossMap.get(sentence.id) || [];
                 const wordGlosses = glosses.filter(g =>
-                    g.word_index ? g.word_index.split(',').map(Number).includes(activePopover.wordIndex) : false
+                    (g.word_index != null && g.word_index !== '') ? String(g.word_index).split(',').map(Number).includes(activePopover.wordIndex) : false
                 );
 
                 return (

@@ -36,14 +36,16 @@ export const InvestigationQueue: React.FC<InvestigationQueueProps> = ({
 
     // Tokenize sentence into words
     const tokenizeSentence = (syllabary: string, translit: string) => {
-        const syl = syllabary ? syllabary.split(' ') : [];
-        const tr = translit ? translit.split(' ') : [];
+        const cleanSyl = (syllabary || '').replace(/\*/g, '').trim();
+        const cleanTr = (translit || '').replace(/\*/g, '').trim();
+        const syl = cleanSyl ? cleanSyl.split(/\s+/) : [];
+        const tr = cleanTr ? cleanTr.split(/\s+/) : [];
         const max = Math.max(syl.length, tr.length);
         const tokens: { syl: string; tr: string; index: number }[] = [];
         for (let i = 0; i < max; i++) {
             tokens.push({
-                syl: (syl[i] || '').replace(/\*/g, ''),
-                tr: (tr[i] || '').replace(/\*/g, ''),
+                syl: syl[i] || '',
+                tr: tr[i] || '',
                 index: i
             });
         }
@@ -204,7 +206,7 @@ export const InvestigationQueue: React.FC<InvestigationQueueProps> = ({
                                             const isTarget = i === item.word_index;
                                             const glosses = glossMap.get(sentence.id) || [];
                                             const hasGloss = glosses.some(g =>
-                                                g.word_index.split(',').map(Number).includes(i)
+                                                (g.word_index != null && g.word_index !== '') ? String(g.word_index).split(',').map(Number).includes(i) : false
                                             );
 
                                             return (

@@ -74,11 +74,15 @@ export const VerbPreview: React.FC<VerbPreviewProps> = ({
                 const forms = importedData[p.id].word_forms!.filter((f: any) => 
                     f.word_index === entryId || f.word_index === entry.id || f.word_index === entry.Index || f.word_index === (entry as any).merged_id
                 );
-                forms.forEach(f => list.push({ ...f, color: p.color, pkgName: p.name, pkgType: p.type }));
+                forms.forEach(f => list.push({ ...f, color: p.color, pkgName: p.name, pkgType: p.type, packageId: p.id }));
             }
         });
         const sortedRawList = list.sort((a, b) => (a.order || 0) - (b.order || 0));
-        const rawCedList = sortedRawList.filter(f => f.source === 'ced');
+        const legacyCount = entry.Other_Forms ? entry.Other_Forms.split('|').length : 0;
+        const rawCedList = sortedRawList.filter(f => f.source === 'ced').map((f, idx) => ({
+            ...f,
+            index: legacyCount + idx + 1
+        }));
         let processedCed = processFormsContextually(rawCedList);
 
         // Fallback to legacy Other_Forms if empty

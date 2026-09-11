@@ -1,13 +1,17 @@
-import React, { useMemo } from 'react';
-import { Volume2 } from './Icons';
+import React, { useMemo, useRef, useState } from 'react';
+import { Volume2, Pause } from './Icons';
 import {
     renderColorizedCherokee,
     renderSegmentedSurface,
     projectSegmentsOntoTone,
     segmentVerbForm,
     deriveSegmentedForm,
+    getAudioFromDB,
+    cleanStr,
     SegmentGroup
 } from '../utils';
+import { usePackageManager } from './PackageManagerContext';
+import { useCorpus } from './CorpusContext';
 
 const SLOT_TO_HD_FORM: Record<string, string> = {
     '1s|3a|present': 'present_1sg',
@@ -39,8 +43,10 @@ interface ReferenceFormsPreviewProps {
     };
     onViewEntry?: (entry: any) => void;
     onPlayAudio?: (audio: any) => void;
+    playingAudioId?: string | null;
     onOpenAllForms?: () => void;
     className?: string;
+    userAudioMeta?: Record<string, any[]>;
 }
 
 export interface ReferencePreviewRow {
@@ -322,12 +328,198 @@ export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
     settings,
     onViewEntry: _onViewEntry,
     onPlayAudio,
+    playingAudioId,
     onOpenAllForms,
-    className = ''
+    className = '',
+    userAudioMeta
 }) => {
     const showTone = settings?.showToneInForms !== false;
     const colorSegments = settings?.colorWordSegments !== false;
     const verbConfig = rootEntry?.config || entry?.config;
+
+    let packages: any[] = [];
+    let getPackageColor = (_id: string): string | undefined => undefined;
+    try {
+        const pm = usePackageManager();
+        if (pm) {
+            packages = pm.packages;
+            getPackageColor = pm.getPackageColor;
+        }
+    } catch (_) {}
+
+    let corpusAudioMeta: Record<string, any[]> = {};
+    try {
+        const corpus = useCorpus();
+        if (corpus) {
+            corpusAudioMeta = corpus.userAudioMeta;
+        }
+    } catch (_) {}
+
+    const effectiveUserAudioMeta = userAudioMeta || corpusAudioMeta;
+
+    const localAudioRef = useRef<HTMLAudioElement | null>(null);
+    const [localPlayingId, setLocalPlayingId] = useState<string | null>(null);
+
+    const activeAudiosForThisEntry = useMemo(() => {
+        const entryKeys = [
+            entry?.Index,
+            entry?.id,
+            entry?.merged_id,
+            (entry as any)?.sources?.['lily-dict.csv']?.Index,
+            rootEntry?.entry_id
+        ].filter(Boolean);
+
+        const map = new Map<string, any>();
+        entryKeys.forEach(k => {
+            const list = effectiveUserAudioMeta[k];
+            if (Array.isArray(list)) {
+                list.forEach(item => {
+                    if (item?.id && !map.has(item.id)) {
+                        map.set(item.id, item);
+                    }
+                });
+            }
+        });
+
+        return Array.from(map.values()).filter(audio => {
+            if (!audio.packageId || audio.packageId === 'user') {
+                const userPkg = packages.find(p => p.id === 'user');
+                return userPkg ? userPkg.status === 'active' : true;
+            }
+            const pkg = packages.find(p => p.id === audio.packageId);
+            return pkg && pkg.status === 'active';
+        });
+    }, [effectiveUserAudioMeta, entry, rootEntry, packages]);
+
+    const getFormAudios = (form: any) => {
+        if (!form) return [];
+        const result: any[] = [];
+        const seenIds = new Set<string>();
+
+        // 1. Official audio or direct form audio from form.audio / form.Word_Audio
+        const directAudio = form.audio || form.Word_Audio;
+        if (directAudio) {
+            const isOfficialDirect = !form.packageId || form.packageId === 'official-cherokee-data' || form.packageId === 'ced' || form.source === 'ced';
+            const pkg = form.packageId ? packages.find(p => p.id === form.packageId) : null;
+            const isOfficial = pkg ? pkg.type === 'official' : isOfficialDirect;
+            const color = isOfficial ? undefined : getPackageColor(form.packageId || 'user');
+            result.push({
+                id: directAudio,
+                audio: directAudio,
+                isOfficial,
+                isUser: false,
+                packageId: form.packageId || (isOfficial ? 'official-cherokee-data' : 'user'),
+                color,
+                speaker: isOfficial ? 'Official' : (form.pkgName || 'Package')
+            });
+            seenIds.add(directAudio);
+        }
+
+        // 2. Audio from userAudioMeta (user recordings or package-imported audios)
+        const formIndex = form.index;
+        const formRegex = formIndex !== undefined ? new RegExp(`(?:_F|\\.)${formIndex}(?:_|$)`) : null;
+        const rawSlug = form.translit || form.Practical || form.Entry || '';
+        const translitSlug = cleanStr(rawSlug).toLowerCase().replace(/[^a-z0-9]/g, '');
+
+        activeAudiosForThisEntry.forEach(audio => {
+            if (seenIds.has(audio.id)) return;
+
+            let matches = false;
+            if (formIndex !== undefined) {
+                if (formRegex && formRegex.test(audio.id)) {
+                    matches = true;
+                } else if (audio.formIndex === formIndex) {
+                    matches = true;
+                } else if (audio.id.includes(`.${formIndex}_`) || audio.id.includes(`_F${formIndex}_`)) {
+                    matches = true;
+                }
+            }
+
+            // Fallback match: if audio id includes _F[0-9]+_[translitSlug]_
+            if (!matches && translitSlug && translitSlug.length >= 3) {
+                const lowerId = audio.id.toLowerCase();
+                if (lowerId.includes(`_${translitSlug}_`) && (lowerId.includes('_f') || lowerId.includes(`_${entry?.Index}.`))) {
+                    matches = true;
+                }
+            }
+
+            if (matches) {
+                const audioPkg = packages.find(p => p.id === audio.packageId);
+                const isOfficial = audioPkg ? audioPkg.type === 'official' : (audio.packageId?.startsWith('official') || false);
+                const isUser = !audio.packageId || audio.packageId === 'user';
+                const pkgColor = isOfficial ? undefined : getPackageColor(audio.packageId || 'user');
+                const effectiveColor = isUser ? '#f59e0b' : (pkgColor || '#f59e0b');
+
+                result.push({
+                    id: audio.id,
+                    audio: audio.id,
+                    isOfficial,
+                    isUser,
+                    packageId: audio.packageId || 'user',
+                    color: effectiveColor,
+                    speaker: audio.speaker || (isUser ? 'User' : 'Package')
+                });
+                seenIds.add(audio.id);
+            }
+        });
+
+        return result;
+    };
+
+    const handleAudioClick = (e: React.MouseEvent, audioItem: any) => {
+        e.stopPropagation();
+        const audioSrc = audioItem.id || audioItem.audio;
+        if (!audioSrc) return;
+
+        if (onPlayAudio) {
+            onPlayAudio({
+                ...audioItem,
+                id: audioSrc,
+                audio: audioSrc,
+                packageId: audioItem.packageId || (audioItem.isOfficial ? 'official-cherokee-data' : 'user'),
+                pkgType: audioItem.isOfficial ? 'official' : (audioItem.isUser ? 'user' : 'imported')
+            });
+            return;
+        }
+
+        // Direct fallback playback
+        if (!localAudioRef.current) {
+            localAudioRef.current = new Audio();
+        }
+        const player = localAudioRef.current;
+
+        if (localPlayingId === audioSrc) {
+            player.pause();
+            setLocalPlayingId(null);
+            return;
+        }
+
+        const isOfficial = audioItem.isOfficial || 
+            audioSrc.startsWith('Word_') || 
+            audioSrc.match(/^\d{4}\./) || 
+            audioSrc.endsWith('.m4a');
+
+        if (isOfficial) {
+            player.src = audioSrc.startsWith('http') ? audioSrc : `https://cherokeenationdictionary.net/Audio/word/${audioSrc}`;
+            player.onended = () => setLocalPlayingId(null);
+            player.play().catch(err => console.error("Failed to play audio:", err));
+            setLocalPlayingId(audioSrc);
+        } else {
+            getAudioFromDB(audioSrc).then(data => {
+                if (data) {
+                    const blob = new Blob([data as Blob], { type: 'audio/mp3' });
+                    const url = URL.createObjectURL(blob);
+                    player.src = url;
+                    player.onended = () => {
+                        setLocalPlayingId(null);
+                        URL.revokeObjectURL(url);
+                    };
+                    player.play().catch(err => console.error("Failed to play audio:", err));
+                    setLocalPlayingId(audioSrc);
+                }
+            });
+        }
+    };
 
     const { rows, hasMiniPreview } = useMemo(() => {
         return getReferencePreviewMatchedForms(forms, entry, rootEntry);
@@ -385,7 +577,7 @@ export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
         const style = CATEGORY_STYLES[category] || CATEGORY_STYLES.ab;
 
         const hdFormName = SLOT_TO_HD_FORM[cardData.slotKey];
-        const hdSegments = hdFormName && rootEntry?.surface_segments ? rootEntry.surface_segments[hdFormName] : undefined;
+        const hdSegments = form.surface_segments || (hdFormName && rootEntry?.surface_segments ? rootEntry.surface_segments[hdFormName] : undefined);
 
         // Determine surface text
         let surface = '';
@@ -393,6 +585,15 @@ export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
             surface = form.tone2 || form.tone || form.Entry_Tone || form.translit || form.Practical || form.Entry || '';
         } else {
             surface = form.translit || form.Practical || form.Entry || form.tone || '';
+        }
+
+        // Split on semicolon if multiple forms exist: color the primary form matching King parse, render remainder uncolored
+        let primarySurface = surface;
+        let remainderSurface = '';
+        if (surface.includes(';')) {
+            const parts = surface.split(';');
+            primarySurface = parts[0].trim();
+            remainderSurface = '; ' + parts.slice(1).map(p => p.trim()).join('; ');
         }
 
         const syllabary = form.syllabary || form.Syllabary || '';
@@ -407,7 +608,7 @@ export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
             }
         }
 
-        const audioSrc = form.audio || form.Word_Audio;
+        const formAudios = getFormAudios(form);
 
         return (
             <div
@@ -416,35 +617,89 @@ export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
                 className={`relative flex flex-col justify-between p-3 rounded-xl shadow-sm transition-all duration-150 min-w-0 ${onOpenAllForms ? 'cursor-pointer hover:shadow-md active:scale-[0.99]' : ''} ${style.bg} ${style.border}`}
                 title={onOpenAllForms ? 'Click to view all forms' : undefined}
             >
-                {/* Card Top: Small Label & optional Audio button */}
+                {/* Card Top: Small Label & optional Audio buttons */}
                 <div className="flex items-center justify-between gap-1 mb-1">
                     <span className={`text-[10px] sm:text-[11px] uppercase tracking-wider truncate leading-tight ${style.label}`}>
                         {label}
                     </span>
-                    {audioSrc && onPlayAudio && (
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onPlayAudio(form);
-                            }}
-                            className="p-1 -mr-1 -mt-1 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors opacity-70 hover:opacity-100"
-                            title="Play audio"
-                        >
-                            <Volume2 size={13} className="text-current" />
-                        </button>
+                    {formAudios.length > 0 && (
+                        <div className="flex items-center gap-1 shrink-0 -mr-0.5 -mt-0.5" onClick={e => e.stopPropagation()}>
+                            {formAudios.map((audioItem: any) => {
+                                const isPlaying = Boolean(
+                                    (playingAudioId && (playingAudioId === audioItem.id || playingAudioId === audioItem.audio)) ||
+                                    (localPlayingId && (localPlayingId === audioItem.id || localPlayingId === audioItem.audio))
+                                );
+
+                                let btnClass = "w-5 h-5 rounded-full flex items-center justify-center transition-all shrink-0 cursor-pointer ";
+                                let btnStyle: React.CSSProperties = {};
+
+                                if (isPlaying) {
+                                    btnClass += "bg-amber-100 dark:bg-amber-900/50 text-amber-600 ring-2 ring-amber-400 scale-105";
+                                } else if (audioItem.isOfficial) {
+                                    btnClass += "bg-slate-200/90 dark:bg-slate-700/90 text-slate-500 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 hover:text-slate-700 opacity-85 hover:opacity-100";
+                                } else if (audioItem.isUser) {
+                                    // User-generated audio: small gold circle around it
+                                    btnClass += "bg-amber-500 text-white shadow-xs hover:bg-amber-600 hover:scale-105 ring-1.5 ring-amber-400/60";
+                                } else if (audioItem.color) {
+                                    // Package imported audio: correct package color
+                                    const c = audioItem.color;
+                                    if (c.startsWith('#')) {
+                                        btnStyle = { backgroundColor: c, color: '#fff' };
+                                        btnClass += "shadow-xs hover:brightness-110 hover:scale-105 ring-1.5 ring-white/30";
+                                    } else if (c === 'gold' || c === 'amber') {
+                                        btnClass += "bg-amber-500 text-white hover:bg-amber-600 shadow-xs hover:scale-105 ring-1.5 ring-amber-400/60";
+                                    } else {
+                                        btnClass += `bg-${c}-500 text-white hover:bg-${c}-600 shadow-xs hover:scale-105 ring-1.5 ring-white/30`;
+                                    }
+                                } else {
+                                    btnClass += "bg-amber-500 text-white hover:bg-amber-600 shadow-xs hover:scale-105 ring-1.5 ring-amber-400/60";
+                                }
+
+                                const title = audioItem.isOfficial
+                                    ? (isPlaying ? "Pause official audio" : "Play official audio")
+                                    : (audioItem.isUser
+                                        ? (isPlaying ? `Pause audio (${audioItem.speaker || 'User'})` : `Play user audio (${audioItem.speaker || 'User'})`)
+                                        : (isPlaying ? `Pause audio (${audioItem.speaker || 'Package'})` : `Play package audio (${audioItem.speaker || 'Package'})`));
+
+                                return (
+                                    <button
+                                        key={audioItem.id}
+                                        type="button"
+                                        onClick={(e) => handleAudioClick(e, audioItem)}
+                                        className={btnClass}
+                                        style={btnStyle}
+                                        title={title}
+                                    >
+                                        {isPlaying ? <Pause size={10} className="fill-current" /> : <Volume2 size={10} className="fill-current" />}
+                                    </button>
+                                );
+                            })}
+                        </div>
                     )}
                 </div>
 
                 {/* Swapped: Translit / Tone on top */}
                 <div className={`font-serif text-base sm:text-lg font-bold leading-tight truncate my-0.5 ${style.translit}`}>
-                    {hdSegments
-                        ? renderSegmentedSurface(
-                            showTone && surface
-                                ? projectSegmentsOntoTone(hdSegments, surface)
-                                : hdSegments,
-                            colorSegments
-                          )
-                        : renderColorizedCherokee(surface, groups, pronominalSet, colorSegments)}
+                    {hdSegments ? (
+                        <>
+                            {renderSegmentedSurface(
+                                showTone && primarySurface
+                                    ? projectSegmentsOntoTone(hdSegments, primarySurface)
+                                    : hdSegments,
+                                colorSegments
+                            )}
+                            {remainderSurface && (
+                                <span className="font-normal opacity-75">{remainderSurface}</span>
+                            )}
+                        </>
+                    ) : (
+                        <>
+                            {renderColorizedCherokee(primarySurface, groups, pronominalSet, colorSegments)}
+                            {remainderSurface && (
+                                <span className="font-normal opacity-75">{remainderSurface}</span>
+                            )}
+                        </>
+                    )}
                 </div>
 
                 {/* Swapped: Syllabary on bottom */}

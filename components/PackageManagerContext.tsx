@@ -189,6 +189,10 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                         definition = s['definition'] || '';
                     }
 
+                    const surfaceSpelling = d.surface_spelling || sources['hierarchical-dict.json']?.surface_spelling || sources['hierarchical-dict.json']?.practical || '';
+                    if (!translit && surfaceSpelling) translit = surfaceSpelling;
+                    if (!definition && sources['hierarchical-dict.json']?.definition) definition = sources['hierarchical-dict.json'].definition;
+
                     const Source_Long = sourceKeys.map(k => metadata.source_names?.[k] || k).join(', ');
                     const slug = d.slug || d.root_slug || sources['hierarchical-dict.json']?.slug || sources['hierarchical-dict.json']?.root_slug;
                     const root_slug = d.root_slug || d.slug || sources['hierarchical-dict.json']?.root_slug || sources['hierarchical-dict.json']?.slug;
@@ -203,6 +207,9 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                         definition,
                         source: sourceStr,
                         audio: audioByBaseForm[d.merged_id] || '',
+                        surface_spelling: surfaceSpelling || undefined,
+                        surface_forms: d.surface_forms,
+                        surface_segments: d.surface_segments,
                         // Legacy
                         Index: d.merged_id,
                         Entry: translit,
@@ -325,17 +332,33 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                 const normalizedGlosses = Array.from(mergedGlossesMap.values());
 
                 const normalizedWordForms = conjugations.map((c: any) => {
+                    const surfaceSpelling = c['hierarchical-dict.json_surface_spelling'] || c['hierarchical-dict.json_practical'] || c.surface_spelling || undefined;
+                    let translit = c['cn-app-dictionary.csv_Practical'] || c['lily-dict.csv_Cherokee'] || c['kirk-book-data.csv_Cherokee'] || c['learning-to-use-the-cherokee-verb.csv_Cherokee'] || '';
+                    if (!translit && surfaceSpelling) translit = surfaceSpelling;
+                    if (!translit && c['hierarchical-dict.json_Cherokee']) translit = c['hierarchical-dict.json_Cherokee'].replace(/[-–—>]/g, '');
+
                     let source = '';
                     if (c['cn-app-dictionary.csv_Practical'] || c['cn-app-dictionary.csv_Syllabary']) source = 'ced';
                     else if (c['learning-to-use-the-cherokee-verb.csv_Cherokee']) source = 'ltu';
                     else if (c['kirk-book-data.csv_Cherokee']) source = 'kirk';
                     else if (c['lily-dict.csv_Cherokee'] || c['lily-dict.csv_Syllabary']) source = 'lily';
+                    else if (surfaceSpelling || c['hierarchical-dict.json_Cherokee']) source = 'ced';
+
+                    let surfaceSegments = c['hierarchical-dict.json_surface_segments'] || c.surface_segments || undefined;
+                    if (typeof surfaceSegments === 'string' && surfaceSegments.trim()) {
+                        try {
+                            surfaceSegments = JSON.parse(surfaceSegments);
+                        } catch {
+                            surfaceSegments = undefined;
+                        }
+                    }
 
                     return {
                         word_index: c.merged_id,
                         form_name: c.normalized_key,
                         syllabary: c['cn-app-dictionary.csv_Syllabary'] || c['lily-dict.csv_Syllabary'] || c['learning-to-use-the-cherokee-verb.csv_Syllabary'] || '',
-                        translit: c['cn-app-dictionary.csv_Practical'] || c['lily-dict.csv_Cherokee'] || c['kirk-book-data.csv_Cherokee'] || c['learning-to-use-the-cherokee-verb.csv_Cherokee'] || '',
+                        translit: translit,
+                        surface_spelling: surfaceSpelling,
                         tone: c['cn-app-dictionary.csv_Tone and length 1'] || c['lily-dict.csv_Tone'] || c['kirk-book-data.csv_Tone'] || '',
                         tone2: c['cn-app-dictionary.csv_Tone and length 2'] || c.tone2 || undefined,
                         tone1: c['cn-app-dictionary.csv_Tone and length 1'] || c.tone1 || undefined,
@@ -345,7 +368,8 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                         root_slug: c.root_slug || c.slug || undefined,
                         slug: c.slug || c.root_slug || undefined,
                         segmented_form: c['hierarchical-dict.json_Cherokee'] || c.segmented_form || undefined,
-                        segmented_name: c['hierarchical-dict.json_Segmented Form'] || c.segmented_name || undefined
+                        segmented_name: c['hierarchical-dict.json_Segmented Form'] || c.segmented_name || undefined,
+                        surface_segments: surfaceSegments
                     };
                 });
 

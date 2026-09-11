@@ -27,26 +27,32 @@ interface WordFormsModalProps {
 const MiniAudioButton = ({ audio, isOfficial = false, color, isPlaying, onPlay, onDelete }: { audio: any, isOfficial?: boolean, color?: string, isPlaying: boolean, onPlay: () => void, onDelete?: () => void }) => {
 
     let bgClass = "";
-    let style = {};
+    let style: React.CSSProperties = {};
+
+    // User-generated audio defaults to gold (#f59e0b / amber-500)
+    const effectiveColor = isOfficial ? undefined : (color || '#f59e0b');
 
     if (isPlaying) {
-        bgClass = "bg-amber-100 dark:bg-amber-900/40 text-amber-600";
-    } else if (color) {
-        if (color.startsWith('#')) {
-            style = { backgroundColor: color, color: '#fff' };
+        bgClass = "bg-amber-100 dark:bg-amber-900/40 text-amber-600 ring-2 ring-amber-400";
+    } else if (effectiveColor) {
+        if (effectiveColor.startsWith('#')) {
+            style = { backgroundColor: effectiveColor, color: '#fff' };
+            bgClass = "hover:brightness-110 shadow-sm transition-all";
+        } else if (effectiveColor === 'gold' || effectiveColor === 'amber') {
+            bgClass = "bg-amber-500 text-white hover:bg-amber-600 shadow-sm transition-colors";
         } else {
-            bgClass = `bg-${color}-500 text-white hover:bg-${color}-600`;
+            bgClass = `bg-${effectiveColor}-500 text-white hover:bg-${effectiveColor}-600 shadow-sm transition-colors`;
         }
     } else if (isOfficial) {
         bgClass = "bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 hover:text-slate-700 transition-colors";
     } else {
-        bgClass = "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-amber-600";
+        bgClass = "bg-amber-500 text-white hover:bg-amber-600 shadow-sm transition-colors";
     }
 
     // Adjust for playing state with custom color
-    if (isPlaying && color && color.startsWith('#')) {
-        style = { backgroundColor: color + '20', color: color, borderColor: color, borderWidth: '1px' };
-        bgClass = "";
+    if (isPlaying && effectiveColor && effectiveColor.startsWith('#')) {
+        style = { backgroundColor: effectiveColor + '20', color: effectiveColor, borderColor: effectiveColor, borderWidth: '1px' };
+        bgClass = "ring-2 ring-amber-400";
     }
 
     return (
@@ -55,7 +61,7 @@ const MiniAudioButton = ({ audio, isOfficial = false, color, isPlaying, onPlay, 
                 onClick={(e) => { e.stopPropagation(); onPlay(); }}
                 className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors shrink-0 ${bgClass}`}
                 style={style}
-                title={isOfficial ? "Official Audio" : (audio.speaker || "User Recording")}
+                title={isOfficial ? "Official Audio" : (audio.speaker ? `${audio.speaker} (User Recording)` : "User Recording")}
             >
                 {isPlaying ? <Pause size={14} className="fill-current" /> : <Volume2 size={14} />}
             </button>
@@ -99,12 +105,14 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
 
     // Helper to tokenize sentence for context view
     const tokenizeSentence = (syllabary: string, translit: string) => {
-        const syl = syllabary ? syllabary.split(' ') : [];
-        const tr = translit ? translit.split(' ') : [];
+        const cleanSyl = (syllabary || '').replace(/\*/g, '').trim();
+        const cleanTr = (translit || '').replace(/\*/g, '').trim();
+        const syl = cleanSyl ? cleanSyl.split(/\s+/) : [];
+        const tr = cleanTr ? cleanTr.split(/\s+/) : [];
         const max = Math.max(syl.length, tr.length);
         const tokens: { syl: string; tr: string; index: number }[] = [];
         for (let i = 0; i < max; i++) {
-            tokens.push({ syl: (syl[i] || '').replace(/\*/g, ''), tr: (tr[i] || '').replace(/\*/g, ''), index: i });
+            tokens.push({ syl: syl[i] || '', tr: tr[i] || '', index: i });
         }
         return tokens;
     };
@@ -220,9 +228,18 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                             {allForms.map((form, idx) => {
                                 // Audio Logic
-                                const formAudios = userAudioMeta && userAudioMeta[entry.Index]
-                                    ? userAudioMeta[entry.Index].filter((a: any) => a.id.includes(`-${entry.Index}.${form.index}_`))
-                                    : [];
+                                const audiosForThisEntry = (userAudioMeta && (
+                                    userAudioMeta[entry.Index] ||
+                                    (entry.id && userAudioMeta[entry.id]) ||
+                                    (entry.merged_id && userAudioMeta[entry.merged_id])
+                                )) || [];
+                                const formRegex = new RegExp(`(?:_F|\\.)${form.index}(?:_|$)`);
+                                const formAudios = audiosForThisEntry.filter((a: any) => 
+                                    formRegex.test(a.id) || 
+                                    a.id.includes(`-${entry.Index}.${form.index}_`) ||
+                                    a.id.includes(`.${form.index}_`) ||
+                                    a.formIndex === form.index
+                                );
 
                                 let borderStyle: React.CSSProperties = { borderLeftWidth: '6px' };
                                 const colorName = form.color === 'gold' ? 'amber' : (form.color || 'slate');
@@ -346,7 +363,7 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
                                         if (!sentence) return null;
 
                                         const tokens = tokenizeSentence(sentence.syllabary, sentence.translit);
-                                        const targetIndices = g.word_index ? g.word_index.split(',').map(Number) : [];
+                                        const targetIndices = (g.word_index != null && g.word_index !== '') ? String(g.word_index).split(',').map(Number) : [];
 
                                         const pkgColor = getPackageColor(g.source || 'slate') || 'slate';
                                         let pkgHex = '#64748b'; // Default Slate

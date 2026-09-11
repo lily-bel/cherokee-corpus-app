@@ -10,10 +10,15 @@
     "title": "Task 2.1: Fix official audio not showing in list view"
   },
   {
-    "note": "http://localhost:5173/cherokee-corpus-app/?word=eeca3dc45019a57c   http://localhost:5173/cherokee-corpus-app/?word=a20186fec2424374     http://localhost:5173/cherokee-corpus-app/?word=bf90c5e7ee5d0065      http://localhost:5173/cherokee-corpus-app/?word=222233fdecb67105    http://localhost:5173/cherokee-corpus-app/?word=497004d2ecd75e7c",
+    "note": "",
     "priority": 3,
-    "title": "See these words for stupid issues in the other forms."
-  }
+    "title": "Task 2.2: Fix class view table"
+  },
+  {
+    "note": "http://localhost:5173/cherokee-corpus-app/?word=eeca3dc45019a57c   http://localhost:5173/cherokee-corpus-app/?word=a20186fec2424374     http://localhost:5173/cherokee-corpus-app/?word=bf90c5e7ee5d0065      http://localhost:5173/cherokee-corpus-app/?word=222233fdecb67105    http://localhost:5173/cherokee-corpus-app/?word=497004d2ecd75e7c     http://localhost:5173/cherokee-corpus-app/?word=d67172d399d59160",
+    "priority": 3,
+    "title": "Task 2.3: See these words for stupid issues in the other forms."
+  },
   {
     "note": "[DATA] [MVP] [Priority: Medium] [Data Cleanup]\nTarget: Corpus Word Form & Part of Speech Data\nNote: Data cleanup task - all data edits must be done manually by a human, not via code implementation.\nSpec:\n1. Manually review entries with solitary word forms and update labeling (label as Base Form rather than Singular in the corpus dataset).\n2. Audit, clean up, and format part of speech tags across solitary form entries in the dictionary data.",
     "priority": 5,
