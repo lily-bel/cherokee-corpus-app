@@ -1,6 +1,6 @@
 # Cherokee Dictionary and Corpus App
 ## Link - [dictionary.hanehlda.org](https://dictionary.hanehlda.org/)
-_Note - Please wait for version 1.0 for guaranteed import/export compatibility. Cached data should be stable from beta version onward._
+_Note - Please wait for version 1.0 for guaranteed custom data persistence. I am still working on the app and I can't guarantee data will persist throughout Beta versions. I'll try my best though!_
 
 A comprehensive Cherokee language app built in React for web and mobile. 
 
