@@ -38,6 +38,8 @@ const DEFAULT_SETTINGS = {
     showToneInForms: true,
     colorWordSegments: true,
     showClassMascots: false,
+    dictionaryLevel: 'default' as 'basic' | 'default' | 'linguist',
+    hideCustomization: false,
 };
 
 
@@ -105,6 +107,12 @@ function App() {
     const [settings, setSettings] = useState(DEFAULT_SETTINGS);
     const [showSettingsModal, setShowSettingsModal] = useState(false);
     const [showSearchSettingsPopover, setShowSearchSettingsPopover] = useState(false);
+
+    useEffect(() => {
+        if (settings?.hideCustomization && (activeTab === 'personal' || activeTab === 'packages')) {
+            setActiveTab('search');
+        }
+    }, [settings?.hideCustomization, activeTab]);
 
     // Auth & Cloud Sync State
     const { user, syncLibraryToCloud, loadAndMergeCloudData, showAuthModal, setShowAuthModal } = useAuth();
@@ -347,6 +355,8 @@ function App() {
 
                     setSettings(prev => ({
                         ...prev, ...parsed,
+                        dictionaryLevel: ['basic', 'default', 'linguist'].includes(parsed.dictionaryLevel) ? parsed.dictionaryLevel : 'default',
+                        hideCustomization: typeof parsed.hideCustomization === 'boolean' ? parsed.hideCustomization : false,
                         searchLangs: combinedLangs,
                         searchScopes: { ...prev.searchScopes, ...parsed.searchScopes }
                     }));
@@ -1635,25 +1645,35 @@ function App() {
         if (!query && activeTab === 'search') return { active: [], inactive: [] };
 
         const activeFilters = searchScope === 'sentences' ? sentenceFilters : filters;
+        const isLinguist = settings?.dictionaryLevel === 'linguist';
 
-        const active = searchResults.filter(item => {
-            // If item is a sentence (has .id), use sentenceFilters
-            // If item is entry (has .Index), use filters
-            // But searchScope already separates them mostly.
-            // However, performSearch returns mixed if scope is mixed? No, scope is strict here.
+        const active: any[] = [];
+        const inactive: any[] = [];
 
+        searchResults.forEach(item => {
+            const isSentence = item.item || (item.id && !item.Index && !item.merged_id);
             const srcKey = searchScope === 'sentences' ? (item.item?.source) : (item.Source || item.source);
+            const isSourceActive = activeFilters[srcKey] !== false;
 
-            if (customDictionaries[srcKey]) return activeFilters[srcKey] !== false;
-            return activeFilters[srcKey] !== false; // Case sensitivity? keys in filters are as-is from source
+            if (!isSourceActive) {
+                inactive.push(item);
+                return;
+            }
+
+            if (isLinguist && searchScope === 'dictionary' && !isSentence) {
+                const itemId = item.id || item.Index || (item as any).merged_id;
+                const rootEntry = itemId ? rootMap?.get(itemId) : null;
+                if (!rootEntry) {
+                    inactive.push(item);
+                    return;
+                }
+            }
+
+            active.push(item);
         });
-        const inactive = searchResults.filter(item => {
-            const srcKey = searchScope === 'sentences' ? (item.item?.source) : (item.Source || item.source);
-            if (customDictionaries[srcKey]) return activeFilters[srcKey] === false;
-            return activeFilters[srcKey] === false;
-        });
+
         return { active, inactive };
-    }, [searchResults, filters, sentenceFilters, activeTab, query, customDictionaries, searchScope]);
+    }, [searchResults, filters, sentenceFilters, activeTab, query, customDictionaries, searchScope, settings?.dictionaryLevel, rootMap]);
 
     const paginatedResults = useMemo(() => {
         const activeSlice = filteredResults.active.slice(0, resultLimit);
@@ -1802,12 +1822,16 @@ function App() {
                                                     <div className="mt-2 p-3 bg-slate-50/50 dark:bg-slate-900/60 rounded-lg border border-slate-200 dark:border-slate-700 flex flex-col gap-2 max-h-56 overflow-y-auto shadow-inner">
                                                         {/* Dictionary Sources */}
                                                         {searchScope === 'dictionary' && availableSources.map(src => {
+                                                            const isLinguist = settings?.dictionaryLevel === 'linguist';
+                                                            const isCed = src.code.toLowerCase() === 'ced';
+                                                            const isDisabled = isLinguist && !isCed;
+
                                                             if (src.code === 'Other') {
                                                                 return (
-                                                                    <div key="OtherGroup" className="flex flex-col">
+                                                                    <div key="OtherGroup" className={`flex flex-col ${isDisabled ? 'opacity-40 pointer-events-none' : ''}`}>
                                                                         <div className="flex items-center justify-between p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded">
                                                                             <label className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer flex-1">
-                                                                                <div onClick={(e) => { e.preventDefault(); toggleAllSmallSources(); }} className="w-4 h-4 rounded border border-slate-300 dark:border-slate-600 flex items-center justify-center bg-white dark:bg-slate-800 overflow-hidden">
+                                                                                <div onClick={(e) => { if (isDisabled) return; e.preventDefault(); toggleAllSmallSources(); }} className="w-4 h-4 rounded border border-slate-300 dark:border-slate-600 flex items-center justify-center bg-white dark:bg-slate-800 overflow-hidden">
                                                                                     {otherGroupState === 'all' && <div className="w-full h-full bg-amber-600 flex items-center justify-center"><Check size={12} className="text-white" /></div>}
                                                                                     {otherGroupState === 'some' && <div className="w-full h-full bg-amber-600 flex items-center justify-center"><Minus size={12} className="text-white" /></div>}
                                                                                 </div>
@@ -1816,7 +1840,7 @@ function App() {
                                                                                 <span className="font-bold text-slate-600 dark:text-slate-400">Other Sources</span>
                                                                                 <span className="ml-auto text-xs text-slate-400 font-mono">({src.count})</span>
                                                                             </label>
-                                                                            <button onClick={(e) => { e.preventDefault(); setExpandOthers(!expandOthers); }} className="p-1 ml-2 text-slate-400 hover:text-amber-600">
+                                                                            <button onClick={(e) => { if (isDisabled) return; e.preventDefault(); setExpandOthers(!expandOthers); }} className="p-1 ml-2 text-slate-400 hover:text-amber-600">
                                                                                 {expandOthers ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                                                                             </button>
                                                                         </div>
@@ -1827,6 +1851,7 @@ function App() {
                                                                                     <label key={smallSrc.code} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded">
                                                                                         <input
                                                                                             type="checkbox"
+                                                                                            disabled={isDisabled}
                                                                                             checked={filters[smallSrc.code] !== false}
                                                                                             onChange={() => setFilters(prev => ({ ...prev, [smallSrc.code]: !prev[smallSrc.code] }))}
                                                                                             className="accent-amber-600 w-4 h-4 rounded"
@@ -1845,15 +1870,22 @@ function App() {
                                                             }
 
                                                             return (
-                                                                <label key={src.code} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded">
-                                                                    <input type="checkbox" checked={filters[src.code] !== false} onChange={() => setFilters(prev => ({ ...prev, [src.code]: !prev[src.code] }))} className="accent-amber-600 w-4 h-4 rounded" />
+                                                                <label key={src.code} className={`flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 cursor-pointer p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded ${isDisabled ? 'opacity-40 cursor-not-allowed' : ''}`}>
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        disabled={isDisabled}
+                                                                        checked={filters[src.code] !== false}
+                                                                        onChange={() => setFilters(prev => ({ ...prev, [src.code]: !prev[src.code] }))}
+                                                                        className="accent-amber-600 w-4 h-4 rounded"
+                                                                    />
                                                                     <div className="flex-1 flex items-center min-w-0">
                                                                         <span className="font-bold uppercase text-xs text-slate-500 dark:text-slate-400 mr-2 min-w-[3rem] shrink-0 text-center bg-white dark:bg-slate-800 rounded px-1">{src.badge}</span>
                                                                         <span className="truncate">{src.name}</span>
+                                                                        {isDisabled && <span className="ml-2 text-[10px] text-amber-600 dark:text-amber-400 font-semibold">(CED only in Linguist Mode)</span>}
                                                                         <span className="ml-auto text-xs text-slate-400 font-mono">({src.count})</span>
                                                                     </div>
                                                                 </label>
-                                                            )
+                                                            );
                                                         })}
 
                                                         {/* Sentence Sources */}
@@ -2011,13 +2043,17 @@ function App() {
                                                     </button>
                                                 </div>
 
-                                                <div className="flex items-center justify-between">
-                                                    <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Show Root Headers</span>
+                                                <div className={`flex items-center justify-between ${settings?.dictionaryLevel === 'basic' ? 'opacity-40 pointer-events-none' : ''}`}>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Show Root Headers</span>
+                                                        {settings?.dictionaryLevel === 'basic' && <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold">(Disabled in Basic Mode)</span>}
+                                                    </div>
                                                     <button
                                                         onClick={() => setSettings(s => ({ ...s, showRootHeaders: !s.showRootHeaders }))}
-                                                        className={`transition-colors ${settings.showRootHeaders ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}
+                                                        disabled={settings?.dictionaryLevel === 'basic'}
+                                                        className={`transition-colors ${settings.showRootHeaders && settings?.dictionaryLevel !== 'basic' ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}
                                                     >
-                                                        {settings.showRootHeaders ? <ToggleRight size={24} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={24} />}
+                                                        {settings.showRootHeaders && settings?.dictionaryLevel !== 'basic' ? <ToggleRight size={24} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={24} />}
                                                     </button>
                                                 </div>
 
@@ -2043,15 +2079,17 @@ function App() {
                                                 onToggleList={toggleInList}
                                                 onOpenNewListModal={() => setShowNewListModal(true)}
                                                 onReadInContext={handleReadInContext}
+                                                settings={settings}
                                             />
                                         );
                                     } else {
                                         const itemId = item.id || item.Index || (item as any).merged_id;
                                         const rootEntry = itemId ? rootMap?.get(itemId) : null;
+                                        const showRootHeaders = settings?.dictionaryLevel !== 'basic' && settings?.showRootHeaders !== false;
                                         
                                         // Look back to see if same root was rendered
                                         let showRootHeader = false;
-                                        if (rootEntry && settings.showRootHeaders !== false) {
+                                        if (rootEntry && showRootHeaders) {
                                             const prevItem = index > 0 ? array[index - 1] : null;
                                             const prevIsSentence = prevItem ? (prevItem.item || (prevItem.id && !prevItem.Index && !prevItem.merged_id)) : true;
                                             const prevEntry = prevIsSentence ? null : (prevItem?.item || prevItem);
@@ -2081,7 +2119,7 @@ function App() {
                                                         </div>
                                                     </div>
                                                 )}
-                                                <div className={(rootEntry && settings.showRootHeaders !== false) ? "ml-4 pl-2 border-l-2 border-amber-500/20 dark:border-amber-400/20" : ""}>
+                                                <div className={(rootEntry && showRootHeaders) ? "ml-4 pl-2 border-l-2 border-amber-500/20 dark:border-amber-400/20" : ""}>
                                                     <EntryCard entry={item} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} settings={settings} />
                                                 </div>
                                             </React.Fragment>
@@ -2100,13 +2138,15 @@ function App() {
                                                 onToggleList={toggleInList}
                                                 onOpenNewListModal={() => setShowNewListModal(true)}
                                                 onReadInContext={handleReadInContext}
+                                                settings={settings}
                                             />;
                                         }
                                         
                                         const entryId = entry.id || entry.Index || (entry as any).merged_id;
                                         const rootEntry = entryId ? rootMap?.get(entryId) : null;
+                                        const showRootHeaders = settings?.dictionaryLevel !== 'basic' && settings?.showRootHeaders !== false;
                                         let showRootHeader = false;
-                                        if (rootEntry) {
+                                        if (rootEntry && showRootHeaders) {
                                             const prevItem = index > 0 ? array[index - 1] : null;
                                             const prevIsSentence = prevItem ? (prevItem.item && (prevItem.type === 'text' || prevItem.type === 'deep')) : true;
                                             const prevEntry = prevIsSentence ? null : (prevItem?.item || prevItem);
@@ -2136,7 +2176,7 @@ function App() {
                                                         </div>
                                                     </div>
                                                 )}
-                                                <div className={rootEntry ? "ml-4 pl-2 border-l-2 border-amber-500/10 dark:border-amber-400/10" : ""}>
+                                                <div className={(rootEntry && showRootHeaders) ? "ml-4 pl-2 border-l-2 border-amber-500/10 dark:border-amber-400/10" : ""}>
                                                     <EntryCard entry={entry} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} isDimmed={true} settings={settings} />
                                                 </div>
                                             </React.Fragment>
@@ -2149,15 +2189,17 @@ function App() {
                                             </button>
                                         </div>
                                     )}
-                                    {/* Create New Button - MOVED HERE */}
-                                    <div className="p-4 pt-0">
-                                        <button
-                                            onClick={() => openWordModal(null)}
-                                            className="w-full py-3 border-2 border-dashed border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-bold rounded-xl hover:border-amber-400 hover:text-amber-600 dark:hover:border-amber-700 dark:hover:text-amber-500 transition-colors flex items-center justify-center gap-2"
-                                        >
-                                            <Plus size={20} /> Create New {searchScope === 'sentences' ? 'Sentence' : 'Word'}
-                                        </button>
-                                    </div>
+                                    {/* Create New Button */}
+                                    {!settings?.hideCustomization && (
+                                        <div className="p-4 pt-0">
+                                            <button
+                                                onClick={() => openWordModal(null)}
+                                                className="w-full py-3 border-2 border-dashed border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-bold rounded-xl hover:border-amber-400 hover:text-amber-600 dark:hover:border-amber-700 dark:hover:text-amber-500 transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                <Plus size={20} /> Create New {searchScope === 'sentences' ? 'Sentence' : 'Word'}
+                                            </button>
+                                        </div>
+                                    )}
                                 </>) : (
                                     <div className="p-4">
                                         {searchHistory.length > 0 ? (
@@ -2285,6 +2327,7 @@ function App() {
                                         setReaderView('importing');
                                     }}
                                     onShowSettings={() => setShowSettingsModal(true)}
+                                    settings={settings}
                                 />
                             )
                         )}
@@ -2305,6 +2348,7 @@ function App() {
                             }}
                             onShowSettings={() => setShowSettingsModal(true)}
                             onShowAuth={() => setShowAuthModal(true)}
+                            settings={settings}
                         />}
                         {
                             activeTab === 'personal' && (!activeDictionaryId ? (<div className="flex flex-col h-full"><div className="px-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0 h-12"><h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">Custom Dictionaries</h1><div className="flex gap-1.5 items-center"><button onClick={() => setShowNewDictionaryModal(true)} className="bg-slate-900 dark:bg-slate-700 text-white p-1.5 rounded-full shadow-sm hover:bg-slate-800 transition-colors" title="New Dictionary"><Plus size={18} /></button><UserAuthButton /><button onClick={() => setShowSettingsModal(true)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" title="Settings"><Menu size={22} strokeWidth={1.5} /></button></div></div><div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-4 content-start">{dictionaryList.map((nb: any) => {
@@ -2338,6 +2382,7 @@ function App() {
                                             onToggleList={toggleInList}
                                             onOpenNewListModal={() => setShowNewListModal(true)}
                                             onReadInContext={handleReadInContext}
+                                            settings={settings}
                                         />)
                                     )}
                                 </div>{customDictionaries[activeDictionaryId] && <button onClick={() => openWordModal()} className="absolute bottom-6 right-6 bg-slate-900 dark:bg-slate-700 text-white p-4 rounded-full shadow-xl z-20 hover:scale-105 transition-transform"><Plus size={24} /></button>}</div>))
@@ -2358,14 +2403,18 @@ function App() {
                     <BookOpen size={22} strokeWidth={2} className="md:w-6 md:h-6" />
                     <span className="text-[9px] md:text-[10px] font-bold tracking-tight md:tracking-wide truncate w-full px-1">Reader</span>
                 </button>
-                <button onClick={() => { if (activeTab === 'personal') setActiveDictionaryId(null); setActiveTab('personal'); }} className={`flex flex-col items-center gap-1 py-2 rounded-lg flex-1 min-w-0 transition-colors ${activeTab === 'personal' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
-                    <Book size={22} strokeWidth={2} className="md:w-6 md:h-6" />
-                    <span className="text-[9px] md:text-[10px] font-bold tracking-tight md:tracking-wide truncate w-full px-1">Dicts</span>
-                </button>
-                <button onClick={() => { setActiveTab('packages'); }} className={`flex flex-col items-center gap-1 py-2 rounded-lg flex-1 min-w-0 transition-colors ${activeTab === 'packages' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
-                    <Box size={22} strokeWidth={2} className="md:w-6 md:h-6" />
-                    <span className="text-[9px] md:text-[10px] font-bold tracking-tight md:tracking-wide truncate w-full px-1">Packages</span>
-                </button>
+                {!settings?.hideCustomization && (
+                    <>
+                        <button onClick={() => { if (activeTab === 'personal') setActiveDictionaryId(null); setActiveTab('personal'); }} className={`flex flex-col items-center gap-1 py-2 rounded-lg flex-1 min-w-0 transition-colors ${activeTab === 'personal' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
+                            <Book size={22} strokeWidth={2} className="md:w-6 md:h-6" />
+                            <span className="text-[9px] md:text-[10px] font-bold tracking-tight md:tracking-wide truncate w-full px-1">Dicts</span>
+                        </button>
+                        <button onClick={() => { setActiveTab('packages'); }} className={`flex flex-col items-center gap-1 py-2 rounded-lg flex-1 min-w-0 transition-colors ${activeTab === 'packages' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
+                            <Box size={22} strokeWidth={2} className="md:w-6 md:h-6" />
+                            <span className="text-[9px] md:text-[10px] font-bold tracking-tight md:tracking-wide truncate w-full px-1">Packages</span>
+                        </button>
+                    </>
+                )}
                 <button onClick={() => { setActiveTab('widgets'); }} className={`flex flex-col items-center gap-1 py-2 rounded-lg flex-1 min-w-0 transition-colors ${activeTab === 'widgets' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
                     <Layout size={22} strokeWidth={2} className="md:w-6 md:h-6" />
                     <span className="text-[9px] md:text-[10px] font-bold tracking-tight md:tracking-wide truncate w-full px-1">Widgets</span>
@@ -2379,6 +2428,52 @@ function App() {
                 showSettingsModal && (
                     <Modal title="Settings" onClose={() => setShowSettingsModal(false)}>
                         <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
+                            {/* Dictionary Experience Mode */}
+                            <div>
+                                <label className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-1 block">Dictionary Mode</label>
+                                <p className="text-xs text-slate-400 mb-3">
+                                    {settings?.dictionaryLevel === 'basic' && "Simplified mode: Hides verb morphology breakdowns, blueprints, and root grouping."}
+                                    {(settings?.dictionaryLevel === 'default' || !settings?.dictionaryLevel) && "Standard mode: Full dictionary view with root groupings and morphology breakdown."}
+                                    {settings?.dictionaryLevel === 'linguist' && "Linguistics mode: Root-first polysynthetic word representation with morphology blueprints."}
+                                </p>
+                                <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 font-medium text-xs">
+                                    {(['basic', 'default', 'linguist'] as const).map(level => {
+                                        const isSelected = (settings?.dictionaryLevel || 'default') === level;
+                                        const label = level === 'basic' ? 'Basic' : (level === 'default' ? 'Default' : 'Linguist');
+                                        return (
+                                            <button
+                                                key={level}
+                                                type="button"
+                                                onClick={() => setSettings(s => ({ ...s, dictionaryLevel: level }))}
+                                                className={`py-2 px-2 rounded-lg font-bold transition-all text-center ${
+                                                    isSelected
+                                                        ? 'bg-amber-600 text-white shadow-sm'
+                                                        : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-slate-700/60'
+                                                }`}
+                                            >
+                                                {label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Hide Customization Features Toggle */}
+                            <div className="flex items-center justify-between">
+                                <div className="flex flex-col pr-4">
+                                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Hide Customization Features</span>
+                                    <span className="text-xs text-slate-400">Hides dictionary creation, package management, audio recording, and editing tools for a simplified viewing experience. Lists and favorites remain accessible.</span>
+                                </div>
+                                <button
+                                    onClick={() => setSettings(s => ({ ...s, hideCustomization: !s.hideCustomization }))}
+                                    className={`transition-colors shrink-0 ${settings?.hideCustomization ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}
+                                >
+                                    {settings?.hideCustomization ? <ToggleRight size={32} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={32} />}
+                                </button>
+                            </div>
+
+                            <hr className="border-slate-100 dark:border-slate-800" />
+
                             <div className="flex items-center justify-between">
                                 <div className="flex flex-col">
                                     <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Dark Mode</span>

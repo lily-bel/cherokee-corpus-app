@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { StickyNote, ListIcon, Mic, SquaresPlus } from './Icons';
 import { SourceBadge } from './UI';
 import { useCorpus } from './CorpusContext';
-import { renderColorizedCherokee, renderSegmentedSurface, projectSegmentsOntoTone, segmentVerbForm, deriveSegmentedForm, getFormPronominalSet } from '../utils';
+import { renderColorizedCherokee, renderSegmentedSurface, projectSegmentsOntoTone, segmentVerbForm, deriveSegmentedForm, getFormPronominalSet, VerbMorphologyTemplate } from '../utils';
 import { usePackageManager } from './PackageManagerContext';
 
 
@@ -52,9 +52,11 @@ const MultiSourceIcon = ({ Icon, colors, size = 14 }: { Icon: any, colors: strin
   );
 };
 
-const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWordForms, favorites, customLists, onClick, isDimmed = false, showPos = false, settings }: any) => {
+const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWordForms, favorites, customLists, onClick, isDimmed = false, showPos = false, settings, onViewRoot, onViewClass }: any) => {
   const { getPackageColor, packages, importedData } = usePackageManager();
   const { rootMap } = useCorpus();
+
+  const isLinguist = settings?.dictionaryLevel === 'linguist';
 
   const isColored = (settings?.colorWordSegments !== undefined)
     ? settings.colorWordSegments !== false
@@ -194,16 +196,28 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
   return (
     <div key={entry.Index} onClick={() => onClick(entry)} className={`bg-white dark:bg-slate-900 p-4 border-b border-slate-100 dark:border-slate-800 active:bg-slate-50 dark:active:bg-slate-800 transition-colors cursor-pointer ${isDimmed ? 'opacity-50 grayscale' : ''} `}>
       <div className="flex justify-between items-start mb-2 gap-3">
-        <div className="flex-1 min-w-0 flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-          {entry.Syllabary && <span className="font-noto-cherokee text-lg font-bold text-slate-800 dark:text-slate-100">{entry.Syllabary}</span>}
-          <span className="font-noto-serif text-base text-amber-700 dark:text-amber-400 font-bold [overflow-wrap:anywhere] [word-break:normal]">
-            {rootEntry?.surface_segments?.present
-              ? renderSegmentedSurface(rootEntry.surface_segments.present, isColored)
-              : (rootEntry && mainPresGroups
-                ? renderColorizedCherokee(entry.Entry, mainPresGroups, mainPronounSet, isColored)
-                : entry.Entry)}
-          </span>
-        </div>
+        {isLinguist && rootEntry ? (
+          <div className="flex-1 min-w-0">
+            <VerbMorphologyTemplate
+              rootEntry={rootEntry}
+              showMascot={settings?.showClassMascots}
+              onViewRoot={onViewRoot}
+              onViewClass={onViewClass}
+              className="text-base font-bold"
+            />
+          </div>
+        ) : (
+          <div className="flex-1 min-w-0 flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+            {entry.Syllabary && <span className="font-noto-cherokee text-lg font-bold text-slate-800 dark:text-slate-100">{entry.Syllabary}</span>}
+            <span className="font-noto-serif text-base text-amber-700 dark:text-amber-400 font-bold [overflow-wrap:anywhere] [word-break:normal]">
+              {rootEntry?.surface_segments?.present
+                ? renderSegmentedSurface(rootEntry.surface_segments.present, isColored)
+                : (rootEntry && mainPresGroups
+                  ? renderColorizedCherokee(entry.Entry, mainPresGroups, mainPronounSet, isColored)
+                  : entry.Entry)}
+            </span>
+          </div>
+        )}
         <div className="shrink-0 flex flex-col items-end gap-1">
           <div className="flex items-center gap-2">
             <MultiSourceIcon Icon={StickyNote} colors={noteColors} size={15} />
@@ -229,9 +243,11 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
                       : matchedHdSegments,
                     isColored
                   )
-                : (rootEntry && matchedFormGroups
-                  ? renderColorizedCherokee(entry.matchedForm.translit, matchedFormGroups, matchedPronounSet, isColored)
-                  : entry.matchedForm.translit)}
+                : (entry.matchedForm.translit === entry.Entry && rootEntry?.surface_segments?.present
+                  ? renderSegmentedSurface(rootEntry.surface_segments.present, isColored)
+                  : (rootEntry && matchedFormGroups
+                    ? renderColorizedCherokee(entry.matchedForm.translit, matchedFormGroups, matchedPronounSet, isColored)
+                    : entry.matchedForm.translit))}
             </span>
           )}
         </div>

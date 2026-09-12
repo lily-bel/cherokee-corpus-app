@@ -3,7 +3,7 @@ import { Star, ListIcon, Trash2, Pencil, ChevronRight, ChevronDown, GripVertical
 import { Modal, SourceBadge, UserAuthButton } from './UI';
 import { usePackageManager } from './PackageManagerContext';
 import { useCorpus } from './CorpusContext';
-import { getAudioFromDB, renderStyledText, parseListName, formatListName, sanitizeListName, ColorizedCherokeeWord } from '../utils';
+import { getAudioFromDB, renderStyledText, parseListName, formatListName, sanitizeListName, ColorizedCherokeeWord, VerbMorphologyTemplate } from '../utils';
 
 export interface ListData {
     id: string;
@@ -124,7 +124,8 @@ const AddWordsModal = ({
     activeList,
     onToggleItem,
     onPerformSearch,
-    customDictionaries
+    customDictionaries,
+    settings
 }: {
     isOpen: boolean,
     onClose: () => void,
@@ -132,9 +133,12 @@ const AddWordsModal = ({
     activeList: ListData | null,
     onToggleItem: (id: string) => void,
     onPerformSearch: (query: string, scope?: 'dictionary' | 'sentences' | 'modal' | 'modal_sentences') => any[],
-    customDictionaries: any
+    customDictionaries: any,
+    settings?: any
 }) => {
     const { getPackageColor } = usePackageManager();
+    const { rootMap } = useCorpus();
+    const isLinguist = settings?.dictionaryLevel === 'linguist';
     const [query, setQuery] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [results, setResults] = useState<any[]>([]);
@@ -180,6 +184,7 @@ const AddWordsModal = ({
 
                         const isInList = activeList?.items.includes(itemId);
                         const source = data.Source || data.source;
+                        const rootEntry = (!isSentenceResult && data) ? (rootMap?.get(data.Index) || rootMap?.get(data.id) || rootMap?.get(data.merged_id)) : null;
 
                         return (
                             <div
@@ -188,26 +193,38 @@ const AddWordsModal = ({
                                 className="p-3 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer rounded-lg flex justify-between items-center group transition-colors"
                             >
                                 <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-0.5">
-                                        <div className="font-serif font-bold text-slate-900 dark:text-slate-100 group-hover:text-amber-700 transition-colors leading-tight">
-                                            {isSentenceResult ? (data.syllabary || '') : (data.Syllabary || data.syllabary)}
+                                    {isLinguist && rootEntry ? (
+                                        <div className="py-0.5">
+                                            <VerbMorphologyTemplate
+                                                rootEntry={rootEntry}
+                                                showMascot={settings?.showClassMascots}
+                                            />
                                         </div>
-                                        {source && (
-                                            <SourceBadge
-                                                source={source}
-                                                name={customDictionaries?.[source]?.name}
-                                                customColor={getPackageColor(source)}
-                                            />
-                                        )}
-                                    </div>
-                                    <div className="text-sm font-bold text-slate-700 dark:text-slate-300">
-                                        {isSentenceResult ? (data.translit || '') : (
-                                            <ColorizedCherokeeWord
-                                                word={data.Entry || data.translit}
-                                                entry={data}
-                                            />
-                                        )}
-                                    </div>
+                                    ) : (
+                                        <>
+                                            <div className="flex items-center gap-2 mb-0.5">
+                                                <div className="font-serif font-bold text-slate-900 dark:text-slate-100 group-hover:text-amber-700 transition-colors leading-tight">
+                                                    {isSentenceResult ? (data.syllabary || '') : (data.Syllabary || data.syllabary)}
+                                                </div>
+                                                {source && (
+                                                    <SourceBadge
+                                                        source={source}
+                                                        name={customDictionaries?.[source]?.name}
+                                                        customColor={getPackageColor(source)}
+                                                    />
+                                                )}
+                                            </div>
+                                            <div className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                                                {isSentenceResult ? (data.translit || '') : (
+                                                    <ColorizedCherokeeWord
+                                                        word={data.Entry || data.translit}
+                                                        entry={data}
+                                                        settings={settings}
+                                                    />
+                                                )}
+                                            </div>
+                                        </>
+                                    )}
                                     <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
                                         {isSentenceResult ? (data.english || '') : (data.Definition || data.definition)}
                                     </div>
@@ -270,7 +287,8 @@ const ListsTab: React.FC<ListsTabProps> = ({
     settings
 }) => {
     const { getPackageColor, packages, importedData } = usePackageManager();
-    const { userAudioMeta, personalWords, glosses } = useCorpus();
+    const { userAudioMeta, personalWords, glosses, rootMap } = useCorpus();
+    const isLinguist = settings?.dictionaryLevel === 'linguist';
 
     const effectiveUserAudioMeta = propUserAudioMeta || userAudioMeta;
 
@@ -1302,6 +1320,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                     onToggleItem={handleToggleItem}
                     onPerformSearch={onPerformSearch}
                     customDictionaries={propCustomDictionaries}
+                    settings={settings}
                 />
 
                 {addExistingModalFolder && (() => {
@@ -1483,6 +1502,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                     {displayedItems.map(({ type, data }) => {
                                         if (type === 'word') {
                                             const word = data;
+                                            const rootEntry = word ? (rootMap?.get(word.Index) || rootMap?.get(word.id) || rootMap?.get(word.merged_id)) : null;
                                             const userAudio = (effectiveUserAudioMeta?.[word.Index] || [])
                                                 .filter((audio: any) => {
                                                     if (!audio.packageId) {
@@ -1496,14 +1516,25 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                             return (
                                                 <tr key={word.Index} onClick={() => onEntryClick(word)} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors active:bg-amber-50 dark:active:bg-amber-900/20">
                                                     <td className="p-3 align-middle">
-                                                        <div className="font-noto-cherokee text-lg text-slate-800 dark:text-slate-100 leading-tight">{word?.Syllabary || ''}</div>
-                                                        <div className="font-noto-serif text-sm text-slate-700 dark:text-slate-300 font-bold">
-                                                            <ColorizedCherokeeWord
-                                                                word={word?.Entry || word?.translit}
-                                                                entry={word}
-                                                                settings={settings}
-                                                            />
-                                                        </div>
+                                                        {isLinguist && rootEntry ? (
+                                                            <div className="py-1">
+                                                                <VerbMorphologyTemplate
+                                                                    rootEntry={rootEntry}
+                                                                    showMascot={settings?.showClassMascots}
+                                                                />
+                                                            </div>
+                                                        ) : (
+                                                            <>
+                                                                <div className="font-noto-cherokee text-lg text-slate-800 dark:text-slate-100 leading-tight">{word?.Syllabary || ''}</div>
+                                                                <div className="font-noto-serif text-sm text-slate-700 dark:text-slate-300 font-bold">
+                                                                    <ColorizedCherokeeWord
+                                                                        word={word?.Entry || word?.translit}
+                                                                        entry={word}
+                                                                        settings={settings}
+                                                                    />
+                                                                </div>
+                                                            </>
+                                                        )}
                                                         <div className="md:hidden mt-2 font-noto-serif text-slate-600 dark:text-slate-300 text-sm line-clamp-2">
                                                             {word?.Definition || ''}
                                                         </div>

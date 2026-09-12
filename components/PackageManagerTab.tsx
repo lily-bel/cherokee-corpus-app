@@ -14,9 +14,10 @@ interface PackageManagerTabProps {
     onReadInContext?: (sentenceId: string) => void;
     onShowSettings: () => void;
     onShowAuth?: () => void;
+    settings?: any;
 }
 
-const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists, onNavigate, onReadInContext, onShowSettings, onShowAuth }) => {
+const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists, onNavigate, onReadInContext, onShowSettings, onShowAuth, settings }) => {
     const { packages, togglePackage, removePackage } = usePackageManager();
     const { removePackageAudio, userAudioMeta, glosses } = useCorpus();
 
@@ -41,6 +42,7 @@ const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists, onNa
                 onNavigate={onNavigate}
                 onReadInContext={onReadInContext}
                 onShowSettings={onShowSettings}
+                settings={settings}
             />
         );
     }

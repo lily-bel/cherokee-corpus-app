@@ -33,9 +33,11 @@ interface SentenceCardProps {
     // Reader Props
     onReadInContext?: (sentenceId: string) => void;
     onCollapse?: () => void;
+    settings?: any;
 }
 
-export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, isDimmed, customDictionaries, userNotes, onEditNote, onEditSentence, sourceMap, onSaveAudio, userAudioMeta, personalWords, onDeleteSentence, onDeleteAudio, onCreateWord, favorites, customLists, onToggleFavorite, onToggleList, onOpenNewListModal, onReadInContext, onCollapse }) => {
+export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, isDimmed, customDictionaries, userNotes, onEditNote, onEditSentence, sourceMap, onSaveAudio, userAudioMeta, personalWords, onDeleteSentence, onDeleteAudio, onCreateWord, favorites, customLists, onToggleFavorite, onToggleList, onOpenNewListModal, onReadInContext, onCollapse, settings }) => {
+    const hideCustomization = !!settings?.hideCustomization;
     const { dictionary, glossMap, dictionaryMap, addUserGloss, removeUserGloss, removeUserSentence } = useCorpus();
     const { packages, getPackageColor, importedData } = usePackageManager(); // Add this line
     const [activePopover, setActivePopover] = useState<{ index: number, rect: { x: number, y: number } } | null>(null);
@@ -182,6 +184,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
             const rect = (event.target as HTMLElement).getBoundingClientRect();
             setActivePopover({ index, rect: { x: rect.left, y: rect.bottom } });
         } else {
+            if (hideCustomization) return;
             // Open Linker
             const token = tokens[index];
             const tr = (token.tr || '').replace(/[.,!?;:"()]/g, '').trim();
@@ -333,7 +336,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                     )}
 
                     {/* Edit Note Button */}
-                    {onEditNote && (
+                    {onEditNote && !hideCustomization && (
                         <button onClick={(e) => { e.stopPropagation(); onEditNote(sentence.id, userNotes?.[`s_${sentence.id}`] || ''); }} className="text-slate-300 hover:text-amber-600 p-1 rounded-full hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors">
                             <Pencil size={14} />
                         </button>
@@ -359,7 +362,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
             </div>
 
             {/* Edit/Delete for user sentences - hover reveal */}
-            {(sentence.source === 'user' || sentence.source.startsWith('nb_')) && (
+            {(sentence.source === 'user' || sentence.source.startsWith('nb_')) && !hideCustomization && (
                 <div className="absolute top-2 right-2 flex gap-1 z-10 opacity-0 group-hover/card:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
                     {onEditSentence && (
                         <button onClick={(e) => { e.stopPropagation(); onEditSentence(sentence.id); }} className="text-slate-400 hover:text-amber-600 p-1 rounded-full hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors bg-white/80 dark:bg-slate-900/80 shadow-sm">
@@ -418,7 +421,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
             </div>
 
             {/* Gloss Select Mode Bar - only shows when active */}
-            {selectMode && (
+            {!hideCustomization && selectMode && (
                 <div className="flex items-center gap-2 mb-2" onClick={e => e.stopPropagation()}>
                     <button
                         onClick={() => { setSelectMode(false); setSelectedIndices([]); }}
@@ -511,7 +514,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                                         {isPlaying ? <Pause size={12} className="fill-current" /> : <Mic size={12} />}
                                         <span>{isPlaying ? 'Playing...' : speakerName}</span>
                                     </button>
-                                    {!isOfficial && onDeleteAudio && (
+                                    {!isOfficial && onDeleteAudio && !hideCustomization && (
                                         <button onClick={(e) => { e.stopPropagation(); if (window.confirm("Delete audio?")) onDeleteAudio(sentence.id + '_sentence', audio.id); }} className="ml-1 pl-2 border-l border-white/20 hover:text-red-200 transition-colors flex items-center">
                                             <Trash2 size={14} />
                                         </button>
@@ -521,7 +524,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                         })}
                         
                     {/* Record Audio Button - inline with audio */}
-                    {onSaveAudio && (
+                    {onSaveAudio && !hideCustomization && (
                         <button
                             onClick={() => setShowRecorder(true)}
                             className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors shrink-0"
@@ -543,14 +546,22 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                         </div>
                     ))}
 
-                    {userNotes?.[`s_${sentence.id}`] && onEditNote && (
-                        <div
-                            onClick={() => onEditNote(sentence.id, userNotes[`s_${sentence.id}`] || '')}
-                            className="text-xs text-slate-600 dark:text-slate-300 hover:text-amber-600 cursor-pointer flex items-center gap-1 group relative border-l-2 pl-2 border-l-amber-500"
-                        >
-                            <span>{userNotes[`s_${sentence.id}`]}</span>
-                            <Pencil size={10} className="absolute -right-1 top-0 opacity-0 group-hover:opacity-100 transition-opacity text-amber-600" />
-                        </div>
+                    {userNotes?.[`s_${sentence.id}`] && (
+                        hideCustomization ? (
+                            <div className="text-xs text-slate-600 dark:text-slate-300 border-l-2 pl-2 border-l-amber-500">
+                                <span>{userNotes[`s_${sentence.id}`]}</span>
+                            </div>
+                        ) : (
+                            onEditNote && (
+                                <div
+                                    onClick={() => onEditNote(sentence.id, userNotes[`s_${sentence.id}`] || '')}
+                                    className="text-xs text-slate-600 dark:text-slate-300 hover:text-amber-600 cursor-pointer flex items-center gap-1 group relative border-l-2 pl-2 border-l-amber-500"
+                                >
+                                    <span>{userNotes[`s_${sentence.id}`]}</span>
+                                    <Pencil size={10} className="absolute -right-1 top-0 opacity-0 group-hover:opacity-100 transition-opacity text-amber-600" />
+                                </div>
+                            )
+                        )
                     )}
                 </div>
             )}
@@ -622,6 +633,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                         }
                     }}
                     personalWords={personalWords}
+                    hideCustomization={hideCustomization}
                 />
             )}
 

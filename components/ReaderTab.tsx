@@ -11,6 +11,7 @@ interface ReaderTabProps {
     onNavigateToReader: (bookId: string, chapterId: string, scrollToSentenceId?: string) => void;
     onOpenImporter: (dictionaryId?: string, initialStoryName?: string, initialMode?: 'new' | 'append') => void;
     onShowSettings?: () => void;
+    settings?: any;
 }
 
 type ViewState = 'books' | 'stories' | 'chapters' | 'queue';
@@ -19,8 +20,10 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
     customDictionaries,
     onNavigateToReader,
     onOpenImporter,
-    onShowSettings
+    onShowSettings,
+    settings
 }) => {
+    const hideCustomization = !!settings?.hideCustomization;
     const { books, getStoriesForBook, getChaptersForStory, investigationQueue, findBookAndChapterForSentence } = useReader();
     const { getPackageColor } = usePackageManager();
     const { setCustomDictionaries, deleteUserBook, deleteUserChapter, reorderUserChapters } = useCorpus();
@@ -293,7 +296,7 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                         </div>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                        {canEdit && (
+                        {canEdit && !hideCustomization && (
                             <button
                                 onClick={() => onOpenImporter(selectedBook?.source, selectedStory.title, 'append')}
                                 className="bg-slate-900 dark:bg-slate-700 text-white p-1.5 rounded-full shadow-sm hover:bg-slate-800 transition-colors"
@@ -330,7 +333,7 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                                 </div>
 
                                 <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
-                                    {canEdit && (
+                                    {canEdit && !hideCustomization && (
                                         <>
                                             {chapters.length > 1 && (
                                                 <div className="flex items-center">
@@ -367,7 +370,7 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                         ))}
 
                         {/* Outlined Add New Chapter Card */}
-                        {canEdit && (
+                        {canEdit && !hideCustomization && (
                             <button
                                 onClick={() => onOpenImporter(selectedBook?.source, selectedStory.title, 'append')}
                                 className="w-full bg-slate-50/50 dark:bg-slate-900/30 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-4 text-left hover:border-amber-400 dark:hover:border-amber-600 hover:bg-white dark:hover:bg-slate-900 transition-all flex items-center justify-between group"
@@ -420,13 +423,15 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                     Reader
                 </h1>
                 <div className="flex gap-1.5 items-center">
-                    <button
-                        onClick={() => setShowNewBookModal(true)}
-                        className="bg-slate-900 dark:bg-slate-700 text-white p-1.5 rounded-full shadow-sm hover:bg-slate-800 transition-colors"
-                        title="New Book / Story"
-                    >
-                        <Plus size={18} />
-                    </button>
+                    {!hideCustomization && (
+                        <button
+                            onClick={() => setShowNewBookModal(true)}
+                            className="bg-slate-900 dark:bg-slate-700 text-white p-1.5 rounded-full shadow-sm hover:bg-slate-800 transition-colors"
+                            title="New Book / Story"
+                        >
+                            <Plus size={18} />
+                        </button>
+                    )}
                     <UserAuthButton />
                     {onShowSettings && (
                         <button onClick={onShowSettings} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" title="Settings">
@@ -487,7 +492,7 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                                             title={book.title}
                                             color={getSourceColor(book.source)}
                                             onClick={() => handleBookClick(book)}
-                                            onDelete={isBookEditable(book) ? () => handleDeleteBook(book) : undefined}
+                                            onDelete={!hideCustomization && isBookEditable(book) ? () => handleDeleteBook(book) : undefined}
                                         />
                                     ))}
                                 </div>
@@ -495,15 +500,17 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                         )}
 
                         {/* Create New Book Button */}
-                        <div className="pt-2">
-                            <button
-                                onClick={() => setShowNewBookModal(true)}
-                                className="w-full py-3 border-2 border-dashed border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-bold rounded-xl hover:border-amber-400 hover:text-amber-600 dark:hover:border-amber-700 dark:hover:text-amber-500 transition-colors flex items-center justify-center gap-2"
-                            >
-                                <Plus size={20} />
-                                <span>Create New Book</span>
-                            </button>
-                        </div>
+                        {!hideCustomization && (
+                            <div className="pt-2">
+                                <button
+                                    onClick={() => setShowNewBookModal(true)}
+                                    className="w-full py-3 border-2 border-dashed border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-bold rounded-xl hover:border-amber-400 hover:text-amber-600 dark:hover:border-amber-700 dark:hover:text-amber-500 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <Plus size={20} />
+                                    <span>Create New Book</span>
+                                </button>
+                            </div>
+                        )}
 
                         {/* Sentence Collections */}
                         {groupedBooks.collections.length > 0 && (
@@ -519,7 +526,7 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                                             title={book.title}
                                             color={getSourceColor(book.source)}
                                             onClick={() => handleBookClick(book)}
-                                            onDelete={isBookEditable(book) ? () => handleDeleteBook(book) : undefined}
+                                            onDelete={!hideCustomization && isBookEditable(book) ? () => handleDeleteBook(book) : undefined}
                                         />
                                     ))}
                                 </div>

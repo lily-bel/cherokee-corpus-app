@@ -22,9 +22,10 @@ interface GlossPopoverProps {
     personalWords?: any[];
     customDictionaries?: any;
     sourceMap?: Record<string, string>;
+    hideCustomization?: boolean;
 }
 
-export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord, dictionaryMap, position, onClose, onEntryClick, onEdit, onDelete, onAdd, onAddToQueue, personalWords, customDictionaries, sourceMap }) => {
+export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord, dictionaryMap, position, onClose, onEntryClick, onEdit, onDelete, onAdd, onAddToQueue, personalWords, customDictionaries, sourceMap, hideCustomization }) => {
     const { getPackageColor, packages, importedData } = usePackageManager();
     const { userWordForms, rootMap } = useCorpus();
 
@@ -127,14 +128,14 @@ export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord,
                         <div
                             key={i}
                             className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors relative group"
-                            onTouchStart={() => isUser && handleTouchStart(gloss.entry_id)}
+                            onTouchStart={() => isUser && !hideCustomization && handleTouchStart(gloss.entry_id)}
                             onTouchEnd={handleTouchEnd}
-                            onMouseDown={() => isUser && handleTouchStart(gloss.entry_id)}
+                            onMouseDown={() => isUser && !hideCustomization && handleTouchStart(gloss.entry_id)}
                             onMouseUp={handleTouchEnd}
                             onMouseLeave={handleTouchEnd}
                         >
                             {/* Actions Overlay (Long Press) */}
-                            {showActionsFor === gloss.entry_id && (
+                            {!hideCustomization && showActionsFor === gloss.entry_id && (
                                 <div className="absolute inset-0 bg-white/95 dark:bg-slate-900/95 z-10 flex items-center justify-center gap-4 animate-in fade-in">
                                     <button onClick={() => { onEdit?.(gloss); setShowActionsFor(null); }} className="flex flex-col items-center gap-1 text-amber-600 hover:scale-110 transition-transform">
                                         <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-full"><Pencil size={20} /></div>
@@ -151,7 +152,7 @@ export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord,
                             <div className="flex justify-between items-start mb-2">
                                 <SourceBadge source={gloss.source} name={sourceName} customColor={pkgColor} />
                                 <div className="flex items-center gap-3">
-                                    {isUser && onEdit && (
+                                    {isUser && !hideCustomization && onEdit && (
                                         <button onClick={() => onEdit(gloss)} className="text-slate-400 hover:text-amber-600 transition-colors">
                                             <Pencil size={14} />
                                         </button>
@@ -332,7 +333,7 @@ export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord,
                 })}
             </div>
             {/* Add New Button */}
-            {(onAdd || onAddToQueue) && (
+            {!hideCustomization && (onAdd || onAddToQueue) && (
                 <div className="p-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/30 flex flex-col gap-2">
                     {onAdd && (
                         <button

@@ -99,6 +99,7 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
     if (!isOpen || !entry) return null;
 
     const { glosses, sentenceMap, rootMap } = useCorpus();
+    const hideCustomization = !!settings?.hideCustomization;
     const isColored = getColorWordSegmentsSetting(settings);
     const effectiveRootEntry = rootEntry || (entry ? rootMap?.get(entry.Index || entry.id || entry.merged_id) : undefined);
     const entryGlosses = glosses.filter((g: any) => g.entry_id === entry.Index && (g.gloss_syllabary || g.gloss_phonetic));
@@ -335,13 +336,15 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
                                                         />
                                                     );
                                                 })}
-                                                <button
-                                                    onClick={() => onRecordAudio(`form_${form.index}`)}
-                                                    className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 flex items-center justify-center transition-colors shrink-0"
-                                                    title="Record Audio"
-                                                >
-                                                    <Mic size={14} />
-                                                </button>
+                                                {!hideCustomization && (
+                                                    <button
+                                                        onClick={() => onRecordAudio(`form_${form.index}`)}
+                                                        className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 flex items-center justify-center transition-colors shrink-0"
+                                                        title="Record Audio"
+                                                    >
+                                                        <Mic size={14} />
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
@@ -460,17 +463,19 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
                             )}
 
                             {/* Add Form Row */}
-                            <tr
-                                onClick={() => onManageForms(entry)}
-                                className="hover:bg-amber-50 dark:hover:bg-amber-900/10 cursor-pointer transition-colors"
-                            >
-                                <td colSpan={3} className="p-4 text-center border-l-4 border-transparent group-hover:border-l-amber-300">
-                                    <div className="flex items-center justify-center gap-2 text-slate-500 dark:text-slate-400 group-hover:text-amber-600 font-bold text-sm uppercase tracking-wide">
-                                        <Plus size={18} />
-                                        <span>Add / Manage Word Forms</span>
-                                    </div>
-                                </td>
-                            </tr>
+                            {!hideCustomization && (
+                                <tr
+                                    onClick={() => onManageForms(entry)}
+                                    className="hover:bg-amber-50 dark:hover:bg-amber-900/10 cursor-pointer transition-colors"
+                                >
+                                    <td colSpan={3} className="p-4 text-center border-l-4 border-transparent group-hover:border-l-amber-300">
+                                        <div className="flex items-center justify-center gap-2 text-slate-500 dark:text-slate-400 group-hover:text-amber-600 font-bold text-sm uppercase tracking-wide">
+                                            <Plus size={18} />
+                                            <span>Add / Manage Word Forms</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>

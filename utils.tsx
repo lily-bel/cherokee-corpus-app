@@ -470,10 +470,11 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
   const normQuery = cleanStr(query);
 
   // --- DICTIONARY MODE LOOP: O(N) where N is number of base entries. ---
-  const sortedResults = allData.map(entry => {
+  const mappedResults = allData.map(entry => {
     let score = 0;
     let matchedForm: { syllabary?: string; translit?: string; label?: string } | null = null;
     let mainMatchScore = 0;
+    let cherokeeMainScore = 0;
     let otherFormMatchScore = 0;
     const isPersonal = customDictionaries && customDictionaries[entry.Source];
 
@@ -545,6 +546,20 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
           }
         }
       }
+      if (activeLangs.tone) {
+        if (entry.Entry_Tone) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.Entry_Tone));
+        if (entry.tone) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.tone));
+        if (entry.sources) {
+          for (const s of Object.values(entry.sources as Record<string, any>)) {
+            if (s['Tone and length 1']) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s['Tone and length 1']));
+            if (s['Tone and length 2']) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s['Tone and length 2']));
+            if (s.Entry_Tone) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.Entry_Tone));
+            if (s.Tone) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.Tone));
+          }
+        }
+      }
+      cherokeeMainScore = mainMatchScore;
+
       if (activeLangs.english) {
         if (entry.Definition) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.Definition));
         if (entry.definition) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.definition));
@@ -556,18 +571,6 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
             if (s.English) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.English));
             if (s['English gloss 1']) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s['English gloss 1']));
             if (s['English gloss 2']) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s['English gloss 2']));
-          }
-        }
-      }
-      if (activeLangs.tone) {
-        if (entry.Entry_Tone) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.Entry_Tone));
-        if (entry.tone) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.tone));
-        if (entry.sources) {
-          for (const s of Object.values(entry.sources as Record<string, any>)) {
-            if (s['Tone and length 1']) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s['Tone and length 1']));
-            if (s['Tone and length 2']) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s['Tone and length 2']));
-            if (s.Entry_Tone) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.Entry_Tone));
-            if (s.Tone) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.Tone));
           }
         }
       }
@@ -644,22 +647,30 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
     }
 
     let rootScore = 0;
-    if (activeScopes.roots) {
-      const id = entry.id || entry.Index || entry.merged_id;
-      const rootEntry = rootMap.get(id);
-      if (rootEntry) {
-        if (activeLangs.translit) {
-          if (isEmptyRoot(rootEntry)) {
-            rootScore = Math.max(rootScore, testMatchScore('∅'));
-          }
-          if (rootEntry.root_h) rootScore = Math.max(rootScore, testMatchScore(rootEntry.root_h));
-          if (rootEntry.root_g) rootScore = Math.max(rootScore, testMatchScore(rootEntry.root_g));
-          if (rootEntry.root_slug) rootScore = Math.max(rootScore, testMatchScore(rootEntry.root_slug));
-          if (rootEntry.slug && rootEntry.slug !== rootEntry.root_slug) rootScore = Math.max(rootScore, testMatchScore(rootEntry.slug));
+    let matchedRootKey: string | null = null;
+    const id = entry.id || entry.Index || (entry as any).merged_id;
+    const rootEntry = (entry.id != null ? rootMap.get(entry.id) : null) ||
+                      (entry.Index != null ? rootMap.get(entry.Index) : null) ||
+                      ((entry as any).merged_id != null ? rootMap.get((entry as any).merged_id) : null) ||
+                      ((entry as any).sources?.['lily-dict.csv']?.Index != null ? rootMap.get((entry as any).sources['lily-dict.csv'].Index) : null) ||
+                      (id != null ? rootMap.get(id) : null);
+
+    if (activeScopes.roots && rootEntry) {
+      if (activeLangs.translit) {
+        if (isEmptyRoot(rootEntry)) {
+          rootScore = Math.max(rootScore, testMatchScore('∅'));
         }
-        if (activeLangs.english && rootEntry.definition) {
-          rootScore = Math.max(rootScore, testMatchScore(rootEntry.definition));
-        }
+        if (rootEntry.root_h) rootScore = Math.max(rootScore, testMatchScore(rootEntry.root_h));
+        if (rootEntry.root_g) rootScore = Math.max(rootScore, testMatchScore(rootEntry.root_g));
+        if (rootEntry.root_slug) rootScore = Math.max(rootScore, testMatchScore(rootEntry.root_slug));
+        if (rootEntry.slug && rootEntry.slug !== rootEntry.root_slug) rootScore = Math.max(rootScore, testMatchScore(rootEntry.slug));
+      }
+      if (activeLangs.english && rootEntry.definition) {
+        rootScore = Math.max(rootScore, testMatchScore(rootEntry.definition));
+      }
+      if (rootScore > 0) {
+        // Homonym roots with same spelling but different slug will have distinct matchedRootKey
+        matchedRootKey = rootEntry.slug || rootEntry.root_slug || String(rootEntry.entry_id || rootEntry.id || id || '');
       }
     }
 
@@ -682,24 +693,61 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
       score = Math.max(mainMatchScore, otherFormMatchScore, notesScore, rootScore);
     }
 
+    if (rootScore > 0) {
+      // Prioritize matching roots so they come first
+      score = Math.max(score, rootScore + 300);
+    }
+
+    const isLinguist = settings?.dictionaryLevel === 'linguist';
     let activeMatchedForm: { syllabary?: string; translit?: string; label?: string } | null = null;
-    if (!baseFormHasPriority && otherFormMatchScore > 0) {
-      const mf: any = matchedForm;
-      if (mf) {
-        const matchedT = mf.translit;
-        const matchedS = mf.syllabary;
-        const isIdenticalToMain = 
-          (matchedT && (
-            (entry.Entry && cleanStr(matchedT) === cleanStr(entry.Entry)) ||
-            (entry.surface_spelling && cleanStr(matchedT) === cleanStr(entry.surface_spelling)) ||
-            (entry.translit && cleanStr(matchedT) === cleanStr(entry.translit))
-          )) ||
-          (matchedS && (
-            (entry.Syllabary && cleanStr(matchedS) === cleanStr(entry.Syllabary)) ||
-            (entry.syllabary && cleanStr(matchedS) === cleanStr(entry.syllabary))
-          ));
-        if (!isIdenticalToMain) {
-          activeMatchedForm = mf;
+
+    if (rootScore > 0) {
+      // If root is matched, do not show a matched form
+      activeMatchedForm = null;
+    } else if (isLinguist) {
+      // In Linguist mode:
+      // 1. If an other/inflected Cherokee form matched:
+      if (otherFormMatchScore > 0 && otherFormMatchScore >= cherokeeMainScore) {
+        activeMatchedForm = matchedForm;
+      }
+      // 2. Else if the main Cherokee form matched (e.g. user searched base form):
+      else if (cherokeeMainScore > 0) {
+        const isRootByItself = rootScore >= cherokeeMainScore && rootScore > 0 && rootEntry && (
+          (rootEntry.root_h && cleanStr(rootEntry.root_h) === normQuery) ||
+          (rootEntry.root_g && cleanStr(rootEntry.root_g) === normQuery) ||
+          (rootEntry.root_slug && cleanStr(rootEntry.root_slug) === normQuery) ||
+          (rootEntry.slug && cleanStr(rootEntry.slug) === normQuery) ||
+          (rootScore >= 120 && normQuery.length <= 6)
+        );
+
+        if (!isRootByItself) {
+          activeMatchedForm = {
+            syllabary: entry.Syllabary || entry.syllabary,
+            translit: entry.Entry || entry.translit || entry.surface_spelling,
+            label: 'present'
+          };
+        }
+      }
+      // 3. If only English matched or query matched root by itself: activeMatchedForm remains null
+    } else {
+      if (!baseFormHasPriority && otherFormMatchScore > 0) {
+        const mf: any = matchedForm;
+        if (mf) {
+          const matchedT = mf.translit;
+          const matchedS = mf.syllabary;
+          const isIdenticalToMain = 
+            (matchedT && (
+              (entry.Entry && cleanStr(matchedT) === cleanStr(entry.Entry)) ||
+              (entry.surface_spelling && cleanStr(matchedT) === cleanStr(entry.surface_spelling)) ||
+              (entry.translit && cleanStr(matchedT) === cleanStr(entry.translit))
+            )) ||
+            (matchedS && (
+              (entry.Syllabary && cleanStr(matchedS) === cleanStr(entry.Syllabary)) ||
+              (entry.syllabary && cleanStr(matchedS) === cleanStr(entry.syllabary))
+            ));
+          if (!isIdenticalToMain) {
+            activeMatchedForm = mf;
+          }
         }
       }
     }
@@ -729,10 +777,50 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
       const primaryLength = entry.Entry?.length || entry.Syllabary?.length || 0;
       score -= primaryLength * 0.001;
     }
-    return { ...entry, score, matchedForm: activeMatchedForm };
-  })
+    return { ...entry, score, matchedForm: activeMatchedForm, matchedRootKey };
+  });
+
+  // Calculate highest score in each matched root group for grouping
+  const rootGroupBestScores = new Map<string, number>();
+  for (const item of mappedResults) {
+    if (item.matchedRootKey && item.score > 0) {
+      const prevBest = rootGroupBestScores.get(item.matchedRootKey) || 0;
+      if (item.score > prevBest) {
+        rootGroupBestScores.set(item.matchedRootKey, item.score);
+      }
+    }
+  }
+
+  const sortedResults = mappedResults
     .filter(item => item.score > 0)
     .sort((a, b) => {
+      // 1. Group entries sharing the same matched root next to each other
+      if (a.matchedRootKey && b.matchedRootKey && a.matchedRootKey === b.matchedRootKey) {
+        const scoreDiff = b.score - a.score;
+        if (Math.abs(scoreDiff) > 0.05) {
+          return scoreDiff;
+        }
+        const lenA = a.Entry?.length || a.Syllabary?.length || 999;
+        const lenB = b.Entry?.length || b.Syllabary?.length || 999;
+        return lenA - lenB;
+      }
+
+      // 2. Rank root groups by group best score vs other items
+      const scoreA = a.matchedRootKey ? (rootGroupBestScores.get(a.matchedRootKey) ?? a.score) : a.score;
+      const scoreB = b.matchedRootKey ? (rootGroupBestScores.get(b.matchedRootKey) ?? b.score) : b.score;
+
+      const groupScoreDiff = scoreB - scoreA;
+      if (Math.abs(groupScoreDiff) > 0.05) {
+        return groupScoreDiff;
+      }
+
+      // If group scores are identical, separate by distinct root keys or prioritize root matches
+      if (a.matchedRootKey && b.matchedRootKey) {
+        return a.matchedRootKey.localeCompare(b.matchedRootKey);
+      }
+      if (a.matchedRootKey && !b.matchedRootKey) return -1;
+      if (!a.matchedRootKey && b.matchedRootKey) return 1;
+
       const scoreDiff = b.score - a.score;
       if (Math.abs(scoreDiff) > 0.05) {
         return scoreDiff;
@@ -2093,8 +2181,8 @@ export function isEmptyRoot(rootEntry?: any): boolean {
 
 export interface VerbMorphologyTemplateProps {
   rootEntry: any;
-  onViewRoot: (slug: string) => void;
-  onViewClass: (className: string) => void;
+  onViewRoot?: (slug: string) => void;
+  onViewClass?: (className: string) => void;
   showMascot?: boolean;
   className?: string;
 }
@@ -2198,8 +2286,13 @@ export const VerbMorphologyTemplate: React.FC<VerbMorphologyTemplateProps> = ({
       <button
         key="root"
         type="button"
-        onClick={() => onViewRoot(rootEntry.slug || rootEntry.root_slug)}
-        className="font-bold text-slate-900 dark:text-slate-100 hover:text-amber-600 dark:hover:text-amber-400 transition-colors inline-flex flex-col items-center align-middle leading-tight"
+        onClick={(e) => {
+          if (onViewRoot) {
+            e.stopPropagation();
+            onViewRoot(rootEntry.slug || rootEntry.root_slug);
+          }
+        }}
+        className={`font-bold text-slate-900 dark:text-slate-100 hover:text-amber-600 dark:hover:text-amber-400 transition-colors inline-flex flex-col items-center align-middle leading-tight ${onViewRoot ? 'cursor-pointer' : ''}`}
         title="View Root"
       >
         {rootLines.map((line, rIdx) => (
@@ -2214,8 +2307,13 @@ export const VerbMorphologyTemplate: React.FC<VerbMorphologyTemplateProps> = ({
       <button
         key="root"
         type="button"
-        onClick={() => onViewRoot(rootEntry.slug || rootEntry.root_slug)}
-        className="font-bold text-slate-900 dark:text-slate-100 hover:text-amber-600 dark:hover:text-amber-400 transition-colors underline decoration-dotted underline-offset-4"
+        onClick={(e) => {
+          if (onViewRoot) {
+            e.stopPropagation();
+            onViewRoot(rootEntry.slug || rootEntry.root_slug);
+          }
+        }}
+        className={`font-bold text-slate-900 dark:text-slate-100 hover:text-amber-600 dark:hover:text-amber-400 transition-colors underline decoration-dotted underline-offset-4 ${onViewRoot ? 'cursor-pointer' : ''}`}
         title="View Root"
       >
         {rootLines[0]}
@@ -2256,8 +2354,13 @@ export const VerbMorphologyTemplate: React.FC<VerbMorphologyTemplateProps> = ({
       <div key="class" className="inline-flex flex-col items-center align-middle leading-tight">
         <button
           type="button"
-          onClick={() => onViewClass(rootEntry.class_name)}
-          className="font-normal text-emerald-500 dark:text-emerald-300 hover:text-emerald-400 dark:hover:text-emerald-200 transition-colors leading-none underline decoration-dotted underline-offset-4"
+          onClick={(e) => {
+            if (onViewClass) {
+              e.stopPropagation();
+              onViewClass(rootEntry.class_name);
+            }
+          }}
+          className={`font-normal text-emerald-500 dark:text-emerald-300 hover:text-emerald-400 dark:hover:text-emerald-200 transition-colors leading-none underline decoration-dotted underline-offset-4 ${onViewClass ? 'cursor-pointer' : ''}`}
           title="View Class"
         >
           [{rootEntry.class_name}]

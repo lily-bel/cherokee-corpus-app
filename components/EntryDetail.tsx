@@ -133,6 +133,10 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
     const linkedSentences = linkedSentenceIds.map(id => sentenceMap.get(id)).filter(Boolean);
 
 
+    const isLinguist = settings?.dictionaryLevel === 'linguist';
+    const isBasic = settings?.dictionaryLevel === 'basic';
+    const hideCustomization = !!settings?.hideCustomization;
+
     // HANDLE SENTENCE VIEW (If entry is a sentence object)
     if (e.english && !e.Definition) {
         return (
@@ -146,6 +150,7 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                         onReadInContext={onReadInContext}
                         onEditSentence={onEditSentence}
                         onDeleteSentence={onDeleteSentence}
+                        settings={settings}
                     />
                     <div className="mt-12 text-xs text-slate-300 font-mono text-center">Ref ID: {e.id}</div>
                 </div>
@@ -351,106 +356,121 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
             {/* Scrollable Container */}
             <div ref={containerRef} className="flex-1 overflow-y-auto p-5 pb-24">
                 <div className="mb-6">
-                    <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-3 mb-1">
-                                <h1 className="font-noto-cherokee text-4xl font-bold text-slate-900 dark:text-slate-100 leading-tight truncate">{e.Syllabary}</h1>
-                                {canEdit && (
-                                    <button onClick={() => onEdit(e)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-300 hover:text-amber-600 transition-colors">
-                                        <Pencil size={20} />
-                                    </button>
-                                )}
-                            </div>
-                            <div className="flex items-baseline gap-3 flex-wrap">
-                                <h2 className="font-noto-serif text-2xl text-amber-800 dark:text-amber-400 font-bold">
-                                    {rootEntry?.surface_segments?.present
-                                        ? renderSegmentedSurface(rootEntry.surface_segments.present, settings?.colorWordSegments !== false)
-                                        : (rootEntry && mainPresGroups
-                                            ? renderColorizedCherokee(e.Entry, mainPresGroups, mainPronounSet, settings?.colorWordSegments !== false)
-                                            : e.Entry)}
-                                </h2>
-                                {e.Entry_Tone && (
-                                    <span className="font-serif text-base text-slate-500 dark:text-slate-400 font-bold italic">
+                    {isLinguist && rootEntry ? (
+                        <div className="pt-2 pb-2">
+                            <VerbMorphologyTemplate
+                                rootEntry={rootEntry}
+                                onViewRoot={onViewRoot}
+                                onViewClass={onViewClass}
+                                showMascot={showMascots}
+                            />
+                        </div>
+                    ) : (
+                        <div className="flex items-start justify-between mb-4">
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-3 mb-1">
+                                    <h1 className="font-noto-cherokee text-4xl font-bold text-slate-900 dark:text-slate-100 leading-tight truncate">{e.Syllabary}</h1>
+                                    {canEdit && !hideCustomization && (
+                                        <button onClick={() => onEdit(e)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-300 hover:text-amber-600 transition-colors">
+                                            <Pencil size={20} />
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="flex items-baseline gap-3 flex-wrap">
+                                    <h2 className="font-noto-serif text-2xl text-amber-800 dark:text-amber-400 font-bold">
                                         {rootEntry?.surface_segments?.present
-                                            ? renderSegmentedSurface(
-                                                projectSegmentsOntoTone(rootEntry.surface_segments.present, e.Entry_Tone),
-                                                settings?.colorWordSegments !== false
-                                              )
+                                            ? renderSegmentedSurface(rootEntry.surface_segments.present, settings?.colorWordSegments !== false)
                                             : (rootEntry && mainPresGroups
-                                                ? renderColorizedCherokee(e.Entry_Tone, mainPresGroups, mainPronounSet, settings?.colorWordSegments !== false)
-                                                : e.Entry_Tone)}
-                                    </span>
-                                )}
+                                                ? renderColorizedCherokee(e.Entry, mainPresGroups, mainPronounSet, settings?.colorWordSegments !== false)
+                                                : e.Entry)}
+                                    </h2>
+                                    {e.Entry_Tone && (
+                                        <span className="font-serif text-base text-slate-500 dark:text-slate-400 font-bold italic">
+                                            {rootEntry?.surface_segments?.present
+                                                ? renderSegmentedSurface(
+                                                    projectSegmentsOntoTone(rootEntry.surface_segments.present, e.Entry_Tone),
+                                                    settings?.colorWordSegments !== false
+                                                  )
+                                                : (rootEntry && mainPresGroups
+                                                    ? renderColorizedCherokee(e.Entry_Tone, mainPresGroups, mainPronounSet, settings?.colorWordSegments !== false)
+                                                    : e.Entry_Tone)}
+                                        </span>
+                                    )}
 
+                                </div>
+                            </div>
+                            <div className="shrink-0 pt-1">
+                                <SourceBadge source={e.Source} name={customDictionaries[e.Source]?.name} />
                             </div>
                         </div>
-                        <div className="shrink-0 pt-1">
-                            <SourceBadge source={e.Source} name={customDictionaries[e.Source]?.name} />
-                        </div>
-                    </div>
+                    )}
                 </div>
 
                 <div className="space-y-4">
                     {/* AUDIO ROW */}
-                    <div className="flex items-center gap-2 flex-wrap min-h-[40px]">
-                        {(!userAudioMeta?.[e.Index]?.some(a => !isFormAudioId(a.id)) || (e.audio && (pkg?.type === 'official' || e.audio.startsWith('Word_') || e.audio.match(/^\d{4}\./) || e.audio.endsWith('.m4a')))) && (
-                            <AudioPlayer
-                                src={e.audio && (pkg?.type === 'official' || e.audio.startsWith('Word_') || e.audio.match(/^\d{4}\./) || e.audio.endsWith('.m4a')) ? `https://cherokeenationdictionary.net/Audio/word/${e.audio}` : undefined}
-                                label="Official"
-                                icon={Mic}
-                                variant="gray"
-                                customColor={pkg?.type !== 'official' ? pkg?.color : undefined}
-                            />
-                        )}
-                        {/* USER AUDIO LIST */}
-                        {userAudioMeta && userAudioMeta[e.Index] && userAudioMeta[e.Index]
-                            .filter(audio => {
-                                if (audio.packageId === 'official-cherokee-data' || audio.id.endsWith('.m4a')) return false;
-                                if (isFormAudioId(audio.id)) return false;
-                                if (!audio.packageId) {
-                                    const userPkg = packages.find(p => p.id === 'user');
-                                    return userPkg ? userPkg.status === 'active' : true;
-                                }
-                                const pkg = packages.find(p => p.id === audio.packageId);
-                                return pkg && pkg.status === 'active';
-                            })
-                            .map(audio => {
-                                const audioPkgColor = getPackageColor(audio.packageId || 'user');
-                                const isCustomAudioColor = audioPkgColor && audioPkgColor.startsWith('#');
-                                let className = "flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors shadow-sm group ";
-                                let style = {};
-                                if (audioPkgColor && isCustomAudioColor) {
-                                    if (playingAudioId === audio.id) {
-                                        style = { backgroundColor: audioPkgColor + '20', color: audioPkgColor, borderColor: audioPkgColor };
-                                    } else {
-                                        style = { backgroundColor: audioPkgColor, color: 'white' };
+                    {!(isLinguist && rootEntry) && (
+                        <div className="flex items-center gap-2 flex-wrap min-h-[40px]">
+                            {(!userAudioMeta?.[e.Index]?.some(a => !isFormAudioId(a.id)) || (e.audio && (pkg?.type === 'official' || e.audio.startsWith('Word_') || e.audio.match(/^\d{4}\./) || e.audio.endsWith('.m4a')))) && (
+                                <AudioPlayer
+                                    src={e.audio && (pkg?.type === 'official' || e.audio.startsWith('Word_') || e.audio.match(/^\d{4}\./) || e.audio.endsWith('.m4a')) ? `https://cherokeenationdictionary.net/Audio/word/${e.audio}` : undefined}
+                                    label="Official"
+                                    icon={Mic}
+                                    variant="gray"
+                                    customColor={pkg?.type !== 'official' ? pkg?.color : undefined}
+                                />
+                            )}
+                            {/* USER AUDIO LIST */}
+                            {userAudioMeta && userAudioMeta[e.Index] && userAudioMeta[e.Index]
+                                .filter(audio => {
+                                    if (audio.packageId === 'official-cherokee-data' || audio.id.endsWith('.m4a')) return false;
+                                    if (isFormAudioId(audio.id)) return false;
+                                    if (!audio.packageId) {
+                                        const userPkg = packages.find(p => p.id === 'user');
+                                        return userPkg ? userPkg.status === 'active' : true;
                                     }
-                                } else if (audioPkgColor && audioPkgColor !== 'slate') {
-                                    className += playingAudioId === audio.id ? `bg-${audioPkgColor}-100 dark:bg-${audioPkgColor}-900 text-${audioPkgColor}-800 dark:text-${audioPkgColor}-100` : `bg-${audioPkgColor}-500 text-white hover:bg-${audioPkgColor}-600`;
-                                } else {
-                                    className += playingAudioId === audio.id ? 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100' : 'bg-amber-500 text-white hover:bg-amber-600';
-                                }
-                                return (
-                                    <div key={audio.id} className={className} style={style}>
-                                        <button onClick={() => handlePlayUserAudio(audio)} className="flex items-center gap-2">
-                                            {playingAudioId === audio.id ? <Pause size={12} className="fill-current" /> : <Mic size={12} />}
-                                            <span>{playingAudioId === audio.id ? 'Playing...' : (audio.speaker || 'User')}</span>
-                                        </button>
-                                        {!audio.packageId?.startsWith('official') && (
-                                            <button onClick={(e) => { e.stopPropagation(); handleLongPressAudio(audio.id); }} className="ml-1 pl-2 border-l border-white/20 hover:text-red-200 transition-colors flex items-center">
-                                                <Trash2 size={14} />
+                                    const pkg = packages.find(p => p.id === audio.packageId);
+                                    return pkg && pkg.status === 'active';
+                                })
+                                .map(audio => {
+                                    const audioPkgColor = getPackageColor(audio.packageId || 'user');
+                                    const isCustomAudioColor = audioPkgColor && audioPkgColor.startsWith('#');
+                                    let className = "flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors shadow-sm group ";
+                                    let style = {};
+                                    if (audioPkgColor && isCustomAudioColor) {
+                                        if (playingAudioId === audio.id) {
+                                            style = { backgroundColor: audioPkgColor + '20', color: audioPkgColor, borderColor: audioPkgColor };
+                                        } else {
+                                            style = { backgroundColor: audioPkgColor, color: 'white' };
+                                        }
+                                    } else if (audioPkgColor && audioPkgColor !== 'slate') {
+                                        className += playingAudioId === audio.id ? `bg-${audioPkgColor}-100 dark:bg-${audioPkgColor}-900 text-${audioPkgColor}-800 dark:text-${audioPkgColor}-100` : `bg-${audioPkgColor}-500 text-white hover:bg-${audioPkgColor}-600`;
+                                    } else {
+                                        className += playingAudioId === audio.id ? 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100' : 'bg-amber-500 text-white hover:bg-amber-600';
+                                    }
+                                    return (
+                                        <div key={audio.id} className={className} style={style}>
+                                            <button onClick={() => handlePlayUserAudio(audio)} className="flex items-center gap-2">
+                                                {playingAudioId === audio.id ? <Pause size={12} className="fill-current" /> : <Mic size={12} />}
+                                                <span>{playingAudioId === audio.id ? 'Playing...' : (audio.speaker || 'User')}</span>
                                             </button>
-                                        )}
-                                    </div>
-                                )
-                            })}
-                        <button onClick={() => { setRecorderTarget('entry'); setShowRecorder(true); }} className="p-2 text-slate-300 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-full transition-colors">
-                            <MicPlus size={20} />
-                        </button>
-                    </div>
+                                            {!hideCustomization && !audio.packageId?.startsWith('official') && (
+                                                <button onClick={(e) => { e.stopPropagation(); handleLongPressAudio(audio.id); }} className="ml-1 pl-2 border-l border-white/20 hover:text-red-200 transition-colors flex items-center">
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    )
+                                })}
+                            {!hideCustomization && (
+                                <button onClick={() => { setRecorderTarget('entry'); setShowRecorder(true); }} className="p-2 text-slate-300 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-full transition-colors">
+                                    <MicPlus size={20} />
+                                </button>
+                            )}
+                        </div>
+                    )}
 
                     {/* MORPHOLOGY BREAKDOWN TEMPLATE */}
-                    {rootEntry && (
+                    {rootEntry && !isBasic && !isLinguist && (
                         <div className="pb-2">
                             <VerbMorphologyTemplate
                                 rootEntry={rootEntry}
@@ -569,6 +589,7 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                                             onToggleList={onToggleList}
                                             onOpenNewListModal={onOpenNewListModal}
                                             onReadInContext={onReadInContext}
+                                            settings={settings}
                                         />
                                     </div>
                                 ))}
@@ -584,10 +605,18 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                                     {note.text}
                                 </div>
                             ))}
-                            <div onClick={() => onEdit(e, noteContent, true)} className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800/50 text-slate-600 dark:text-slate-400 whitespace-pre-wrap font-sans text-sm cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative group border-l-4 border-l-amber-500/50">
-                                {noteContent || <span className="text-slate-400 italic">Add a note...</span>}
-                                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white dark:bg-slate-800 p-1 rounded-full shadow-sm border border-slate-200 dark:border-slate-700"><Pencil size={12} className="text-amber-600" /></div>
-                            </div>
+                            {hideCustomization ? (
+                                noteContent ? (
+                                    <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800/50 text-slate-600 dark:text-slate-400 whitespace-pre-wrap font-sans text-sm border-l-4 border-l-amber-500/50">
+                                        {noteContent}
+                                    </div>
+                                ) : null
+                            ) : (
+                                <div onClick={() => onEdit(e, noteContent, true)} className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800/50 text-slate-600 dark:text-slate-400 whitespace-pre-wrap font-sans text-sm cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative group border-l-4 border-l-amber-500/50">
+                                    {noteContent || <span className="text-slate-400 italic">Add a note...</span>}
+                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white dark:bg-slate-800 p-1 rounded-full shadow-sm border border-slate-200 dark:border-slate-700"><Pencil size={12} className="text-amber-600" /></div>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -605,7 +634,7 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                     )}
                 </div>
 
-                {isPersonal && (
+                {isPersonal && !hideCustomization && (
                     <div className="mt-12 space-y-3">
                         <button onClick={() => onMove(e.Index)} className="w-full py-3 text-sky-700 dark:text-sky-400 font-bold bg-sky-50 dark:bg-sky-900/20 rounded-xl border border-sky-100 dark:border-sky-900/50 flex items-center justify-center gap-2">
                             <Folder size={20} /> Move to Custom Dictionary

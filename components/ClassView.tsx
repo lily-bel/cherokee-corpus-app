@@ -26,6 +26,7 @@ const ClassView: React.FC<ClassViewProps> = ({ className, onClose, onViewClass, 
     const { roots } = useCorpus();
 
     const mainClassName = className.includes('[') ? className.split('[')[0] : className;
+    const [selectedSubclass, setSelectedSubclass] = React.useState<string | null>(() => className.includes('[') ? className : null);
 
     const variations = useMemo(() => {
         const set = new Set<string>();
@@ -40,6 +41,38 @@ const ClassView: React.FC<ClassViewProps> = ({ className, onClose, onViewClass, 
     const allVerbsInSuperclass = useMemo(() => {
         return roots.filter(r => r.class_name && (r.class_name === mainClassName || r.class_name.startsWith(mainClassName + '[')));
     }, [mainClassName, roots]);
+
+    const allSubclasses = useMemo(() => [mainClassName, ...variations], [mainClassName, variations]);
+
+    const verbsBySubclass = useMemo(() => {
+        const map = new Map<string, typeof allVerbsInSuperclass>();
+        allSubclasses.forEach(sub => map.set(sub, []));
+        allVerbsInSuperclass.forEach(r => {
+            const cls = r.class_name || mainClassName;
+            if (!map.has(cls)) {
+                map.set(cls, []);
+            }
+            map.get(cls)!.push(r);
+        });
+        return map;
+    }, [allSubclasses, allVerbsInSuperclass, mainClassName]);
+
+    const orderedSubclasses = useMemo(() => {
+        const activeSubclasses = allSubclasses.filter(sub => (verbsBySubclass.get(sub)?.length || 0) > 0);
+        verbsBySubclass.forEach((vList, sub) => {
+            if (!activeSubclasses.includes(sub) && vList.length > 0) {
+                activeSubclasses.push(sub);
+            }
+        });
+
+        if (!selectedSubclass) {
+            return activeSubclasses;
+        }
+
+        const selected = activeSubclasses.filter(sub => sub === selectedSubclass);
+        const others = activeSubclasses.filter(sub => sub !== selectedSubclass);
+        return [...selected, ...others];
+    }, [allSubclasses, verbsBySubclass, selectedSubclass]);
 
     const verbCountByClass = useMemo(() => {
         const counts = new Map<string, number>();
@@ -161,8 +194,12 @@ const ClassView: React.FC<ClassViewProps> = ({ className, onClose, onViewClass, 
                             {parentEndings && (
                                 <tr 
                                     key={mainClassName} 
-                                    onClick={() => onViewClass(mainClassName)}
-                                    className={`group cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 ${mainClassName === className ? 'bg-amber-50 dark:bg-slate-900/60' : ''}`}
+                                    onClick={() => setSelectedSubclass(prev => prev === mainClassName ? null : mainClassName)}
+                                    className={`group cursor-pointer transition-colors ${
+                                        selectedSubclass === mainClassName 
+                                            ? 'bg-amber-100/80 dark:bg-amber-950/70 ring-1 ring-amber-500/50' 
+                                            : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                                    }`}
                                 >
                                     <td className="py-2.5 font-bold text-slate-800 dark:text-slate-200 text-[10px] truncate pr-1 font-mono" title={mainClassName}>
                                         <span>{mainClassName}</span>
@@ -196,12 +233,17 @@ const ClassView: React.FC<ClassViewProps> = ({ className, onClose, onViewClass, 
                                 const isPerfDiff = Boolean(parentEndings?.perfective && endings.perfective !== parentEndings.perfective);
                                 const isImpDiff = Boolean(parentEndings?.imperative && endings.imperative !== parentEndings.imperative);
                                 const isInfDiff = Boolean(parentEndings?.infinitive && endings.infinitive !== parentEndings.infinitive);
+                                const isSelected = selectedSubclass === v;
 
                                 return (
                                     <tr 
                                         key={v} 
-                                        onClick={() => onViewClass(v)}
-                                        className={`group cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 ${v === className ? 'bg-amber-50 dark:bg-slate-900/60' : ''}`}
+                                        onClick={() => setSelectedSubclass(prev => prev === v ? null : v)}
+                                        className={`group cursor-pointer transition-colors ${
+                                            isSelected 
+                                                ? 'bg-amber-100/80 dark:bg-amber-950/70 ring-1 ring-amber-500/50' 
+                                                : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                                        }`}
                                     >
                                         <td className="py-2.5 font-medium text-slate-800 dark:text-slate-200 text-[10px] truncate pr-1 font-mono" title={v}>
                                             <span>{v}</span>
@@ -239,18 +281,60 @@ const ClassView: React.FC<ClassViewProps> = ({ className, onClose, onViewClass, 
 
                 {/* All Verbs Section */}
                 <div>
-                    <h3 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-6">All Verbs</h3>
-                    <div className="space-y-6">
-                        {allVerbsInSuperclass.map((r) => (
-                            <VerbPreview
-                                key={r.entry_id}
-                                rootEntry={r}
-                                onViewEntry={onViewEntry}
-                                onViewRoot={onViewRoot}
-                                onViewClass={onViewClass}
-                                settings={settings}
-                            />
-                        ))}
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
+                            All Verbs ({allVerbsInSuperclass.length})
+                        </h3>
+                        {selectedSubclass && (
+                            <button
+                                onClick={() => setSelectedSubclass(null)}
+                                className="text-xs text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1.5 font-medium bg-amber-50 dark:bg-amber-950/40 px-2.5 py-1 rounded-full border border-amber-200/50 dark:border-amber-900/50 transition-colors"
+                            >
+                                <span>Selected: <strong className="font-mono">[{selectedSubclass}]</strong></span>
+                                <span className="text-slate-400 dark:text-slate-500 text-[10px]">✕ Show all</span>
+                            </button>
+                        )}
+                    </div>
+                    <div className="space-y-8">
+                        {orderedSubclasses.map((subName) => {
+                            const verbs = verbsBySubclass.get(subName) || [];
+                            if (verbs.length === 0) return null;
+
+                            const isCurrentSubclass = selectedSubclass === subName;
+                            const isDimmed = selectedSubclass !== null && !isCurrentSubclass;
+
+                            return (
+                                <div 
+                                    key={subName} 
+                                    className={`transition-all duration-200 ${isDimmed ? 'opacity-35 grayscale hover:opacity-75' : 'opacity-100'}`}
+                                >
+                                    {/* Subclass Header */}
+                                    <div className="flex items-center gap-2 mb-4 pb-1.5 border-b border-slate-200/60 dark:border-slate-800">
+                                        <div className={`w-1.5 h-4 rounded-full ${isDimmed ? 'bg-slate-300 dark:bg-slate-700' : 'bg-amber-500 dark:bg-amber-400'}`} />
+                                        <span className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200">
+                                            [{subName}]
+                                        </span>
+                                        <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500">
+                                            ({verbs.length} {verbs.length === 1 ? 'verb' : 'verbs'})
+                                        </span>
+                                    </div>
+
+                                    {/* Verbs List for this Subclass */}
+                                    <div className="space-y-6">
+                                        {verbs.map((r) => (
+                                            <VerbPreview
+                                                key={r.entry_id}
+                                                rootEntry={r}
+                                                onViewEntry={onViewEntry}
+                                                onViewRoot={onViewRoot}
+                                                onViewClass={onViewClass}
+                                                settings={settings}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             </div>

@@ -19,6 +19,7 @@ interface PackageDetailViewProps {
     onNavigate: (type: 'dictionary' | 'list' | 'word' | 'sentence', payload: any) => void;
     onReadInContext?: (sentenceId: string) => void;
     onShowSettings: () => void;
+    settings?: any;
 }
 
 const getIconStyles = (pkg: any) => {
@@ -83,7 +84,7 @@ const ContentSection = ({ label, items, type, onNavigate, pkg }: { label: string
 };
 
 export const PackageDetailView: React.FC<PackageDetailViewProps> = ({
-    packageId, onBack, customLists, onNavigate, onReadInContext, onShowSettings
+    packageId, onBack, customLists, onNavigate, onReadInContext, onShowSettings, settings
 }) => {
     const { packages, importedData } = usePackageManager(); // importedData needed for official/imported packages
     const {
@@ -343,6 +344,7 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({
                 onManageForms={() => { }}
                 onReadInContext={onReadInContext}
                 onShowSettings={onShowSettings}
+                settings={settings}
             />
         );
     }
@@ -442,7 +444,7 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({
                     type="word"
                     pkg={pkg}
                     onItemClick={setSelectedEntry}
-                    extraProps={{ customDictionaries, userNotes, userAudioMeta, userWordForms, favorites: [], customLists: {} }}
+                    extraProps={{ customDictionaries, userNotes, userAudioMeta, userWordForms, favorites: [], customLists: {}, settings }}
                      // Pass required props for EntryCard
                 />
 

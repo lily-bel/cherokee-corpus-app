@@ -35,6 +35,7 @@ interface ReaderViewProps {
     onToggleFavorite?: (id: string) => void;
     onToggleList?: (listId: string, id: string) => void;
     onOpenNewListModal?: (id: string) => void;
+    settings?: any;
 }
 
 const CHUNK_SIZE = 20;
@@ -61,8 +62,10 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
     customLists,
     onToggleFavorite,
     onToggleList,
-    onOpenNewListModal
+    onOpenNewListModal,
+    settings
 }) => {
+    const hideCustomization = !!settings?.hideCustomization;
     const { dictionary, glossMap, dictionaryMap, addUserGloss, removeUserGloss, personalWords } = useCorpus();
     const { books, getSentencesForChapter, addToInvestigationQueue, investigationQueue } = useReader();
     const { getPackageColor } = usePackageManager();
@@ -275,6 +278,12 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
 
     const handleWordClick = (sentence: Sentence, wordIndex: number, event: React.MouseEvent) => {
         event.stopPropagation();
+        const glosses = glossMap.get(sentence.id) || [];
+        const wordGlosses = glosses.filter(g =>
+            (g.word_index != null && g.word_index !== '') ? String(g.word_index).split(',').map(Number).includes(wordIndex) : false
+        );
+        if (hideCustomization && wordGlosses.length === 0) return;
+
         const rect = (event.target as HTMLElement).getBoundingClientRect();
 
         setActivePopover({
@@ -443,6 +452,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                                         onToggleList={onToggleList}
                                         onOpenNewListModal={onOpenNewListModal}
                                         onCollapse={() => setExpandedSentenceId(null)}
+                                        settings={settings}
                                     />
                                 ) : (
                                     <>
@@ -451,7 +461,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                                             <div className={`flex-1 flex flex-wrap gap-x-1 gap-y-1 leading-relaxed ${studyMode === 'study' && scriptMode === 'both' ? 'gap-x-2' : 'gap-x-1'}`}>
                                                 {tokens.map((token, tokenIdx) => {
                                                     const glossColor = getGlossColor(sentence.id, tokenIdx);
-                                                    const isClickable = true;
+                                                    const isClickable = !hideCustomization || !!glossColor;
 
                                                     if (scriptMode === 'syllabary') {
                                                         const inQueue = isInQueue(sentence.id, tokenIdx);
@@ -614,6 +624,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                         }}
                         personalWords={personalWords}
                         customDictionaries={customDictionaries}
+                        hideCustomization={hideCustomization}
                     />
                 );
             })()}
