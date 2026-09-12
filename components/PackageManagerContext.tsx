@@ -72,25 +72,68 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
     const [packages, setPackages] = useState<Package[]>([]);
     const [importedData, setImportedData] = useState<Record<string, ImportedPackageData>>({});
 
-    // Initialize Default Packages
+    // Helper to safely fetch JSON without choking on HTML 404/SPA responses
+    const fetchJsonSafe = async <T,>(url: string, fallback: T): Promise<T> => {
+        try {
+            const res = await fetch(url);
+            if (!res.ok) return fallback;
+            const contentType = res.headers.get('content-type') || '';
+            if (contentType.includes('text/html')) return fallback;
+            const text = await res.text();
+            if (!text || text.trim().startsWith('<')) return fallback;
+            return JSON.parse(text) as T;
+        } catch {
+            return fallback;
+        }
+    };
+
     // Initialize Default Packages & Load Official Data
     useEffect(() => {
         const loadOfficialData = async () => {
             try {
-                // Fetch Metadata
-                const metaRes = await fetch(`${import.meta.env.BASE_URL}data/metadata.json`);
-                if (!metaRes.ok) throw new Error('Failed to load official metadata');
-                const metadata: PackageMetadata = await metaRes.json();
-
-                // Fetch Data Files
                 const base = import.meta.env.BASE_URL;
-                const [dictRes, sentRes, joinRes, conjRes, audioMapRes, officialListRes] = await Promise.all([
-                    fetch(`${base}data/base_forms.json`).then(r => r.json()),
-                    fetch(`${base}data/sentences.json`).then(r => r.json()),
-                    fetch(`${base}data/sentence_joins.json`).then(r => r.json()),
-                    fetch(`${base}data/conjugations.json`).then(r => r.json()),
-                    fetch(`${base}data/audio_mapping.json`).then(r => r.json()),
-                    fetch(`${base}data/lists/official_lists_ced_verbs.json`).then(r => r.ok ? r.json() : null).catch(() => null)
+
+                // Default Official Metadata fallback
+                const defaultMetadata: PackageMetadata = {
+                    id: 'official-cherokee-data',
+                    name: 'Official Cherokee Reference Data',
+                    author: 'Cherokee Nation & Durbin Feeling',
+                    description: 'Official Cherokee Nation Language Department dictionary, King Recreation verb morphology, and reference corpus.',
+                    date_created: Date.now(),
+                    app_version: '1.0',
+                    color: 'slate',
+                    stats: { words: 0, sentences: 0, audio_files: 0, glosses: 0, lists: 0 },
+                    source_names: {
+                        'cn-app-dictionary.csv': 'Cherokee Nation Dictionary',
+                        'lily-dict.csv': 'Feeling & Pulte CED',
+                        'kirk-book-data.csv': 'Kirk Verb Database',
+                        'learning-to-use-the-cherokee-verb.csv': 'Learning to Use the Cherokee Verb',
+                        'hierarchical-dict.json': 'King Recreation Verb Morphology',
+                        'ced': 'Feeling & Pulte CED',
+                        'ltu': 'Learning to Use the Cherokee Verb',
+                        'kirk': 'Kirk Verb Database',
+                        'cnt': 'Cherokee New Testament'
+                    },
+                    source_meta: {
+                        'cn-app-dictionary.csv': 'prioritize',
+                        'lily-dict.csv': 'prioritize',
+                        'kirk-book-data.csv': 'prioritize',
+                        'learning-to-use-the-cherokee-verb.csv': 'prioritize',
+                        'hierarchical-dict.json': 'prioritize'
+                    },
+                    locked: 'yes',
+                    editable: 'No'
+                };
+
+                // Fetch Data Files in parallel safely
+                const [metadata, dictRes, sentRes, joinRes, conjRes, audioMapRes, officialListRes] = await Promise.all([
+                    fetchJsonSafe<PackageMetadata>(`${base}data/metadata.json`, defaultMetadata),
+                    fetchJsonSafe<any[]>(`${base}data/base_forms.json`, []),
+                    fetchJsonSafe<any[]>(`${base}data/sentences.json`, []),
+                    fetchJsonSafe<any[]>(`${base}data/sentence_joins.json`, []),
+                    fetchJsonSafe<any[]>(`${base}data/conjugations.json`, []),
+                    fetchJsonSafe<Record<string, any>>(`${base}data/audio_mapping.json`, {}),
+                    fetchJsonSafe<any>(`${base}data/lists/official_lists_ced_verbs.json`, null)
                 ]);
 
                 const dictionary = dictRes;
@@ -407,20 +450,17 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
 
                 // Auto-install packages marked with autoInstall in catalog
                 try {
-                    const catalogRes = await fetch(`${import.meta.env.BASE_URL}packages/catalog.json`);
-                    if (catalogRes.ok) {
-                        const catalog = await catalogRes.json();
-                        if (Array.isArray(catalog)) {
-                            for (const item of catalog) {
-                                if (item.autoInstall && !loadedImportedPkgs.some(p => p.id === item.id) && !uninstalledPackages.includes(item.id)) {
-                                    const pkgRes = await fetch(`${import.meta.env.BASE_URL}packages/${item.packageFile}`);
-                                    if (pkgRes.ok) {
-                                        const blob = await pkgRes.blob();
-                                        const parsed = await parsePackageZip(blob, item.color);
-                                        loadedImportedPkgs.push(parsed.pkg);
-                                        loadedImportedData[parsed.pkg.id] = parsed.data;
-                                        await savePackageToDB(parsed.pkg, parsed.data);
-                                    }
+                    const catalog = await fetchJsonSafe<any[]>(`${import.meta.env.BASE_URL}packages/catalog.json`, []);
+                    if (Array.isArray(catalog)) {
+                        for (const item of catalog) {
+                            if (item.autoInstall && !loadedImportedPkgs.some(p => p.id === item.id) && !uninstalledPackages.includes(item.id)) {
+                                const pkgRes = await fetch(`${import.meta.env.BASE_URL}packages/${item.packageFile}`);
+                                if (pkgRes.ok) {
+                                    const blob = await pkgRes.blob();
+                                    const parsed = await parsePackageZip(blob, item.color);
+                                    loadedImportedPkgs.push(parsed.pkg);
+                                    loadedImportedData[parsed.pkg.id] = parsed.data;
+                                    await savePackageToDB(parsed.pkg, parsed.data);
                                 }
                             }
                         }

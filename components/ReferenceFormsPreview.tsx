@@ -604,7 +604,7 @@ export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
             const derivedSeg = deriveSegmentedForm(form, forms, rootEntry);
             if (derivedSeg) {
                 const formName = cardData.slotKey.split('|')[2] || 'present';
-                groups = segmentVerbForm(derivedSeg, formName, verbConfig, rootEntry?.class_name);
+                groups = segmentVerbForm(derivedSeg, formName, verbConfig, rootEntry?.class_name, rootEntry?.post_root_morpheme);
             }
         }
 

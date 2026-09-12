@@ -239,7 +239,7 @@ export const LinkerModal: React.FC<LinkerModalProps> = ({ initialQuery, targetWo
                                     <div className={rootEntry ? "ml-3 pl-2 border-l-2 border-amber-500/20 dark:border-amber-400/20" : ""}>
                                         {(() => {
                                             const mainPresGroups = rootEntry?.segmented_forms?.present
-                                                ? segmentVerbForm(rootEntry.segmented_forms.present, 'present', rootEntry.config, rootEntry.class_name)
+                                                ? segmentVerbForm(rootEntry.segmented_forms.present, 'present', rootEntry.config, rootEntry.class_name, rootEntry.post_root_morpheme)
                                                 : null;
                                             const mainPronounSet = rootEntry?.config?.pron?.set_type === 'b' ? 'B' : 'A';
 
@@ -249,7 +249,7 @@ export const LinkerModal: React.FC<LinkerModalProps> = ({ initialQuery, targetWo
                                                 const derivedSeg = deriveSegmentedForm(entry.matchedForm, [], rootEntry);
                                                 if (derivedSeg) {
                                                     const formName = (entry.matchedForm.normalized_key || entry.matchedForm.form_name || '').split('|')[2] || 'present';
-                                                    matchedFormGroups = segmentVerbForm(derivedSeg, formName, rootEntry.config, rootEntry.class_name);
+                                                    matchedFormGroups = segmentVerbForm(derivedSeg, formName, rootEntry.config, rootEntry.class_name, rootEntry.post_root_morpheme);
                                                     matchedPronounSet = getFormPronominalSet(entry.matchedForm.normalized_key || entry.matchedForm.form_name, rootEntry.config);
                                                 }
                                             }

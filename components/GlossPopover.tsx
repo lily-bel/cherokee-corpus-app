@@ -168,7 +168,7 @@ export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord,
                                 const entryId = entry.id || entry.Index || (entry as any).merged_id;
                                 const rootEntry = entryId ? rootMap?.get(entryId) : null;
                                 const mainPresGroups = rootEntry?.segmented_forms?.present
-                                    ? segmentVerbForm(rootEntry.segmented_forms.present, 'present', rootEntry.config, rootEntry.class_name)
+                                    ? segmentVerbForm(rootEntry.segmented_forms.present, 'present', rootEntry.config, rootEntry.class_name, rootEntry.post_root_morpheme)
                                     : null;
                                 const mainPronounSet = rootEntry?.config?.pron?.set_type === 'b' ? 'B' : 'A';
 
@@ -184,7 +184,7 @@ export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord,
                                     const derivedSeg = deriveSegmentedForm(fakeForm, [], rootEntry);
                                     if (derivedSeg) {
                                         const formName = (gloss.form_name || '').split('|')[2] || 'present';
-                                        matchedFormGroups = segmentVerbForm(derivedSeg, formName, rootEntry.config, rootEntry.class_name);
+                                        matchedFormGroups = segmentVerbForm(derivedSeg, formName, rootEntry.config, rootEntry.class_name, rootEntry.post_root_morpheme);
                                         matchedPronounSet = getFormPronominalSet(gloss.form_name || '', rootEntry.config);
                                     }
                                 }

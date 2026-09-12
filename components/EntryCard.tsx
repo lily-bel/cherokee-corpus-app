@@ -73,7 +73,7 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
   const mainPresSeg = rootEntry?.segmented_forms?.present;
   const mainPresGroups = useMemo(() => {
     if (!rootEntry || !mainPresSeg) return null;
-    return segmentVerbForm(mainPresSeg, 'present', rootEntry.config, rootEntry.class_name);
+    return segmentVerbForm(mainPresSeg, 'present', rootEntry.config, rootEntry.class_name, rootEntry.post_root_morpheme);
   }, [rootEntry, mainPresSeg]);
   const mainPronounSet = rootEntry?.config?.pron?.set_type === 'b' ? 'B' : 'A';
 
@@ -109,7 +109,7 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
     const derivedSeg = deriveSegmentedForm(entry.matchedForm, [], rootEntry);
     if (!derivedSeg) return null;
     const formName = (entry.matchedForm.normalized_key || entry.matchedForm.form_name || '').split('|')[2] || 'present';
-    return segmentVerbForm(derivedSeg, formName, rootEntry.config, rootEntry.class_name);
+    return segmentVerbForm(derivedSeg, formName, rootEntry.config, rootEntry.class_name, rootEntry.post_root_morpheme);
   }, [rootEntry, entry.matchedForm, matchedHdSegments]);
   const matchedPronounSet = useMemo(() => {
     if (!entry.matchedForm) return 'A';

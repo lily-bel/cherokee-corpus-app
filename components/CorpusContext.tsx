@@ -396,31 +396,31 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                     surface_forms: surfaceForms,
                     surface_segments: surfaceSegments,
                     segmented_forms: {
-                        present: hd?.['segmented_forms.present'] || '',
-                        present_1sg: hd?.['segmented_forms.present_1sg'] || '',
-                        imperfective: hd?.['segmented_forms.imperfective'] || '',
-                        perfective: hd?.['segmented_forms.perfective'] || '',
-                        imperative: hd?.['segmented_forms.imperative'] || '',
-                        infinitive: hd?.['segmented_forms.infinitive'] || ''
+                        present: hd?.['segmented_forms.present'] || hd?.['morphology.segmented_forms.present'] || hd?.['shim.segmented_forms.present'] || hd?.segmented_forms?.present || (d as any)?.segmented_forms?.present || (d as any)?.['segmented_forms.present'] || '',
+                        present_1sg: hd?.['segmented_forms.present_1sg'] || hd?.['morphology.segmented_forms.present_1sg'] || hd?.['shim.segmented_forms.present_1sg'] || hd?.segmented_forms?.present_1sg || (d as any)?.segmented_forms?.present_1sg || (d as any)?.['segmented_forms.present_1sg'] || '',
+                        imperfective: hd?.['segmented_forms.imperfective'] || hd?.['morphology.segmented_forms.imperfective'] || hd?.['shim.segmented_forms.imperfective'] || hd?.segmented_forms?.imperfective || (d as any)?.segmented_forms?.imperfective || (d as any)?.['segmented_forms.imperfective'] || '',
+                        perfective: hd?.['segmented_forms.perfective'] || hd?.['morphology.segmented_forms.perfective'] || hd?.['shim.segmented_forms.perfective'] || hd?.segmented_forms?.perfective || (d as any)?.segmented_forms?.perfective || (d as any)?.['segmented_forms.perfective'] || '',
+                        imperative: hd?.['segmented_forms.imperative'] || hd?.['morphology.segmented_forms.imperative'] || hd?.['shim.segmented_forms.imperative'] || hd?.segmented_forms?.imperative || (d as any)?.segmented_forms?.imperative || (d as any)?.['segmented_forms.imperative'] || '',
+                        infinitive: hd?.['segmented_forms.infinitive'] || hd?.['morphology.segmented_forms.infinitive'] || hd?.['shim.segmented_forms.infinitive'] || hd?.segmented_forms?.infinitive || (d as any)?.segmented_forms?.infinitive || (d as any)?.['segmented_forms.infinitive'] || ''
                     },
                     config: {
                         pre: {
-                            distributive: hd?.['config.pre.distributive'] === true || hd?.['config.pre.distributive'] === 'true',
-                            translocutive: hd?.['config.pre.translocutive'] === true || hd?.['config.pre.translocutive'] === 'true',
-                            translocutiveImpOnly: hd?.['config.pre.translocutiveImpOnly'] === true || hd?.['config.pre.translocutiveImpOnly'] === 'true',
-                            partitive: hd?.['config.pre.partitive'] === true || hd?.['config.pre.partitive'] === 'true'
+                            distributive: hd?.['config.pre.distributive'] === true || hd?.['config.pre.distributive'] === 'true' || (d as any)?.['config.pre.distributive'] === true || (d as any)?.config?.pre?.distributive === true,
+                            translocutive: hd?.['config.pre.translocutive'] === true || hd?.['config.pre.translocutive'] === 'true' || (d as any)?.['config.pre.translocutive'] === true || (d as any)?.config?.pre?.translocutive === true,
+                            translocutiveImpOnly: hd?.['config.pre.translocutiveImpOnly'] === true || hd?.['config.pre.translocutiveImpOnly'] === 'true' || (d as any)?.['config.pre.translocutiveImpOnly'] === true || (d as any)?.config?.pre?.translocutiveImpOnly === true,
+                            partitive: hd?.['config.pre.partitive'] === true || hd?.['config.pre.partitive'] === 'true' || (d as any)?.['config.pre.partitive'] === true || (d as any)?.config?.pre?.partitive === true
                         },
                         pron: {
-                            set_type: hd?.['config.pron.set_type'] || '',
-                            stem_type: hd?.['config.pron.stem_type'] || '',
-                            use_ka_variant: hd?.['config.pron.use_ka_variant'] === true || hd?.['config.pron.use_ka_variant'] === 'true',
-                            plural_pronouns: hd?.['config.pron.plural_pronouns'] === true || hd?.['config.pron.plural_pronouns'] === 'true',
-                            middle_voice: hd?.['config.pron.middle_voice'] || 'none',
-                            use_3rd_person_object: hd?.['config.pron.use_3rd_person_object'] === true || hd?.['config.pron.use_3rd_person_object'] === 'true'
+                            set_type: hd?.['config.pron.set_type'] || (d as any)?.['config.pron.set_type'] || (d as any)?.config?.pron?.set_type || '',
+                            stem_type: hd?.['config.pron.stem_type'] || (d as any)?.['config.pron.stem_type'] || (d as any)?.config?.pron?.stem_type || '',
+                            use_ka_variant: hd?.['config.pron.use_ka_variant'] === true || hd?.['config.pron.use_ka_variant'] === 'true' || (d as any)?.['config.pron.use_ka_variant'] === true || (d as any)?.config?.pron?.use_ka_variant === true,
+                            plural_pronouns: hd?.['config.pron.plural_pronouns'] === true || hd?.['config.pron.plural_pronouns'] === 'true' || (d as any)?.['config.pron.plural_pronouns'] === true || (d as any)?.config?.pron?.plural_pronouns === true,
+                            middle_voice: hd?.['config.pron.middle_voice'] || (d as any)?.['config.pron.middle_voice'] || (d as any)?.config?.pron?.middle_voice || 'none',
+                            use_3rd_person_object: hd?.['config.pron.use_3rd_person_object'] === true || hd?.['config.pron.use_3rd_person_object'] === 'true' || (d as any)?.['config.pron.use_3rd_person_object'] === true || (d as any)?.config?.pron?.use_3rd_person_object === true
                         }
                     },
-                    post_root_morpheme: hd?.['post_root_morpheme'] || hd?.['morphology.post_root_morpheme'] || null,
-                    _is_transitive: hd?.['_is_transitive'] === true || hd?.['_is_transitive'] === 'true'
+                    post_root_morpheme: hd?.['post_root_morpheme'] || hd?.['morphology.post_root_morpheme'] || (d as any).post_root_morpheme || hd?.['shim.morphology.post_root_morpheme'] || (d as any)?.['morphology.post_root_morpheme'] || null,
+                    _is_transitive: hd?.['_is_transitive'] === true || hd?.['_is_transitive'] === 'true' || (d as any)?._is_transitive === true
                 };
                 
                 rootsArr.push(rootEntry);

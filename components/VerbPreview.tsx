@@ -123,7 +123,7 @@ export const VerbPreview: React.FC<VerbPreviewProps> = ({
 
     const presGroups = useMemo(() => {
         const seg = rootEntry.segmented_forms?.present;
-        return seg ? segmentVerbForm(seg, 'present', rootEntry.config, rootEntry.class_name) : null;
+        return seg ? segmentVerbForm(seg, 'present', rootEntry.config, rootEntry.class_name, rootEntry.post_root_morpheme) : null;
     }, [rootEntry]);
 
     const pronounSet = rootEntry.config?.pron?.set_type === 'b' ? 'B' : 'A';

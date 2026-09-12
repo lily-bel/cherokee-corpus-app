@@ -1268,8 +1268,8 @@ export function preventGlottalCluster(s: string): string {
 }
 
 export interface SegmentGroup {
-  role: number; // 0: root, 1: pronoun, 2: aspect, 3: prepronominal, 4: final, 5: post_root
-  roleType: 'root' | 'pronoun' | 'aspect' | 'prepronominal' | 'final' | 'post_root';
+  role: number; // 0: root, 1: pronoun, 2: aspect, 3: prepronominal, 4: final, 5: post_root, 6: middle_voice
+  roleType: 'root' | 'pronoun' | 'aspect' | 'prepronominal' | 'final' | 'post_root' | 'middle_voice';
   text: string;
 }
 
@@ -1277,7 +1277,8 @@ export function segmentVerbForm(
   segForm: string | undefined,
   formName: string = 'present',
   config?: any,
-  className?: string
+  className?: string,
+  postRootMorpheme?: string | null
 ): SegmentGroup[] | null {
   if (!segForm || segForm === '---') return null;
   const parts = segForm.split(/(->|-)/);
@@ -1287,41 +1288,139 @@ export function segmentVerbForm(
   if (formName === 'imperative' && config?.pre?.translocutiveImpOnly && !config?.pre?.translocutive) numPre++;
 
   // Defensive check: if prepronominal prefix exists in segments but not in config
-  if (numPre === 0 && segments.length > 3 && /^(w|wi|te|de|ti|ni)$/i.test(segments[0])) {
-    numPre = 1;
+  if (numPre === 0 && segments.length > 3 && /^(w|wi|te|de|ti|ni|t)$/i.test(segments[0])) {
+    if (segments.length >= 4) {
+      numPre = 1;
+    }
   }
 
   const pronounIdx = numPre;
-  let aspectIdx: number | null = formName === 'imperative' ? segments.length - 1 : segments.length - 2;
-  if (className === 'stative') aspectIdx = null;
+  const hasMv = !!(config?.pron?.middle_voice && config?.pron?.middle_voice !== 'none');
+  const hasPrm = !!(postRootMorpheme || config?.post_root_morpheme);
 
   // Check if there is an empty root segment between pronoun and aspect
   let emptyRootIdx = -1;
-  for (let i = pronounIdx + 1; i < (aspectIdx !== null ? aspectIdx : segments.length); i++) {
+  for (let i = pronounIdx + 1; i < segments.length - 1; i++) {
     if (segments[i] === '') {
       emptyRootIdx = i;
       break;
     }
   }
 
-  const chars: { char: string; role: number; roleType: 'root' | 'pronoun' | 'aspect' | 'prepronominal' | 'final' | 'post_root' }[] = [];
-  segments.forEach((seg, i) => {
-    let role = 0;
-    let roleType: 'root' | 'pronoun' | 'aspect' | 'prepronominal' | 'final' | 'post_root' = 'root';
-    if (i < pronounIdx) { role = 3; roleType = 'prepronominal'; }
-    else if (i === pronounIdx) { role = 1; roleType = 'pronoun'; }
-    else if (aspectIdx !== null && i === aspectIdx) { role = 2; roleType = 'aspect'; }
-    else if (aspectIdx !== null && i > aspectIdx) { role = 4; roleType = 'final'; }
-    else if (emptyRootIdx !== -1) {
-      if (i === emptyRootIdx) {
-        role = 0;
-        roleType = 'root';
-      } else if (i > emptyRootIdx) {
-        role = 5;
-        roleType = 'post_root';
+  let aspectIdx = segments.length - 1;
+  let finalIdx = -1;
+
+  if (className === 'stative') {
+    aspectIdx = -1;
+  } else {
+    const expectedStemSegs = (hasMv ? 1 : 0) + 1 + (hasPrm || emptyRootIdx !== -1 ? 1 : 0);
+    const minSegsWithFinal = pronounIdx + expectedStemSegs + 2;
+
+    if (segments.length >= minSegsWithFinal) {
+      const lastSeg = segments[segments.length - 1];
+      if (/^(a|i|v'i|o'i|e'i|vht)$/.test(lastSeg)) {
+        finalIdx = segments.length - 1;
+        aspectIdx = segments.length - 2;
       }
     }
-    for (const c of seg) chars.push({ char: c, role, roleType });
+  }
+
+  const stemEndIdx = aspectIdx !== -1 ? aspectIdx : (finalIdx !== -1 ? finalIdx : segments.length);
+  const stemStartIdx = pronounIdx + 1;
+  const numStemSegs = Math.max(0, stemEndIdx - stemStartIdx);
+
+  const roles = new Array(segments.length).fill(0);
+  const roleTypes: ('root' | 'pronoun' | 'aspect' | 'prepronominal' | 'final' | 'post_root' | 'middle_voice')[] = new Array(segments.length).fill('root');
+
+  for (let i = 0; i < pronounIdx; i++) {
+    roles[i] = 3;
+    roleTypes[i] = 'prepronominal';
+  }
+  if (pronounIdx < segments.length) {
+    roles[pronounIdx] = 1;
+    roleTypes[pronounIdx] = 'pronoun';
+  }
+  if (aspectIdx !== -1 && aspectIdx < segments.length) {
+    roles[aspectIdx] = 2;
+    roleTypes[aspectIdx] = 'aspect';
+  }
+  if (finalIdx !== -1 && finalIdx < segments.length) {
+    roles[finalIdx] = 4;
+    roleTypes[finalIdx] = 'final';
+  }
+
+  if (emptyRootIdx !== -1) {
+    roles[emptyRootIdx] = 0;
+    roleTypes[emptyRootIdx] = 'root';
+    for (let i = emptyRootIdx + 1; i < stemEndIdx; i++) {
+      roles[i] = 5;
+      roleTypes[i] = 'post_root';
+    }
+    for (let i = stemStartIdx; i < emptyRootIdx; i++) {
+      if (hasMv) {
+        roles[i] = 6;
+        roleTypes[i] = 'middle_voice';
+      } else {
+        roles[i] = 0;
+        roleTypes[i] = 'root';
+      }
+    }
+  } else if (numStemSegs === 1) {
+    roles[stemStartIdx] = 0;
+    roleTypes[stemStartIdx] = 'root';
+  } else if (numStemSegs === 2) {
+    if (hasMv && !hasPrm) {
+      roles[stemStartIdx] = 6;
+      roleTypes[stemStartIdx] = 'middle_voice';
+      roles[stemStartIdx + 1] = 0;
+      roleTypes[stemStartIdx + 1] = 'root';
+    } else if (hasPrm && !hasMv) {
+      roles[stemStartIdx] = 0;
+      roleTypes[stemStartIdx] = 'root';
+      roles[stemStartIdx + 1] = 5;
+      roleTypes[stemStartIdx + 1] = 'post_root';
+    } else if (hasMv && hasPrm) {
+      roles[stemStartIdx] = 6;
+      roleTypes[stemStartIdx] = 'middle_voice';
+      roles[stemStartIdx + 1] = 5;
+      roleTypes[stemStartIdx + 1] = 'post_root';
+    } else {
+      const prmForms = new Set(['iy', "a'iy", 'hs', 'at', 't', 'vn', 'ihs', 'il', 'it', 'tey', 'telu', 'elu', 'a', 'i', 'o', 'in']);
+      if (prmForms.has(segments[stemStartIdx + 1])) {
+        roles[stemStartIdx] = 0;
+        roleTypes[stemStartIdx] = 'root';
+        roles[stemStartIdx + 1] = 5;
+        roleTypes[stemStartIdx + 1] = 'post_root';
+      } else {
+        roles[stemStartIdx] = 0;
+        roleTypes[stemStartIdx] = 'root';
+        roles[stemStartIdx + 1] = 0;
+        roleTypes[stemStartIdx + 1] = 'root';
+      }
+    }
+  } else if (numStemSegs >= 3) {
+    if (hasMv) {
+      roles[stemStartIdx] = 6;
+      roleTypes[stemStartIdx] = 'middle_voice';
+      roles[stemStartIdx + 1] = 0;
+      roleTypes[stemStartIdx + 1] = 'root';
+      for (let i = stemStartIdx + 2; i < stemEndIdx; i++) {
+        roles[i] = 5;
+        roleTypes[i] = 'post_root';
+      }
+    } else {
+      roles[stemStartIdx] = 0;
+      roleTypes[stemStartIdx] = 'root';
+      for (let i = stemStartIdx + 1; i < stemEndIdx; i++) {
+        roles[i] = 5;
+        roleTypes[i] = 'post_root';
+      }
+    }
+  }
+
+  const chars: { char: string; role: number; roleType: 'root' | 'pronoun' | 'aspect' | 'prepronominal' | 'final' | 'post_root' | 'middle_voice' }[] = [];
+  segments.forEach((seg, i) => {
+    for (const c of seg) chars.push({ char: c, role: roles[i], roleType: roleTypes[i] });
   });
 
   // Drop dropped phones
@@ -1361,7 +1460,7 @@ export function segmentVerbForm(
     i++;
   }
 
-  const groups: { role: number; roleType: 'root' | 'pronoun' | 'aspect' | 'prepronominal' | 'final' | 'post_root'; text: string }[] = [];
+  const groups: { role: number; roleType: 'root' | 'pronoun' | 'aspect' | 'prepronominal' | 'final' | 'post_root' | 'middle_voice'; text: string }[] = [];
   chars.forEach(item => {
     if (groups.length > 0 && groups[groups.length - 1].role === item.role) {
       groups[groups.length - 1].text += item.char;
@@ -1395,7 +1494,7 @@ export function normalizeForMatch(str: string): string {
 
 export interface ColorChunk {
   role: number;
-  roleType: 'root' | 'pronoun' | 'aspect' | 'prepronominal' | 'final' | 'post_root';
+  roleType: 'root' | 'pronoun' | 'aspect' | 'prepronominal' | 'final' | 'post_root' | 'middle_voice';
   text: string;
 }
 
@@ -1474,9 +1573,10 @@ export function deriveSegmentedForm(
   if (form?.segmented_form) return form.segmented_form;
   if (!rootEntry || !rootEntry.segmented_forms) return undefined;
 
-  const key = (form?.normalized_key || form?.form_name || form?.label || '').toLowerCase();
-  if (key === '3s|3s|present' || key === '3s|present' || key.includes('3rd person singular present') || key === 'present') {
-    return rootEntry.segmented_forms.present || undefined;
+  const key = form?.normalized_key || form?.form_name || form?.label || (typeof form === 'string' ? form : '');
+  const slot = resolveHdFormName(key);
+  if (slot && rootEntry.segmented_forms[slot]) {
+    return rootEntry.segmented_forms[slot] || undefined;
   }
 
   return undefined;
@@ -1642,6 +1742,7 @@ export function segmentGroupsToSegments(
   return groups.map(g => ({
     role: (g.role === 3 || g.roleType === 'prepronominal') ? 'prepronominal'
         : (g.role === 1 || g.roleType === 'pronoun') ? 'pronoun'
+        : (g.role === 6 || g.roleType === 'middle_voice') ? 'middle_voice'
         : (g.role === 5 || g.roleType === 'post_root') ? 'post_root'
         : (g.role === 2 || g.roleType === 'aspect') ? 'aspect'
         : (g.role === 4 || g.roleType === 'final') ? 'final'
@@ -1947,7 +2048,7 @@ export const ColorizedCherokeeWord: React.FC<ColorizedCherokeeWordProps> = ({
 
     if (derivedSeg) {
       const slotName = (candidateKey || '').split('|')[2] || hdSlot || 'present';
-      const groups = segmentVerbForm(derivedSeg, slotName, rEntry.config, rEntry.class_name);
+      const groups = segmentVerbForm(derivedSeg, slotName, rEntry.config, rEntry.class_name, rEntry.post_root_morpheme);
       const pSet = getFormPronominalSet(candidateKey || '', rEntry.config);
       return (
         <span className={className}>
@@ -1958,7 +2059,7 @@ export const ColorizedCherokeeWord: React.FC<ColorizedCherokeeWordProps> = ({
 
     // If headword or present
     if ((!form || hdSlot === 'present') && rEntry.segmented_forms.present) {
-      const groups = segmentVerbForm(rEntry.segmented_forms.present, 'present', rEntry.config, rEntry.class_name);
+      const groups = segmentVerbForm(rEntry.segmented_forms.present, 'present', rEntry.config, rEntry.class_name, rEntry.post_root_morpheme);
       const pSet = rEntry.config?.pron?.set_type === 'b' ? 'B' : 'A';
       return (
         <span className={className}>
@@ -2132,7 +2233,7 @@ export const VerbMorphologyTemplate: React.FC<VerbMorphologyTemplateProps> = ({
       <div key="prm" className="inline-flex flex-col items-center align-middle leading-tight" title={`Post-root morpheme: ${prmName}`}>
         {prmForm ? (
           <>
-            <span className="font-semibold text-slate-800 dark:text-slate-200 leading-none underline decoration-transparent decoration-dotted underline-offset-4">
+            <span className="font-semibold text-slate-800 dark:text-slate-200 leading-none select-text">
               {prmForm}
             </span>
             <span className="text-[11px] font-sans font-normal text-slate-400 dark:text-slate-500 leading-none mt-1 select-text">

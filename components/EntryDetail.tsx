@@ -319,7 +319,7 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
     const mainVerbConfig = rootEntry?.config;
     const mainPresGroups = React.useMemo(() => {
         if (!rootEntry || !mainPresSeg) return null;
-        return segmentVerbForm(mainPresSeg, 'present', mainVerbConfig, rootEntry?.class_name);
+        return segmentVerbForm(mainPresSeg, 'present', mainVerbConfig, rootEntry?.class_name, rootEntry?.post_root_morpheme);
     }, [mainPresSeg, mainVerbConfig, rootEntry]);
     const mainPronounSet = mainVerbConfig?.pron?.set_type === 'b' ? 'B' : 'A';
 
