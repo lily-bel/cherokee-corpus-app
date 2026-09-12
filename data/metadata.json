@@ -1,0 +1,40 @@
+{
+  "id": "official-cherokee-data",
+  "name": "Official Cherokee Reference Data",
+  "version": "1.0.0",
+  "author": "Cherokee Nation & Durbin Feeling",
+  "description": "Official Cherokee Nation Language Department dictionary, King Recreation verb morphology, and reference corpus.",
+  "created_at": "2026-09-12T00:00:00.000Z",
+  "date_created": 1773446400000,
+  "app_version": "1.0",
+  "color": "slate",
+  "stats": {
+    "words": 0,
+    "sentences": 0,
+    "audio_files": 0,
+    "glosses": 0,
+    "word_forms": 0,
+    "lists": 0,
+    "notes": 0
+  },
+  "source_names": {
+    "cn-app-dictionary.csv": "Cherokee Nation Dictionary",
+    "lily-dict.csv": "Feeling & Pulte CED",
+    "kirk-book-data.csv": "Kirk Verb Database",
+    "learning-to-use-the-cherokee-verb.csv": "Learning to Use the Cherokee Verb",
+    "hierarchical-dict.json": "King Recreation Verb Morphology",
+    "ced": "Feeling & Pulte CED",
+    "ltu": "Learning to Use the Cherokee Verb",
+    "kirk": "Kirk Verb Database",
+    "cnt": "Cherokee New Testament"
+  },
+  "source_meta": {
+    "cn-app-dictionary.csv": "prioritize",
+    "lily-dict.csv": "prioritize",
+    "kirk-book-data.csv": "prioritize",
+    "learning-to-use-the-cherokee-verb.csv": "prioritize",
+    "hierarchical-dict.json": "prioritize"
+  },
+  "locked": "yes",
+  "editable": "No"
+}
