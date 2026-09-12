@@ -7,6 +7,22 @@
 
 ## 🏆 Completed Task Log
 
+### Task: 3-Tier Aspect Hierarchy Expansion (Class → Subclass → Variant) & Unified ClassView
+- **Completion Date:** 2026-09-12
+- **Status:** `[Completed]`
+- **Target Files:** [`cherokee-data-consolidation/scripts/preliminary_flatten.py`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-data-consolidation/scripts/preliminary_flatten.py), [`cherokee-data-consolidation/scripts/merge_duplicates.py`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-data-consolidation/scripts/merge_duplicates.py), [`run_pipeline.py`](file:///C:/Users/lilyb/Desktop/cherokee/run_pipeline.py), [`classMascots.ts`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/classMascots.ts), [`components/ClassView.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/ClassView.tsx), [`public/data/aspect_classes.json`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/public/data/aspect_classes.json)
+- **Implementation Summary:**
+  1. **Consolidation Pipeline Extraction:** Updated `preliminary_flatten.py` and `merge_duplicates.py` in `cherokee-data-consolidation` (and verified via `run_pipeline.py`) to read canonical aspect class relationships from `king-recreation/data/classes.csv` (read-only), generating `aspect_classes.json` (30 top-level parent classes, 56 subclass mappings with preconditions, default endings, and variant endings) and syncing to `cherokee-corpus-app/public/data/`.
+  2. **3-Tier Hierarchy Model:** Re-labeled and restructured the taxonomy:
+     - **Top-Level Class:** e.g. `sg-s`, `eh`, `hih`, `stative`, `a`, `hvsg`, etc.
+     - **Subclass:** e.g. `sg-s-a`, `sg-s-hi-hihst`, `eh-hehl`, `rev-gi`, `hih-hil`, `a` (previously called "superclass" or "class name").
+     - **Variant:** e.g. `sg-s-a[inf2]`, `hih-hil[imp2]` (previously called "subclass" or "variation").
+  3. **Unified `ClassView` Page:**
+     - **Breadcrumbs Navigation:** Dynamic breadcrumbs (`Class: [parentClass] › Subclass: [subclass] › Variant: [variant]`) with clickable levels to easily navigate up the hierarchy.
+     - **Focused Subclass Mode & "See Full Class":** Direct navigation from verb badges opens the view focused on that specific subclass, with a prominent "See Full Class [parentClass] →" button to expand to the full 2-level overview.
+     - **2-Level Flat Grouped Table:** Subclasses feature distinct header rows (with preconditions and verb count) followed by base subclass endings and indented variant rows (`↳ [variant]`) with diff highlights for endings variations in bold amber.
+     - **Interactive Highlighting & Filtering:** Clicking a subclass or variant row highlights the selection and filters the verbs list without hiding the rest of the table.
+
 ### Task: Firebase Integration for Cloud Data Backup, Auth, & Public Package Link Sharing
 - **Completion Date:** 2026-09-04
 - **Status:** `[Completed]`

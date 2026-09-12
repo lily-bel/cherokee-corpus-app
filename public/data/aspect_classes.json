@@ -1,0 +1,2078 @@
+{
+  "classes": [
+    {
+      "name": "a",
+      "mascot": {
+        "present": "ahiya'a",
+        "definition": "he/she is leaving it behind",
+        "corpus_id": 165
+      },
+      "subclasses": [
+        {
+          "name": "a",
+          "sub_key": "",
+          "preconditions": [],
+          "endings": {
+            "present": "-a'",
+            "imperfective": "-ahsk",
+            "perfective": "",
+            "imperative": "-a",
+            "infinitive": "-ahst"
+          },
+          "variants": [
+            {
+              "name": "a",
+              "endings": {
+                "present": "-a'",
+                "imperfective": "-ahsk",
+                "perfective": "",
+                "imperative": "-a",
+                "infinitive": "-ahst"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "g-ts",
+      "mascot": {
+        "present": "ugohniyoga",
+        "definition": "he/she is late",
+        "corpus_id": 1523
+      },
+      "subclasses": [
+        {
+          "name": "g-ts",
+          "sub_key": "",
+          "preconditions": [
+            "V"
+          ],
+          "endings": {
+            "present": "-k",
+            "imperfective": "-k",
+            "perfective": "-ts",
+            "imperative": "-ki",
+            "infinitive": "-hst"
+          },
+          "variants": [
+            {
+              "name": "g-ts",
+              "endings": {
+                "present": "-k",
+                "imperfective": "-k",
+                "perfective": "-ts",
+                "imperative": "-ki",
+                "infinitive": "-hst"
+              }
+            },
+            {
+              "name": "g-ts[inf2]",
+              "endings": {
+                "present": "-k",
+                "imperfective": "-k",
+                "perfective": "-ts",
+                "imperative": "-ki",
+                "infinitive": "-'ihst"
+              }
+            },
+            {
+              "name": "g-ts[inf3]",
+              "endings": {
+                "present": "-k",
+                "imperfective": "-k",
+                "perfective": "-ts",
+                "imperative": "-ki",
+                "infinitive": "-yhst"
+              }
+            },
+            {
+              "name": "g-ts[inf4]",
+              "endings": {
+                "present": "-k",
+                "imperfective": "-k",
+                "perfective": "-ts",
+                "imperative": "-ki",
+                "infinitive": "-ihst"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "hg-hts",
+      "mascot": {
+        "present": "ga'luhga",
+        "definition": "he/she is arriving",
+        "corpus_id": 858
+      },
+      "subclasses": [
+        {
+          "name": "hg-hts",
+          "sub_key": "",
+          "preconditions": [],
+          "endings": {
+            "present": "-hk",
+            "imperfective": "-hk",
+            "perfective": "-hts",
+            "imperative": "-hki",
+            "infinitive": "-hihst"
+          },
+          "variants": [
+            {
+              "name": "hg-hts",
+              "endings": {
+                "present": "-hk",
+                "imperfective": "-hk",
+                "perfective": "-hts",
+                "imperative": "-hki",
+                "infinitive": "-hihst"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "go-gots",
+      "mascot": {
+        "present": "asuligoga",
+        "definition": "he/she is quitting",
+        "corpus_id": 449
+      },
+      "subclasses": [
+        {
+          "name": "go-gots",
+          "sub_key": "",
+          "preconditions": [],
+          "endings": {
+            "present": "-kok",
+            "imperfective": "-kok",
+            "perfective": "-kots",
+            "imperative": "-ko'i",
+            "infinitive": "-kohst"
+          },
+          "variants": [
+            {
+              "name": "go-gots",
+              "endings": {
+                "present": "-kok",
+                "imperfective": "-kok",
+                "perfective": "-kots",
+                "imperative": "-ko'i",
+                "infinitive": "-kohst"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "sg-s",
+      "mascot": null,
+      "subclasses": [
+        {
+          "name": "sg-s-hi-hihst",
+          "sub_key": "hi-hihst",
+          "preconditions": [],
+          "endings": {
+            "present": "-hsk",
+            "imperfective": "-hsk",
+            "perfective": "-hs",
+            "imperative": "-hi",
+            "infinitive": "-hihst"
+          },
+          "variants": [
+            {
+              "name": "sg-s-hi-hihst",
+              "endings": {
+                "present": "-hsk",
+                "imperfective": "-hsk",
+                "perfective": "-hs",
+                "imperative": "-hi",
+                "infinitive": "-hihst"
+              }
+            }
+          ]
+        },
+        {
+          "name": "sg-s-a",
+          "sub_key": "a",
+          "preconditions": [
+            "C"
+          ],
+          "endings": {
+            "present": "-hsk",
+            "imperfective": "-hsk",
+            "perfective": "-hs",
+            "imperative": "-a",
+            "infinitive": "-hihst"
+          },
+          "variants": [
+            {
+              "name": "sg-s-a",
+              "endings": {
+                "present": "-hsk",
+                "imperfective": "-hsk",
+                "perfective": "-hs",
+                "imperative": "-a",
+                "infinitive": "-hihst"
+              }
+            },
+            {
+              "name": "sg-s-a[inf2]",
+              "endings": {
+                "present": "-hsk",
+                "imperfective": "-hsk",
+                "perfective": "-hs",
+                "imperative": "-a",
+                "infinitive": "-hst"
+              }
+            }
+          ]
+        },
+        {
+          "name": "sg-s-hst",
+          "sub_key": "hst",
+          "preconditions": [
+            "V"
+          ],
+          "endings": {
+            "present": "-hsk",
+            "imperfective": "-hsk",
+            "perfective": "-hs",
+            "imperative": "",
+            "infinitive": "-hst"
+          },
+          "variants": [
+            {
+              "name": "sg-s-hst",
+              "endings": {
+                "present": "-hsk",
+                "imperfective": "-hsk",
+                "perfective": "-hs",
+                "imperative": "",
+                "infinitive": "-hst"
+              }
+            },
+            {
+              "name": "sg-s-hst[imp2]",
+              "endings": {
+                "present": "-hsk",
+                "imperfective": "-hsk",
+                "perfective": "-hs",
+                "imperative": "-hi",
+                "infinitive": "-hst"
+              }
+            }
+          ]
+        },
+        {
+          "name": "sg-s-la",
+          "sub_key": "la",
+          "preconditions": [
+            "V"
+          ],
+          "endings": {
+            "present": "-hsk",
+            "imperfective": "-hsk",
+            "perfective": "-hs",
+            "imperative": "-la",
+            "infinitive": "-hst"
+          },
+          "variants": [
+            {
+              "name": "sg-s-la",
+              "endings": {
+                "present": "-hsk",
+                "imperfective": "-hsk",
+                "perfective": "-hs",
+                "imperative": "-la",
+                "infinitive": "-hst"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "sg-h",
+      "mascot": {
+        "present": "galuysga",
+        "definition": "he/she is chopping it",
+        "corpus_id": 862
+      },
+      "subclasses": [
+        {
+          "name": "sg-h",
+          "sub_key": "",
+          "preconditions": [],
+          "endings": {
+            "present": "-hsk",
+            "imperfective": "-hsk",
+            "perfective": "-h",
+            "imperative": "-ha",
+            "infinitive": "-hst"
+          },
+          "variants": [
+            {
+              "name": "sg-h",
+              "endings": {
+                "present": "-hsk",
+                "imperfective": "-hsk",
+                "perfective": "-h",
+                "imperative": "-ha",
+                "infinitive": "-hst"
+              }
+            },
+            {
+              "name": "sg-h[imp2]",
+              "endings": {
+                "present": "-hsk",
+                "imperfective": "-hsk",
+                "perfective": "-h",
+                "imperative": "",
+                "infinitive": "-hst"
+              }
+            }
+          ]
+        },
+        {
+          "name": "sg-h-hy",
+          "sub_key": "hy",
+          "preconditions": [
+            "V"
+          ],
+          "endings": {
+            "present": "-hsk",
+            "imperfective": "-hsk",
+            "perfective": "-yh",
+            "imperative": "-yha",
+            "infinitive": "-hst"
+          },
+          "variants": [
+            {
+              "name": "sg-h-hy",
+              "endings": {
+                "present": "-hsk",
+                "imperfective": "-hsk",
+                "perfective": "-yh",
+                "imperative": "-yha",
+                "infinitive": "-hst"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "hvsg",
+      "mascot": null,
+      "subclasses": [
+        {
+          "name": "hvsg-han",
+          "sub_key": "han",
+          "preconditions": [
+            "C"
+          ],
+          "endings": {
+            "present": "-hvhsk",
+            "imperfective": "-hvhsk",
+            "perfective": "-han",
+            "imperative": "-hvka",
+            "infinitive": "-ht"
+          },
+          "variants": [
+            {
+              "name": "hvsg-han",
+              "endings": {
+                "present": "-hvhsk",
+                "imperfective": "-hvhsk",
+                "perfective": "-han",
+                "imperative": "-hvka",
+                "infinitive": "-ht"
+              }
+            },
+            {
+              "name": "hvsg-han[inf2]",
+              "endings": {
+                "present": "-hvhsk",
+                "imperfective": "-hvhsk",
+                "perfective": "-han",
+                "imperative": "-hvka",
+                "infinitive": "-hvhst"
+              }
+            }
+          ]
+        },
+        {
+          "name": "hvsg-hn",
+          "sub_key": "hn",
+          "preconditions": [
+            "V"
+          ],
+          "endings": {
+            "present": "-hvhsk",
+            "imperfective": "-hvhsk",
+            "perfective": "-nh",
+            "imperative": "-hvka",
+            "infinitive": "-ht"
+          },
+          "variants": [
+            {
+              "name": "hvsg-hn",
+              "endings": {
+                "present": "-hvhsk",
+                "imperfective": "-hvhsk",
+                "perfective": "-nh",
+                "imperative": "-hvka",
+                "infinitive": "-ht"
+              }
+            },
+            {
+              "name": "hvsg-hn[inf2]",
+              "endings": {
+                "present": "-hvhsk",
+                "imperfective": "-hvhsk",
+                "perfective": "-nh",
+                "imperative": "-hvka",
+                "infinitive": "-ht"
+              }
+            },
+            {
+              "name": "hvsg-hn[inf3]",
+              "endings": {
+                "present": "-hvhsk",
+                "imperfective": "-hvhsk",
+                "perfective": "-nh",
+                "imperative": "-hvka",
+                "infinitive": "-hvhst"
+              }
+            },
+            {
+              "name": "hvsg-hn[inf4]",
+              "endings": {
+                "present": "-hvhsk",
+                "imperfective": "-hvhsk",
+                "perfective": "-nh",
+                "imperative": "-hvka",
+                "infinitive": "-oht"
+              }
+            }
+          ]
+        },
+        {
+          "name": "hvsg-n",
+          "sub_key": "n",
+          "preconditions": [
+            "hV"
+          ],
+          "endings": {
+            "present": "-hvhsk",
+            "imperfective": "-hvhsk",
+            "perfective": "-n",
+            "imperative": "-hvka",
+            "infinitive": "-oht"
+          },
+          "variants": [
+            {
+              "name": "hvsg-n",
+              "endings": {
+                "present": "-hvhsk",
+                "imperfective": "-hvhsk",
+                "perfective": "-n",
+                "imperative": "-hvka",
+                "infinitive": "-oht"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "husg",
+      "mascot": {
+        "present": "alsdvhlusga",
+        "definition": "he/she is taking a seat",
+        "corpus_id": 334
+      },
+      "subclasses": [
+        {
+          "name": "husg",
+          "sub_key": "",
+          "preconditions": [],
+          "endings": {
+            "present": "-huhsk",
+            "imperfective": "-huhsk",
+            "perfective": "-hun",
+            "imperative": "-huka",
+            "infinitive": "-huhst"
+          },
+          "variants": [
+            {
+              "name": "husg",
+              "endings": {
+                "present": "-huhsk",
+                "imperfective": "-huhsk",
+                "perfective": "-hun",
+                "imperative": "-huka",
+                "infinitive": "-huhst"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "vhvsg",
+      "mascot": {
+        "present": "alsdayvhvsga",
+        "definition": "he/she is eating a meal",
+        "corpus_id": 327
+      },
+      "subclasses": [
+        {
+          "name": "vhvsg",
+          "sub_key": "",
+          "preconditions": [],
+          "endings": {
+            "present": "-vhvhsk",
+            "imperfective": "-vhvhsk",
+            "perfective": "-vnh",
+            "imperative": "-vhvka",
+            "infinitive": "-ht"
+          },
+          "variants": [
+            {
+              "name": "vhvsg",
+              "endings": {
+                "present": "-vhvhsk",
+                "imperfective": "-vhvhsk",
+                "perfective": "-vnh",
+                "imperative": "-vhvka",
+                "infinitive": "-ht"
+              }
+            },
+            {
+              "name": "vhvsg[inf2]",
+              "endings": {
+                "present": "-vhvhsk",
+                "imperfective": "-vhvhsk",
+                "perfective": "-vnh",
+                "imperative": "-vhvka",
+                "infinitive": "-vhvhst"
+              }
+            },
+            {
+              "name": "vhvsg[imp2]",
+              "endings": {
+                "present": "-vhvhsk",
+                "imperfective": "-vhvhsk",
+                "perfective": "-vnh",
+                "imperative": "-vna",
+                "infinitive": "-ht"
+              }
+            },
+            {
+              "name": "vhvsg[imp2-inf2]",
+              "endings": {
+                "present": "-vhvhsk",
+                "imperfective": "-vhvhsk",
+                "perfective": "-vnh",
+                "imperative": "-vna",
+                "infinitive": "-vhvhst"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ohvsg",
+      "mascot": {
+        "present": "agohvsga",
+        "definition": "it's burning",
+        "corpus_id": 136
+      },
+      "subclasses": [
+        {
+          "name": "ohvsg",
+          "sub_key": "",
+          "preconditions": [
+            "C"
+          ],
+          "endings": {
+            "present": "-ohvhsk",
+            "imperfective": "-ohvhsk",
+            "perfective": "-onh",
+            "imperative": "-onha",
+            "infinitive": "-ohvhst"
+          },
+          "variants": [
+            {
+              "name": "ohvsg",
+              "endings": {
+                "present": "-ohvhsk",
+                "imperfective": "-ohvhsk",
+                "perfective": "-onh",
+                "imperative": "-onha",
+                "infinitive": "-ohvhst"
+              }
+            }
+          ]
+        },
+        {
+          "name": "ohvsg-no-o",
+          "sub_key": "no-o",
+          "preconditions": [
+            "V"
+          ],
+          "endings": {
+            "present": "-hvhsk",
+            "imperfective": "-hvhsk",
+            "perfective": "-nh",
+            "imperative": "-nha",
+            "infinitive": "-hvhst"
+          },
+          "variants": [
+            {
+              "name": "ohvsg-no-o",
+              "endings": {
+                "present": "-hvhsk",
+                "imperfective": "-hvhsk",
+                "perfective": "-nh",
+                "imperative": "-nha",
+                "infinitive": "-hvhst"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "e-aka",
+      "mascot": {
+        "present": "gahye'a",
+        "definition": "he/she is eating it (refers to a flexible object)",
+        "corpus_id": 818
+      },
+      "subclasses": [
+        {
+          "name": "e-aka",
+          "sub_key": "",
+          "preconditions": [],
+          "endings": {
+            "present": "-e'",
+            "imperfective": "-ehsk",
+            "perfective": "-a'",
+            "imperative": "-aka",
+            "infinitive": "-ehst"
+          },
+          "variants": [
+            {
+              "name": "e-aka",
+              "endings": {
+                "present": "-e'",
+                "imperfective": "-ehsk",
+                "perfective": "-a'",
+                "imperative": "-aka",
+                "infinitive": "-ehst"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "e-a",
+      "mascot": {
+        "present": "agoliye'a",
+        "definition": "he/she is reading",
+        "corpus_id": 138
+      },
+      "subclasses": [
+        {
+          "name": "e-a",
+          "sub_key": "",
+          "preconditions": [],
+          "endings": {
+            "present": "-e'",
+            "imperfective": "-ehsk",
+            "perfective": "-e'",
+            "imperative": "-a",
+            "infinitive": "-et"
+          },
+          "variants": [
+            {
+              "name": "e-a",
+              "endings": {
+                "present": "-e'",
+                "imperfective": "-ehsk",
+                "perfective": "-e'",
+                "imperative": "-a",
+                "infinitive": "-et"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "eh",
+      "mascot": null,
+      "subclasses": [
+        {
+          "name": "eh-eh",
+          "sub_key": "eh",
+          "preconditions": [],
+          "endings": {
+            "present": "-eh",
+            "imperfective": "-ehsk",
+            "perfective": "-eh",
+            "imperative": "-vla",
+            "infinitive": "-eht"
+          },
+          "variants": [
+            {
+              "name": "eh-eh",
+              "endings": {
+                "present": "-eh",
+                "imperfective": "-ehsk",
+                "perfective": "-eh",
+                "imperative": "-vla",
+                "infinitive": "-eht"
+              }
+            }
+          ]
+        },
+        {
+          "name": "eh-hehl",
+          "sub_key": "hehl",
+          "preconditions": [],
+          "endings": {
+            "present": "-heh",
+            "imperfective": "-hehsk",
+            "perfective": "-helh",
+            "imperative": "-hvla",
+            "infinitive": "-heht"
+          },
+          "variants": [
+            {
+              "name": "eh-hehl",
+              "endings": {
+                "present": "-heh",
+                "imperfective": "-hehsk",
+                "perfective": "-helh",
+                "imperative": "-hvla",
+                "infinitive": "-heht"
+              }
+            }
+          ]
+        },
+        {
+          "name": "eh-ehl",
+          "sub_key": "ehl",
+          "preconditions": [
+            "'"
+          ],
+          "endings": {
+            "present": "-eh",
+            "imperfective": "-ehsk",
+            "perfective": "-elh",
+            "imperative": "-vla",
+            "infinitive": "-eht"
+          },
+          "variants": [
+            {
+              "name": "eh-ehl",
+              "endings": {
+                "present": "-eh",
+                "imperfective": "-ehsk",
+                "perfective": "-elh",
+                "imperative": "-vla",
+                "infinitive": "-eht"
+              }
+            }
+          ]
+        },
+        {
+          "name": "eh-a",
+          "sub_key": "a",
+          "preconditions": [],
+          "endings": {
+            "present": "-eh",
+            "imperfective": "-ehsk",
+            "perfective": "-eh",
+            "imperative": "-a",
+            "infinitive": "-ht"
+          },
+          "variants": [
+            {
+              "name": "eh-a",
+              "endings": {
+                "present": "-eh",
+                "imperfective": "-ehsk",
+                "perfective": "-eh",
+                "imperative": "-a",
+                "infinitive": "-ht"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "eh-el",
+      "mascot": {
+        "present": "ganvneha",
+        "definition": "he/she is giving him/her an object (refers to a flexible object)",
+        "corpus_id": 950
+      },
+      "subclasses": [
+        {
+          "name": "eh-el",
+          "sub_key": "",
+          "preconditions": [],
+          "endings": {
+            "present": "-eh",
+            "imperfective": "-eh",
+            "perfective": "-el",
+            "imperative": "-hsi",
+            "infinitive": "-eht"
+          },
+          "variants": [
+            {
+              "name": "eh-el",
+              "endings": {
+                "present": "-eh",
+                "imperfective": "-eh",
+                "perfective": "-el",
+                "imperative": "-hsi",
+                "infinitive": "-eht"
+              }
+            },
+            {
+              "name": "eh-el[imp2]",
+              "endings": {
+                "present": "-eh",
+                "imperfective": "-eh",
+                "perfective": "-el",
+                "imperative": "-hsi",
+                "infinitive": "-eht"
+              }
+            },
+            {
+              "name": "eh-el[imp3]",
+              "endings": {
+                "present": "-eh",
+                "imperfective": "-eh",
+                "perfective": "-el",
+                "imperative": "-ihsi",
+                "infinitive": "-eht"
+              }
+            },
+            {
+              "name": "eh-el[imp4]",
+              "endings": {
+                "present": "-eh",
+                "imperfective": "-eh",
+                "perfective": "-el",
+                "imperative": "-vla",
+                "infinitive": "-eht"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "eg",
+      "mascot": null,
+      "subclasses": [
+        {
+          "name": "eg-vs",
+          "sub_key": "vs",
+          "preconditions": [],
+          "endings": {
+            "present": "-ek",
+            "imperfective": "-ek",
+            "perfective": "-vhs",
+            "imperative": "-uka",
+            "infinitive": "-vhst"
+          },
+          "variants": [
+            {
+              "name": "eg-vs",
+              "endings": {
+                "present": "-ek",
+                "imperfective": "-ek",
+                "perfective": "-vhs",
+                "imperative": "-uka",
+                "infinitive": "-vhst"
+              }
+            },
+            {
+              "name": "eg-vs[pres2]",
+              "endings": {
+                "present": "",
+                "imperfective": "-ek",
+                "perfective": "-vhs",
+                "imperative": "-uka",
+                "infinitive": "-vhst"
+              }
+            }
+          ]
+        },
+        {
+          "name": "eg-invs",
+          "sub_key": "invs",
+          "preconditions": [],
+          "endings": {
+            "present": "-ek",
+            "imperfective": "-ek",
+            "perfective": "-invhs",
+            "imperative": "-uka",
+            "infinitive": "-invt"
+          },
+          "variants": [
+            {
+              "name": "eg-invs",
+              "endings": {
+                "present": "-ek",
+                "imperfective": "-ek",
+                "perfective": "-invhs",
+                "imperative": "-uka",
+                "infinitive": "-invt"
+              }
+            },
+            {
+              "name": "eg-invs[perf2]",
+              "endings": {
+                "present": "-ek",
+                "imperfective": "-ek",
+                "perfective": "-ehs",
+                "imperative": "-uka",
+                "infinitive": "-invt"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ih-ohd",
+      "mascot": {
+        "present": "anehldiha",
+        "definition": "he/she is attempting it",
+        "corpus_id": 361
+      },
+      "subclasses": [
+        {
+          "name": "ih-ohd",
+          "sub_key": "",
+          "preconditions": [],
+          "endings": {
+            "present": "-ih",
+            "imperfective": "-ihsk",
+            "perfective": "-han",
+            "imperative": "-a",
+            "infinitive": "-oht"
+          },
+          "variants": [
+            {
+              "name": "ih-ohd",
+              "endings": {
+                "present": "-ih",
+                "imperfective": "-ihsk",
+                "perfective": "-han",
+                "imperative": "-a",
+                "infinitive": "-oht"
+              }
+            },
+            {
+              "name": "ih-ohd[perf2]",
+              "endings": {
+                "present": "-ih",
+                "imperfective": "-ihsk",
+                "perfective": "-anh",
+                "imperative": "-a",
+                "infinitive": "-oht"
+              }
+            },
+            {
+              "name": "ih-ohd[perf3]",
+              "endings": {
+                "present": "-ih",
+                "imperfective": "-ihsk",
+                "perfective": "-an",
+                "imperative": "-a",
+                "infinitive": "-oht"
+              }
+            },
+            {
+              "name": "ih-ohd[pres2]",
+              "endings": {
+                "present": "",
+                "imperfective": "-ihsk",
+                "perfective": "-han",
+                "imperative": "-a",
+                "infinitive": "-oht"
+              }
+            },
+            {
+              "name": "ih-ohd[pres2-perf2]",
+              "endings": {
+                "present": "",
+                "imperfective": "-ihsk",
+                "perfective": "-anh",
+                "imperative": "-a",
+                "infinitive": "-oht"
+              }
+            },
+            {
+              "name": "ih-ohd[pres2-perf3]",
+              "endings": {
+                "present": "",
+                "imperfective": "-ihsk",
+                "perfective": "-an",
+                "imperative": "-a",
+                "infinitive": "-oht"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ih-il",
+      "mascot": {
+        "present": "dasihtvniha",
+        "definition": "he/she is clapping his/her hands",
+        "corpus_id": 609
+      },
+      "subclasses": [
+        {
+          "name": "ih-il",
+          "sub_key": "",
+          "preconditions": [],
+          "endings": {
+            "present": "-ih",
+            "imperfective": "-ih",
+            "perfective": "-il",
+            "imperative": "-ika",
+            "infinitive": "-ihst"
+          },
+          "variants": [
+            {
+              "name": "ih-il",
+              "endings": {
+                "present": "-ih",
+                "imperfective": "-ih",
+                "perfective": "-il",
+                "imperative": "-ika",
+                "infinitive": "-ihst"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "hih",
+      "mascot": null,
+      "subclasses": [
+        {
+          "name": "hih-hil",
+          "sub_key": "hil",
+          "preconditions": [
+            "C"
+          ],
+          "endings": {
+            "present": "-hih",
+            "imperfective": "-hih",
+            "perfective": "-hil",
+            "imperative": "-hka",
+            "infinitive": "-hst"
+          },
+          "variants": [
+            {
+              "name": "hih-hil",
+              "endings": {
+                "present": "-hih",
+                "imperfective": "-hih",
+                "perfective": "-hil",
+                "imperative": "-hka",
+                "infinitive": "-hst"
+              }
+            },
+            {
+              "name": "hih-hil[imp2]",
+              "endings": {
+                "present": "-hih",
+                "imperfective": "-hih",
+                "perfective": "-hil",
+                "imperative": "-hika",
+                "infinitive": "-hst"
+              }
+            }
+          ]
+        },
+        {
+          "name": "hih-hilh",
+          "sub_key": "hilh",
+          "preconditions": [
+            "C"
+          ],
+          "endings": {
+            "present": "-hih",
+            "imperfective": "-hih",
+            "perfective": "-hilh",
+            "imperative": "-hika",
+            "infinitive": "-hihst"
+          },
+          "variants": [
+            {
+              "name": "hih-hilh",
+              "endings": {
+                "present": "-hih",
+                "imperfective": "-hih",
+                "perfective": "-hilh",
+                "imperative": "-hika",
+                "infinitive": "-hihst"
+              }
+            }
+          ]
+        },
+        {
+          "name": "hih-lh",
+          "sub_key": "lh",
+          "preconditions": [
+            "V"
+          ],
+          "endings": {
+            "present": "-hih",
+            "imperfective": "-hih",
+            "perfective": "-lh",
+            "imperative": "-ka",
+            "infinitive": "-hst"
+          },
+          "variants": [
+            {
+              "name": "hih-lh",
+              "endings": {
+                "present": "-hih",
+                "imperfective": "-hih",
+                "perfective": "-lh",
+                "imperative": "-ka",
+                "infinitive": "-hst"
+              }
+            },
+            {
+              "name": "hih-lh[imp2]",
+              "endings": {
+                "present": "-hih",
+                "imperfective": "-hih",
+                "perfective": "-lh",
+                "imperative": "-ha",
+                "infinitive": "-hst"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ih-vh",
+      "mascot": {
+        "present": "uduliha",
+        "definition": "he/she wants it",
+        "corpus_id": 1507
+      },
+      "subclasses": [
+        {
+          "name": "ih-vh",
+          "sub_key": "",
+          "preconditions": [],
+          "endings": {
+            "present": "-ih",
+            "imperfective": "-ihsk",
+            "perfective": "-vh",
+            "imperative": "-a",
+            "infinitive": "-ht"
+          },
+          "variants": [
+            {
+              "name": "ih-vh",
+              "endings": {
+                "present": "-ih",
+                "imperfective": "-ihsk",
+                "perfective": "-vh",
+                "imperative": "-a",
+                "infinitive": "-ht"
+              }
+            },
+            {
+              "name": "ih-vh[inf2]",
+              "endings": {
+                "present": "-ih",
+                "imperfective": "-ihsk",
+                "perfective": "-vh",
+                "imperative": "-a",
+                "infinitive": "-vht"
+              }
+            },
+            {
+              "name": "ih-vh[imperf2]",
+              "endings": {
+                "present": "-ih",
+                "imperfective": "-ih",
+                "perfective": "-vh",
+                "imperative": "-a",
+                "infinitive": "-ht"
+              }
+            },
+            {
+              "name": "ih-vh[imperf2-inf2]",
+              "endings": {
+                "present": "-ih",
+                "imperfective": "-ih",
+                "perfective": "-vh",
+                "imperative": "-a",
+                "infinitive": "-vht"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "vnh",
+      "mascot": null,
+      "subclasses": [
+        {
+          "name": "vnh-ih-a",
+          "sub_key": "ih-a",
+          "preconditions": [],
+          "endings": {
+            "present": "-ih",
+            "imperfective": "-ihsk",
+            "perfective": "-vnh",
+            "imperative": "-a",
+            "infinitive": "-ht"
+          },
+          "variants": [
+            {
+              "name": "vnh-ih-a",
+              "endings": {
+                "present": "-ih",
+                "imperfective": "-ihsk",
+                "perfective": "-vnh",
+                "imperative": "-a",
+                "infinitive": "-ht"
+              }
+            }
+          ]
+        },
+        {
+          "name": "vnh-vsk",
+          "sub_key": "vsk",
+          "preconditions": [],
+          "endings": {
+            "present": "-vhsk",
+            "imperfective": "-vhsk",
+            "perfective": "-vnh",
+            "imperative": "-vna",
+            "infinitive": "-ht"
+          },
+          "variants": [
+            {
+              "name": "vnh-vsk",
+              "endings": {
+                "present": "-vhsk",
+                "imperfective": "-vhsk",
+                "perfective": "-vnh",
+                "imperative": "-vna",
+                "infinitive": "-ht"
+              }
+            },
+            {
+              "name": "vnh-vsk[inf2]",
+              "endings": {
+                "present": "-vhsk",
+                "imperfective": "-vhsk",
+                "perfective": "-vnh",
+                "imperative": "-vna",
+                "infinitive": "-vht"
+              }
+            },
+            {
+              "name": "vnh-vsk[inf3]",
+              "endings": {
+                "present": "-vhsk",
+                "imperfective": "-vhsk",
+                "perfective": "-vnh",
+                "imperative": "-vna",
+                "infinitive": "-vnht"
+              }
+            },
+            {
+              "name": "vnh-vsk[inf4]",
+              "endings": {
+                "present": "-vhsk",
+                "imperfective": "-vhsk",
+                "perfective": "-vnh",
+                "imperative": "-vna",
+                "infinitive": "-vhst"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "i-vka",
+      "mascot": {
+        "present": "gohweli'a",
+        "definition": "he/she is writing it",
+        "corpus_id": 1027
+      },
+      "subclasses": [
+        {
+          "name": "i-vka",
+          "sub_key": "",
+          "preconditions": [],
+          "endings": {
+            "present": "-i'",
+            "imperfective": "-ihsk",
+            "perfective": "-an",
+            "imperative": "-vka",
+            "infinitive": "-ot"
+          },
+          "variants": [
+            {
+              "name": "i-vka",
+              "endings": {
+                "present": "-i'",
+                "imperfective": "-ihsk",
+                "perfective": "-an",
+                "imperative": "-vka",
+                "infinitive": "-ot"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "i-a",
+      "mascot": null,
+      "subclasses": [
+        {
+          "name": "i-a-i",
+          "sub_key": "i",
+          "preconditions": [],
+          "endings": {
+            "present": "-i'",
+            "imperfective": "-ihsk",
+            "perfective": "",
+            "imperative": "-a",
+            "infinitive": "-ihst"
+          },
+          "variants": [
+            {
+              "name": "i-a-i",
+              "endings": {
+                "present": "-i'",
+                "imperfective": "-ihsk",
+                "perfective": "",
+                "imperative": "-a",
+                "infinitive": "-ihst"
+              }
+            },
+            {
+              "name": "i-a-i[perf2]",
+              "endings": {
+                "present": "-i'",
+                "imperfective": "-ihsk",
+                "perfective": "-ihs",
+                "imperative": "-a",
+                "infinitive": "-ihst"
+              }
+            }
+          ]
+        },
+        {
+          "name": "i-a-ihsk",
+          "sub_key": "ihsk",
+          "preconditions": [],
+          "endings": {
+            "present": "-ihsk",
+            "imperfective": "-ihsk",
+            "perfective": "-ihs",
+            "imperative": "-a",
+            "infinitive": "-ihst"
+          },
+          "variants": [
+            {
+              "name": "i-a-ihsk",
+              "endings": {
+                "present": "-ihsk",
+                "imperfective": "-ihsk",
+                "perfective": "-ihs",
+                "imperative": "-a",
+                "infinitive": "-ihst"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ih-ihi",
+      "mascot": {
+        "present": "gawoniha",
+        "definition": "he/she is speaking",
+        "corpus_id": 983
+      },
+      "subclasses": [
+        {
+          "name": "ih-ihi",
+          "sub_key": "",
+          "preconditions": [],
+          "endings": {
+            "present": "-ih",
+            "imperfective": "-ihsk",
+            "perfective": "-ihs",
+            "imperative": "-ihi",
+            "infinitive": "-ihihst"
+          },
+          "variants": [
+            {
+              "name": "ih-ihi",
+              "endings": {
+                "present": "-ih",
+                "imperfective": "-ihsk",
+                "perfective": "-ihs",
+                "imperative": "-ihi",
+                "infinitive": "-ihihst"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "o",
+      "mascot": {
+        "present": "ahnawo'a",
+        "definition": "he/she is putting on a shirt",
+        "corpus_id": 189
+      },
+      "subclasses": [
+        {
+          "name": "o",
+          "sub_key": "",
+          "preconditions": [
+            "C"
+          ],
+          "endings": {
+            "present": "-o'",
+            "imperfective": "-ohsk",
+            "perfective": "-o'",
+            "imperative": "-otsa",
+            "infinitive": "-ohst"
+          },
+          "variants": [
+            {
+              "name": "o",
+              "endings": {
+                "present": "-o'",
+                "imperfective": "-ohsk",
+                "perfective": "-o'",
+                "imperative": "-otsa",
+                "infinitive": "-ohst"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "oh-ol-a",
+      "mascot": {
+        "present": "edoha",
+        "definition": "he/she is walking around",
+        "corpus_id": 742
+      },
+      "subclasses": [
+        {
+          "name": "oh-ol-a",
+          "sub_key": "",
+          "preconditions": [],
+          "endings": {
+            "present": "-oh",
+            "imperfective": "-oh",
+            "perfective": "-ol",
+            "imperative": "-a",
+            "infinitive": "-ahst"
+          },
+          "variants": [
+            {
+              "name": "oh-ol-a",
+              "endings": {
+                "present": "-oh",
+                "imperfective": "-oh",
+                "perfective": "-ol",
+                "imperative": "-a",
+                "infinitive": "-ahst"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "oh",
+      "mascot": null,
+      "subclasses": [
+        {
+          "name": "oh-al",
+          "sub_key": "al",
+          "preconditions": [],
+          "endings": {
+            "present": "-hoh",
+            "imperfective": "-hoh",
+            "perfective": "-hal",
+            "imperative": "-hka",
+            "infinitive": "-hst"
+          },
+          "variants": [
+            {
+              "name": "oh-al",
+              "endings": {
+                "present": "-hoh",
+                "imperfective": "-hoh",
+                "perfective": "-hal",
+                "imperative": "-hka",
+                "infinitive": "-hst"
+              }
+            },
+            {
+              "name": "oh-al[imp2]",
+              "endings": {
+                "present": "-hoh",
+                "imperfective": "-hoh",
+                "perfective": "-hal",
+                "imperative": "-aka",
+                "infinitive": "-hst"
+              }
+            }
+          ]
+        },
+        {
+          "name": "oh-ol",
+          "sub_key": "ol",
+          "preconditions": [],
+          "endings": {
+            "present": "-oh",
+            "imperfective": "-oh",
+            "perfective": "-ol",
+            "imperative": "-aka",
+            "infinitive": "-ot"
+          },
+          "variants": [
+            {
+              "name": "oh-ol",
+              "endings": {
+                "present": "-oh",
+                "imperfective": "-oh",
+                "perfective": "-ol",
+                "imperative": "-aka",
+                "infinitive": "-ot"
+              }
+            },
+            {
+              "name": "oh-ol[inf2]",
+              "endings": {
+                "present": "-oh",
+                "imperfective": "-oh",
+                "perfective": "-ol",
+                "imperative": "-aka",
+                "infinitive": "-hst"
+              }
+            },
+            {
+              "name": "oh-ol[inf3]",
+              "endings": {
+                "present": "-oh",
+                "imperfective": "-oh",
+                "perfective": "-ol",
+                "imperative": "-aka",
+                "infinitive": "-ahst"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "v-vhs",
+      "mascot": {
+        "present": "ganedliyv'a",
+        "definition": "he/she is changing it",
+        "corpus_id": 880
+      },
+      "subclasses": [
+        {
+          "name": "v-vhs",
+          "sub_key": "",
+          "preconditions": [
+            "C"
+          ],
+          "endings": {
+            "present": "-v'",
+            "imperfective": "-vhsk",
+            "perfective": "-vhs",
+            "imperative": "-vna",
+            "infinitive": "-vhst"
+          },
+          "variants": [
+            {
+              "name": "v-vhs",
+              "endings": {
+                "present": "-v'",
+                "imperfective": "-vhsk",
+                "perfective": "-vhs",
+                "imperative": "-vna",
+                "infinitive": "-vhst"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "vsk",
+      "mascot": {
+        "present": "ahliyvhgwidvsga",
+        "definition": "it's bending",
+        "corpus_id": 175
+      },
+      "subclasses": [
+        {
+          "name": "vsk",
+          "sub_key": "",
+          "preconditions": [
+            "C"
+          ],
+          "endings": {
+            "present": "-vhsk",
+            "imperfective": "-vhsk",
+            "perfective": "-vn",
+            "imperative": "-vka",
+            "infinitive": "-vt"
+          },
+          "variants": [
+            {
+              "name": "vsk",
+              "endings": {
+                "present": "-vhsk",
+                "imperfective": "-vhsk",
+                "perfective": "-vn",
+                "imperative": "-vka",
+                "infinitive": "-vt"
+              }
+            },
+            {
+              "name": "vsk[imp2]",
+              "endings": {
+                "present": "-vhsk",
+                "imperfective": "-vhsk",
+                "perfective": "-vn",
+                "imperative": "-v'vka",
+                "infinitive": "-vt"
+              }
+            }
+          ]
+        },
+        {
+          "name": "vsk-long",
+          "sub_key": "long",
+          "preconditions": [
+            "C"
+          ],
+          "endings": {
+            "present": "-v'vhsk",
+            "imperfective": "-v'vhsk",
+            "perfective": "-vn",
+            "imperative": "-vka",
+            "infinitive": "-vt"
+          },
+          "variants": [
+            {
+              "name": "vsk-long",
+              "endings": {
+                "present": "-v'vhsk",
+                "imperfective": "-v'vhsk",
+                "perfective": "-vn",
+                "imperative": "-vka",
+                "infinitive": "-vt"
+              }
+            },
+            {
+              "name": "vsk-long[imp2]",
+              "endings": {
+                "present": "-v'vhsk",
+                "imperfective": "-v'vhsk",
+                "perfective": "-vn",
+                "imperative": "-v'vka",
+                "infinitive": "-vt"
+              }
+            }
+          ]
+        },
+        {
+          "name": "vsk-post-v",
+          "sub_key": "post-v",
+          "preconditions": [
+            "V"
+          ],
+          "endings": {
+            "present": "-'vhsk",
+            "imperfective": "-'vhsk",
+            "perfective": "-n",
+            "imperative": "-'vka",
+            "infinitive": "-t"
+          },
+          "variants": [
+            {
+              "name": "vsk-post-v",
+              "endings": {
+                "present": "-'vhsk",
+                "imperfective": "-'vhsk",
+                "perfective": "-n",
+                "imperative": "-'vka",
+                "infinitive": "-t"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "rev",
+      "mascot": null,
+      "subclasses": [
+        {
+          "name": "rev-gi",
+          "sub_key": "gi",
+          "preconditions": [],
+          "endings": {
+            "present": "-ki'",
+            "imperfective": "-kihsk",
+            "perfective": "-kihs",
+            "imperative": "-ki",
+            "infinitive": "-kihst"
+          },
+          "variants": [
+            {
+              "name": "rev-gi",
+              "endings": {
+                "present": "-ki'",
+                "imperfective": "-kihsk",
+                "perfective": "-kihs",
+                "imperative": "-ki",
+                "infinitive": "-kihst"
+              }
+            }
+          ]
+        },
+        {
+          "name": "rev-i",
+          "sub_key": "i",
+          "preconditions": [],
+          "endings": {
+            "present": "-i'",
+            "imperfective": "-ihsk",
+            "perfective": "-ihs",
+            "imperative": "-i",
+            "infinitive": "-ihst"
+          },
+          "variants": [
+            {
+              "name": "rev-i",
+              "endings": {
+                "present": "-i'",
+                "imperfective": "-ihsk",
+                "perfective": "-ihs",
+                "imperative": "-i",
+                "infinitive": "-ihst"
+              }
+            }
+          ]
+        },
+        {
+          "name": "rev-'i",
+          "sub_key": "'i",
+          "preconditions": [],
+          "endings": {
+            "present": "-'i'",
+            "imperfective": "-'ihsk",
+            "perfective": "-'ihs",
+            "imperative": "-'i",
+            "infinitive": "-'ihst"
+          },
+          "variants": [
+            {
+              "name": "rev-'i",
+              "endings": {
+                "present": "-'i'",
+                "imperfective": "-'ihsk",
+                "perfective": "-'ihs",
+                "imperative": "-'i",
+                "infinitive": "-'ihst"
+              }
+            }
+          ]
+        },
+        {
+          "name": "rev-e",
+          "sub_key": "e",
+          "preconditions": [],
+          "endings": {
+            "present": "-e'",
+            "imperfective": "-ehsk",
+            "perfective": "-ehs",
+            "imperative": "-aki",
+            "infinitive": "-ehst"
+          },
+          "variants": [
+            {
+              "name": "rev-e",
+              "endings": {
+                "present": "-e'",
+                "imperfective": "-ehsk",
+                "perfective": "-ehs",
+                "imperative": "-aki",
+                "infinitive": "-ehst"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "stative",
+      "mascot": {
+        "present": "ganela",
+        "definition": "he/she lives (in sense of resides now)",
+        "corpus_id": 893
+      },
+      "subclasses": [
+        {
+          "name": "stative",
+          "sub_key": "",
+          "preconditions": [],
+          "endings": {
+            "present": "",
+            "imperfective": "",
+            "perfective": "",
+            "imperative": "",
+            "infinitive": ""
+          },
+          "variants": [
+            {
+              "name": "stative",
+              "endings": {
+                "present": "",
+                "imperfective": "",
+                "perfective": "",
+                "imperative": "",
+                "infinitive": ""
+              }
+            }
+          ]
+        },
+        {
+          "name": "stative-k",
+          "sub_key": "k",
+          "preconditions": [],
+          "endings": {
+            "present": "-k",
+            "imperfective": "-k",
+            "perfective": "",
+            "imperative": "",
+            "infinitive": ""
+          },
+          "variants": [
+            {
+              "name": "stative-k",
+              "endings": {
+                "present": "-k",
+                "imperfective": "-k",
+                "perfective": "",
+                "imperative": "",
+                "infinitive": ""
+              }
+            }
+          ]
+        },
+        {
+          "name": "stative-h",
+          "sub_key": "h",
+          "preconditions": [],
+          "endings": {
+            "present": "-h",
+            "imperfective": "-h",
+            "perfective": "",
+            "imperative": "",
+            "infinitive": ""
+          },
+          "variants": [
+            {
+              "name": "stative-h",
+              "endings": {
+                "present": "-h",
+                "imperfective": "-h",
+                "perfective": "",
+                "imperative": "",
+                "infinitive": ""
+              }
+            }
+          ]
+        },
+        {
+          "name": "stative-s",
+          "sub_key": "s",
+          "preconditions": [],
+          "endings": {
+            "present": "-h",
+            "imperfective": "-hs",
+            "perfective": "",
+            "imperative": "",
+            "infinitive": ""
+          },
+          "variants": [
+            {
+              "name": "stative-s",
+              "endings": {
+                "present": "-h",
+                "imperfective": "-hs",
+                "perfective": "",
+                "imperative": "",
+                "infinitive": ""
+              }
+            }
+          ]
+        },
+        {
+          "name": "stative-a'",
+          "sub_key": "a'",
+          "preconditions": [],
+          "endings": {
+            "present": "-a'",
+            "imperfective": "-a'",
+            "perfective": "",
+            "imperative": "",
+            "infinitive": ""
+          },
+          "variants": [
+            {
+              "name": "stative-a'",
+              "endings": {
+                "present": "-a'",
+                "imperfective": "-a'",
+                "perfective": "",
+                "imperative": "",
+                "infinitive": ""
+              }
+            }
+          ]
+        },
+        {
+          "name": "stative-eh",
+          "sub_key": "eh",
+          "preconditions": [],
+          "endings": {
+            "present": "-eh",
+            "imperfective": "-eh",
+            "perfective": "",
+            "imperative": "",
+            "infinitive": ""
+          },
+          "variants": [
+            {
+              "name": "stative-eh",
+              "endings": {
+                "present": "-eh",
+                "imperfective": "-eh",
+                "perfective": "",
+                "imperative": "",
+                "infinitive": ""
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "subclass_to_class": {
+    "a": "a",
+    "g-ts": "g-ts",
+    "hg-hts": "hg-hts",
+    "go-gots": "go-gots",
+    "sg-s-hi-hihst": "sg-s",
+    "sg-s-a": "sg-s",
+    "sg-s-hst": "sg-s",
+    "sg-s-la": "sg-s",
+    "sg-h": "sg-h",
+    "sg-h-hy": "sg-h",
+    "hvsg-han": "hvsg",
+    "hvsg-hn": "hvsg",
+    "hvsg-n": "hvsg",
+    "husg": "husg",
+    "vhvsg": "vhvsg",
+    "ohvsg": "ohvsg",
+    "ohvsg-no-o": "ohvsg",
+    "e-aka": "e-aka",
+    "e-a": "e-a",
+    "eh-eh": "eh",
+    "eh-hehl": "eh",
+    "eh-ehl": "eh",
+    "eh-a": "eh",
+    "eh-el": "eh-el",
+    "eg-vs": "eg",
+    "eg-invs": "eg",
+    "ih-ohd": "ih-ohd",
+    "ih-il": "ih-il",
+    "hih-hil": "hih",
+    "hih-hilh": "hih",
+    "hih-lh": "hih",
+    "ih-vh": "ih-vh",
+    "vnh-ih-a": "vnh",
+    "vnh-vsk": "vnh",
+    "i-vka": "i-vka",
+    "i-a-i": "i-a",
+    "i-a-ihsk": "i-a",
+    "ih-ihi": "ih-ihi",
+    "o": "o",
+    "oh-ol-a": "oh-ol-a",
+    "oh-al": "oh",
+    "oh-ol": "oh",
+    "v-vhs": "v-vhs",
+    "vsk": "vsk",
+    "vsk-long": "vsk",
+    "vsk-post-v": "vsk",
+    "rev-gi": "rev",
+    "rev-i": "rev",
+    "rev-'i": "rev",
+    "rev-e": "rev",
+    "stative": "stative",
+    "stative-k": "stative",
+    "stative-h": "stative",
+    "stative-s": "stative",
+    "stative-a'": "stative",
+    "stative-eh": "stative"
+  }
+}
