@@ -734,8 +734,10 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                             )}
                             {Object.keys(customLists).map(listKey => {
                                 const list = customLists[listKey];
-                                const isChecked = Array.isArray(list) ? list.includes(listId) : list.items.includes(listId);
-                                const name = Array.isArray(list) ? listKey : list.name;
+                                if (!list) return null;
+                                const items = Array.isArray(list) ? list : (list.items || []);
+                                const isChecked = items.includes(listId);
+                                const name = Array.isArray(list) ? listKey : (list.name || listKey);
                                 return (
                                     <label key={listKey} className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 dark:border-slate-800 active:bg-slate-50 dark:active:bg-slate-800 cursor-pointer">
                                         <input type="checkbox" checked={isChecked} onChange={() => onToggleList && onToggleList(listKey, listId)} className="w-5 h-5 accent-amber-500" />
@@ -747,11 +749,16 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                                 );
                             })}
                         </div>
-                        {onOpenNewListModal && (
-                            <button onClick={() => { setShowListSheet(false); onOpenNewListModal(listId); }} className="w-full py-3 bg-slate-900 dark:bg-slate-800 text-white font-bold rounded-xl flex items-center justify-center gap-2 shrink-0">
-                                <Plus size={20} /> Create New List
+                        <div className="flex gap-2 shrink-0">
+                            {onOpenNewListModal && (
+                                <button onClick={() => { setShowListSheet(false); onOpenNewListModal(listId); }} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors text-sm sm:text-base">
+                                    <Plus size={20} /> Create New List
+                                </button>
+                            )}
+                            <button onClick={() => setShowListSheet(false)} className="flex-1 py-3 bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-colors text-sm sm:text-base">
+                                Done
                             </button>
-                        )}
+                        </div>
                     </div>
                 </div>
             )}

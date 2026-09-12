@@ -1,22 +1,25 @@
 
 
 
-const IconBase = ({ path, size = 24, className = "", stroke = "currentColor", fill = "none", ...props }: any) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill={fill}
-    stroke={stroke}
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
-    {...props}
-  >
-    {path}
-  </svg>
-);
+const IconBase = ({ path, size = 24, className = "", stroke = "currentColor", fill = "none", ...props }: any) => {
+  const remSize = typeof size === 'number' ? `${size / 16}rem` : size;
+  return (
+    <svg
+      width={remSize}
+      height={remSize}
+      viewBox="0 0 24 24"
+      fill={fill}
+      stroke={stroke}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      {...props}
+    >
+      {path}
+    </svg>
+  );
+};
 
 export const RainbowGradient = () => (
   <div style={{ width: 0, height: 0, overflow: 'hidden', position: 'absolute', pointerEvents: 'none' }} aria-hidden="true">
@@ -93,34 +96,37 @@ export const Merge = (p) => <IconBase {...p} path={<><path d="M8 18L12 22L16 18"
 export const Globe = (p) => <IconBase {...p} path={<><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></>} />;
 export const FileCode = (p) => <IconBase {...p} path={<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><path d="M8 13l3 3-3 3" /><path d="M16 19l-3-3 3-3" /></>} />;
 
-export const TranslateCherokee = ({ size = 20, className = "", ...props }: any) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 299 299"
-    className={className}
-    {...props}
-  >
-    <g>
-      <text xmlSpace="preserve" textAnchor="start" fontFamily="Noto Sans JP" fontSize="250" id="svg_2" y="285.68428" x="161.71345" strokeWidth="0" stroke="#000" fill="currentColor">s</text>
-      <path id="svg_3" d="m-45.59738,152.81233" opacity="NaN" strokeWidth="0" stroke="#000" fill="#c17d7d" />
-      <path id="svg_5" d="m44.47996,115.6546" opacity="NaN" strokeWidth="0" stroke="#000" fill="#000000" />
-      <path fill="#fff" stroke="currentColor" opacity="NaN" d="m43.46378,116.20141" id="svg_4" />
-      <path fill="#c17d7d" stroke="currentColor" strokeWidth="0" opacity="NaN" d="m78.24638,161.08942" id="svg_7" />
-      <path fill="none" stroke="currentColor" d="m44.25429,116.20141c13.83399,0 32.01581,11.85771 32.41107,43.87352c0.39526,32.01581 -16.20553,44.26877 -33.20158,44.66403c-16.99605,0.39526 -31.62055,-18.18182 -32.01581,-44.66403c-0.39526,-26.48221 18.97233,-43.87352 32.80632,-43.87352z" id="svg_6" strokeWidth="17" fillOpacity="0" />
-      <path fill="#c17d7d" stroke="currentColor" strokeWidth="0" d="m125.72334,158.34239c0.34913,0.37549 -45.10541,-0.01977 -45.45454,0l45.45454,0z" id="svg_8" />
-      <path fill="none" stroke="currentColor" opacity="NaN" d="m79.0369,159.66649c1.18577,0 47.43083,0.39526 47.0817,0.25693" id="svg_10" strokeWidth="17" fillOpacity="0" />
-      <path fill="#fff" stroke="currentColor" opacity="NaN" d="m97.16131,115.39771l59.88408,-0.13833l-29.61137,0" id="svg_11" strokeWidth="17" />
-      <path fill="#000000" stroke="currentColor" strokeWidth="0" opacity="NaN" d="m125.11067,66.20141" id="svg_15" />
-      <path fill="none" stroke="currentColor" opacity="NaN" d="m127.08696,115.21327l-0.57311,43.52438c0.17785,0.34914 -4.56523,44.61791 36.93674,45.40843" id="svg_18" strokeWidth="17" fillOpacity="0" />
-      <path strokeWidth="10" id="svg_17" d="m271.67032,128.23457c52.46913,-75.30864 -21.60494,-119.1358 -48.76543,-88.2716" opacity="NaN" stroke="currentColor" fill="none" />
-      <path id="svg_19" d="m-91.24582,-29.05917l0.3725,-0.3725l0,0.18625l0.55875,0l0,-0.55875l-0.18625,0l0.3725,-0.3725l0.3725,0.3725l-0.18625,0l0,0.93125l-0.93125,0l0,0.18625l-0.3725,-0.3725l0,0z" stroke="currentColor" fill="none" />
-      <path fillOpacity="0" strokeWidth="10" id="svg_28" d="m226.91467,10.91666l-5.16563,30.33334l27.5,0.625" opacity="NaN" stroke="currentColor" fill="none" />
-      <path fillOpacity="0" strokeWidth="10" id="svg_29" d="m290.66467,127.79166l-22.66563,5.33334l-1.25,-26.875" opacity="NaN" stroke="currentColor" fill="none" />
-      <path id="svg_35" d="m81.79845,68.66537c7.75194,-6.97674 23.25581,-24.03101 46.51163,-25.5814c23.25581,-1.55039 41.08527,-1.55039 67.44186,24.8062c26.35659,26.35659 22.48062,59.68992 22.48062,63.56589" fillOpacity="0" strokeWidth="17" stroke="currentColor" fill="none" />
-    </g>
-  </svg>
-);
+export const TranslateCherokee = ({ size = 20, className = "", ...props }: any) => {
+  const remSize = typeof size === 'number' ? `${size / 16}rem` : size;
+  return (
+    <svg
+      width={remSize}
+      height={remSize}
+      viewBox="0 0 299 299"
+      className={className}
+      {...props}
+    >
+      <g>
+        <text xmlSpace="preserve" textAnchor="start" fontFamily="Noto Sans JP" fontSize="250" id="svg_2" y="285.68428" x="161.71345" strokeWidth="0" stroke="#000" fill="currentColor">s</text>
+        <path id="svg_3" d="m-45.59738,152.81233" opacity="NaN" strokeWidth="0" stroke="#000" fill="#c17d7d" />
+        <path id="svg_5" d="m44.47996,115.6546" opacity="NaN" strokeWidth="0" stroke="#000" fill="#000000" />
+        <path fill="#fff" stroke="currentColor" opacity="NaN" d="m43.46378,116.20141" id="svg_4" />
+        <path fill="#c17d7d" stroke="currentColor" strokeWidth="0" opacity="NaN" d="m78.24638,161.08942" id="svg_7" />
+        <path fill="none" stroke="currentColor" d="m44.25429,116.20141c13.83399,0 32.01581,11.85771 32.41107,43.87352c0.39526,32.01581 -16.20553,44.26877 -33.20158,44.66403c-16.99605,0.39526 -31.62055,-18.18182 -32.01581,-44.66403c-0.39526,-26.48221 18.97233,-43.87352 32.80632,-43.87352z" id="svg_6" strokeWidth="17" fillOpacity="0" />
+        <path fill="#c17d7d" stroke="currentColor" strokeWidth="0" d="m125.72334,158.34239c0.34913,0.37549 -45.10541,-0.01977 -45.45454,0l45.45454,0z" id="svg_8" />
+        <path fill="none" stroke="currentColor" opacity="NaN" d="m79.0369,159.66649c1.18577,0 47.43083,0.39526 47.0817,0.25693" id="svg_10" strokeWidth="17" fillOpacity="0" />
+        <path fill="#fff" stroke="currentColor" opacity="NaN" d="m97.16131,115.39771l59.88408,-0.13833l-29.61137,0" id="svg_11" strokeWidth="17" />
+        <path fill="#000000" stroke="currentColor" strokeWidth="0" opacity="NaN" d="m125.11067,66.20141" id="svg_15" />
+        <path fill="none" stroke="currentColor" opacity="NaN" d="m127.08696,115.21327l-0.57311,43.52438c0.17785,0.34914 -4.56523,44.61791 36.93674,45.40843" id="svg_18" strokeWidth="17" fillOpacity="0" />
+        <path strokeWidth="10" id="svg_17" d="m271.67032,128.23457c52.46913,-75.30864 -21.60494,-119.1358 -48.76543,-88.2716" opacity="NaN" stroke="currentColor" fill="none" />
+        <path id="svg_19" d="m-91.24582,-29.05917l0.3725,-0.3725l0,0.18625l0.55875,0l0,-0.55875l-0.18625,0l0.3725,-0.3725l0.3725,0.3725l-0.18625,0l0,0.93125l-0.93125,0l0,0.18625l-0.3725,-0.3725l0,0z" stroke="currentColor" fill="none" />
+        <path fillOpacity="0" strokeWidth="10" id="svg_28" d="m226.91467,10.91666l-5.16563,30.33334l27.5,0.625" opacity="NaN" stroke="currentColor" fill="none" />
+        <path fillOpacity="0" strokeWidth="10" id="svg_29" d="m290.66467,127.79166l-22.66563,5.33334l-1.25,-26.875" opacity="NaN" stroke="currentColor" fill="none" />
+        <path id="svg_35" d="m81.79845,68.66537c7.75194,-6.97674 23.25581,-24.03101 46.51163,-25.5814c23.25581,-1.55039 41.08527,-1.55039 67.44186,24.8062c26.35659,26.35659 22.48062,59.68992 22.48062,63.56589" fillOpacity="0" strokeWidth="17" stroke="currentColor" fill="none" />
+      </g>
+    </svg>
+  );
+};
 
 export const UserIcon = (p: any) => (
   <IconBase
@@ -165,32 +171,38 @@ export const Cloud = (p: any) => (
   />
 );
 
-export const GoogleIcon = ({ size = 20, className = "" }: { size?: number; className?: string }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" className={className}>
-    <path
-      fill="#4285F4"
-      d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"
-    />
-    <path
-      fill="#34A853"
-      d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z"
-    />
-    <path
-      fill="#FBBC05"
-      d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"
-    />
-    <path
-      fill="#EA4335"
-      d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
-    />
-  </svg>
-);
+export const GoogleIcon = ({ size = 20, className = "" }: { size?: number; className?: string }) => {
+  const remSize = typeof size === 'number' ? `${size / 16}rem` : size;
+  return (
+    <svg width={remSize} height={remSize} viewBox="0 0 24 24" className={className}>
+      <path
+        fill="#4285F4"
+        d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+      />
+    </svg>
+  );
+};
 
-export const FacebookIcon = ({ size = 20, className = "" }: { size?: number; className?: string }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="#1877F2" className={className}>
-    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-  </svg>
-);
+export const FacebookIcon = ({ size = 20, className = "" }: { size?: number; className?: string }) => {
+  const remSize = typeof size === 'number' ? `${size / 16}rem` : size;
+  return (
+    <svg width={remSize} height={remSize} viewBox="0 0 24 24" fill="#1877F2" className={className}>
+      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+    </svg>
+  );
+};
 
 
 

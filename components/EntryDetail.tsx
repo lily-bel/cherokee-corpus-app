@@ -636,8 +636,9 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                             {customListOrder.map(listId => {
                                 const list = customLists[listId];
                                 if (!list) return null;
-                                const isChecked = Array.isArray(list) ? list.includes(e.Index) : list.items.includes(e.Index);
-                                const name = Array.isArray(list) ? listId : list.name;
+                                const items = Array.isArray(list) ? list : (list.items || []);
+                                const isChecked = items.includes(e.Index);
+                                const name = Array.isArray(list) ? listId : (list.name || listId);
                                 const { folder, name: displayName } = parseListName(name);
                                 return (
                                     <label key={listId} className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 dark:border-slate-800 active:bg-slate-50 dark:active:bg-slate-800 cursor-pointer">
@@ -652,9 +653,14 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                                 );
                             })}
                         </div>
-                        <button onClick={() => { setShowListSheet(false); onOpenNewListModal(e.Index); }} className="w-full py-3 bg-slate-900 dark:bg-slate-800 text-white font-bold rounded-xl flex items-center justify-center gap-2 shrink-0">
-                            <Plus size={20} /> Create New List
-                        </button>
+                        <div className="flex gap-2 shrink-0">
+                            <button onClick={() => { setShowListSheet(false); onOpenNewListModal(e.Index); }} className="flex-1 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors text-sm sm:text-base">
+                                <Plus size={20} /> Create New List
+                            </button>
+                            <button onClick={() => setShowListSheet(false)} className="flex-1 py-3 bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-colors text-sm sm:text-base">
+                                Done
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

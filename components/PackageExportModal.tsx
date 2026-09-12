@@ -456,7 +456,7 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({
                                                 </span>
                                             </div>
                                             <div className="text-xs text-slate-400 truncate">
-                                                {list.items.length} items
+                                                {list.items?.length || 0} items
                                             </div>
                                         </div>
                                     </div>

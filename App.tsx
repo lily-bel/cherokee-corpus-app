@@ -28,6 +28,7 @@ import { PackageLinkImportView } from './components/PackageLinkImportView';
 
 const DEFAULT_SETTINGS = {
     darkMode: false,
+    zoomLevel: 1,
     enableRegex: false,
     showPosInLists: false,
     searchLangs: { syllabary: true, translit: true, english: true, tone: false },
@@ -310,6 +311,13 @@ function App() {
     }, [settings.darkMode]);
 
     useEffect(() => {
+        const zoom = settings.zoomLevel ?? 1;
+        const docEl = document.documentElement;
+        docEl.style.fontSize = `${zoom * 100}%`;
+        docEl.style.zoom = '';
+    }, [settings.zoomLevel]);
+
+    useEffect(() => {
         const timer = setTimeout(() => {
             setQuery(inputValue);
             setResultLimit(50);
@@ -368,6 +376,12 @@ function App() {
                                 items: val,
                                 type: 'user',
                                 color: 'gold'
+                            };
+                            migrated = true;
+                        } else if (val && typeof val === 'object' && !Array.isArray(val.items)) {
+                            parsedLists[key] = {
+                                ...val,
+                                items: []
                             };
                             migrated = true;
                         }
@@ -1693,7 +1707,7 @@ function App() {
     }
 
     return (
-        <div className="h-screen w-full bg-[#F9F9F7] dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans flex flex-col overflow-hidden relative">
+        <div className="h-full w-full bg-[#F9F9F7] dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans flex flex-col overflow-hidden relative">
             <RainbowGradient />
             {!selectedEntry && !activeWidgetName && activeTab === 'search' && (
                 <header className="bg-white dark:bg-slate-900 px-4 border-b border-slate-200 dark:border-slate-800 shadow-sm z-10 flex items-center justify-between shrink-0 h-12">
@@ -2389,6 +2403,44 @@ function App() {
                                 <button onClick={() => setSettings(s => ({ ...s, darkMode: !s.darkMode }))} className={`transition-colors ${settings.darkMode ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}>
                                     {settings.darkMode ? <ToggleRight size={32} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={32} />}
                                 </button>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Interface Zoom</span>
+                                    <span className="text-xs text-slate-400">Scale text, icons, and layout</span>
+                                </div>
+                                <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-xl p-1 border border-slate-200 dark:border-slate-700">
+                                    <button
+                                        type="button"
+                                        onClick={() => setSettings(s => ({
+                                            ...s,
+                                            zoomLevel: Math.max(0.8, Math.round(((s.zoomLevel ?? 1) - 0.1) * 10) / 10)
+                                        }))}
+                                        disabled={(settings.zoomLevel ?? 1) <= 0.8}
+                                        className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                        title="Zoom out"
+                                        aria-label="Zoom out"
+                                    >
+                                        <Minus size={16} />
+                                    </button>
+                                    <div className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold text-slate-700 dark:text-slate-200 select-none">
+                                        <Search size={14} className="text-slate-400 dark:text-slate-500" />
+                                        <span>{Math.round((settings.zoomLevel ?? 1) * 100)}%</span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSettings(s => ({
+                                            ...s,
+                                            zoomLevel: Math.min(1.5, Math.round(((s.zoomLevel ?? 1) + 0.1) * 10) / 10)
+                                        }))}
+                                        disabled={(settings.zoomLevel ?? 1) >= 1.5}
+                                        className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                        title="Zoom in"
+                                        aria-label="Zoom in"
+                                    >
+                                        <Plus size={16} />
+                                    </button>
+                                </div>
                             </div>
                             <hr className="border-slate-100 dark:border-slate-800" />
                             <div>

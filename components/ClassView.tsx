@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { ArrowLeft, Menu } from './Icons';
 import { useCorpus } from './CorpusContext';
 import VerbPreview from './VerbPreview';
+import { getClassEndings, ClassEndingInfo } from '../classMascots';
 
 
 interface ClassViewProps {
@@ -39,17 +40,36 @@ const ClassView: React.FC<ClassViewProps> = ({ className, onClose, onViewClass, 
         return roots.filter(r => r.class_name && (r.class_name === mainClassName || r.class_name.startsWith(mainClassName + '[')));
     }, [mainClassName, roots]);
 
-    const getEndings = (clsName: string) => {
+    const verbCountByClass = useMemo(() => {
+        const counts = new Map<string, number>();
+        allVerbsInSuperclass.forEach(r => {
+            if (r.class_name) {
+                counts.set(r.class_name, (counts.get(r.class_name) || 0) + 1);
+            }
+        });
+        return counts;
+    }, [allVerbsInSuperclass]);
+
+    const getEndings = (clsName: string): ClassEndingInfo | null => {
+        const mascotEndings = getClassEndings(clsName);
+        if (mascotEndings) {
+            return mascotEndings;
+        }
+
+        // Dynamic fallback from roots if not in mascot endings
         const classVerbs = roots.filter(r => r.class_name === clsName && r.segmented_forms);
         if (classVerbs.length === 0) return null;
 
-        const parseForm = (formStr: string) => {
-            if (!formStr) return '';
-            const parts = formStr.replace(/-+/g, '-').split('-');
-            return parts.length > 1 ? parts[parts.length - 1] : formStr;
+        const parseForm = (formStr: string, isImp = false) => {
+            if (!formStr || formStr === '---') return '';
+            const parts = formStr.replace(/-+/g, '-').split('-').filter(Boolean);
+            if (parts.length === 0) return '';
+            const aspect = isImp ? parts[parts.length - 1] : (parts.length >= 2 ? parts[parts.length - 2] : parts[parts.length - 1]);
+            const clean = aspect.replace(/[*@>:]/g, '').trim();
+            return clean ? `-${clean}` : '';
         };
 
-        const result = {
+        const result: ClassEndingInfo = {
             present: '',
             imperfective: '',
             perfective: '',
@@ -60,11 +80,11 @@ const ClassView: React.FC<ClassViewProps> = ({ className, onClose, onViewClass, 
         for (const verb of classVerbs) {
             const f = verb.segmented_forms;
             if (f) {
-                if (!result.present && f.present) result.present = parseForm(f.present);
-                if (!result.imperfective && f.imperfective) result.imperfective = parseForm(f.imperfective);
-                if (!result.perfective && f.perfective) result.perfective = parseForm(f.perfective);
-                if (!result.imperative && f.imperative) result.imperative = parseForm(f.imperative);
-                if (!result.infinitive && f.infinitive) result.infinitive = parseForm(f.infinitive);
+                if (!result.present && f.present) result.present = parseForm(f.present, false);
+                if (!result.imperfective && f.imperfective) result.imperfective = parseForm(f.imperfective, false);
+                if (!result.perfective && f.perfective) result.perfective = parseForm(f.perfective, false);
+                if (!result.imperative && f.imperative) result.imperative = parseForm(f.imperative, true);
+                if (!result.infinitive && f.infinitive) result.infinitive = parseForm(f.infinitive, false);
             }
         }
 
@@ -75,36 +95,7 @@ const ClassView: React.FC<ClassViewProps> = ({ className, onClose, onViewClass, 
     };
 
     const parentEndings = useMemo(() => {
-        const baseEndings = getEndings(mainClassName);
-        const result = baseEndings || {
-            present: '',
-            imperfective: '',
-            perfective: '',
-            imperative: '',
-            infinitive: ''
-        };
-
-        // Fallback to any verb in the superclass to ensure all columns are filled if possible
-        const superclassVerbs = roots.filter(r => r.class_name && (r.class_name === mainClassName || r.class_name.startsWith(mainClassName + '[')) && r.segmented_forms);
-
-        const parseForm = (formStr: string) => {
-            if (!formStr) return '';
-            const parts = formStr.replace(/-+/g, '-').split('-');
-            return parts.length > 1 ? parts[parts.length - 1] : formStr;
-        };
-
-        for (const verb of superclassVerbs) {
-            const f = verb.segmented_forms;
-            if (f) {
-                if (!result.present && f.present) result.present = parseForm(f.present);
-                if (!result.imperfective && f.imperfective) result.imperfective = parseForm(f.imperfective);
-                if (!result.perfective && f.perfective) result.perfective = parseForm(f.perfective);
-                if (!result.imperative && f.imperative) result.imperative = parseForm(f.imperative);
-                if (!result.infinitive && f.infinitive) result.infinitive = parseForm(f.infinitive);
-            }
-        }
-
-        return (result.present || result.imperfective || result.perfective || result.imperative || result.infinitive) ? result : null;
+        return getEndings(mainClassName);
     }, [mainClassName, roots]);
 
     return (
@@ -166,24 +157,31 @@ const ClassView: React.FC<ClassViewProps> = ({ className, onClose, onViewClass, 
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
                             {parentEndings && (
-                                <tr key={mainClassName} className={`group transition-colors ${mainClassName === className ? 'bg-amber-50 dark:bg-slate-900/60' : ''}`}>
+                                <tr 
+                                    key={mainClassName} 
+                                    onClick={() => onViewClass(mainClassName)}
+                                    className={`group cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 ${mainClassName === className ? 'bg-amber-50 dark:bg-slate-900/60' : ''}`}
+                                >
                                     <td className="py-2.5 font-bold text-slate-800 dark:text-slate-200 text-[10px] truncate pr-1 font-mono" title={mainClassName}>
-                                        {mainClassName}
+                                        <span>{mainClassName}</span>
+                                        <span className="ml-1 text-[9px] font-normal text-slate-400 dark:text-slate-500 font-sans">
+                                            ({verbCountByClass.get(mainClassName) || 0})
+                                        </span>
                                     </td>
                                     <td className="py-2.5 px-1 font-mono text-[10px] text-slate-800 dark:text-slate-200 text-center font-semibold">
-                                        {parentEndings.present || ''}
+                                        {parentEndings.present || '—'}
                                     </td>
                                     <td className="py-2.5 px-1 font-mono text-[10px] text-slate-800 dark:text-slate-200 text-center font-semibold">
-                                        {parentEndings.imperfective || ''}
+                                        {parentEndings.imperfective || '—'}
                                     </td>
                                     <td className="py-2.5 px-1 font-mono text-[10px] text-slate-800 dark:text-slate-200 text-center font-semibold">
-                                        {parentEndings.perfective || ''}
+                                        {parentEndings.perfective || '—'}
                                     </td>
                                     <td className="py-2.5 px-1 font-mono text-[10px] text-slate-800 dark:text-slate-200 text-center font-semibold">
-                                        {parentEndings.imperative || ''}
+                                        {parentEndings.imperative || '—'}
                                     </td>
                                     <td className="py-2.5 px-1 font-mono text-[10px] text-slate-800 dark:text-slate-200 text-center font-semibold">
-                                        {parentEndings.infinitive || ''}
+                                        {parentEndings.infinitive || '—'}
                                     </td>
                                 </tr>
                             )}
@@ -191,25 +189,38 @@ const ClassView: React.FC<ClassViewProps> = ({ className, onClose, onViewClass, 
                                 const endings = getEndings(v);
                                 if (!endings) return null;
 
+                                const isPresDiff = Boolean(parentEndings?.present && endings.present !== parentEndings.present);
+                                const isImpfDiff = Boolean(parentEndings?.imperfective && endings.imperfective !== parentEndings.imperfective);
+                                const isPerfDiff = Boolean(parentEndings?.perfective && endings.perfective !== parentEndings.perfective);
+                                const isImpDiff = Boolean(parentEndings?.imperative && endings.imperative !== parentEndings.imperative);
+                                const isInfDiff = Boolean(parentEndings?.infinitive && endings.infinitive !== parentEndings.infinitive);
+
                                 return (
-                                    <tr key={v} className={`group transition-colors ${v === className ? 'bg-amber-50 dark:bg-slate-900/60' : ''}`}>
+                                    <tr 
+                                        key={v} 
+                                        onClick={() => onViewClass(v)}
+                                        className={`group cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 ${v === className ? 'bg-amber-50 dark:bg-slate-900/60' : ''}`}
+                                    >
                                         <td className="py-2.5 font-medium text-slate-800 dark:text-slate-200 text-[10px] truncate pr-1 font-mono" title={v}>
-                                            {v}
+                                            <span>{v}</span>
+                                            <span className="ml-1 text-[9px] font-normal text-slate-400 dark:text-slate-500 font-sans">
+                                                ({verbCountByClass.get(v) || 0})
+                                            </span>
                                         </td>
-                                        <td className="py-2.5 px-1 font-mono text-[10px] text-slate-500 dark:text-slate-400 text-center">
-                                            {(endings.present !== parentEndings?.present) ? endings.present : ''}
+                                        <td className={`py-2.5 px-1 font-mono text-[10px] text-center ${isPresDiff ? 'font-bold text-amber-700 dark:text-amber-400' : 'text-slate-400 dark:text-slate-500 opacity-60'}`}>
+                                            {endings.present || '—'}
                                         </td>
-                                        <td className="py-2.5 px-1 font-mono text-[10px] text-slate-500 dark:text-slate-400 text-center">
-                                            {(endings.imperfective !== parentEndings?.imperfective) ? endings.imperfective : ''}
+                                        <td className={`py-2.5 px-1 font-mono text-[10px] text-center ${isImpfDiff ? 'font-bold text-amber-700 dark:text-amber-400' : 'text-slate-400 dark:text-slate-500 opacity-60'}`}>
+                                            {endings.imperfective || '—'}
                                         </td>
-                                        <td className="py-2.5 px-1 font-mono text-[10px] text-slate-500 dark:text-slate-400 text-center">
-                                            {(endings.perfective !== parentEndings?.perfective) ? endings.perfective : ''}
+                                        <td className={`py-2.5 px-1 font-mono text-[10px] text-center ${isPerfDiff ? 'font-bold text-amber-700 dark:text-amber-400' : 'text-slate-400 dark:text-slate-500 opacity-60'}`}>
+                                            {endings.perfective || '—'}
                                         </td>
-                                        <td className="py-2.5 px-1 font-mono text-[10px] text-slate-500 dark:text-slate-400 text-center">
-                                            {(endings.imperative !== parentEndings?.imperative) ? endings.imperative : ''}
+                                        <td className={`py-2.5 px-1 font-mono text-[10px] text-center ${isImpDiff ? 'font-bold text-amber-700 dark:text-amber-400' : 'text-slate-400 dark:text-slate-500 opacity-60'}`}>
+                                            {endings.imperative || '—'}
                                         </td>
-                                        <td className="py-2.5 px-1 font-mono text-[10px] text-slate-500 dark:text-slate-400 text-center">
-                                            {(endings.infinitive !== parentEndings?.infinitive) ? endings.infinitive : ''}
+                                        <td className={`py-2.5 px-1 font-mono text-[10px] text-center ${isInfDiff ? 'font-bold text-amber-700 dark:text-amber-400' : 'text-slate-400 dark:text-slate-500 opacity-60'}`}>
+                                            {endings.infinitive || '—'}
                                         </td>
                                     </tr>
                                 );

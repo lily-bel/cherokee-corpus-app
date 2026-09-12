@@ -469,7 +469,10 @@ const ListsTab: React.FC<ListsTabProps> = ({
         if (Array.isArray(raw)) {
             return { id, name: id, items: raw, type: 'user', color: 'amber' };
         }
-        return raw as ListData;
+        return {
+            ...raw,
+            items: Array.isArray(raw.items) ? raw.items : []
+        } as ListData;
     };
 
     // Get all available lists
@@ -542,7 +545,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                         ...prev,
                         [activeListId]: {
                             ...prev[activeListId] as ListData,
-                            items: (prev[activeListId] as ListData).items.filter(i => i !== id)
+                            items: ((prev[activeListId] as ListData).items || []).filter(i => i !== id)
                         }
                     };
                 });
