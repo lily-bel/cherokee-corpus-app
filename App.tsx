@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Search, Book, Menu, X, Filter, Sliders, Clock, ListIcon, Folder, BookOpen, Download, ArrowLeft, Pencil, ChevronDown, Share, Trash2, Plus, ChevronUp, Minus, Check, ToggleLeft, ToggleRight, Box, Layout, UserIcon } from './components/Icons';
-import { Toast, Modal } from './components/UI';
+import { Toast, Modal, UserAuthButton } from './components/UI';
 import EntryCard from './components/EntryCard';
 import EntryDetail from './components/EntryDetail';
 
@@ -107,8 +107,7 @@ function App() {
     const [showSearchSettingsPopover, setShowSearchSettingsPopover] = useState(false);
 
     // Auth & Cloud Sync State
-    const { user, syncStatus, syncLibraryToCloud, loadAndMergeCloudData } = useAuth();
-    const [showAuthModal, setShowAuthModal] = useState(false);
+    const { user, syncLibraryToCloud, loadAndMergeCloudData, showAuthModal, setShowAuthModal } = useAuth();
     const [urlPackageId, setUrlPackageId] = useState<string | null>(() => {
         const params = new URLSearchParams(window.location.search);
         if (params.get('package')) return params.get('package');
@@ -1712,24 +1711,9 @@ function App() {
             {!selectedEntry && !activeWidgetName && activeTab === 'search' && (
                 <header className="bg-white dark:bg-slate-900 px-4 border-b border-slate-200 dark:border-slate-800 shadow-sm z-10 flex items-center justify-between shrink-0 h-12">
                     <h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 flex items-baseline gap-2 truncate">ᏣᎳᎩ-English Dictionary<span className="text-xs font-sans font-medium text-slate-400 dark:text-slate-500 tracking-wide shrink-0">(BETA)</span></h1>
-                    <div className="flex items-center gap-1">
-                        <button
-                            onClick={() => setShowAuthModal(true)}
-                            className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors relative"
-                            title={user ? `${user.displayName || user.email || 'Account'} (${syncStatus === 'synced' ? 'Backed Up' : syncStatus === 'syncing' ? 'Backing Up...' : 'Online'})` : "Sign In / Cloud Backup"}
-                        >
-                            {user?.photoURL ? (
-                                <img src={user.photoURL} alt="User" className="w-5 h-5 rounded-full object-cover border border-amber-500" />
-                            ) : (
-                                <UserIcon size={20} />
-                            )}
-                            {user && (
-                                <span className={`absolute top-1 right-1 w-2 h-2 rounded-full ring-2 ring-white dark:ring-slate-900 ${
-                                    syncStatus === 'syncing' ? 'bg-amber-500 animate-pulse' : syncStatus === 'error' ? 'bg-red-500' : 'bg-emerald-500'
-                                }`} />
-                            )}
-                        </button>
-                        <button onClick={() => setShowSettingsModal(true)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors">
+                    <div className="flex items-center gap-1.5">
+                        <UserAuthButton />
+                        <button onClick={() => setShowSettingsModal(true)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" title="Settings">
                             <Menu size={22} strokeWidth={1.5} />
                         </button>
                     </div>
@@ -2323,7 +2307,7 @@ function App() {
                             onShowAuth={() => setShowAuthModal(true)}
                         />}
                         {
-                            activeTab === 'personal' && (!activeDictionaryId ? (<div className="flex flex-col h-full"><div className="px-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0 h-12"><h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">Custom Dictionaries</h1><div className="flex gap-1.5 items-center"><button onClick={() => setShowNewDictionaryModal(true)} className="bg-slate-900 dark:bg-slate-700 text-white p-1.5 rounded-full shadow-sm hover:bg-slate-800 transition-colors"><Plus size={18} /></button><button onClick={() => setShowSettingsModal(true)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300"><Menu size={22} strokeWidth={1.5} /></button></div></div><div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-4 content-start">{dictionaryList.map((nb: any) => {
+                            activeTab === 'personal' && (!activeDictionaryId ? (<div className="flex flex-col h-full"><div className="px-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0 h-12"><h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">Custom Dictionaries</h1><div className="flex gap-1.5 items-center"><button onClick={() => setShowNewDictionaryModal(true)} className="bg-slate-900 dark:bg-slate-700 text-white p-1.5 rounded-full shadow-sm hover:bg-slate-800 transition-colors" title="New Dictionary"><Plus size={18} /></button><UserAuthButton /><button onClick={() => setShowSettingsModal(true)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" title="Settings"><Menu size={22} strokeWidth={1.5} /></button></div></div><div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-4 content-start">{dictionaryList.map((nb: any) => {
                                 const isImported = nb.type === 'imported';
                                 const colorClass = isImported ? `text-${nb.color === 'amber' ? 'amber' : (nb.color === 'slate' ? 'slate' : nb.color)}-600 dark:text-${nb.color === 'amber' ? 'amber' : (nb.color === 'slate' ? 'slate' : nb.color)}-400` : 'text-amber-500 hover:text-amber-600';
                                 // Handle hex colors
@@ -2336,7 +2320,7 @@ function App() {
                                     <div className="flex-1 flex items-center gap-2"><h2 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100">{customDictionaries[activeDictionaryId]?.name || dictionaryList.find(n => n.id === activeDictionaryId)?.name || 'Custom Dictionary'}</h2>
                                         {customDictionaries[activeDictionaryId] && <button onClick={() => { setRenameData({ type: 'dictionary', target: activeDictionaryId, value: customDictionaries[activeDictionaryId].name }); setShowNewDictionaryModal(true); }} className="p-1 text-slate-400 hover:text-sky-600 rounded-full"><Pencil size={14} /></button>}
                                     </div>
-                                    <div className="flex gap-2 ml-auto items-center"><button onClick={() => setDictionaryToDelete(activeDictionaryId)} className="p-1.5 text-slate-400 hover:text-red-500 rounded"><Trash2 size={20} /></button><button onClick={() => setShowSettingsModal(true)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300"><Menu size={22} strokeWidth={1.5} /></button></div>
+                                    <div className="flex gap-1.5 ml-auto items-center"><button onClick={() => setDictionaryToDelete(activeDictionaryId)} className="p-1.5 text-slate-400 hover:text-red-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Delete Dictionary"><Trash2 size={20} /></button><UserAuthButton /><button onClick={() => setShowSettingsModal(true)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" title="Settings"><Menu size={22} strokeWidth={1.5} /></button></div>
                                 </div>
                                 <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
                                     <button onClick={() => setDictionaryMode('words')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${dictionaryMode === 'words' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'} `}>Words</button>

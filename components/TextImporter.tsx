@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useCorpus, CustomDictionary } from './CorpusContext';
 import { useReader } from './ReaderContext';
 import { ArrowLeft, ArrowRight, Check, Type, BookOpen, ChevronDown, Menu, Trash2, Plus, AlertCircle } from './Icons';
+import { UserAuthButton } from './UI';
 
 type Step = 'details' | 'paste' | 'review' | 'done';
 type Mode = 'new' | 'append';
@@ -313,9 +314,10 @@ export const TextImporter: React.FC<TextImporterProps> = ({
                             {mode === 'new' ? 'Create Book / Story' : 'Add Chapter'}
                         </h1>
                     </div>
+                    <UserAuthButton />
                     {onShowSettings && (
-                        <button onClick={onShowSettings} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
-                            <Menu size={24} strokeWidth={1.5} />
+                        <button onClick={onShowSettings} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" title="Settings">
+                            <Menu size={22} strokeWidth={1.5} />
                         </button>
                     )}
                 </div>

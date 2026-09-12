@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Pencil, ListPlus, Star, ListIcon, X, Plus, Folder, Pause, MicPlus, Trash2, Mic, Menu } from './Icons';
-import { AudioPlayer, SourceBadge } from './UI';
+import { AudioPlayer, SourceBadge, UserAuthButton } from './UI';
 import { renderStyledText, getAudioFromDB, processFormsContextually, parseListName, renderColorizedCherokee, renderSegmentedSurface, projectSegmentsOntoTone, segmentVerbForm, VerbMorphologyTemplate } from '../utils';
 import { usePackageManager } from './PackageManagerContext';
 import AudioRecorder from './AudioRecorder';
@@ -332,16 +332,19 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                         <ArrowLeft size={24} className="text-slate-700 dark:text-slate-200" />
                     </button>
                 </div>
-                <div className="flex items-center gap-1">
-                    <button onClick={() => onToggleFavorite(e.Index)} className="p-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-full transition-colors" title="Toggle Favorite">
-                        <Star size={20} className={isFav ? "fill-amber-400 text-amber-400" : "text-slate-400 dark:text-slate-500"} />
+                <div className="flex items-center gap-1.5">
+                    <button onClick={() => onToggleFavorite(e.Index)} className="p-1.5 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-full transition-colors" title="Toggle Favorite">
+                        <Star size={18} className={isFav ? "fill-amber-400 text-amber-400" : "text-slate-400 dark:text-slate-500"} />
                     </button>
-                    <button onClick={() => setShowListSheet(true)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400 dark:text-slate-500" title="Add to List">
-                        <ListPlus size={20} />
+                    <button onClick={() => setShowListSheet(true)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400 dark:text-slate-500" title="Add to List">
+                        <ListPlus size={18} />
                     </button>
-                    <button onClick={onShowSettings} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors ml-1">
-                        <Menu size={24} strokeWidth={1.5} />
-                    </button>
+                    <UserAuthButton />
+                    {onShowSettings && (
+                        <button onClick={onShowSettings} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" title="Settings">
+                            <Menu size={22} strokeWidth={1.5} />
+                        </button>
+                    )}
                 </div>
             </div>
 

@@ -3,8 +3,8 @@ import { useCorpus } from './CorpusContext';
 import { usePackageManager, Package } from './PackageManagerContext';
 import PackageExportModal from './PackageExportModal';
 import { ListData } from './ListsTab';
-import { Upload, Download, Trash2, ToggleLeft, ToggleRight, Box, Mic, StickyNote, ListIcon, SquaresPlus, Book, ListPlus, Menu, UserIcon } from './Icons';
-import { Toast, SourceBadge } from './UI';
+import { Upload, Download, Trash2, ToggleLeft, ToggleRight, Box, Mic, StickyNote, ListIcon, SquaresPlus, Book, ListPlus, Menu } from './Icons';
+import { Toast, SourceBadge, UserAuthButton } from './UI';
 import { PackageDetailView } from './PackageDetailView';
 import { PackageImportModal } from './PackageImportModal';
 
@@ -49,29 +49,25 @@ const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists, onNa
         <div className="flex flex-col h-full bg-[#F9F9F7] dark:bg-slate-950">
             <div className="px-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0 h-12">
                 <h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">Packages</h1>
-                <div className="flex gap-2 items-center">
+                <div className="flex gap-1.5 items-center">
                     <button
                         onClick={() => setShowExportModal(true)}
-                        className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                        className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 p-1.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shadow-sm"
                         title="Export Package"
                     >
-                        <Upload size={20} />
+                        <Upload size={18} />
                     </button>
                     <button
                         onClick={() => setShowImportModal(true)}
-                        className="bg-slate-900 dark:bg-slate-700 text-white p-2 rounded-full shadow-md hover:bg-slate-800 transition-colors"
+                        className="bg-slate-900 dark:bg-slate-700 text-white p-1.5 rounded-full shadow-sm hover:bg-slate-800 transition-colors"
                         title="Import / Browse Packages"
                     >
-                        <Download size={20} />
+                        <Download size={18} />
                     </button>
-                    {onShowAuth && (
-                        <button onClick={onShowAuth} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300" title="Account & Backup">
-                            <UserIcon size={22} />
-                        </button>
-                    )}
+                    <UserAuthButton onClick={onShowAuth} />
                     {onShowSettings && (
-                        <button onClick={onShowSettings} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
-                            <Menu size={24} strokeWidth={1.5} />
+                        <button onClick={onShowSettings} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" title="Settings">
+                            <Menu size={22} strokeWidth={1.5} />
                         </button>
                     )}
                 </div>

@@ -6,6 +6,7 @@ import { GlossPopover } from './GlossPopover';
 import { LinkerModal } from './LinkerModal';
 import { SentenceCard } from './SentenceCard';
 import { ArrowLeft, BookOpen, Eye, EyeOff, Type, Menu, ChevronDown } from './Icons';
+import { UserAuthButton } from './UI';
 import { renderStyledText } from '../utils';
 
 type StudyMode = 'study' | 'read';
@@ -378,9 +379,10 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                             <ScriptIcon size={14} />
                             <span>{getScriptLabel()}</span>
                         </button>
+                        <UserAuthButton />
                         {onShowSettings && (
-                            <button onClick={onShowSettings} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
-                                <Menu size={24} strokeWidth={1.5} />
+                            <button onClick={onShowSettings} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" title="Settings">
+                                <Menu size={22} strokeWidth={1.5} />
                             </button>
                         )}
                     </div>

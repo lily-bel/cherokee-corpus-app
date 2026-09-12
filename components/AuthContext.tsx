@@ -35,6 +35,10 @@ interface AuthContextType {
   loading: boolean;
   syncStatus: SyncStatus;
   lastSynced: number | null;
+  showAuthModal: boolean;
+  setShowAuthModal: (open: boolean) => void;
+  openAuthModal: () => void;
+  closeAuthModal: () => void;
   loginWithGoogle: () => Promise<void>;
   loginWithFacebook: () => Promise<void>;
   loginWithEmail: (email: string, pass: string) => Promise<void>;
@@ -159,6 +163,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const openAuthModal = useCallback(() => setShowAuthModal(true), []);
+  const closeAuthModal = useCallback(() => setShowAuthModal(false), []);
   const [lastSynced, setLastSynced] = useState<number | null>(() => {
     const saved = localStorage.getItem('cherokee_app_last_synced');
     return saved ? parseInt(saved, 10) : null;
@@ -319,6 +326,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loading,
         syncStatus,
         lastSynced,
+        showAuthModal,
+        setShowAuthModal,
+        openAuthModal,
+        closeAuthModal,
         loginWithGoogle,
         loginWithFacebook,
         loginWithEmail,

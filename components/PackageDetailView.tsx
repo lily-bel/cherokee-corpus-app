@@ -6,7 +6,7 @@ import {
     ChevronDown, ChevronRight, ListIcon, ListPlus, SquaresPlus,
     Search, Pause, Volume2, Menu, Upload, LinkIcon, Check
 } from './Icons';
-import { SourceBadge } from './UI';
+import { SourceBadge, UserAuthButton } from './UI';
 import EntryCard from './EntryCard';
 import EntryDetail from './EntryDetail';
 import { getAudioFromDB, renderStyledText, parseListName, ColorizedCherokeeWord } from '../utils';
@@ -394,9 +394,10 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({
                             {copiedLink ? <Check size={18} className="text-emerald-500" /> : <LinkIcon size={18} />}
                         </button>
                     )}
+                    <UserAuthButton />
                     {onShowSettings && (
-                        <button onClick={onShowSettings} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
-                            <Menu size={24} strokeWidth={1.5} />
+                        <button onClick={onShowSettings} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" title="Settings">
+                            <Menu size={22} strokeWidth={1.5} />
                         </button>
                     )}
                 </div>

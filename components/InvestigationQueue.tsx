@@ -3,6 +3,7 @@ import { useCorpus, DictionaryEntry } from './CorpusContext';
 import { useReader, InvestigationItem } from './ReaderContext';
 import { LinkerModal } from './LinkerModal';
 import { ArrowLeft, Trash2, Search as SearchIcon, Clock, ChevronRight, Menu } from './Icons';
+import { UserAuthButton } from './UI';
 import { renderStyledText } from '../utils';
 
 interface InvestigationQueueProps {
@@ -141,9 +142,10 @@ export const InvestigationQueue: React.FC<InvestigationQueueProps> = ({
                             {investigationQueue.length} word{investigationQueue.length !== 1 ? 's' : ''} to investigate
                         </p>
                     </div>
+                    <UserAuthButton />
                     {onShowSettings && (
-                        <button onClick={onShowSettings} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
-                            <Menu size={24} strokeWidth={1.5} />
+                        <button onClick={onShowSettings} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" title="Settings">
+                            <Menu size={22} strokeWidth={1.5} />
                         </button>
                     )}
                 </div>

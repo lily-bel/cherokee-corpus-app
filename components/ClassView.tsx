@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { ArrowLeft, Menu } from './Icons';
+import { UserAuthButton } from './UI';
 import { useCorpus } from './CorpusContext';
 import VerbPreview from './VerbPreview';
 import { getClassEndings, ClassEndingInfo } from '../classMascots';
@@ -108,10 +109,11 @@ const ClassView: React.FC<ClassViewProps> = ({ className, onClose, onViewClass, 
                         <span className="text-xs font-bold uppercase tracking-wider hidden sm:inline">Back</span>
                     </button>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-1.5 items-center">
+                    <UserAuthButton />
                     {onShowSettings && (
-                        <button onClick={onShowSettings} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
-                            <Menu size={24} strokeWidth={1.5} />
+                        <button onClick={onShowSettings} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" title="Settings">
+                            <Menu size={22} strokeWidth={1.5} />
                         </button>
                     )}
                 </div>

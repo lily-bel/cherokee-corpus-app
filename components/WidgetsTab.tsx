@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Box, Menu, Globe, FileCode } from './Icons';
 import { getAllWidgets, saveWidget, deleteWidget, Widget } from '../widgetUtils';
 import WidgetViewer from './WidgetViewer';
-import { Modal } from './UI';
+import { Modal, UserAuthButton } from './UI';
 
 const COLORS = [
     'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-200',
@@ -158,16 +158,18 @@ const WidgetsTab = ({ onShowSettings }: { onShowSettings?: () => void }) => {
         <div className="flex flex-col h-full bg-[#F9F9F7] dark:bg-slate-950">
             <div className="px-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0 h-12">
                 <h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">Widgets</h1>
-                <div className="flex gap-2 items-center">
+                <div className="flex gap-1.5 items-center">
                     <button
                         onClick={() => setShowImportModal(true)}
-                        className="bg-slate-900 dark:bg-slate-700 text-white p-2 rounded-full shadow-md hover:bg-slate-800 dark:hover:bg-slate-600 transition-colors"
+                        className="bg-slate-900 dark:bg-slate-700 text-white p-1.5 rounded-full shadow-sm hover:bg-slate-800 dark:hover:bg-slate-600 transition-colors"
+                        title="Add Widget"
                     >
-                        <Plus size={20} />
+                        <Plus size={18} />
                     </button>
+                    <UserAuthButton />
                     {onShowSettings && (
-                        <button onClick={onShowSettings} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
-                            <Menu size={24} strokeWidth={1.5} />
+                        <button onClick={onShowSettings} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" title="Settings">
+                            <Menu size={22} strokeWidth={1.5} />
                         </button>
                     )}
                 </div>

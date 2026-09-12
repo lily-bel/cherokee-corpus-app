@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Star, ListIcon, Trash2, Pencil, ChevronRight, ChevronDown, GripVertical, Folder, FolderPlus, ArrowLeft, Plus, X, Search, Check, Volume2, Pause, Eye, EyeOff, Mic, StickyNote, ListPlus, BookOpen, Menu } from './Icons';
-import { Modal, SourceBadge } from './UI';
+import { Modal, SourceBadge, UserAuthButton } from './UI';
 import { usePackageManager } from './PackageManagerContext';
 import { useCorpus } from './CorpusContext';
 import { getAudioFromDB, renderStyledText, parseListName, formatListName, sanitizeListName, ColorizedCherokeeWord } from '../utils';
@@ -1438,13 +1438,14 @@ const ListsTab: React.FC<ListsTabProps> = ({
                         <p className="text-xs text-slate-500 dark:text-slate-400">{listItems.length} items</p>
                     </div>
                     {activeList.type === 'user' && (
-                        <button onClick={() => setDeleteTargetId(activeList.id)} className="p-2 text-slate-400 hover:text-red-500 rounded-full">
-                            <Trash2 size={24} />
+                        <button onClick={() => setDeleteTargetId(activeList.id)} className="p-1.5 text-slate-400 hover:text-red-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Delete List">
+                            <Trash2 size={20} />
                         </button>
                     )}
+                    <UserAuthButton />
                     {onShowSettings && (
-                        <button onClick={onShowSettings} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
-                            <Menu size={24} strokeWidth={1.5} />
+                        <button onClick={onShowSettings} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" title="Settings">
+                            <Menu size={22} strokeWidth={1.5} />
                         </button>
                     )}
                 </div>
@@ -1980,8 +1981,9 @@ const ListsTab: React.FC<ListsTabProps> = ({
                     >
                         <Plus size={18} />
                     </button>
+                    <UserAuthButton />
                     {onShowSettings && (
-                        <button onClick={onShowSettings} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300">
+                        <button onClick={onShowSettings} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" title="Settings">
                             <Menu size={22} strokeWidth={1.5} />
                         </button>
                     )}

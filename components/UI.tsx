@@ -125,3 +125,6 @@ export const Modal = ({ title, children, onClose }: any) => createPortal(
   </div>,
   document.body
 );
+
+export { UserAuthButton } from './UserAuthButton';
+
