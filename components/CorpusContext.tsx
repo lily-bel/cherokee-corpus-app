@@ -438,6 +438,88 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             }
         });
 
+        // Index Personal Words & Extract User Morphology
+        personalWords.forEach(pw => {
+            const id = pw.Index || pw.id;
+            if (id && !dMap.has(id)) {
+                dMap.set(id, {
+                    ...pw,
+                    id,
+                    Index: id,
+                    Entry: pw.translit || pw.Entry || '',
+                    Syllabary: pw.syllabary || pw.Syllabary || '',
+                    Definition: pw.definition || pw.Definition || '',
+                    Source: pw.customDictionaryId || pw.source || 'user',
+                    Source_Long: customDictionaries[pw.customDictionaryId || pw.source || '']?.name || 'My Library'
+                } as any);
+            }
+
+            const slugVal = (pw as any).root_slug || (pw as any).slug || (pw as any).root_h || (pw as any).root_g || (pw as any).class_name;
+            const rootH = (pw as any).root_h || (pw as any).h_grade_root || '';
+            const rootG = (pw as any).root_g || (pw as any).glottal_grade_root || '';
+            const className = (pw as any).class_name || '';
+            const classMascot = (pw as any).class_mascot || '';
+            const surfaceSpelling = (pw as any).surface_spelling || '';
+            const surfaceForms = (pw as any).surface_forms || undefined;
+            const surfaceSegments = (pw as any).surface_segments || undefined;
+            const segmentedForms = (pw as any).segmented_forms || undefined;
+            const config = (pw as any).config || undefined;
+
+            if (slugVal || rootH || rootG || className || surfaceSpelling || surfaceSegments || segmentedForms) {
+                const rootSlug = slugVal || rootH || rootG || className;
+                const rootEntry: RootEntry = {
+                    entry_id: id || '',
+                    root_h: rootH,
+                    root_g: rootG,
+                    root_slug: rootSlug,
+                    slug: rootSlug,
+                    definition: pw.definition || pw.Definition || '',
+                    class_name: className,
+                    class_mascot: classMascot,
+                    surface_spelling: surfaceSpelling,
+                    surface_forms: surfaceForms,
+                    surface_segments: surfaceSegments,
+                    segmented_forms: {
+                        present: segmentedForms?.present || '',
+                        present_1sg: segmentedForms?.present_1sg || '',
+                        imperfective: segmentedForms?.imperfective || '',
+                        perfective: segmentedForms?.perfective || '',
+                        imperative: segmentedForms?.imperative || '',
+                        infinitive: segmentedForms?.infinitive || ''
+                    },
+                    config: config || {
+                        pre: {
+                            distributive: (pw as any)?.preDistributive ?? false,
+                            translocutive: (pw as any)?.preTranslocutive ?? false,
+                            translocutiveImpOnly: false,
+                            partitive: (pw as any)?.prePartitive ?? false
+                        },
+                        pron: {
+                            set_type: (pw as any)?.pronSetType || 'a',
+                            stem_type: '',
+                            use_ka_variant: false,
+                            plural_pronouns: false,
+                            middle_voice: (pw as any)?.middleVoice || 'none',
+                            use_3rd_person_object: false
+                        }
+                    },
+                    post_root_morpheme: (pw as any)?.post_root_morpheme || null,
+                    _is_transitive: (pw as any)?._is_transitive === true
+                };
+
+                rootsArr.push(rootEntry);
+                if (rootEntry.entry_id) rMap.set(rootEntry.entry_id, rootEntry);
+                if (id && !rMap.has(id)) rMap.set(id, rootEntry);
+                if (pw.id && !rMap.has(pw.id)) rMap.set(pw.id, rootEntry);
+                if (pw.Index && !rMap.has(pw.Index)) rMap.set(pw.Index, rootEntry);
+
+                if (!grMap.has(rootSlug)) {
+                    grMap.set(rootSlug, []);
+                }
+                grMap.get(rootSlug)!.push(rootEntry);
+            }
+        });
+
         // Index Sentences
         [...sentences, ...userSentences].forEach(s => {
             if (s.id) sMap.set(s.id, s);
@@ -465,13 +547,17 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 addLink(targetId);
 
                 // If dictionaryMap has this entry, also link by its alias IDs
-                const ent = dMap.get(targetId);
-                if (ent) {
-                    if (ent.id) addLink(ent.id);
-                    if (ent.Index) addLink(ent.Index);
-                    if ((ent as any).merged_id) addLink((ent as any).merged_id);
-                    const lilyIndex = (ent as any).sources?.['lily-dict.csv']?.Index;
+                const entry = dMap.get(targetId);
+                if (entry) {
+                    if (entry.id) addLink(entry.id);
+                    if (entry.Index) addLink(entry.Index);
+                    if ((entry as any).merged_id) addLink((entry as any).merged_id);
+                    const lilyIndex = (entry as any).sources?.['lily-dict.csv']?.Index;
                     if (lilyIndex) addLink(lilyIndex);
+
+                    if ((entry as any).Other_Forms) {
+                        // Extract form indices or names if needed
+                    }
                 }
             }
         });
@@ -492,7 +578,7 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             groupedRootsMap: grMap,
             derivedRoots: rootsArr
         };
-    }, [dictionary, sentences, combinedGlosses, userGlosses, userSentences]);
+    }, [dictionary, sentences, combinedGlosses, userGlosses, userSentences, personalWords, customDictionaries]);
 
     // Actions
     const addUserGloss = (gloss: Gloss) => {

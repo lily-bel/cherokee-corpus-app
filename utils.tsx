@@ -103,18 +103,98 @@ const OBJ_MAP: Record<string, string> = {
     '1p-ex': '1st person plural exclusive',
 };
 
+export type ToneStyle = 'superscript' | 'diacritic' | 'inline' | 'none';
+
+export const KNOWN_SOURCE_NAMES: Record<string, string> = {
+    'ced': 'Feeling & Pulte CED (1975)',
+    'lily-dict.csv': 'Feeling & Pulte CED (1975)',
+    'lily': 'Feeling & Pulte CED (1975)',
+    'cnd': 'Cherokee Nation Dictionary',
+    'cn-app-dictionary.csv': 'Cherokee Nation Dictionary',
+    'df': 'Durbin Feeling Database',
+    'cwl': 'Consortium Word List',
+    'holmes': 'Holmes & Smith Dictionary',
+    'kirk': 'Kirk Verb Database',
+    'kirk-book-data.csv': 'Kirk Verb Database',
+    'ltu': 'Learning to Use the Cherokee Verb',
+    'learning-to-use-the-cherokee-verb.csv': 'Learning to Use the Cherokee Verb',
+    'king': 'King Recreation Verb Morphology',
+    'hierarchical-dict.json': 'King Recreation Verb Morphology',
+    'ma': 'Montgomery-Anderson Grammar',
+    'cnt': 'Cherokee New Testament',
+    'cherokee-new-testament.csv': 'Cherokee New Testament',
+    'cherokee-new-testament': 'Cherokee New Testament',
+    'bible': 'Cherokee New Testament',
+    'cn': 'Cherokee Narratives',
+    'narr': 'Cherokee Narratives',
+    'cherokee-narratives.csv': 'Cherokee Narratives',
+    'cherokee-narratives': 'Cherokee Narratives',
+    'moondove': 'Moondove Spiral',
+    'wh': 'Willie Henson Sentences',
+    'culturev': 'Culturev Roots',
+    'culturev.csv': 'Culturev Roots',
+    'rrd': 'Raven Rock Dictionary',
+    'user': 'My Library',
+    'other_official': 'Other Official Sentences'
+};
+
+export function getFriendlySourceName(code: string | undefined): string {
+    if (!code) return '';
+    const lower = code.toLowerCase().trim();
+    if (KNOWN_SOURCE_NAMES[lower]) return KNOWN_SOURCE_NAMES[lower];
+    if (KNOWN_SOURCE_NAMES[code]) return KNOWN_SOURCE_NAMES[code];
+    return code;
+}
+
+export function formatToneStyle(toneStr: string | undefined, style: ToneStyle = 'superscript'): string {
+    if (!toneStr) return '';
+    if (style === 'none') {
+        return toneStr.replace(/[¹²³⁴1234]/g, '').replace(/\s+/g, ' ').trim();
+    }
+    if (style === 'inline') {
+        const supToInline: Record<string, string> = { '¹': '1', '²': '2', '³': '3', '⁴': '4', 'ʔ': '?' };
+        return toneStr.replace(/[¹²³⁴ʔ]/g, m => supToInline[m] || m);
+    }
+    if (style === 'diacritic') {
+        // Map tone numbers to diacritics over preceding vowels where applicable
+        const vowelDiacritics: Record<string, Record<string, string>> = {
+            'a': { '1': 'à', '2': 'ā', '3': 'á', '4': 'â', '¹': 'à', '²': 'ā', '³': 'á', '⁴': 'â' },
+            'e': { '1': 'è', '2': 'ē', '3': 'é', '4': 'ê', '¹': 'è', '²': 'ē', '³': 'é', '⁴': 'ê' },
+            'i': { '1': 'ì', '2': 'ī', '3': 'í', '4': 'î', '¹': 'ì', '²': 'ī', '³': 'í', '⁴': 'î' },
+            'o': { '1': 'ò', '2': 'ō', '3': 'ó', '4': 'ô', '¹': 'ò', '²': 'ō', '³': 'ó', '⁴': 'ô' },
+            'u': { '1': 'ù', '2': 'ū', '3': 'ú', '4': 'û', '¹': 'ù', '²': 'ū', '³': 'ú', '⁴': 'û' },
+            'v': { '1': 'v̀', '2': 'v̄', '3': 'v́', '4': 'v̂', '¹': 'v̀', '²': 'v̄', '³': 'v́', '⁴': 'v̂' },
+        };
+        let out = toneStr;
+        out = out.replace(/([aeiouv])([¹²³⁴1234])/gi, (match, v, t) => {
+            const vLow = v.toLowerCase();
+            const replacement = vowelDiacritics[vLow]?.[t];
+            if (replacement) {
+                return v === v.toUpperCase() ? replacement.toUpperCase() : replacement;
+            }
+            return match;
+        });
+        return out.replace(/[¹²³⁴1234]/g, '');
+    }
+    // Default 'superscript'
+    const inlineToSup: Record<string, string> = { '1': '¹', '2': '²', '3': '³', '4': '⁴', '?': 'ʔ' };
+    return toneStr.replace(/[1234?]/g, m => inlineToSup[m] || m);
+}
+
 export const getFriendlyLabel = (key: string, showObject = false, hasAnimateContrast = false) => {
-    if (!key) return '';
+    if (!key || key === 'none' || key === 'no_form' || key === 'unspecified') return 'Base Form';
     const parts = key.split('|');
     if (parts.length >= 3) {
         if (parts[0] === 'noun') {
-            return parts[1] === 'singular' ? 'Singular' : 'Plural';
+            if (!parts[1] || parts[1] === 'none' || parts[1] === '') return 'Base Form';
+            return parts[1] === 'singular' ? 'Singular' : parts[1] === 'plural' ? 'Plural' : 'Base Form';
         }
         
         const subj = PRONOUN_MAP[parts[0]] || parts[0];
         const tense = parts[2];
         
-        let label = `${subj} ${tense}`;
+        if (!subj && !tense) return 'Base Form';
+        let label = subj ? (tense ? `${subj} ${tense}` : subj) : tense;
         if (showObject && parts[1] && parts[1] !== 'none') {
             let objStr = OBJ_MAP[parts[1]] || parts[1];
             if (hasAnimateContrast) {
@@ -129,6 +209,7 @@ export const getFriendlyLabel = (key: string, showObject = false, hasAnimateCont
     // Fallback
     if (key === 'noun|singular|') return 'Singular';
     if (key === 'noun|plural|') return 'Plural';
+    if (key.toLowerCase() === 'base' || key.toLowerCase() === 'present' || key.toLowerCase() === '3s|3s|present') return '3rd person singular present';
     return key;
 };
 
@@ -412,9 +493,13 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
   let regex: RegExp | null = null;
   if (settings?.enableRegex) {
     try {
-      const regexQuery = query.replace(/[1234]/g, m => ({ '1': '¹', '2': '²', '3': '³', '4': '⁴' }[m] || m));
-      regex = new RegExp(regexQuery, 'i');
-    } catch (e) { }
+      regex = new RegExp(query, 'i');
+    } catch (e) {
+      try {
+        const regexQuery = query.replace(/[1234]/g, m => ({ '1': '¹', '2': '²', '3': '³', '4': '⁴' }[m] || m));
+        regex = new RegExp(regexQuery, 'i');
+      } catch (e2) { }
+    }
   }
 
   // SENTENCE MODE
@@ -1872,7 +1957,7 @@ export function renderSegmentedSurface(
         if (!seg.text) return null;
         if (seg.role === 'prepronominal') {
           return (
-            <span key={idx} className="text-emerald-500 dark:text-emerald-300 font-bold" title="Prepronominal prefix">
+            <span key={idx} className="text-teal-600 dark:text-teal-400 font-semibold" title="Prepronominal prefix">
               {seg.text}
             </span>
           );
@@ -1881,7 +1966,7 @@ export function renderSegmentedSurface(
           const setType = seg.set || (seg.color === 'RoyalBlue' ? 'B' : seg.color === 'Purple' ? 'P2P' : 'A');
           let colorClass = "text-red-600 dark:text-red-400 font-bold";
           if (setType === 'B') {
-            colorClass = "text-blue-600 dark:text-blue-400 font-bold";
+            colorClass = "text-sky-600 dark:text-sky-400 font-bold";
           } else if (setType === 'P2P') {
             colorClass = "text-purple-600 dark:text-purple-400 font-bold";
           }
@@ -1893,35 +1978,35 @@ export function renderSegmentedSurface(
         }
         if (seg.role === 'middle_voice') {
           return (
-            <span key={idx} className="text-slate-700 dark:text-slate-300 font-bold" title="Middle voice">
+            <span key={idx} className="text-slate-600 dark:text-slate-400 font-medium" title="Middle voice">
               {seg.text}
             </span>
           );
         }
         if (seg.role === 'root') {
           return (
-            <span key={idx} className="text-slate-700 dark:text-slate-300 font-bold underline underline-offset-2" title="Root">
+            <span key={idx} className="text-amber-700 dark:text-amber-400 font-extrabold underline decoration-2 decoration-amber-500/80 underline-offset-2" title="Root">
               {seg.text}
             </span>
           );
         }
         if (seg.role === 'post_root') {
           return (
-            <span key={idx} className="text-slate-700 dark:text-slate-300 font-bold" title="Post-root morpheme">
+            <span key={idx} className="text-slate-600 dark:text-slate-400 font-medium" title="Post-root morpheme">
               {seg.text}
             </span>
           );
         }
         if (seg.role === 'aspect') {
           return (
-            <span key={idx} className="text-emerald-500 dark:text-emerald-300 font-bold" title="Aspect suffix / Class ending">
+            <span key={idx} className="text-teal-600 dark:text-teal-400 font-semibold" title="Aspect suffix / Class ending">
               {seg.text}
             </span>
           );
         }
         if (seg.role === 'final') {
           return (
-            <span key={idx} className="text-slate-700 dark:text-slate-300 font-bold" title="Final suffix">
+            <span key={idx} className="text-slate-600 dark:text-slate-400 font-medium" title="Final suffix">
               {seg.text}
             </span>
           );
@@ -2202,21 +2287,21 @@ export const VerbMorphologyTemplate: React.FC<VerbMorphologyTemplateProps> = ({
   // 1. Prepronominals
   if (config?.pre?.translocutive) {
     elements.push(
-      <span key="pre-wi" className="font-semibold text-emerald-500 dark:text-emerald-300" title="Translocutive prefix">
+      <span key="pre-wi" className="font-semibold text-teal-600 dark:text-teal-400" title="Translocutive prefix">
         wi
       </span>
     );
   }
   if (config?.pre?.partitive) {
     elements.push(
-      <span key="pre-ni" className="font-semibold text-emerald-500 dark:text-emerald-300" title="Partitive prefix">
+      <span key="pre-ni" className="font-semibold text-teal-600 dark:text-teal-400" title="Partitive prefix">
         ni
       </span>
     );
   }
   if (config?.pre?.distributive) {
     elements.push(
-      <span key="pre-te" className="font-semibold text-emerald-500 dark:text-emerald-300" title="Distributive prefix">
+      <span key="pre-te" className="font-semibold text-teal-600 dark:text-teal-400" title="Distributive prefix">
         te
       </span>
     );
@@ -2229,7 +2314,7 @@ export const VerbMorphologyTemplate: React.FC<VerbMorphologyTemplateProps> = ({
 
   if (setType === 'b') {
     setLabel = config?.pron?.plural_pronouns ? 'Set B (pl)' : 'Set B';
-    setClass = 'text-blue-600 dark:text-blue-400 font-semibold';
+    setClass = 'text-sky-600 dark:text-sky-400 font-semibold';
   } else if (setType === 'p2p' || setType === 'person_to_person') {
     setLabel = 'Person-to-person';
     setClass = 'text-purple-600 dark:text-purple-400 font-semibold';
@@ -2292,11 +2377,11 @@ export const VerbMorphologyTemplate: React.FC<VerbMorphologyTemplateProps> = ({
             onViewRoot(rootEntry.slug || rootEntry.root_slug);
           }
         }}
-        className={`font-bold text-slate-900 dark:text-slate-100 hover:text-amber-600 dark:hover:text-amber-400 transition-colors inline-flex flex-col items-center align-middle leading-tight ${onViewRoot ? 'cursor-pointer' : ''}`}
+        className={`font-extrabold text-amber-800 dark:text-amber-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors inline-flex flex-col items-center align-middle leading-tight ${onViewRoot ? 'cursor-pointer' : ''}`}
         title="View Root"
       >
         {rootLines.map((line, rIdx) => (
-          <span key={rIdx} className="underline decoration-dotted underline-offset-2 select-text leading-tight">
+          <span key={rIdx} className="underline decoration-2 decoration-amber-500/80 underline-offset-2 select-text leading-tight">
             {line}
           </span>
         ))}
@@ -2313,7 +2398,7 @@ export const VerbMorphologyTemplate: React.FC<VerbMorphologyTemplateProps> = ({
             onViewRoot(rootEntry.slug || rootEntry.root_slug);
           }
         }}
-        className={`font-bold text-slate-900 dark:text-slate-100 hover:text-amber-600 dark:hover:text-amber-400 transition-colors underline decoration-dotted underline-offset-4 ${onViewRoot ? 'cursor-pointer' : ''}`}
+        className={`font-extrabold text-amber-800 dark:text-amber-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors underline decoration-2 decoration-amber-500/80 underline-offset-4 ${onViewRoot ? 'cursor-pointer' : ''}`}
         title="View Root"
       >
         {rootLines[0]}
@@ -2360,7 +2445,7 @@ export const VerbMorphologyTemplate: React.FC<VerbMorphologyTemplateProps> = ({
               onViewClass(rootEntry.class_name);
             }
           }}
-          className={`font-normal text-emerald-500 dark:text-emerald-300 hover:text-emerald-400 dark:hover:text-emerald-200 transition-colors leading-none underline decoration-dotted underline-offset-4 ${onViewClass ? 'cursor-pointer' : ''}`}
+          className={`font-semibold text-teal-600 dark:text-teal-400 hover:text-teal-500 dark:hover:text-teal-300 transition-colors leading-none underline decoration-dotted underline-offset-4 ${onViewClass ? 'cursor-pointer' : ''}`}
           title="View Class"
         >
           [{rootEntry.class_name}]

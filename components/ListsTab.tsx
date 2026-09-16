@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Star, ListIcon, Trash2, Pencil, ChevronRight, ChevronDown, GripVertical, Folder, FolderPlus, ArrowLeft, Plus, X, Search, Check, Volume2, Pause, Eye, EyeOff, Mic, StickyNote, ListPlus, BookOpen, Menu } from './Icons';
+import { Star, ListIcon, Trash2, Pencil, ChevronRight, ChevronDown, GripVertical, Folder, FolderPlus, ArrowLeft, Plus, X, Search, Check, Volume2, Pause, Eye, EyeOff, Mic, StickyNote, ListPlus, BookOpen, Menu, GraduationCap, Sparkles, Download, RotateCcw } from './Icons';
 import { Modal, SourceBadge, UserAuthButton } from './UI';
 import { usePackageManager } from './PackageManagerContext';
 import { useCorpus } from './CorpusContext';
-import { getAudioFromDB, renderStyledText, parseListName, formatListName, sanitizeListName, ColorizedCherokeeWord, VerbMorphologyTemplate } from '../utils';
+import { getAudioFromDB, renderStyledText, parseListName, formatListName, sanitizeListName, ColorizedCherokeeWord, VerbMorphologyTemplate, downloadFile } from '../utils';
 
 export interface ListData {
     id: string;
@@ -54,10 +54,17 @@ const MiniAudioButton = ({ audio, isOfficial = false, color }: { audio: any, isO
 
         try {
             let url = "";
-            const audioId = typeof audio === 'string' ? audio : audio.id;
+            const audioId = typeof audio === 'string' ? audio : (audio?.id || audio?.src || '');
+            if (!audioId) return;
 
             if (isOfficial) {
-                url = audioId.startsWith('http') ? audioId : `https://cherokeenationdictionary.net/Audio/${audioId}`;
+                if (audioId.startsWith('http')) {
+                    url = audioId;
+                } else if (audioId.includes('/')) {
+                    url = `https://cherokeenationdictionary.net/Audio/${audioId}`;
+                } else {
+                    url = `https://cherokeenationdictionary.net/Audio/word/${audioId}`;
+                }
             } else if (audio.src) {
                 url = audio.src;
             } else {
@@ -75,6 +82,9 @@ const MiniAudioButton = ({ audio, isOfficial = false, color }: { audio: any, isO
                 a.onended = () => {
                     setIsPlaying(false);
                     if (!isOfficial && !audio.src) URL.revokeObjectURL(url);
+                };
+                a.onerror = () => {
+                    setIsPlaying(false);
                 };
                 a.play();
             }
@@ -102,8 +112,8 @@ const MiniAudioButton = ({ audio, isOfficial = false, color }: { audio: any, isO
         bgClass = "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-amber-600";
     }
 
-    const audioId = typeof audio === 'string' ? audio : audio.id;
-    const speakerName = isOfficial ? (audioId.split('_')[0] || "Official Audio") : (audio.speaker || "User Recording");
+    const audioId = typeof audio === 'string' ? audio : (audio?.id || '');
+    const speakerName = isOfficial ? (audioId.split('_')[0] || "Official Audio") : (audio?.speaker || "User Recording");
 
     return (
         <button
@@ -114,6 +124,343 @@ const MiniAudioButton = ({ audio, isOfficial = false, color }: { audio: any, isO
         >
             {isPlaying ? <Pause size={14} className="fill-current" /> : <Icon size={14} />}
         </button>
+    );
+};
+
+// --- STUDY & FLASHCARDS COMPONENT ---
+interface StudyModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    listTitle: string;
+    items: { type: 'word' | 'sentence', data: any }[];
+    settings?: any;
+}
+
+const StudyModal: React.FC<StudyModalProps> = ({ isOpen, onClose, listTitle, items, settings: _settings }) => {
+    const [mode, setMode] = useState<'flashcards' | 'quiz'>('flashcards');
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [isFlipped, setIsFlipped] = useState(false);
+    const [studyList, setStudyList] = useState<any[]>([]);
+    const [masteredIds, setMasteredIds] = useState<Set<string>>(new Set());
+    const [reviewIds, setReviewIds] = useState<Set<string>>(new Set());
+    const [quizSelected, setQuizSelected] = useState<string | null>(null);
+    const [quizScore, setQuizScore] = useState(0);
+
+    const initDeck = (sourceItems: { type: 'word' | 'sentence', data: any }[], shuffle = false) => {
+        let deck = sourceItems.map(item => {
+            if (item.type === 'word') {
+                const w = item.data;
+                return {
+                    id: w.Index || w.id || Math.random().toString(),
+                    syllabary: w.Syllabary || w.syllabary || '',
+                    translit: w.Entry || w.translit || '',
+                    english: w.Definition || w.definition || '',
+                    audio: w.Entry_Audio || w.entry_audio || w.audio || w.sources?.['cn-app-dictionary.csv']?.['Word audio'] || w.sources?.['cn-app-dictionary.csv']?.Word_Audio,
+                    type: 'word',
+                    raw: w
+                };
+            } else {
+                const s = item.data;
+                return {
+                    id: s.id || Math.random().toString(),
+                    syllabary: (s.syllabary || '').replace(/\*/g, ''),
+                    translit: (s.translit || '').replace(/\*/g, ''),
+                    english: s.english || '',
+                    audio: s.audio,
+                    type: 'sentence',
+                    raw: s
+                };
+            }
+        }).filter(d => d.syllabary || d.translit || d.english);
+
+        if (shuffle) {
+            deck = [...deck].sort(() => Math.random() - 0.5);
+        }
+        setStudyList(deck);
+        setCurrentIndex(0);
+        setIsFlipped(false);
+        setMasteredIds(new Set());
+        setReviewIds(new Set());
+        setQuizSelected(null);
+        setQuizScore(0);
+    };
+
+    useEffect(() => {
+        if (isOpen) {
+            initDeck(items);
+        }
+    }, [isOpen, items]);
+
+    if (!isOpen || studyList.length === 0) return null;
+
+    const currentCard = studyList[currentIndex];
+    const isCompleted = currentIndex >= studyList.length;
+
+    // Generate Multiple Choice Quiz Options
+    const quizOptions = useMemo(() => {
+        if (!currentCard || mode !== 'quiz') return [];
+        const correct = currentCard.english;
+        const otherPool = studyList.filter(c => c.id !== currentCard.id && c.english !== correct).map(c => c.english);
+        const shuffledOthers = [...new Set(otherPool)].sort(() => Math.random() - 0.5).slice(0, 3);
+        return [correct, ...shuffledOthers].sort(() => Math.random() - 0.5);
+    }, [currentCard, studyList, mode]);
+
+    const handleNextCard = (mastered: boolean) => {
+        if (!currentCard) return;
+        if (mastered) {
+            setMasteredIds(prev => new Set(prev).add(currentCard.id));
+        } else {
+            setReviewIds(prev => new Set(prev).add(currentCard.id));
+        }
+        setIsFlipped(false);
+        setCurrentIndex(prev => prev + 1);
+    };
+
+    const handleQuizAnswer = (option: string) => {
+        if (quizSelected !== null || !currentCard) return;
+        setQuizSelected(option);
+        if (option === currentCard.english) {
+            setQuizScore(prev => prev + 1);
+            setMasteredIds(prev => new Set(prev).add(currentCard.id));
+        } else {
+            setReviewIds(prev => new Set(prev).add(currentCard.id));
+        }
+    };
+
+    const handleExportDeckTSV = () => {
+        const rows = ['Cherokee Syllabary\tTransliteration\tEnglish Translation'];
+        studyList.forEach(c => {
+            rows.push(`${c.syllabary}\t${c.translit}\t${c.english}`);
+        });
+        downloadFile(rows.join('\n'), `${listTitle.replace(/[^a-zA-Z0-9]/g, '_')}_anki_deck.tsv`, 'text/tab-separated-values');
+    };
+
+    const restartReviewOnly = () => {
+        const reviewItems = items.filter(it => {
+            const id = it.type === 'word' ? (it.data.Index || it.data.id) : it.data.id;
+            return reviewIds.has(id);
+        });
+        if (reviewItems.length > 0) {
+            initDeck(reviewItems, true);
+        } else {
+            initDeck(items, true);
+        }
+    };
+
+    return (
+        <Modal title={`Study: ${listTitle}`} onClose={onClose}>
+            <div className="space-y-4">
+                {/* Header Controls */}
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                    <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+                        <button
+                            onClick={() => { setMode('flashcards'); setIsFlipped(false); setQuizSelected(null); }}
+                            className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${mode === 'flashcards' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500'}`}
+                        >
+                            Flashcards
+                        </button>
+                        <button
+                            onClick={() => { setMode('quiz'); setIsFlipped(false); setQuizSelected(null); }}
+                            className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${mode === 'quiz' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500'}`}
+                        >
+                            Quiz
+                        </button>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                        <button
+                            onClick={() => initDeck(items, true)}
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-xs flex items-center gap-1"
+                            title="Shuffle Deck"
+                        >
+                            <RotateCcw size={14} /> Shuffle
+                        </button>
+                        <button
+                            onClick={handleExportDeckTSV}
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-xs flex items-center gap-1"
+                            title="Export to Anki TSV"
+                        >
+                            <Download size={14} /> Anki
+                        </button>
+                    </div>
+                </div>
+
+                {!isCompleted && currentCard ? (
+                    <>
+                        {/* Progress */}
+                        <div className="space-y-1">
+                            <div className="flex justify-between text-xs text-slate-400 font-semibold">
+                                <span>Card {currentIndex + 1} of {studyList.length}</span>
+                                <span>{masteredIds.size} Mastered • {reviewIds.size} Review</span>
+                            </div>
+                            <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                <div
+                                    className="bg-amber-500 h-full transition-all duration-300"
+                                    style={{ width: `${((currentIndex) / studyList.length) * 100}%` }}
+                                />
+                            </div>
+                        </div>
+
+                        {mode === 'flashcards' ? (
+                            /* Flashcard View */
+                            <div className="space-y-4">
+                                <div
+                                    onClick={() => setIsFlipped(!isFlipped)}
+                                    className="w-full min-h-[200px] bg-gradient-to-br from-amber-50/50 via-white to-orange-50/30 dark:from-slate-800 dark:to-slate-900 border-2 border-amber-200/60 dark:border-amber-900/40 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer shadow-sm hover:shadow-md transition-all active:scale-[0.99] select-none relative group"
+                                >
+                                    <span className="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-400 tracking-wider absolute top-3 left-4">
+                                        {isFlipped ? 'Definition' : 'Cherokee (Tap to Flip)'}
+                                    </span>
+
+                                    {currentCard.audio && (
+                                        <div className="absolute top-3 right-3" onClick={e => e.stopPropagation()}>
+                                            <MiniAudioButton audio={currentCard.audio} isOfficial={true} />
+                                        </div>
+                                    )}
+
+                                    {!isFlipped ? (
+                                        <div className="space-y-2 py-4">
+                                            <div className="font-noto-cherokee text-3xl sm:text-4xl text-slate-800 dark:text-slate-100 font-bold">
+                                                {currentCard.syllabary}
+                                            </div>
+                                            <div className="text-base sm:text-lg text-slate-600 dark:text-slate-300 font-serif font-semibold">
+                                                {currentCard.translit}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2 py-4 animate-fade-in">
+                                            <div className="text-xl sm:text-2xl font-serif text-slate-800 dark:text-slate-100 font-bold">
+                                                {currentCard.english}
+                                            </div>
+                                            <div className="text-xs text-slate-400 font-serif">
+                                                {currentCard.syllabary} • {currentCard.translit}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <span className="text-[11px] text-slate-400 font-medium absolute bottom-3">
+                                        {isFlipped ? 'Tap to flip back' : 'Tap to reveal answer'}
+                                    </span>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3 pt-2">
+                                    <button
+                                        onClick={() => handleNextCard(false)}
+                                        className="py-3 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <RotateCcw size={16} className="text-orange-500" /> Review Again
+                                    </button>
+                                    <button
+                                        onClick={() => handleNextCard(true)}
+                                        className="py-3 px-4 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-sm transition-colors shadow-sm flex items-center justify-center gap-2"
+                                    >
+                                        <Check size={16} /> Got It!
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            /* Multiple Choice Quiz View */
+                            <div className="space-y-4">
+                                <div className="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 text-center relative">
+                                    {currentCard.audio && (
+                                        <div className="absolute top-3 right-3">
+                                            <MiniAudioButton audio={currentCard.audio} isOfficial={true} />
+                                        </div>
+                                    )}
+                                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">
+                                        Translate to English
+                                    </span>
+                                    <div className="font-noto-cherokee text-2xl sm:text-3xl text-slate-800 dark:text-slate-100 font-bold">
+                                        {currentCard.syllabary}
+                                    </div>
+                                    <div className="text-sm text-slate-600 dark:text-slate-300 font-serif font-semibold mt-1">
+                                        {currentCard.translit}
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    {quizOptions.map((opt, oIdx) => {
+                                        let btnClass = "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800";
+                                        if (quizSelected !== null) {
+                                            if (opt === currentCard.english) {
+                                                btnClass = "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 text-emerald-700 dark:text-emerald-300 font-bold";
+                                            } else if (opt === quizSelected) {
+                                                btnClass = "bg-red-50 dark:bg-red-950/40 border-red-500 text-red-700 dark:text-red-300 font-bold";
+                                            } else {
+                                                btnClass = "opacity-40 border-slate-200 dark:border-slate-800 text-slate-400";
+                                            }
+                                        }
+
+                                        return (
+                                            <button
+                                                key={oIdx}
+                                                disabled={quizSelected !== null}
+                                                onClick={() => handleQuizAnswer(opt)}
+                                                className={`w-full p-3.5 rounded-xl border text-left text-sm font-medium transition-all flex items-center justify-between ${btnClass}`}
+                                            >
+                                                <span>{opt}</span>
+                                                {quizSelected !== null && opt === currentCard.english && <Check size={16} className="text-emerald-600 shrink-0" />}
+                                                {quizSelected === opt && opt !== currentCard.english && <X size={16} className="text-red-600 shrink-0" />}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                {quizSelected !== null && (
+                                    <button
+                                        onClick={() => {
+                                            setQuizSelected(null);
+                                            setCurrentIndex(prev => prev + 1);
+                                        }}
+                                        className="w-full py-3 bg-slate-900 dark:bg-slate-800 text-white font-bold rounded-xl text-sm hover:bg-slate-800 transition-colors"
+                                    >
+                                        Next Question →
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </>
+                ) : (
+                    /* Completion Summary */
+                    <div className="py-6 text-center space-y-4">
+                        <div className="w-14 h-14 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-600 flex items-center justify-center mx-auto">
+                            <Sparkles size={28} />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">
+                                {mode === 'quiz' ? `Quiz Score: ${quizScore} / ${studyList.length}` : 'Study Session Complete!'}
+                            </h3>
+                            <p className="text-xs text-slate-400 mt-1">
+                                {masteredIds.size} of {studyList.length} items mastered ({Math.round((masteredIds.size / studyList.length) * 100)}%)
+                            </p>
+                        </div>
+
+                        <div className="space-y-2 pt-2">
+                            {reviewIds.size > 0 && (
+                                <button
+                                    onClick={restartReviewOnly}
+                                    className="w-full py-3 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <RotateCcw size={16} /> Practice {reviewIds.size} Words Needing Review
+                                </button>
+                            )}
+                            <button
+                                onClick={() => initDeck(items, true)}
+                                className="w-full py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl text-sm transition-colors"
+                            >
+                                Restart Full Deck
+                            </button>
+                            <button
+                                onClick={onClose}
+                                className="w-full py-2.5 text-slate-400 hover:text-slate-600 text-xs font-semibold"
+                            >
+                                Done
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </Modal>
     );
 };
 
@@ -350,6 +697,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
     const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
     const [renameTargetId, setRenameTargetId] = useState<string | null>(null);
     const [showAddWordsModal, setShowAddWordsModal] = useState(false);
+    const [showStudyModal, setShowStudyModal] = useState(false);
     const [hoveredDropFolder, setHoveredDropFolder] = useState<string | null>(null);
     const [addExistingModalFolder, setAddExistingModalFolder] = useState<string | null>(null);
     const [existingSearchQuery, setExistingSearchQuery] = useState('');
@@ -1423,6 +1771,14 @@ const ListsTab: React.FC<ListsTabProps> = ({
                         </Modal>
                     );
                 })()}
+
+                <StudyModal
+                    isOpen={showStudyModal}
+                    onClose={() => setShowStudyModal(false)}
+                    listTitle={activeList ? parseListName(activeList.name).name : 'List'}
+                    items={listItems.filter(Boolean)}
+                    settings={settings}
+                />
             </>
         );
     };
@@ -1456,6 +1812,14 @@ const ListsTab: React.FC<ListsTabProps> = ({
                         </div>
                         <p className="text-xs text-slate-500 dark:text-slate-400">{listItems.length} items</p>
                     </div>
+                    <button
+                        onClick={() => setShowStudyModal(true)}
+                        className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 active:scale-95 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all shrink-0"
+                        title="Study with Flashcards & Quiz"
+                    >
+                        <GraduationCap size={16} />
+                        <span className="hidden sm:inline">Study</span>
+                    </button>
                     {activeList.type === 'user' && (
                         <button onClick={() => setDeleteTargetId(activeList.id)} className="p-1.5 text-slate-400 hover:text-red-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Delete List">
                             <Trash2 size={20} />
@@ -1546,9 +1910,10 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                                     </td>
                                                     <td className="p-3 align-middle">
                                                         <div className="flex flex-wrap gap-1.5" onClick={e => e.stopPropagation()}>
-                                                            {(word.Entry_Audio || word.entry_audio) && (
-                                                                <MiniAudioButton audio={word.Entry_Audio || word.entry_audio} isOfficial={true} />
-                                                            )}
+                                                            {(() => {
+                                                                const officialAudio = word.Entry_Audio || word.entry_audio || word.audio || word.sources?.['cn-app-dictionary.csv']?.['Word audio'] || word.sources?.['cn-app-dictionary.csv']?.Word_Audio;
+                                                                return officialAudio ? <MiniAudioButton audio={officialAudio} isOfficial={true} /> : null;
+                                                            })()}
                                                             {userAudio.map((audio: any) => {
                                                                 const isOfficialItem = audio.packageId === 'official-cherokee-data';
                                                                 return (

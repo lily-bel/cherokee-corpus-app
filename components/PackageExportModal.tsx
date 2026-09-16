@@ -2,12 +2,13 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Modal } from './UI';
 import { useCorpus } from './CorpusContext';
 import { usePackageExport } from './usePackageHooks';
-import { Download, Check, ListIcon, Mic, Box, LinkIcon } from './Icons'; // Check imports
+import { Download, Check, ListIcon, Mic, Box, LinkIcon, FileCode } from './Icons';
 import { parseListName } from '../utils';
 import { ListData } from './ListsTab';
 import { useAuth } from './AuthContext';
 import { DictionaryDB } from '../firebase';
 import { PackageMetadata, usePackageManager } from './PackageManagerContext';
+import { getAllWidgets, Widget } from '../widgetUtils';
 
 interface PackageExportModalProps {
     onClose: () => void;
@@ -29,6 +30,8 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({
 
     const [selectedDictionaries, setSelectedDictionaries] = useState<string[]>([]);
     const [selectedLists, setSelectedLists] = useState<Record<string, { selected: boolean, includeDependencies: boolean }>>({});
+    const [availableWidgets, setAvailableWidgets] = useState<Widget[]>([]);
+    const [selectedWidgetNames, setSelectedWidgetNames] = useState<string[]>([]);
     const [metadata, setMetadata] = useState({
         name: initialMetadata?.name || '',
         author: initialMetadata?.author || user?.displayName || '',
@@ -184,6 +187,9 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({
             setUserCloudPackages(list);
         };
         loadUserPackages();
+        getAllWidgets().then(all => {
+            setAvailableWidgets(all.filter(w => !w.isBuiltIn));
+        }).catch(err => console.warn("Failed to load widgets for export:", err));
     }, [user, packages]);
 
     const toggleDictionary = (id: string) => {
@@ -201,11 +207,17 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({
             };
         });
     };
+
+    const toggleWidget = (name: string) => {
+        setSelectedWidgetNames(prev =>
+            prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]
+        );
+    };
     
     // toggleListDeps removed as per request to move to Global Includes
 
     const handleExport = async () => {
-        if (!metadata.name || (selectedDictionaries.length === 0 && !Object.values(selectedLists).some(l => l.selected) && !includeAllAudio && !includeAllGlosses)) return;
+        if (!metadata.name || (selectedDictionaries.length === 0 && !Object.values(selectedLists).some(l => l.selected) && selectedWidgetNames.length === 0 && !includeAllAudio && !includeAllGlosses)) return;
 
         if (shareViaLink && !user) {
             alert("Please sign in first to share this package via a public link.");
@@ -234,8 +246,9 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({
             
             // Pass dependency entries if confirmed
             const depEntryIds = includeDependencies ? dependencyEntries.map(d => d.id) : [];
+            const widgetsToExport = availableWidgets.filter(w => selectedWidgetNames.includes(w.name));
 
-            console.log("Calling exportPackage with:", { selectedDictionaries, metadata, finalListsConfig, depAudioIds, depEntryIds, includeAllNotesAndForms });
+            console.log("Calling exportPackage with:", { selectedDictionaries, metadata, finalListsConfig, depAudioIds, depEntryIds, includeAllNotesAndForms, widgetsToExport });
             const result = await exportPackage(
                 selectedDictionaries, 
                 metadata, 
@@ -244,7 +257,8 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({
                 depEntryIds, 
                 includeAllNotesAndForms,
                 shareViaLink,
-                isUpdate ? selectedUpdateOf : null
+                isUpdate ? selectedUpdateOf : null,
+                widgetsToExport
             );
 
             if (result && result.shared && result.publicUrl) {
@@ -485,6 +499,34 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({
                         })}
                     </div>
                 </div>
+
+                {/* Custom Widgets */}
+                {availableWidgets.length > 0 && (
+                    <div className="space-y-3">
+                        <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Select Custom Widgets</h3>
+                        <div className="max-h-48 overflow-y-auto space-y-2 border border-slate-100 dark:border-slate-800 rounded-lg p-2">
+                            {availableWidgets.map((widget) => {
+                                const isSelected = selectedWidgetNames.includes(widget.name);
+                                return (
+                                    <div
+                                        key={widget.name}
+                                        onClick={() => toggleWidget(widget.name)}
+                                        className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${isSelected ? 'bg-amber-50 dark:bg-amber-900/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                                    >
+                                        <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 ${isSelected ? 'bg-amber-600 border-amber-600' : 'border-slate-300 dark:border-slate-600'}`}>
+                                            {isSelected && <Check size={14} className="text-white" />}
+                                        </div>
+                                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                                            <FileCode size={16} className="text-amber-600 shrink-0" />
+                                            <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">{widget.name}</span>
+                                            {widget.path && <span className="text-[10px] text-slate-400 uppercase font-mono">(URL)</span>}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
 
                 {/* Global Includes */}
                 <div className="space-y-3">

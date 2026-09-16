@@ -22,6 +22,7 @@ export interface PackageMetadata {
         notebooks?: number;
         notes?: number;
         word_forms?: number;
+        widgets?: number;
     };
     source_names?: Record<string, string>;
     source_meta?: Record<string, "prioritize" | "filter">;
@@ -46,6 +47,7 @@ export interface ImportedPackageData {
     lists?: any[]; // ListData[]
     notes?: any[]; // [{ text, target_id, type }]
     word_forms?: any[]; // [{ word_index, order, form_name, syllabary, translit, tone, notes }]
+    widgets?: any[]; // [{ name, content, path, isBuiltIn }]
 }
 
 interface PackageManagerContextType {

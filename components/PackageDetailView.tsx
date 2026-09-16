@@ -4,7 +4,8 @@ import { useCorpus } from './CorpusContext';
 import {
     ArrowLeft, Folder, Mic, StickyNote,
     ChevronDown, ChevronRight, ListIcon, ListPlus, SquaresPlus,
-    Search, Pause, Volume2, Menu, Upload, LinkIcon, Check
+    Search, Pause, Volume2, Menu, Upload, LinkIcon, Check,
+    FileCode, Globe
 } from './Icons';
 import { SourceBadge, UserAuthButton } from './UI';
 import EntryCard from './EntryCard';
@@ -230,7 +231,8 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({
                 glosses: userGlosses,
                 notes: notesList,
                 wordForms: formsList,
-                lists: userLists
+                lists: userLists,
+                widgets: []
             };
         } else {
             // Official / Imported Data
@@ -307,7 +309,8 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({
                 glosses: glosses,
                 lists: pData.lists || [],
                 notes: notes,
-                wordForms: wordForms
+                wordForms: wordForms,
+                widgets: pData.widgets || []
             };
         }
     }, [isUser, isOfficial, pkg.id, importedData, customDictionaries, personalWords, userSentences, userAudioMeta, glosses, userNotes, userWordForms, dictionary, sentences, customLists]);
@@ -493,6 +496,15 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({
                     pkg={pkg}
                     onNavigate={onNavigate}
                 />
+
+                <SectionItem
+                    icon={<FileCode size={20} />}
+                    label="Widgets"
+                    items={data.widgets || []}
+                    type="widget"
+                    pkg={pkg}
+                    onNavigate={onNavigate}
+                />
             </div>
         </div>
     );
@@ -513,7 +525,7 @@ const SectionItem = ({
     label: string,
     items: any[],
     searchable?: boolean,
-    type: 'word' | 'sentence' | 'audio' | 'gloss' | 'list' | 'note' | 'form' | 'dictionary',
+    type: 'word' | 'sentence' | 'audio' | 'gloss' | 'list' | 'note' | 'form' | 'dictionary' | 'widget',
     onItemClick?: (item: any) => void,
     extraProps?: any,
     pkg: any,
@@ -597,6 +609,7 @@ const SectionItem = ({
                                 {type === 'form' && <WordFormCard form={item} onNavigate={onNavigate} />}
                                 {type === 'gloss' && <GlossCard gloss={item} onNavigate={onNavigate} />}
                                 {type === 'list' && <ListCard list={item} onNavigate={onNavigate} />}
+                                {type === 'widget' && <WidgetCard widget={item} />}
                                 {type === 'dictionary' && (
                                     <div
                                         onClick={() => onNavigate && onNavigate('dictionary', item.id)}
@@ -938,6 +951,31 @@ const ListCard = ({ list, onNavigate }: { list: any, onNavigate?: (type: 'dictio
                     <div className="text-xs text-slate-500">{list.count} items</div>
                 </div>
             </div>
+        </div>
+    );
+};
+
+const WidgetCard = ({ widget }: { widget: any }) => {
+    return (
+        <div
+            onClick={() => {
+                const params = new URLSearchParams(window.location.search);
+                params.set('tab', 'widgets');
+                params.set('widget', widget.name);
+                window.location.search = params.toString();
+            }}
+            className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer group"
+        >
+            <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                    {widget.path ? <Globe size={18} /> : <FileCode size={18} />}
+                </div>
+                <div className="min-w-0">
+                    <div className="font-bold text-slate-800 dark:text-slate-100 group-hover:text-amber-600 transition-colors truncate">{widget.name}</div>
+                    <div className="text-[10px] text-slate-400 uppercase tracking-wider">{widget.path ? 'External' : 'Custom HTML Widget'}</div>
+                </div>
+            </div>
+            <ChevronRight size={18} className="text-slate-300 group-hover:text-amber-500 shrink-0 transition-colors" />
         </div>
     );
 };

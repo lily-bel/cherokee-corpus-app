@@ -2,6 +2,7 @@ import JSZip from 'jszip';
 import { Package, PackageMetadata, ImportedPackageData } from './PackageManagerContext';
 import { ListData } from './ListsTab';
 import { saveAudioToDB } from '../utils';
+import { saveWidget, Widget } from '../widgetUtils';
 
 const generateId = () => {
     try {
@@ -169,6 +170,61 @@ export async function parsePackageZip(
                 });
             } catch (e: any) {
                 throw new Error(`Corrupted list file in lists/${path}: Invalid JSON syntax (${e?.message || 'parse error'})`);
+            }
+        }
+    }
+
+    // 3.8 widgets/ directory or widgets.json
+    const widgets: Widget[] = [];
+    const widgetsFile = zip.file('widgets.json');
+    if (widgetsFile) {
+        try {
+            const text = await widgetsFile.async('string');
+            const parsed = JSON.parse(text);
+            if (Array.isArray(parsed)) {
+                for (const w of parsed) {
+                    if (w.name) {
+                        const widgetObj: Widget = {
+                            name: w.name,
+                            content: w.content || '',
+                            isBuiltIn: false,
+                            path: w.path || undefined
+                        };
+                        widgets.push(widgetObj);
+                        await saveWidget(widgetObj.name, widgetObj.content, widgetObj.path);
+                    }
+                }
+            }
+        } catch (e: any) {
+            console.warn("Corrupted widgets.json in package:", e);
+        }
+    }
+
+    const widgetsFolder = zip.folder('widgets');
+    if (widgetsFolder) {
+        const widgetFiles: { path: string; file: JSZip.JSZipObject }[] = [];
+        widgetsFolder.forEach((path, file) => {
+            if (!file.dir && path.endsWith('.html')) {
+                widgetFiles.push({ path, file });
+            }
+        });
+
+        for (const { path, file } of widgetFiles) {
+            try {
+                const content = await file.async('string');
+                const name = path.replace('.html', '').split('/').pop() || 'Widget';
+                const exists = widgets.some(w => w.name === name);
+                if (!exists) {
+                    const widgetObj: Widget = {
+                        name,
+                        content,
+                        isBuiltIn: false
+                    };
+                    widgets.push(widgetObj);
+                    await saveWidget(name, content);
+                }
+            } catch (e: any) {
+                console.warn(`Failed to parse widget ${path}:`, e);
             }
         }
     }
@@ -462,6 +518,7 @@ export async function parsePackageZip(
         lists: lists.length,
         word_forms: normalizedWordForms.length,
         notes: importedNotes.length,
+        widgets: widgets.length,
         notebooks: meta.stats?.notebooks !== undefined ? meta.stats.notebooks : (normalizedDictionary.length === 0 ? 0 : undefined)
     };
 
@@ -480,7 +537,8 @@ export async function parsePackageZip(
         glosses: normalizedGlosses,
         lists,
         notes: importedNotes,
-        word_forms: normalizedWordForms
+        word_forms: normalizedWordForms,
+        widgets
     };
 
     return { pkg, data, audioMeta: newAudioMeta };
@@ -729,6 +787,22 @@ export function parsePackageJsonData(
         ...importedWordFormsFromEntryData
     ];
 
+    const widgets: Widget[] = [];
+    if (Array.isArray(packageData.widgets)) {
+        for (const w of packageData.widgets) {
+            if (w.name) {
+                const widgetObj: Widget = {
+                    name: w.name,
+                    content: w.content || '',
+                    isBuiltIn: false,
+                    path: w.path || undefined
+                };
+                widgets.push(widgetObj);
+                saveWidget(widgetObj.name, widgetObj.content, widgetObj.path).catch(e => console.warn("Failed to save widget", e));
+            }
+        }
+    }
+
     meta.stats = {
         words: normalizedDictionary.length,
         sentences: normalizedSentences.length,
@@ -737,6 +811,7 @@ export function parsePackageJsonData(
         lists: lists.length,
         word_forms: normalizedWordForms.length,
         notes: importedNotes.length,
+        widgets: widgets.length,
         notebooks: meta.stats?.notebooks !== undefined ? meta.stats.notebooks : (normalizedDictionary.length === 0 ? 0 : undefined)
     };
 
@@ -755,7 +830,8 @@ export function parsePackageJsonData(
         glosses: normalizedGlosses,
         lists,
         notes: importedNotes,
-        word_forms: normalizedWordForms
+        word_forms: normalizedWordForms,
+        widgets
     };
 
     return { pkg, data, audioMeta: newAudioMeta };

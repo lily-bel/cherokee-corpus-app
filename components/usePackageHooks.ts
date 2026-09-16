@@ -25,7 +25,8 @@ export const usePackageExport = () => {
         dependencyEntryIds: string[] = [],
         exportAllNotesAndForms: boolean = false,
         shareViaLink: boolean = false,
-        updateOf: string | null = null
+        updateOf: string | null = null,
+        widgetsToExport: any[] = []
     ) => {
         try {
             const zip = new JSZip();
@@ -287,6 +288,16 @@ export const usePackageExport = () => {
             if (notesExport.length > 0) {
                 zip.file('entry_data.json', JSON.stringify({ notes: notesExport }, null, 2));
             }
+            if (widgetsToExport.length > 0) {
+                zip.file('widgets.json', JSON.stringify(widgetsToExport, null, 2));
+                const widgetsFolder = zip.folder('widgets');
+                widgetsToExport.forEach(w => {
+                    if (w.content) {
+                        const safeName = w.name.replace(/[^a-zA-Z0-9_\-]/g, '_');
+                        widgetsFolder?.file(`${safeName}.html`, w.content);
+                    }
+                });
+            }
 
             // 3. Audio & audio_mapping.json
             const audioFolder = zip.folder('audio');
@@ -446,7 +457,8 @@ export const usePackageExport = () => {
                     glosses: glossesToExport.length,
                     lists: exportedListCount,
                     word_forms: formsExport.length,
-                    notes: notesExport.length
+                    notes: notesExport.length,
+                    widgets: widgetsToExport.length
                 },
                 source_names: sourceNamesMap,
                 source_meta: sourceMetaMap as any,
@@ -493,6 +505,7 @@ export const usePackageExport = () => {
                     conjugations: formsExport,
                     entry_data: notesExport.length > 0 ? { notes: notesExport } : null,
                     lists: exportedListsPayload,
+                    widgets: widgetsToExport.length > 0 ? widgetsToExport : null,
                     date_exported: Date.now()
                 };
 

@@ -7,7 +7,7 @@ import EntryDetail from './components/EntryDetail';
 
 import PackageManagerTab from './components/PackageManagerTab';
 import { useCorpus } from './components/CorpusContext';
-import { downloadFile, performSearch, buildWordFormsLookupMap, isEmptyRoot } from './utils';
+import { downloadFile, performSearch, buildWordFormsLookupMap, isEmptyRoot, KNOWN_SOURCE_NAMES, getFriendlySourceName, formatToneStyle, ToneStyle } from './utils';
 import { SentenceCard } from './components/SentenceCard';
 import WidgetsTab from './components/WidgetsTab';
 
@@ -35,6 +35,7 @@ const DEFAULT_SETTINGS = {
     searchScopes: { main: true, otherForms: true, sentences: false, notes: false, roots: true },
     showRootHeaders: true,
     transliterationStyle: 'classic' as 'classic' | 'aspiration' | 'reverse_aspiration',
+    toneStyle: 'superscript' as ToneStyle,
     showToneInForms: true,
     colorWordSegments: true,
     showClassMascots: false,
@@ -268,7 +269,7 @@ function App() {
     const [newListName, setNewListName] = useState('');
     const [toast, setToast] = useState({ show: false, message: '', type: 'error' });
     const [showWordModal, setShowWordModal] = useState(false);
-    const [wordForm, setWordForm] = useState({ Entry: '', Syllabary: '', Definition: '', PoS: '', Entry_Tone: '', Notes: '', customDictionaryId: '' });
+    const [wordForm, setWordForm] = useState<any>({ Entry: '', Syllabary: '', Definition: '', PoS: '', Entry_Tone: '', Notes: '', customDictionaryId: '' });
     const [isSentenceMode, setIsSentenceMode] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [pdSort] = useState('date');
@@ -767,7 +768,7 @@ function App() {
     }, [allData, packages]);
 
     const sourceNames = useMemo(() => {
-        const names: Record<string, string> = {};
+        const names: Record<string, string> = { ...KNOWN_SOURCE_NAMES };
         packages.forEach(p => {
             if (p.status === 'active' && p.metadata?.source_names) {
                 Object.assign(names, p.metadata.source_names);
@@ -787,7 +788,7 @@ function App() {
                 if (sourceStats.smallSourceCodes.includes(d.Source)) return;
 
                 let code = String(d.Source);
-                let name = sourceNames[code.toLowerCase()] || sourceNames[code] || d.Source_Long || code.toUpperCase();
+                let name = sourceNames[code.toLowerCase()] || sourceNames[code] || getFriendlySourceName(code) || d.Source_Long || code.toUpperCase();
                 let badge = code.substring(0, 3).toUpperCase();
                 let packageId: string | undefined = undefined;
                 let packageDate = 0;
@@ -877,7 +878,7 @@ function App() {
                 const pkgById = packages.find(p => p.status === 'active' && p.id === code);
 
                 if (pkgBySource) {
-                    name = pkgBySource.metadata?.source_names?.[code] || code;
+                    name = pkgBySource.metadata?.source_names?.[code] || getFriendlySourceName(code) || code;
                     badge = code.substring(0, 3).toUpperCase();
                 } else if (pkgById) {
                     name = pkgById.name;
@@ -889,8 +890,8 @@ function App() {
                     name = 'My Library';
                     badge = 'MY';
                 } else {
-                    // Fallback
-                    name = code;
+                    // Fallback using friendly lookup
+                    name = getFriendlySourceName(code) || code;
                     badge = code.substring(0, 3).toUpperCase();
                 }
             }
@@ -1315,13 +1316,31 @@ function App() {
             // Editing existing item
             setIsSentenceMode(false); // Default to word, handleEditSentence will override if needed
             setWordForm({
-                Entry: w.Entry || '',
-                Syllabary: w.Syllabary || '',
-                Definition: w.Definition || '',
+                Entry: w.Entry || w.translit || '',
+                Syllabary: w.Syllabary || w.syllabary || '',
+                Definition: w.Definition || w.definition || '',
                 PoS: w.PoS || '',
                 Entry_Tone: w.Entry_Tone || '',
                 Notes: w.Notes || '',
-                customDictionaryId: w.customDictionaryId || w.source || '' // Handle both word and sentence source
+                customDictionaryId: w.customDictionaryId || w.source || '',
+                Other_Forms: w.Other_Forms || '',
+                class_name: w.class_name || (w as any).className || '',
+                root_h: w.root_h || '',
+                root_g: w.root_g || '',
+                root_slug: w.root_slug || (w as any).slug || '',
+                preDistributive: w.config?.pre?.distributive ?? (w as any).preDistributive ?? false,
+                preTranslocutive: w.config?.pre?.translocutive ?? (w as any).preTranslocutive ?? false,
+                prePartitive: w.config?.pre?.partitive ?? (w as any).prePartitive ?? false,
+                pronSetType: w.config?.pron?.set_type || (w as any).pronSetType || 'a',
+                middleVoice: w.config?.pron?.middle_voice || (w as any).middleVoice || 'none',
+                segmented_forms: w.segmented_forms || {
+                    present: '',
+                    present_1sg: '',
+                    imperfective: '',
+                    perfective: '',
+                    imperative: '',
+                    infinitive: ''
+                }
             });
             setEditingId(w.Index || w.id);
         }
@@ -1384,7 +1403,14 @@ function App() {
             translit: data.Entry,
             definition: data.Definition,
             source: 'user',
-            Other_Forms: data.Other_Forms // Ensure Other_Forms is saved
+            Other_Forms: data.Other_Forms,
+            class_name: data.class_name,
+            root_h: data.root_h,
+            root_g: data.root_g,
+            root_slug: data.root_slug,
+            config: data.config,
+            segmented_forms: data.segmented_forms,
+            surface_segments: data.surface_segments
         };
         if (editingId) {
             setPersonalWords(p => p.map(w => w.Index === editingId ? nw : w));
@@ -2522,18 +2548,68 @@ function App() {
                                 </div>
                             </div>
                             <hr className="border-slate-100 dark:border-slate-800" />
+                            {/* TRANSLITERATION STYLE */}
                             <div>
-                                <label className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-1 block">Preferred Transliteration Style</label>
-                                <p className="text-xs text-slate-400 mb-3">Controls automatic syllabary and transliteration conversion across the app.</p>
+                                <label className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-1 block">Transliteration Style</label>
+                                <p className="text-xs text-slate-400 mb-3">Controls consonant spelling and syllabary conversion across the app.</p>
                                 <select
                                     value={settings.transliterationStyle || 'classic'}
                                     onChange={(e) => setSettings(s => ({ ...s, transliterationStyle: e.target.value as any }))}
                                     className="w-full p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-sm outline-none focus:ring-2 focus:ring-amber-500 font-medium"
                                 >
-                                    <option value="classic">Classic (CED)</option>
-                                    <option value="aspiration">Aspiration (Uchihara t/th)</option>
-                                    <option value="reverse_aspiration">Reverse Aspiration (d/dh)</option>
+                                    <option value="classic">Classic CED (Feeling & Pulte: g, d, ts, gw)</option>
+                                    <option value="aspiration">Aspiration (Uchihara: k/th/ch/kw vs g/d/ts/gw)</option>
+                                    <option value="reverse_aspiration">Reverse Aspiration (d/dh/gh)</option>
                                 </select>
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2 bg-slate-100/60 dark:bg-slate-800/60 p-2 rounded-lg leading-relaxed">
+                                    {settings.transliterationStyle === 'aspiration'
+                                        ? "• Aspiration (Uchihara): Explicitly distinguishes unaspirated consonants (k, t, ts, kw) from aspirated consonants (kh, th, ch, khw)."
+                                        : settings.transliterationStyle === 'reverse_aspiration'
+                                        ? "• Reverse Aspiration: Standard CED consonant base with explicit 'h' trailing for aspirated pairs (dh, gh, ch)."
+                                        : "• Classic CED: The standard dictionary transliteration used by Durbin Feeling and William Pulte (1975)."}
+                                </p>
+                            </div>
+
+                            {/* TONE REPRESENTATION STYLE */}
+                            <div>
+                                <label className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-1 block">Tone Representation</label>
+                                <p className="text-xs text-slate-400 mb-3">Choose how tone numbers and pitch accents are rendered across the dictionary.</p>
+                                <select
+                                    value={settings.toneStyle || 'superscript'}
+                                    onChange={(e) => setSettings(s => ({ ...s, toneStyle: e.target.value as any }))}
+                                    className="w-full p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-sm outline-none focus:ring-2 focus:ring-amber-500 font-medium"
+                                >
+                                    <option value="superscript">Superscript Numbers (¹ ² ³ ⁴)</option>
+                                    <option value="diacritic">Diacritic Pitch Accents (á, à, â, ǎ)</option>
+                                    <option value="inline">Inline Numbers (1 2 3 4)</option>
+                                    <option value="none">None (Hide Tones)</option>
+                                </select>
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2 bg-slate-100/60 dark:bg-slate-800/60 p-2 rounded-lg leading-relaxed">
+                                    {settings.toneStyle === 'diacritic'
+                                        ? "• Diacritics: 1 = Low (à), 2 = Mid (ā), 3 = High (á), 4 = Falling (â). Standard linguistic IPA accents."
+                                        : settings.toneStyle === 'inline'
+                                        ? "• Inline Numbers: Digits 1-4 directly after syllables (e.g. tsa2la4gi1) for rapid keyboard typing and searching."
+                                        : settings.toneStyle === 'none'
+                                        ? "• None: Hides all tone marks for clean reading without numeric annotations."
+                                        : "• Superscript: Traditional Feeling & Pulte superscript tone levels (¹ = low, ² = mid, ³ = high, ⁴ = falling)."}
+                                </p>
+                            </div>
+
+                            {/* LIVE PREVIEW CARD */}
+                            <div className="bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/50 rounded-xl p-3.5 flex items-center justify-between">
+                                <div>
+                                    <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest block mb-0.5">Style Preview</span>
+                                    <div className="flex items-baseline gap-2">
+                                        <span className="font-noto-cherokee text-lg font-bold text-slate-900 dark:text-slate-100">ᏣᎳᎩ</span>
+                                        <span className="font-noto-serif text-sm font-semibold text-amber-800 dark:text-amber-400">
+                                            {settings.transliterationStyle === 'aspiration' ? 'tsalagi' : (settings.transliterationStyle === 'reverse_aspiration' ? 'tsalagi' : 'tsalagi')}
+                                        </span>
+                                        <span className="font-serif text-xs text-slate-500 dark:text-slate-400 font-bold italic">
+                                            {formatToneStyle('tsa²la⁴gi¹', settings.toneStyle || 'superscript')}
+                                        </span>
+                                    </div>
+                                </div>
+                                <span className="text-xs text-slate-400 font-serif italic">Cherokee</span>
                             </div>
                             <hr className="border-slate-100 dark:border-slate-800" />
                             <div className="flex items-center justify-between">

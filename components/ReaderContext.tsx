@@ -128,8 +128,14 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 ? sentence.source.trim()
                 : 'other_official';
             const lowerSource = mappedSource.toLowerCase();
-            if (officialSources.includes(lowerSource)) {
-                if (!['ced', 'rrd'].includes(lowerSource)) {
+
+            // Normalize Bible sources
+            if (lowerSource === 'cnt' || lowerSource === 'cherokee-new-testament' || lowerSource === 'cherokee_new_testament' || lowerSource === 'cherokee new testament') {
+                mappedSource = 'cnt';
+            } else if (lowerSource === 'cn' || lowerSource === 'narr' || lowerSource === 'cherokee-narratives' || lowerSource === 'cherokee_narratives' || lowerSource === 'cherokee narratives') {
+                mappedSource = 'cn';
+            } else if (officialSources.includes(lowerSource)) {
+                if (!['ced', 'rrd', 'cnt', 'cn'].includes(lowerSource)) {
                     mappedSource = 'other_official';
                 }
             }
@@ -162,6 +168,10 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
             if (safeSource === 'other_official') {
                 title = 'Other Official Sentences';
+            } else if (safeSource === 'cnt') {
+                title = 'Cherokee New Testament';
+            } else if (safeSource === 'cn') {
+                title = 'Cherokee Narratives';
             } else if (userDictionaries && userDictionaries[safeSource]) {
                 title = userDictionaries[safeSource].name || safeSource;
             } else {
