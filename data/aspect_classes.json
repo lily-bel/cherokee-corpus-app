@@ -12,6 +12,11 @@
           "name": "a",
           "sub_key": "",
           "preconditions": [],
+          "mascot": {
+            "present": "ahiya'a",
+            "definition": "he/she is leaving it behind",
+            "corpus_id": 165
+          },
           "endings": {
             "present": "-a'",
             "imperfective": "-ahsk",
@@ -22,6 +27,11 @@
           "variants": [
             {
               "name": "a",
+              "mascot": {
+                "present": "ahiya'a",
+                "definition": "he/she is leaving it behind",
+                "corpus_id": 165
+              },
               "endings": {
                 "present": "-a'",
                 "imperfective": "-ahsk",
@@ -48,6 +58,11 @@
           "preconditions": [
             "V"
           ],
+          "mascot": {
+            "present": "ugohniyoga",
+            "definition": "he/she is late",
+            "corpus_id": 1523
+          },
           "endings": {
             "present": "-k",
             "imperfective": "-k",
@@ -58,6 +73,11 @@
           "variants": [
             {
               "name": "g-ts",
+              "mascot": {
+                "present": "ugohniyoga",
+                "definition": "he/she is late",
+                "corpus_id": 1523
+              },
               "endings": {
                 "present": "-k",
                 "imperfective": "-k",
@@ -68,6 +88,11 @@
             },
             {
               "name": "g-ts[inf2]",
+              "mascot": {
+                "present": "ayega",
+                "definition": "he/she is waking up",
+                "corpus_id": 507
+              },
               "endings": {
                 "present": "-k",
                 "imperfective": "-k",
@@ -78,6 +103,11 @@
             },
             {
               "name": "g-ts[inf3]",
+              "mascot": {
+                "present": "ayoga",
+                "definition": "it's breaking",
+                "corpus_id": 515
+              },
               "endings": {
                 "present": "-k",
                 "imperfective": "-k",
@@ -88,6 +118,7 @@
             },
             {
               "name": "g-ts[inf4]",
+              "mascot": null,
               "endings": {
                 "present": "-k",
                 "imperfective": "-k",
@@ -112,6 +143,11 @@
           "name": "hg-hts",
           "sub_key": "",
           "preconditions": [],
+          "mascot": {
+            "present": "ga'luhga",
+            "definition": "he/she is arriving",
+            "corpus_id": 858
+          },
           "endings": {
             "present": "-hk",
             "imperfective": "-hk",
@@ -122,6 +158,11 @@
           "variants": [
             {
               "name": "hg-hts",
+              "mascot": {
+                "present": "ga'luhga",
+                "definition": "he/she is arriving",
+                "corpus_id": 858
+              },
               "endings": {
                 "present": "-hk",
                 "imperfective": "-hk",
@@ -146,6 +187,11 @@
           "name": "go-gots",
           "sub_key": "",
           "preconditions": [],
+          "mascot": {
+            "present": "asuligoga",
+            "definition": "he/she is quitting",
+            "corpus_id": 449
+          },
           "endings": {
             "present": "-kok",
             "imperfective": "-kok",
@@ -156,6 +202,11 @@
           "variants": [
             {
               "name": "go-gots",
+              "mascot": {
+                "present": "asuligoga",
+                "definition": "he/she is quitting",
+                "corpus_id": 449
+              },
               "endings": {
                 "present": "-kok",
                 "imperfective": "-kok",
@@ -176,6 +227,11 @@
           "name": "sg-s-hi-hihst",
           "sub_key": "hi-hihst",
           "preconditions": [],
+          "mascot": {
+            "present": "galosga",
+            "definition": "he/she is passing by without stopping",
+            "corpus_id": 856
+          },
           "endings": {
             "present": "-hsk",
             "imperfective": "-hsk",
@@ -186,6 +242,11 @@
           "variants": [
             {
               "name": "sg-s-hi-hihst",
+              "mascot": {
+                "present": "galosga",
+                "definition": "he/she is passing by without stopping",
+                "corpus_id": 856
+              },
               "endings": {
                 "present": "-hsk",
                 "imperfective": "-hsk",
@@ -202,6 +263,11 @@
           "preconditions": [
             "C"
           ],
+          "mascot": {
+            "present": "uwakewsga",
+            "definition": "he/she is forgetting it",
+            "corpus_id": 1698
+          },
           "endings": {
             "present": "-hsk",
             "imperfective": "-hsk",
@@ -212,6 +278,11 @@
           "variants": [
             {
               "name": "sg-s-a",
+              "mascot": {
+                "present": "uwakewsga",
+                "definition": "he/she is forgetting it",
+                "corpus_id": 1698
+              },
               "endings": {
                 "present": "-hsk",
                 "imperfective": "-hsk",
@@ -222,6 +293,11 @@
             },
             {
               "name": "sg-s-a[inf2]",
+              "mascot": {
+                "present": "asgwalsga",
+                "definition": "he/she is breaking it (refers to a long object)",
+                "corpus_id": 424
+              },
               "endings": {
                 "present": "-hsk",
                 "imperfective": "-hsk",
@@ -238,6 +314,11 @@
           "preconditions": [
             "V"
           ],
+          "mascot": {
+            "present": "ahwisga",
+            "definition": "he/she is planting it",
+            "corpus_id": 210
+          },
           "endings": {
             "present": "-hsk",
             "imperfective": "-hsk",
@@ -248,6 +329,11 @@
           "variants": [
             {
               "name": "sg-s-hst",
+              "mascot": {
+                "present": "ahwisga",
+                "definition": "he/she is planting it",
+                "corpus_id": 210
+              },
               "endings": {
                 "present": "-hsk",
                 "imperfective": "-hsk",
@@ -258,6 +344,11 @@
             },
             {
               "name": "sg-s-hst[imp2]",
+              "mascot": {
+                "present": "dugwenotisga",
+                "definition": "he/she is getting a rash",
+                "corpus_id": 725
+              },
               "endings": {
                 "present": "-hsk",
                 "imperfective": "-hsk",
@@ -274,6 +365,11 @@
           "preconditions": [
             "V"
           ],
+          "mascot": {
+            "present": "adanvsga",
+            "definition": "he/she is ordering it",
+            "corpus_id": 46
+          },
           "endings": {
             "present": "-hsk",
             "imperfective": "-hsk",
@@ -284,6 +380,11 @@
           "variants": [
             {
               "name": "sg-s-la",
+              "mascot": {
+                "present": "adanvsga",
+                "definition": "he/she is ordering it",
+                "corpus_id": 46
+              },
               "endings": {
                 "present": "-hsk",
                 "imperfective": "-hsk",
@@ -298,16 +399,17 @@
     },
     {
       "name": "sg-h",
-      "mascot": {
-        "present": "galuysga",
-        "definition": "he/she is chopping it",
-        "corpus_id": 862
-      },
+      "mascot": null,
       "subclasses": [
         {
           "name": "sg-h",
           "sub_key": "",
           "preconditions": [],
+          "mascot": {
+            "present": "galuysga",
+            "definition": "he/she is chopping it",
+            "corpus_id": 862
+          },
           "endings": {
             "present": "-hsk",
             "imperfective": "-hsk",
@@ -318,6 +420,11 @@
           "variants": [
             {
               "name": "sg-h",
+              "mascot": {
+                "present": "galuysga",
+                "definition": "he/she is chopping it",
+                "corpus_id": 862
+              },
               "endings": {
                 "present": "-hsk",
                 "imperfective": "-hsk",
@@ -328,6 +435,11 @@
             },
             {
               "name": "sg-h[imp2]",
+              "mascot": {
+                "present": "aditasga",
+                "definition": "he/she is drinking it",
+                "corpus_id": 82
+              },
               "endings": {
                 "present": "-hsk",
                 "imperfective": "-hsk",
@@ -344,6 +456,11 @@
           "preconditions": [
             "V"
           ],
+          "mascot": {
+            "present": "dasdlusga",
+            "definition": "he/she is splitting it",
+            "corpus_id": 605
+          },
           "endings": {
             "present": "-hsk",
             "imperfective": "-hsk",
@@ -354,6 +471,11 @@
           "variants": [
             {
               "name": "sg-h-hy",
+              "mascot": {
+                "present": "dasdlusga",
+                "definition": "he/she is splitting it",
+                "corpus_id": 605
+              },
               "endings": {
                 "present": "-hsk",
                 "imperfective": "-hsk",
@@ -376,6 +498,11 @@
           "preconditions": [
             "C"
           ],
+          "mascot": {
+            "present": "dalasuhlvsga",
+            "definition": "he/she is putting on shoes",
+            "corpus_id": 582
+          },
           "endings": {
             "present": "-hvhsk",
             "imperfective": "-hvhsk",
@@ -386,6 +513,11 @@
           "variants": [
             {
               "name": "hvsg-han",
+              "mascot": {
+                "present": "dalasuhlvsga",
+                "definition": "he/she is putting on shoes",
+                "corpus_id": 582
+              },
               "endings": {
                 "present": "-hvhsk",
                 "imperfective": "-hvhsk",
@@ -396,6 +528,11 @@
             },
             {
               "name": "hvsg-han[inf2]",
+              "mascot": {
+                "present": "ajvstvsga",
+                "definition": "he/she is turning on a light",
+                "corpus_id": 255
+              },
               "endings": {
                 "present": "-hvhsk",
                 "imperfective": "-hvhsk",
@@ -412,6 +549,11 @@
           "preconditions": [
             "V"
           ],
+          "mascot": {
+            "present": "dalehvsga",
+            "definition": "he/she is getting up (from sitting or from involuntarily assumed prone position)",
+            "corpus_id": 587
+          },
           "endings": {
             "present": "-hvhsk",
             "imperfective": "-hvhsk",
@@ -422,6 +564,11 @@
           "variants": [
             {
               "name": "hvsg-hn",
+              "mascot": {
+                "present": "dalehvsga",
+                "definition": "he/she is getting up (from sitting or from involuntarily assumed prone position)",
+                "corpus_id": 587
+              },
               "endings": {
                 "present": "-hvhsk",
                 "imperfective": "-hvhsk",
@@ -432,6 +579,11 @@
             },
             {
               "name": "hvsg-hn[inf2]",
+              "mascot": {
+                "present": "danelohvsga",
+                "definition": "he/she is playing",
+                "corpus_id": 600
+              },
               "endings": {
                 "present": "-hvhsk",
                 "imperfective": "-hvhsk",
@@ -442,6 +594,11 @@
             },
             {
               "name": "hvsg-hn[inf3]",
+              "mascot": {
+                "present": "gehluhvsga",
+                "definition": "he/she is howling",
+                "corpus_id": 993
+              },
               "endings": {
                 "present": "-hvhsk",
                 "imperfective": "-hvhsk",
@@ -452,6 +609,11 @@
             },
             {
               "name": "hvsg-hn[inf4]",
+              "mascot": {
+                "present": "ahlahvsga",
+                "definition": "he/she is placing it on something",
+                "corpus_id": 166
+              },
               "endings": {
                 "present": "-hvhsk",
                 "imperfective": "-hvhsk",
@@ -468,6 +630,11 @@
           "preconditions": [
             "hV"
           ],
+          "mascot": {
+            "present": "wigakahvsga",
+            "definition": "he/she is sending it",
+            "corpus_id": 1774
+          },
           "endings": {
             "present": "-hvhsk",
             "imperfective": "-hvhsk",
@@ -478,6 +645,11 @@
           "variants": [
             {
               "name": "hvsg-n",
+              "mascot": {
+                "present": "wigakahvsga",
+                "definition": "he/she is sending it",
+                "corpus_id": 1774
+              },
               "endings": {
                 "present": "-hvhsk",
                 "imperfective": "-hvhsk",
@@ -502,6 +674,11 @@
           "name": "husg",
           "sub_key": "",
           "preconditions": [],
+          "mascot": {
+            "present": "alsdvhlusga",
+            "definition": "he/she is taking a seat",
+            "corpus_id": 334
+          },
           "endings": {
             "present": "-huhsk",
             "imperfective": "-huhsk",
@@ -512,6 +689,11 @@
           "variants": [
             {
               "name": "husg",
+              "mascot": {
+                "present": "alsdvhlusga",
+                "definition": "he/she is taking a seat",
+                "corpus_id": 334
+              },
               "endings": {
                 "present": "-huhsk",
                 "imperfective": "-huhsk",
@@ -536,6 +718,11 @@
           "name": "vhvsg",
           "sub_key": "",
           "preconditions": [],
+          "mascot": {
+            "present": "alsdayvhvsga",
+            "definition": "he/she is eating a meal",
+            "corpus_id": 327
+          },
           "endings": {
             "present": "-vhvhsk",
             "imperfective": "-vhvhsk",
@@ -546,6 +733,11 @@
           "variants": [
             {
               "name": "vhvsg",
+              "mascot": {
+                "present": "alsdayvhvsga",
+                "definition": "he/she is eating a meal",
+                "corpus_id": 327
+              },
               "endings": {
                 "present": "-vhvhsk",
                 "imperfective": "-vhvhsk",
@@ -556,6 +748,11 @@
             },
             {
               "name": "vhvsg[inf2]",
+              "mascot": {
+                "present": "adananesvhvsga",
+                "definition": "he/she is shopping",
+                "corpus_id": 30
+              },
               "endings": {
                 "present": "-vhvhsk",
                 "imperfective": "-vhvhsk",
@@ -566,6 +763,11 @@
             },
             {
               "name": "vhvsg[imp2]",
+              "mascot": {
+                "present": "atelvhvsga",
+                "definition": "he/she is shaking him/her",
+                "corpus_id": 477
+              },
               "endings": {
                 "present": "-vhvhsk",
                 "imperfective": "-vhvhsk",
@@ -576,6 +778,7 @@
             },
             {
               "name": "vhvsg[imp2-inf2]",
+              "mascot": null,
               "endings": {
                 "present": "-vhvhsk",
                 "imperfective": "-vhvhsk",
@@ -590,11 +793,7 @@
     },
     {
       "name": "ohvsg",
-      "mascot": {
-        "present": "agohvsga",
-        "definition": "it's burning",
-        "corpus_id": 136
-      },
+      "mascot": null,
       "subclasses": [
         {
           "name": "ohvsg",
@@ -602,6 +801,11 @@
           "preconditions": [
             "C"
           ],
+          "mascot": {
+            "present": "agohvsga",
+            "definition": "it's burning",
+            "corpus_id": 136
+          },
           "endings": {
             "present": "-ohvhsk",
             "imperfective": "-ohvhsk",
@@ -612,6 +816,11 @@
           "variants": [
             {
               "name": "ohvsg",
+              "mascot": {
+                "present": "agohvsga",
+                "definition": "it's burning",
+                "corpus_id": 136
+              },
               "endings": {
                 "present": "-ohvhsk",
                 "imperfective": "-ohvhsk",
@@ -628,6 +837,11 @@
           "preconditions": [
             "V"
           ],
+          "mascot": {
+            "present": "asvhvsga",
+            "definition": "he/she is drinking it up",
+            "corpus_id": 459
+          },
           "endings": {
             "present": "-hvhsk",
             "imperfective": "-hvhsk",
@@ -638,6 +852,11 @@
           "variants": [
             {
               "name": "ohvsg-no-o",
+              "mascot": {
+                "present": "asvhvsga",
+                "definition": "he/she is drinking it up",
+                "corpus_id": 459
+              },
               "endings": {
                 "present": "-hvhsk",
                 "imperfective": "-hvhsk",
@@ -662,6 +881,11 @@
           "name": "e-aka",
           "sub_key": "",
           "preconditions": [],
+          "mascot": {
+            "present": "gahye'a",
+            "definition": "he/she is eating it (refers to a flexible object)",
+            "corpus_id": 818
+          },
           "endings": {
             "present": "-e'",
             "imperfective": "-ehsk",
@@ -672,6 +896,11 @@
           "variants": [
             {
               "name": "e-aka",
+              "mascot": {
+                "present": "gahye'a",
+                "definition": "he/she is eating it (refers to a flexible object)",
+                "corpus_id": 818
+              },
               "endings": {
                 "present": "-e'",
                 "imperfective": "-ehsk",
@@ -696,6 +925,11 @@
           "name": "e-a",
           "sub_key": "",
           "preconditions": [],
+          "mascot": {
+            "present": "agoliye'a",
+            "definition": "he/she is reading",
+            "corpus_id": 138
+          },
           "endings": {
             "present": "-e'",
             "imperfective": "-ehsk",
@@ -706,6 +940,11 @@
           "variants": [
             {
               "name": "e-a",
+              "mascot": {
+                "present": "agoliye'a",
+                "definition": "he/she is reading",
+                "corpus_id": 138
+              },
               "endings": {
                 "present": "-e'",
                 "imperfective": "-ehsk",
@@ -726,6 +965,11 @@
           "name": "eh-eh",
           "sub_key": "eh",
           "preconditions": [],
+          "mascot": {
+            "present": "asuyeha",
+            "definition": "he/she is stirring it",
+            "corpus_id": 453
+          },
           "endings": {
             "present": "-eh",
             "imperfective": "-ehsk",
@@ -736,6 +980,11 @@
           "variants": [
             {
               "name": "eh-eh",
+              "mascot": {
+                "present": "asuyeha",
+                "definition": "he/she is stirring it",
+                "corpus_id": 453
+              },
               "endings": {
                 "present": "-eh",
                 "imperfective": "-ehsk",
@@ -750,6 +999,11 @@
           "name": "eh-hehl",
           "sub_key": "hehl",
           "preconditions": [],
+          "mascot": {
+            "present": "kanoheha",
+            "definition": "he/she is telling it",
+            "corpus_id": 1246
+          },
           "endings": {
             "present": "-heh",
             "imperfective": "-hehsk",
@@ -760,6 +1014,11 @@
           "variants": [
             {
               "name": "eh-hehl",
+              "mascot": {
+                "present": "kanoheha",
+                "definition": "he/she is telling it",
+                "corpus_id": 1246
+              },
               "endings": {
                 "present": "-heh",
                 "imperfective": "-hehsk",
@@ -776,6 +1035,11 @@
           "preconditions": [
             "'"
           ],
+          "mascot": {
+            "present": "alasda'eha",
+            "definition": "he/she is tromping on him/her",
+            "corpus_id": 296
+          },
           "endings": {
             "present": "-eh",
             "imperfective": "-ehsk",
@@ -786,6 +1050,11 @@
           "variants": [
             {
               "name": "eh-ehl",
+              "mascot": {
+                "present": "alasda'eha",
+                "definition": "he/she is tromping on him/her",
+                "corpus_id": 296
+              },
               "endings": {
                 "present": "-eh",
                 "imperfective": "-ehsk",
@@ -800,6 +1069,11 @@
           "name": "eh-a",
           "sub_key": "a",
           "preconditions": [],
+          "mascot": {
+            "present": "alsduleha",
+            "definition": "he/she is washing his/her hair",
+            "corpus_id": 331
+          },
           "endings": {
             "present": "-eh",
             "imperfective": "-ehsk",
@@ -810,6 +1084,11 @@
           "variants": [
             {
               "name": "eh-a",
+              "mascot": {
+                "present": "alsduleha",
+                "definition": "he/she is washing his/her hair",
+                "corpus_id": 331
+              },
               "endings": {
                 "present": "-eh",
                 "imperfective": "-ehsk",
@@ -834,6 +1113,11 @@
           "name": "eh-el",
           "sub_key": "",
           "preconditions": [],
+          "mascot": {
+            "present": "ganvneha",
+            "definition": "he/she is giving him/her an object (refers to a flexible object)",
+            "corpus_id": 950
+          },
           "endings": {
             "present": "-eh",
             "imperfective": "-eh",
@@ -844,6 +1128,11 @@
           "variants": [
             {
               "name": "eh-el",
+              "mascot": {
+                "present": "ganvneha",
+                "definition": "he/she is giving him/her an object (refers to a flexible object)",
+                "corpus_id": 950
+              },
               "endings": {
                 "present": "-eh",
                 "imperfective": "-eh",
@@ -854,6 +1143,11 @@
             },
             {
               "name": "eh-el[imp2]",
+              "mascot": {
+                "present": "ulsdahneha",
+                "definition": "it's happening to him",
+                "corpus_id": 1616
+              },
               "endings": {
                 "present": "-eh",
                 "imperfective": "-eh",
@@ -864,6 +1158,11 @@
             },
             {
               "name": "eh-el[imp3]",
+              "mascot": {
+                "present": "adeha",
+                "definition": "he/she is giving him/her it (refers to a long object)",
+                "corpus_id": 59
+              },
               "endings": {
                 "present": "-eh",
                 "imperfective": "-eh",
@@ -874,6 +1173,11 @@
             },
             {
               "name": "eh-el[imp4]",
+              "mascot": {
+                "present": "adahyoneha",
+                "definition": "he/she is committing adultery",
+                "corpus_id": 22
+              },
               "endings": {
                 "present": "-eh",
                 "imperfective": "-eh",
@@ -894,6 +1198,11 @@
           "name": "eg-vs",
           "sub_key": "vs",
           "preconditions": [],
+          "mascot": {
+            "present": "asdawadega",
+            "definition": "he/she is following him/her",
+            "corpus_id": 381
+          },
           "endings": {
             "present": "-ek",
             "imperfective": "-ek",
@@ -904,6 +1213,11 @@
           "variants": [
             {
               "name": "eg-vs",
+              "mascot": {
+                "present": "asdawadega",
+                "definition": "he/she is following him/her",
+                "corpus_id": 381
+              },
               "endings": {
                 "present": "-ek",
                 "imperfective": "-ek",
@@ -914,6 +1228,11 @@
             },
             {
               "name": "eg-vs[pres2]",
+              "mascot": {
+                "present": "atihni",
+                "definition": "he/she is leading him/her",
+                "corpus_id": 479
+              },
               "endings": {
                 "present": "",
                 "imperfective": "-ek",
@@ -928,6 +1247,11 @@
           "name": "eg-invs",
           "sub_key": "invs",
           "preconditions": [],
+          "mascot": {
+            "present": "udega",
+            "definition": "he/she is throwing it",
+            "corpus_id": 1471
+          },
           "endings": {
             "present": "-ek",
             "imperfective": "-ek",
@@ -938,6 +1262,11 @@
           "variants": [
             {
               "name": "eg-invs",
+              "mascot": {
+                "present": "udega",
+                "definition": "he/she is throwing it",
+                "corpus_id": 1471
+              },
               "endings": {
                 "present": "-ek",
                 "imperfective": "-ek",
@@ -948,6 +1277,11 @@
             },
             {
               "name": "eg-invs[perf2]",
+              "mascot": {
+                "present": "adadega",
+                "definition": "he/she is limping",
+                "corpus_id": 5
+              },
               "endings": {
                 "present": "-ek",
                 "imperfective": "-ek",
@@ -972,6 +1306,11 @@
           "name": "ih-ohd",
           "sub_key": "",
           "preconditions": [],
+          "mascot": {
+            "present": "anehldiha",
+            "definition": "he/she is attempting it",
+            "corpus_id": 361
+          },
           "endings": {
             "present": "-ih",
             "imperfective": "-ihsk",
@@ -982,6 +1321,11 @@
           "variants": [
             {
               "name": "ih-ohd",
+              "mascot": {
+                "present": "anehldiha",
+                "definition": "he/she is attempting it",
+                "corpus_id": 361
+              },
               "endings": {
                 "present": "-ih",
                 "imperfective": "-ihsk",
@@ -992,6 +1336,11 @@
             },
             {
               "name": "ih-ohd[perf2]",
+              "mascot": {
+                "present": "gahlisiha",
+                "definition": "he/she is gathering it",
+                "corpus_id": 804
+              },
               "endings": {
                 "present": "-ih",
                 "imperfective": "-ihsk",
@@ -1002,6 +1351,11 @@
             },
             {
               "name": "ih-ohd[perf3]",
+              "mascot": {
+                "present": "ahlawitdiha",
+                "definition": "he/she is making him/her fly",
+                "corpus_id": 169
+              },
               "endings": {
                 "present": "-ih",
                 "imperfective": "-ihsk",
@@ -1012,6 +1366,11 @@
             },
             {
               "name": "ih-ohd[pres2]",
+              "mascot": {
+                "present": "aktosdi",
+                "definition": "he/she is looking at him/her",
+                "corpus_id": 288
+              },
               "endings": {
                 "present": "",
                 "imperfective": "-ihsk",
@@ -1022,6 +1381,7 @@
             },
             {
               "name": "ih-ohd[pres2-perf2]",
+              "mascot": null,
               "endings": {
                 "present": "",
                 "imperfective": "-ihsk",
@@ -1032,6 +1392,7 @@
             },
             {
               "name": "ih-ohd[pres2-perf3]",
+              "mascot": null,
               "endings": {
                 "present": "",
                 "imperfective": "-ihsk",
@@ -1056,6 +1417,11 @@
           "name": "ih-il",
           "sub_key": "",
           "preconditions": [],
+          "mascot": {
+            "present": "dasihtvniha",
+            "definition": "he/she is clapping his/her hands",
+            "corpus_id": 609
+          },
           "endings": {
             "present": "-ih",
             "imperfective": "-ih",
@@ -1066,6 +1432,11 @@
           "variants": [
             {
               "name": "ih-il",
+              "mascot": {
+                "present": "dasihtvniha",
+                "definition": "he/she is clapping his/her hands",
+                "corpus_id": 609
+              },
               "endings": {
                 "present": "-ih",
                 "imperfective": "-ih",
@@ -1088,6 +1459,11 @@
           "preconditions": [
             "C"
           ],
+          "mascot": {
+            "present": "adlohyiha",
+            "definition": "he/she is crying",
+            "corpus_id": 98
+          },
           "endings": {
             "present": "-hih",
             "imperfective": "-hih",
@@ -1098,6 +1474,11 @@
           "variants": [
             {
               "name": "hih-hil",
+              "mascot": {
+                "present": "adlohyiha",
+                "definition": "he/she is crying",
+                "corpus_id": 98
+              },
               "endings": {
                 "present": "-hih",
                 "imperfective": "-hih",
@@ -1108,6 +1489,11 @@
             },
             {
               "name": "hih-hil[imp2]",
+              "mascot": {
+                "present": "gvhniha",
+                "definition": "he/she is hitting him/her",
+                "corpus_id": 1070
+              },
               "endings": {
                 "present": "-hih",
                 "imperfective": "-hih",
@@ -1124,6 +1510,11 @@
           "preconditions": [
             "C"
           ],
+          "mascot": {
+            "present": "gatiha",
+            "definition": "he/she is stabbing him/her",
+            "corpus_id": 973
+          },
           "endings": {
             "present": "-hih",
             "imperfective": "-hih",
@@ -1134,6 +1525,11 @@
           "variants": [
             {
               "name": "hih-hilh",
+              "mascot": {
+                "present": "gatiha",
+                "definition": "he/she is stabbing him/her",
+                "corpus_id": 973
+              },
               "endings": {
                 "present": "-hih",
                 "imperfective": "-hih",
@@ -1150,6 +1546,11 @@
           "preconditions": [
             "V"
           ],
+          "mascot": {
+            "present": "daliyohiha",
+            "definition": "he/she is putting on his/her socks",
+            "corpus_id": 592
+          },
           "endings": {
             "present": "-hih",
             "imperfective": "-hih",
@@ -1160,6 +1561,11 @@
           "variants": [
             {
               "name": "hih-lh",
+              "mascot": {
+                "present": "daliyohiha",
+                "definition": "he/she is putting on his/her socks",
+                "corpus_id": 592
+              },
               "endings": {
                 "present": "-hih",
                 "imperfective": "-hih",
@@ -1170,6 +1576,11 @@
             },
             {
               "name": "hih-lh[imp2]",
+              "mascot": {
+                "present": "ayvhiha",
+                "definition": "he/she is entering it",
+                "corpus_id": 529
+              },
               "endings": {
                 "present": "-hih",
                 "imperfective": "-hih",
@@ -1194,6 +1605,11 @@
           "name": "ih-vh",
           "sub_key": "",
           "preconditions": [],
+          "mascot": {
+            "present": "uduliha",
+            "definition": "he/she wants it",
+            "corpus_id": 1507
+          },
           "endings": {
             "present": "-ih",
             "imperfective": "-ihsk",
@@ -1204,6 +1620,11 @@
           "variants": [
             {
               "name": "ih-vh",
+              "mascot": {
+                "present": "uduliha",
+                "definition": "he/she wants it",
+                "corpus_id": 1507
+              },
               "endings": {
                 "present": "-ih",
                 "imperfective": "-ihsk",
@@ -1214,6 +1635,11 @@
             },
             {
               "name": "ih-vh[inf2]",
+              "mascot": {
+                "present": "ahwahtiha",
+                "definition": "he/she is finding him/her",
+                "corpus_id": 207
+              },
               "endings": {
                 "present": "-ih",
                 "imperfective": "-ihsk",
@@ -1224,6 +1650,7 @@
             },
             {
               "name": "ih-vh[imperf2]",
+              "mascot": null,
               "endings": {
                 "present": "-ih",
                 "imperfective": "-ih",
@@ -1234,6 +1661,11 @@
             },
             {
               "name": "ih-vh[imperf2-inf2]",
+              "mascot": {
+                "present": "daliyosiha",
+                "definition": "he/she is changing his/her socks",
+                "corpus_id": 593
+              },
               "endings": {
                 "present": "-ih",
                 "imperfective": "-ih",
@@ -1254,6 +1686,11 @@
           "name": "vnh-ih-a",
           "sub_key": "ih-a",
           "preconditions": [],
+          "mascot": {
+            "present": "adiha",
+            "definition": "he/she is saying it",
+            "corpus_id": 77
+          },
           "endings": {
             "present": "-ih",
             "imperfective": "-ihsk",
@@ -1264,6 +1701,11 @@
           "variants": [
             {
               "name": "vnh-ih-a",
+              "mascot": {
+                "present": "adiha",
+                "definition": "he/she is saying it",
+                "corpus_id": 77
+              },
               "endings": {
                 "present": "-ih",
                 "imperfective": "-ihsk",
@@ -1278,6 +1720,11 @@
           "name": "vnh-vsk",
           "sub_key": "vsk",
           "preconditions": [],
+          "mascot": {
+            "present": "ajelvsga",
+            "definition": "he/she is acting like him/her",
+            "corpus_id": 242
+          },
           "endings": {
             "present": "-vhsk",
             "imperfective": "-vhsk",
@@ -1288,6 +1735,11 @@
           "variants": [
             {
               "name": "vnh-vsk",
+              "mascot": {
+                "present": "ajelvsga",
+                "definition": "he/she is acting like him/her",
+                "corpus_id": 242
+              },
               "endings": {
                 "present": "-vhsk",
                 "imperfective": "-vhsk",
@@ -1298,6 +1750,11 @@
             },
             {
               "name": "vnh-vsk[inf2]",
+              "mascot": {
+                "present": "gakwenvsga",
+                "definition": "he/she is wrapping him/her",
+                "corpus_id": 829
+              },
               "endings": {
                 "present": "-vhsk",
                 "imperfective": "-vhsk",
@@ -1308,6 +1765,11 @@
             },
             {
               "name": "vnh-vsk[inf3]",
+              "mascot": {
+                "present": "gohlvsga",
+                "definition": "he/she is making it",
+                "corpus_id": 1022
+              },
               "endings": {
                 "present": "-vhsk",
                 "imperfective": "-vhsk",
@@ -1318,6 +1780,11 @@
             },
             {
               "name": "vnh-vsk[inf4]",
+              "mascot": {
+                "present": "asonvsga",
+                "definition": "he/she is wounding him/her",
+                "corpus_id": 441
+              },
               "endings": {
                 "present": "-vhsk",
                 "imperfective": "-vhsk",
@@ -1342,6 +1809,11 @@
           "name": "i-vka",
           "sub_key": "",
           "preconditions": [],
+          "mascot": {
+            "present": "gohweli'a",
+            "definition": "he/she is writing it",
+            "corpus_id": 1027
+          },
           "endings": {
             "present": "-i'",
             "imperfective": "-ihsk",
@@ -1352,6 +1824,11 @@
           "variants": [
             {
               "name": "i-vka",
+              "mascot": {
+                "present": "gohweli'a",
+                "definition": "he/she is writing it",
+                "corpus_id": 1027
+              },
               "endings": {
                 "present": "-i'",
                 "imperfective": "-ihsk",
@@ -1372,6 +1849,11 @@
           "name": "i-a-i",
           "sub_key": "i",
           "preconditions": [],
+          "mascot": {
+            "present": "agi'a",
+            "definition": "he/she is eating it (refers to a single solid food)",
+            "corpus_id": 127
+          },
           "endings": {
             "present": "-i'",
             "imperfective": "-ihsk",
@@ -1382,6 +1864,11 @@
           "variants": [
             {
               "name": "i-a-i",
+              "mascot": {
+                "present": "agi'a",
+                "definition": "he/she is eating it (refers to a single solid food)",
+                "corpus_id": 127
+              },
               "endings": {
                 "present": "-i'",
                 "imperfective": "-ihsk",
@@ -1392,6 +1879,11 @@
             },
             {
               "name": "i-a-i[perf2]",
+              "mascot": {
+                "present": "eli'a",
+                "definition": "he/she thinks so",
+                "corpus_id": 752
+              },
               "endings": {
                 "present": "-i'",
                 "imperfective": "-ihsk",
@@ -1406,6 +1898,11 @@
           "name": "i-a-ihsk",
           "sub_key": "ihsk",
           "preconditions": [],
+          "mascot": {
+            "present": "asuhwisga",
+            "definition": "he/she is painting it",
+            "corpus_id": 445
+          },
           "endings": {
             "present": "-ihsk",
             "imperfective": "-ihsk",
@@ -1416,6 +1913,11 @@
           "variants": [
             {
               "name": "i-a-ihsk",
+              "mascot": {
+                "present": "asuhwisga",
+                "definition": "he/she is painting it",
+                "corpus_id": 445
+              },
               "endings": {
                 "present": "-ihsk",
                 "imperfective": "-ihsk",
@@ -1440,6 +1942,11 @@
           "name": "ih-ihi",
           "sub_key": "",
           "preconditions": [],
+          "mascot": {
+            "present": "gawoniha",
+            "definition": "he/she is speaking",
+            "corpus_id": 983
+          },
           "endings": {
             "present": "-ih",
             "imperfective": "-ihsk",
@@ -1450,6 +1957,11 @@
           "variants": [
             {
               "name": "ih-ihi",
+              "mascot": {
+                "present": "gawoniha",
+                "definition": "he/she is speaking",
+                "corpus_id": 983
+              },
               "endings": {
                 "present": "-ih",
                 "imperfective": "-ihsk",
@@ -1476,6 +1988,11 @@
           "preconditions": [
             "C"
           ],
+          "mascot": {
+            "present": "ahnawo'a",
+            "definition": "he/she is putting on a shirt",
+            "corpus_id": 189
+          },
           "endings": {
             "present": "-o'",
             "imperfective": "-ohsk",
@@ -1486,6 +2003,11 @@
           "variants": [
             {
               "name": "o",
+              "mascot": {
+                "present": "ahnawo'a",
+                "definition": "he/she is putting on a shirt",
+                "corpus_id": 189
+              },
               "endings": {
                 "present": "-o'",
                 "imperfective": "-ohsk",
@@ -1510,6 +2032,11 @@
           "name": "oh-ol-a",
           "sub_key": "",
           "preconditions": [],
+          "mascot": {
+            "present": "edoha",
+            "definition": "he/she is walking around",
+            "corpus_id": 742
+          },
           "endings": {
             "present": "-oh",
             "imperfective": "-oh",
@@ -1520,6 +2047,11 @@
           "variants": [
             {
               "name": "oh-ol-a",
+              "mascot": {
+                "present": "edoha",
+                "definition": "he/she is walking around",
+                "corpus_id": 742
+              },
               "endings": {
                 "present": "-oh",
                 "imperfective": "-oh",
@@ -1540,6 +2072,11 @@
           "name": "oh-al",
           "sub_key": "al",
           "preconditions": [],
+          "mascot": {
+            "present": "uhyoha",
+            "definition": "he/she is looking for it",
+            "corpus_id": 1563
+          },
           "endings": {
             "present": "-hoh",
             "imperfective": "-hoh",
@@ -1550,6 +2087,11 @@
           "variants": [
             {
               "name": "oh-al",
+              "mascot": {
+                "present": "uhyoha",
+                "definition": "he/she is looking for it",
+                "corpus_id": 1563
+              },
               "endings": {
                 "present": "-hoh",
                 "imperfective": "-hoh",
@@ -1560,6 +2102,11 @@
             },
             {
               "name": "oh-al[imp2]",
+              "mascot": {
+                "present": "ahyehloha",
+                "definition": "he/she is making an incision",
+                "corpus_id": 219
+              },
               "endings": {
                 "present": "-hoh",
                 "imperfective": "-hoh",
@@ -1574,6 +2121,11 @@
           "name": "oh-ol",
           "sub_key": "ol",
           "preconditions": [],
+          "mascot": {
+            "present": "asdeyoha",
+            "definition": "he/she is braiding it",
+            "corpus_id": 383
+          },
           "endings": {
             "present": "-oh",
             "imperfective": "-oh",
@@ -1584,6 +2136,11 @@
           "variants": [
             {
               "name": "oh-ol",
+              "mascot": {
+                "present": "asdeyoha",
+                "definition": "he/she is braiding it",
+                "corpus_id": 383
+              },
               "endings": {
                 "present": "-oh",
                 "imperfective": "-oh",
@@ -1594,6 +2151,11 @@
             },
             {
               "name": "oh-ol[inf2]",
+              "mascot": {
+                "present": "adeyoha",
+                "definition": "he/she is going around a curve",
+                "corpus_id": 70
+              },
               "endings": {
                 "present": "-oh",
                 "imperfective": "-oh",
@@ -1604,6 +2166,11 @@
             },
             {
               "name": "oh-ol[inf3]",
+              "mascot": {
+                "present": "aktenoha",
+                "definition": "he/she is looking around",
+                "corpus_id": 280
+              },
               "endings": {
                 "present": "-oh",
                 "imperfective": "-oh",
@@ -1630,6 +2197,11 @@
           "preconditions": [
             "C"
           ],
+          "mascot": {
+            "present": "ganedliyv'a",
+            "definition": "he/she is changing it",
+            "corpus_id": 880
+          },
           "endings": {
             "present": "-v'",
             "imperfective": "-vhsk",
@@ -1640,6 +2212,11 @@
           "variants": [
             {
               "name": "v-vhs",
+              "mascot": {
+                "present": "ganedliyv'a",
+                "definition": "he/she is changing it",
+                "corpus_id": 880
+              },
               "endings": {
                 "present": "-v'",
                 "imperfective": "-vhsk",
@@ -1654,11 +2231,7 @@
     },
     {
       "name": "vsk",
-      "mascot": {
-        "present": "ahliyvhgwidvsga",
-        "definition": "it's bending",
-        "corpus_id": 175
-      },
+      "mascot": null,
       "subclasses": [
         {
           "name": "vsk",
@@ -1666,6 +2239,11 @@
           "preconditions": [
             "C"
           ],
+          "mascot": {
+            "present": "ahliyvhgwidvsga",
+            "definition": "it's bending",
+            "corpus_id": 175
+          },
           "endings": {
             "present": "-vhsk",
             "imperfective": "-vhsk",
@@ -1676,6 +2254,11 @@
           "variants": [
             {
               "name": "vsk",
+              "mascot": {
+                "present": "ahliyvhgwidvsga",
+                "definition": "it's bending",
+                "corpus_id": 175
+              },
               "endings": {
                 "present": "-vhsk",
                 "imperfective": "-vhsk",
@@ -1686,6 +2269,11 @@
             },
             {
               "name": "vsk[imp2]",
+              "mascot": {
+                "present": "guhlvsga",
+                "definition": "he/she is covering it",
+                "corpus_id": 1055
+              },
               "endings": {
                 "present": "-vhsk",
                 "imperfective": "-vhsk",
@@ -1702,6 +2290,11 @@
           "preconditions": [
             "C"
           ],
+          "mascot": {
+            "present": "ganolv'vsga",
+            "definition": "it is blowing (refers to wind)",
+            "corpus_id": 924
+          },
           "endings": {
             "present": "-v'vhsk",
             "imperfective": "-v'vhsk",
@@ -1712,6 +2305,11 @@
           "variants": [
             {
               "name": "vsk-long",
+              "mascot": {
+                "present": "ganolv'vsga",
+                "definition": "it is blowing (refers to wind)",
+                "corpus_id": 924
+              },
               "endings": {
                 "present": "-v'vhsk",
                 "imperfective": "-v'vhsk",
@@ -1722,6 +2320,11 @@
             },
             {
               "name": "vsk-long[imp2]",
+              "mascot": {
+                "present": "wiganv'vsga",
+                "definition": "he/she is sending it (refers to a flexible object)",
+                "corpus_id": 1776
+              },
               "endings": {
                 "present": "-v'vhsk",
                 "imperfective": "-v'vhsk",
@@ -1738,6 +2341,11 @@
           "preconditions": [
             "V"
           ],
+          "mascot": {
+            "present": "atsgo'vsga",
+            "definition": "he/she is lying",
+            "corpus_id": 490
+          },
           "endings": {
             "present": "-'vhsk",
             "imperfective": "-'vhsk",
@@ -1748,6 +2356,11 @@
           "variants": [
             {
               "name": "vsk-post-v",
+              "mascot": {
+                "present": "atsgo'vsga",
+                "definition": "he/she is lying",
+                "corpus_id": 490
+              },
               "endings": {
                 "present": "-'vhsk",
                 "imperfective": "-'vhsk",
@@ -1768,6 +2381,11 @@
           "name": "rev-gi",
           "sub_key": "gi",
           "preconditions": [],
+          "mascot": {
+            "present": "dekanogi'a",
+            "definition": "he/she is singing",
+            "corpus_id": 631
+          },
           "endings": {
             "present": "-ki'",
             "imperfective": "-kihsk",
@@ -1778,6 +2396,11 @@
           "variants": [
             {
               "name": "rev-gi",
+              "mascot": {
+                "present": "dekanogi'a",
+                "definition": "he/she is singing",
+                "corpus_id": 631
+              },
               "endings": {
                 "present": "-ki'",
                 "imperfective": "-kihsk",
@@ -1792,6 +2415,11 @@
           "name": "rev-i",
           "sub_key": "i",
           "preconditions": [],
+          "mascot": {
+            "present": "aja'i'a",
+            "definition": "it's hatching",
+            "corpus_id": 238
+          },
           "endings": {
             "present": "-i'",
             "imperfective": "-ihsk",
@@ -1802,6 +2430,11 @@
           "variants": [
             {
               "name": "rev-i",
+              "mascot": {
+                "present": "aja'i'a",
+                "definition": "it's hatching",
+                "corpus_id": 238
+              },
               "endings": {
                 "present": "-i'",
                 "imperfective": "-ihsk",
@@ -1816,6 +2449,11 @@
           "name": "rev-'i",
           "sub_key": "'i",
           "preconditions": [],
+          "mascot": {
+            "present": "asdu'i'a",
+            "definition": "he/she is opening it",
+            "corpus_id": 390
+          },
           "endings": {
             "present": "-'i'",
             "imperfective": "-'ihsk",
@@ -1826,6 +2464,11 @@
           "variants": [
             {
               "name": "rev-'i",
+              "mascot": {
+                "present": "asdu'i'a",
+                "definition": "he/she is opening it",
+                "corpus_id": 390
+              },
               "endings": {
                 "present": "-'i'",
                 "imperfective": "-'ihsk",
@@ -1840,6 +2483,11 @@
           "name": "rev-e",
           "sub_key": "e",
           "preconditions": [],
+          "mascot": {
+            "present": "dalasule'a",
+            "definition": "he/she is taking off his/her shoes",
+            "corpus_id": 584
+          },
           "endings": {
             "present": "-e'",
             "imperfective": "-ehsk",
@@ -1850,6 +2498,11 @@
           "variants": [
             {
               "name": "rev-e",
+              "mascot": {
+                "present": "dalasule'a",
+                "definition": "he/she is taking off his/her shoes",
+                "corpus_id": 584
+              },
               "endings": {
                 "present": "-e'",
                 "imperfective": "-ehsk",
@@ -1864,16 +2517,17 @@
     },
     {
       "name": "stative",
-      "mascot": {
-        "present": "ganela",
-        "definition": "he/she lives (in sense of resides now)",
-        "corpus_id": 893
-      },
+      "mascot": null,
       "subclasses": [
         {
           "name": "stative",
           "sub_key": "",
           "preconditions": [],
+          "mascot": {
+            "present": "ganela",
+            "definition": "he/she lives (in sense of resides now)",
+            "corpus_id": 893
+          },
           "endings": {
             "present": "",
             "imperfective": "",
@@ -1884,6 +2538,11 @@
           "variants": [
             {
               "name": "stative",
+              "mascot": {
+                "present": "ganela",
+                "definition": "he/she lives (in sense of resides now)",
+                "corpus_id": 893
+              },
               "endings": {
                 "present": "",
                 "imperfective": "",
@@ -1898,6 +2557,11 @@
           "name": "stative-k",
           "sub_key": "k",
           "preconditions": [],
+          "mascot": {
+            "present": "gadoga",
+            "definition": "he/she is standing",
+            "corpus_id": 772
+          },
           "endings": {
             "present": "-k",
             "imperfective": "-k",
@@ -1908,6 +2572,11 @@
           "variants": [
             {
               "name": "stative-k",
+              "mascot": {
+                "present": "gadoga",
+                "definition": "he/she is standing",
+                "corpus_id": 772
+              },
               "endings": {
                 "present": "-k",
                 "imperfective": "-k",
@@ -1922,6 +2591,11 @@
           "name": "stative-h",
           "sub_key": "h",
           "preconditions": [],
+          "mascot": {
+            "present": "dulasuhla",
+            "definition": "he/she is wearing shoes",
+            "corpus_id": 730
+          },
           "endings": {
             "present": "-h",
             "imperfective": "-h",
@@ -1932,6 +2606,11 @@
           "variants": [
             {
               "name": "stative-h",
+              "mascot": {
+                "present": "dulasuhla",
+                "definition": "he/she is wearing shoes",
+                "corpus_id": 730
+              },
               "endings": {
                 "present": "-h",
                 "imperfective": "-h",
@@ -1946,6 +2625,11 @@
           "name": "stative-s",
           "sub_key": "s",
           "preconditions": [],
+          "mascot": {
+            "present": "uwohiyuha",
+            "definition": "he/she is confident",
+            "corpus_id": 1729
+          },
           "endings": {
             "present": "-h",
             "imperfective": "-hs",
@@ -1956,6 +2640,11 @@
           "variants": [
             {
               "name": "stative-s",
+              "mascot": {
+                "present": "uwohiyuha",
+                "definition": "he/she is confident",
+                "corpus_id": 1729
+              },
               "endings": {
                 "present": "-h",
                 "imperfective": "-hs",
@@ -1970,6 +2659,11 @@
           "name": "stative-a'",
           "sub_key": "a'",
           "preconditions": [],
+          "mascot": {
+            "present": "una'a",
+            "definition": "he/she has an object (refers to a flexible object)",
+            "corpus_id": 1629
+          },
           "endings": {
             "present": "-a'",
             "imperfective": "-a'",
@@ -1980,6 +2674,11 @@
           "variants": [
             {
               "name": "stative-a'",
+              "mascot": {
+                "present": "una'a",
+                "definition": "he/she has an object (refers to a flexible object)",
+                "corpus_id": 1629
+              },
               "endings": {
                 "present": "-a'",
                 "imperfective": "-a'",
@@ -1994,6 +2693,11 @@
           "name": "stative-eh",
           "sub_key": "eh",
           "preconditions": [],
+          "mascot": {
+            "present": "ahyeha",
+            "definition": "he/she is holding it in his/her hand",
+            "corpus_id": 217
+          },
           "endings": {
             "present": "-eh",
             "imperfective": "-eh",
@@ -2004,6 +2708,11 @@
           "variants": [
             {
               "name": "stative-eh",
+              "mascot": {
+                "present": "ahyeha",
+                "definition": "he/she is holding it in his/her hand",
+                "corpus_id": 217
+              },
               "endings": {
                 "present": "-eh",
                 "imperfective": "-eh",
