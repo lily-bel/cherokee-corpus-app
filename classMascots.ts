@@ -18,6 +18,7 @@ export interface ClassMascotInfo {
 
 export interface AspectVariantInfo {
   name: string;
+  mascot?: ClassMascotInfo | null;
   endings: ClassEndingInfo;
 }
 
@@ -25,6 +26,7 @@ export interface AspectSubclassInfo {
   name: string;
   sub_key: string;
   preconditions: string[];
+  mascot?: ClassMascotInfo | null;
   endings: ClassEndingInfo;
   variants: AspectVariantInfo[];
 }
@@ -72,13 +74,35 @@ export function getAllAspectClasses(): AspectClassInfo[] {
   return ASPECT_CLASSES.classes;
 }
 
-export function getClassMascot(className: string | undefined): string | undefined {
-  if (!className) return undefined;
-  if (CLASS_MASCOTS[className]) return CLASS_MASCOTS[className].present;
-  const baseClass = className.split('[')[0];
-  if (CLASS_MASCOTS[baseClass]) return CLASS_MASCOTS[baseClass].present;
-  const parent = getParentClassName(className);
-  if (CLASS_MASCOTS[parent]) return CLASS_MASCOTS[parent].present;
+export function getClassMascot(classNameOrSubclassOrVariant: string | undefined): string | undefined {
+  if (!classNameOrSubclassOrVariant) return undefined;
+
+  // 1. Direct match (e.g. "sg-s-a[inf2]" or "sg-s-a" or "a")
+  if (CLASS_MASCOTS[classNameOrSubclassOrVariant]?.present) {
+    return CLASS_MASCOTS[classNameOrSubclassOrVariant].present;
+  }
+
+  // 2. Base subclass match (e.g. for "sg-s-a[inf2]", check "sg-s-a")
+  const baseSubclass = classNameOrSubclassOrVariant.split('[')[0];
+  if (CLASS_MASCOTS[baseSubclass]?.present) {
+    return CLASS_MASCOTS[baseSubclass].present;
+  }
+
+  // 3. Aspect subclass info lookup
+  const sub = getAspectSubclass(baseSubclass);
+  if (sub?.mascot?.present) {
+    return sub.mascot.present;
+  }
+
+  // 4. Parent class lookup (only if class has its own mascot, e.g. single-subclass classes)
+  const parentName = getParentClassName(classNameOrSubclassOrVariant);
+  if (parentName === classNameOrSubclassOrVariant) {
+    const parent = getAspectClass(parentName);
+    if (parent?.mascot?.present) {
+      return parent.mascot.present;
+    }
+  }
+
   return undefined;
 }
 

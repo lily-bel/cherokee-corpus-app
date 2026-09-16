@@ -12,16 +12,16 @@
 - **Status:** `[Completed]`
 - **Target Files:** [`cherokee-data-consolidation/scripts/preliminary_flatten.py`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-data-consolidation/scripts/preliminary_flatten.py), [`cherokee-data-consolidation/scripts/merge_duplicates.py`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-data-consolidation/scripts/merge_duplicates.py), [`run_pipeline.py`](file:///C:/Users/lilyb/Desktop/cherokee/run_pipeline.py), [`classMascots.ts`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/classMascots.ts), [`components/ClassView.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/ClassView.tsx), [`public/data/aspect_classes.json`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/public/data/aspect_classes.json)
 - **Implementation Summary:**
-  1. **Consolidation Pipeline Extraction:** Updated `preliminary_flatten.py` and `merge_duplicates.py` in `cherokee-data-consolidation` (and verified via `run_pipeline.py`) to read canonical aspect class relationships from `king-recreation/data/classes.csv` (read-only), generating `aspect_classes.json` (30 top-level parent classes, 56 subclass mappings with preconditions, default endings, and variant endings) and syncing to `cherokee-corpus-app/public/data/`.
+  1. **Consolidation Pipeline & Subclass Mascot Mapping:** Updated `preliminary_flatten.py` and `merge_duplicates.py` in `cherokee-data-consolidation` (and verified via `run_pipeline.py`) to read canonical aspect class relationships from `king-recreation/data/classes.csv` (read-only), generating `aspect_classes.json` with mascots properly attached to individual subclasses and variants (rather than falsely attributing one mascot to an entire parent class).
   2. **3-Tier Hierarchy Model:** Re-labeled and restructured the taxonomy:
      - **Top-Level Class:** e.g. `sg-s`, `eh`, `hih`, `stative`, `a`, `hvsg`, etc.
      - **Subclass:** e.g. `sg-s-a`, `sg-s-hi-hihst`, `eh-hehl`, `rev-gi`, `hih-hil`, `a` (previously called "superclass" or "class name").
      - **Variant:** e.g. `sg-s-a[inf2]`, `hih-hil[imp2]` (previously called "subclass" or "variation").
-  3. **Unified `ClassView` Page:**
-     - **Breadcrumbs Navigation:** Dynamic breadcrumbs (`Class: [parentClass] › Subclass: [subclass] › Variant: [variant]`) with clickable levels to easily navigate up the hierarchy.
-     - **Focused Subclass Mode & "See Full Class":** Direct navigation from verb badges opens the view focused on that specific subclass, with a prominent "See Full Class [parentClass] →" button to expand to the full 2-level overview.
-     - **2-Level Flat Grouped Table:** Subclasses feature distinct header rows (with preconditions and verb count) followed by base subclass endings and indented variant rows (`↳ [variant]`) with diff highlights for endings variations in bold amber.
-     - **Interactive Highlighting & Filtering:** Clicking a subclass or variant row highlights the selection and filters the verbs list without hiding the rest of the table.
+  3. **Unified `ClassView` Page & Header Redesign:**
+     - **Stacked Equal-Size Header Levels:** Displays the selected level and its parent levels in equal font sizes (`Class`, `Subclass`, `Variant`), displaying only up to the level currently selected. Parent levels act as clickable quick-reset buttons.
+     - **Subclass & Variant Mascot Display:** Mascots render directly next to their respective Subclass and Variant lines.
+     - **Cleaned Up 2-Level Table:** Removed the redundant `Subclass: x` spanning row and `(base)` label. The base subclass row acts as the primary row, separated from other subclasses by a darker divider line.
+     - **Grouped Highlighting & Non-Destructive Filtering:** Clicking a subclass row highlights the entire subclass and all its variant rows simultaneously while filtering verbs below. Clicking a variant row highlights that specific variant. Removed the separate "Focus" button in favor of natural row selection.
 
 ### Task: Firebase Integration for Cloud Data Backup, Auth, & Public Package Link Sharing
 - **Completion Date:** 2026-09-04
@@ -239,4 +239,18 @@
   2. Exact inflected form matches now score `155` (Exact Tier), cleanly beating partial substring forms (e.g. `ga'i` over `ga'iso'i`).
   3. Applied length ratio scoring (`query.length / target.length * 35`) and entry length tie-breaker so shorter entries consistently rank first within CED and non-CED search tiers.
 - **Verification:** Built cleanly via `npm run build` (`vite v5.4.21 built in 7.92s`), tested, and approved by user.
+
+---
+
+### Task 2.5: 3-Tier Aspect Class Hierarchy & Table Alignment
+- **Completion Date:** 2026-09-16
+- **Status:** `[Completed]` (User Approved)
+- **Target Files:** [`components/ClassView.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/ClassView.tsx), [`classMascots.ts`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/classMascots.ts), [`cherokee-data-consolidation/scripts/preliminary_flatten.py`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-data-consolidation/scripts/preliminary_flatten.py), [`cherokee-data-consolidation/scripts/merge_duplicates.py`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-data-consolidation/scripts/merge_duplicates.py)
+- **Implementation Summary:**
+  1. Realigned linguistic hierarchy into Class (parent level from `classes.csv`) -> Subclass (`[class]-[subclass]`) -> Variant (bracketed variations).
+  2. Synced mascot mappings strictly to subclasses and variants (curated from `king-recreation/curated/aspect_class_mascots.csv` without modifying source repo).
+  3. Formatted header as stacked equal-sized labels with staggered indents, showing mascot only on Subclass level and `base` in italics for base variants.
+  4. Formatted subclass tables as modular cards with compact columns (`w-[30%]` name, `w-[14%]` per aspect ending) to eliminate mobile screen overflow.
+  5. Aligned base subclass and variant rows flush without indents, bullets, or arrows.
+- **Verification:** Built cleanly via `npm run build` (`vite v5.4.21 built in 2.08s`).
 

@@ -59,18 +59,6 @@
       "infinitive": "-hihst"
     }
   },
-  "sg-s": {
-    "present": "galosga",
-    "definition": "he/she is passing by without stopping",
-    "corpus_id": 856,
-    "endings": {
-      "present": "-hsk",
-      "imperfective": "-hsk",
-      "perfective": "-hs",
-      "imperative": "-hi",
-      "infinitive": "-hihst"
-    }
-  },
   "sg-s-a": {
     "present": "uwakewsga",
     "definition": "he/she is forgetting it",
@@ -132,18 +120,6 @@
     }
   },
   "hvsg-han": {
-    "present": "dalasuhlvsga",
-    "definition": "he/she is putting on shoes",
-    "corpus_id": 582,
-    "endings": {
-      "present": "-hvhsk",
-      "imperfective": "-hvhsk",
-      "perfective": "-han",
-      "imperative": "-hvka",
-      "infinitive": "-ht"
-    }
-  },
-  "hvsg": {
     "present": "dalasuhlvsga",
     "definition": "he/she is putting on shoes",
     "corpus_id": 582,
@@ -263,18 +239,6 @@
       "infinitive": "-eht"
     }
   },
-  "eh": {
-    "present": "asuyeha",
-    "definition": "he/she is stirring it",
-    "corpus_id": 453,
-    "endings": {
-      "present": "-eh",
-      "imperfective": "-ehsk",
-      "perfective": "-eh",
-      "imperative": "-vla",
-      "infinitive": "-eht"
-    }
-  },
   "eh-hehl": {
     "present": "kanoheha",
     "definition": "he/she is telling it",
@@ -335,18 +299,6 @@
       "infinitive": "-vhst"
     }
   },
-  "eg": {
-    "present": "asdawadega",
-    "definition": "he/she is following him/her",
-    "corpus_id": 381,
-    "endings": {
-      "present": "-ek",
-      "imperfective": "-ek",
-      "perfective": "-vhs",
-      "imperative": "-uka",
-      "infinitive": "-vhst"
-    }
-  },
   "eg-invs": {
     "present": "udega",
     "definition": "he/she is throwing it",
@@ -384,18 +336,6 @@
     }
   },
   "hih-hil": {
-    "present": "adlohyiha",
-    "definition": "he/she is crying",
-    "corpus_id": 98,
-    "endings": {
-      "present": "-hih",
-      "imperfective": "-hih",
-      "perfective": "-hil",
-      "imperative": "-hka",
-      "infinitive": "-hst"
-    }
-  },
-  "hih": {
     "present": "adlohyiha",
     "definition": "he/she is crying",
     "corpus_id": 98,
@@ -455,18 +395,6 @@
       "infinitive": "-ht"
     }
   },
-  "vnh": {
-    "present": "adiha",
-    "definition": "he/she is saying it",
-    "corpus_id": 77,
-    "endings": {
-      "present": "-ih",
-      "imperfective": "-ihsk",
-      "perfective": "-vnh",
-      "imperative": "-a",
-      "infinitive": "-ht"
-    }
-  },
   "vnh-vsk": {
     "present": "ajelvsga",
     "definition": "he/she is acting like him/her",
@@ -492,18 +420,6 @@
     }
   },
   "i-a-i": {
-    "present": "agi'a",
-    "definition": "he/she is eating it (refers to a single solid food)",
-    "corpus_id": 127,
-    "endings": {
-      "present": "-i'",
-      "imperfective": "-ihsk",
-      "perfective": "-t",
-      "imperative": "-a",
-      "infinitive": "-ihst"
-    }
-  },
-  "i-a": {
     "present": "agi'a",
     "definition": "he/she is eating it (refers to a single solid food)",
     "corpus_id": 127,
@@ -564,18 +480,6 @@
     }
   },
   "oh-al": {
-    "present": "uhyoha",
-    "definition": "he/she is looking for it",
-    "corpus_id": 1563,
-    "endings": {
-      "present": "-hoh",
-      "imperfective": "-hoh",
-      "perfective": "-hal",
-      "imperative": "-hka",
-      "infinitive": "-hst"
-    }
-  },
-  "oh": {
     "present": "uhyoha",
     "definition": "he/she is looking for it",
     "corpus_id": 1563,
@@ -648,18 +552,6 @@
     }
   },
   "rev-gi": {
-    "present": "dekanogi'a",
-    "definition": "he/she is singing",
-    "corpus_id": 631,
-    "endings": {
-      "present": "-ki'",
-      "imperfective": "-kihsk",
-      "perfective": "-kihs",
-      "imperative": "-ki",
-      "infinitive": "-kihst"
-    }
-  },
-  "rev": {
     "present": "dekanogi'a",
     "definition": "he/she is singing",
     "corpus_id": 631,
