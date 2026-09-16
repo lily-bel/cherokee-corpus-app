@@ -1,53 +1,81 @@
-TODO:
-- creating a story - need options to add chapters to existing story, also need a place to input the english + transliteration as well as the syllabary. You need to be able to separate all 3 by sentence at once.
-- splitting the sentences doesn't seem to work right now.
-
-- other forms - dont show repeat gloss forms
-- clicking root -> class -> verb goes back to root (page stays open behind i think)
-- search algo - make sure exact / shorter are better within ced, deprioritize other forms, prioritize personal dictionaries
-- gloss popup - add a quick other forms dropdown to see other forms in the search. maybe theres a form section too?
-- add auto translit to create word modal]
-- audio modal for other forms dont say recording for ___
-
-data
-- check bible for chapter errors + mismatched syl/phonetics
-- fix raven rock sentences
-- adverbs got marked as verbs tense wise
-- if theres only one form of a word dont display the word forms the same, its probably not "singular"
-
-to check
-- header text overflows on mobile now, make it smaller. top bar could be thinner in general
-
-
-- package fixes - they export properly but import gets tripped up, still expects old format. also audio names can be changed for readibility (put word in title)
-
-
-Other dynamic / default lists (CED Verbs / non-verbs)
-
-show error when importing zip that's not formatted correctly
-check new format with packages
-
-More:
-"editable" packages - make sure they're editable in all circumstances
-part of speech stuff
-Tone regex / tone conversion, tone options: tone dot under letter, syllabary tone?
-folders for lists (expandable)
-dialect info for sources
-fix backup
-
-MVP:
-All importing / exporting
-Full immersion text reader functionality + tie to sentences
-Settings menu revamp (search settings separate (button in search bar)
-UI Overhaul
-Intro tutorial
-API?
-
-Post-MVP:
-Widgets
-Finish mass editor
-Cherokee Narratives, other stories, etc (+ an import package screen w/ packages listed)
-Online saving / backup
-"Study" mode
-
-
+1. Word Colorization & Emphasis                                                                                  
+  The way words are colored in de-emphasizes the root and emphasizes the green parts. There should be some sort of 
+  changing around of how it's colored to look better.                                                              
+  2. List Tab Audio & Word Forms                                                                                   
+  In the list tab, official audio is not shown next to the word, and it seems to show word form audio rather than  
+  just base form. Not sure how word forms should work in the list view.                                            
+  3. List Tab Study Tools & Integration                                                                            
+  The list tab in general needs some work. It's meant to be a studying tab, but obviously it doesn't have those    
+  features yet. Now that we're on the hanehla domain, we can do more with integration with Annette law / Hanehla,  
+  but right now we don't have any study tools and the list tab is lacking.                                         
+  4. Widget Integration in Packages & Widgets Styling                                                              
+  There needs to be a way to integrate widgets into packages—you should be able to import and export widgets in    
+  packages. On that note, the widgets tab has weird coloring and icons for the widgets that would need to be       
+  changed as well.                                                                                                 
+  5. Dictionary Folder View Redesign                                                                               
+  The dictionary folder view is sort of lacking; I don't like how it looks. I want to sort of redo the visual here.
+  The list of widgets could maybe match the new visual here too.                                                   
+  6. Online Capabilities & Testing                                                                                 
+  Online capabilities, specifically cloud backup and public packages, have not been tested yet.                    
+  7. Reader Tab Sentence Organization & Bible Handling                                                             
+  The reader tab has a bunch of random sentence collections that need to all be combined into "Other Official      
+  Sentences". Also, the Bible seems to be under "Other Official Sentences" as well, when it should only be in the  
+  book.                                                                                                            
+  8. Cherokee Narratives Data Fix                                                                                  
+  Cherokee Narratives needs to be edited and fixed on the data side.                                               
+  9. Public Packages for Narratives & New Testament                                                                
+  Cherokee Narratives and the Cherokee New Testament packages should become public packages uploaded by myself.    
+  10. Class & Root System for Custom Words                                                                         
+  You need to be able to work with the class and root system on custom words.                                      
+  11. Glossing Feature Review                                                                                      
+  I should look over glossing to see if any features are missing there. It's a pretty complex feature at this point,
+  so I want to look it over again.                                                                                 
+  12. Official Data Package Naming                                                                                 
+  The official data package is named weird again.                                                                  
+  13. Data Consolidation: Animate / Inanimate Distinction                                                          
+  The data consolidation project does not keep track of the animate/inanimate words versus the just inanimate words.
+  I need to maintain this distinction for Julie to have the 10 reference forms that the dictionary uses.           
+  14. Noun Roots                                                                                                   
+  Eventually we will implement roots for nouns as well, but that is through the data side and through Julie.       
+  15. Transliteration & Tone Styling in Settings                                                                   
+  The transliteration and tone styling in the settings is not implemented yet. Now that we're pulling data directly
+  from King-recreation, we should be able to generate all the different spellings in the data consolidation project
+  and then just pull them in the app. This also requires explanations for the different styles.                    
+  16. Tone Regex & Superscript Typing                                                                              
+  On that note, I don't know if I ever fixed regex for tone or typing tone and getting superscript when you create 
+  a word.                                                                                                          
+  17. Create Word Modal: Morphological Architecture                                                                
+  Creating words should allow you to just create the morphological architecture rather than creating a base form.  
+  This feature should probably be locked in linguist mode, but in general we should change the way the create word 
+  modal looks a bit to allow for creating the verb architecture. Maybe there is an advanced button on the create   
+  word modal that shows these options.                                                                             
+  18. Adding Roots and Classes to Existing Words                                                                   
+  There should probably be a way to add roots and classes to existing words, but hopefully we will cover all of the
+  CED eventually.                                                                                                  
+  19. Filter Sources Dropdown Titles                                                                               
+  The list of sources in the filter sources dropdown has been broken; the titles are wrong.                        
+  20. Part of Speech Representation                                                                                
+  Part of speech is still not reflected in the app correctly. Not sure what I want to do with it given Julie's     
+  different way of representing part of speech, I don't know.                                                      
+  21. Shorthand Form Ambiguity                                                                                     
+  The shorthand form for words should probably be fixed to change all of the ambiguous ones to just a              
+  straightforward "no form" form, rather than defaulting to noun singular or third person present.                 
+  22. Editable & Shared Packages                                                                                   
+  Implement editable packages and sharing packages between people.                                                 
+  23. Basic & Advanced Modes Polish                                                                                
+  Basic and advanced modes need to be polished.                                                                    
+  24. Startup Onboarding Tutorial                                                                                  
+  I would like to create a first launch startup onboarding tutorial. This will be a simple explanation of the app, 
+  with some of the settings available to turn on or off as you go through the tutorial so we can demonstrate the   
+  different modes of the dictionary.                                                                               
+      • Added a folder to the project called public/tutorial containing an .md file and screenshots. Take this and 
+      turn it into a paginated tutorial (swipe left to proceed, swipe right to go back, along with small next and  
+      back buttons).                                                                                               
+      • Follow that .md file, filling in what it asks for whenever brackets [...] are used on that page.           
+      • Add a button in Settings to view the startup tutorial at any time.                                         
+  25. App Visual Style Overhaul                                                                                    
+  Consider overhauling the visual style of the app somewhat.                                                       
+  26. Mass Editor Tool Update                                                                                      
+  The mass editor tool should be updated.                                                                          
+  27. API Consideration                                                                                            
+  API?

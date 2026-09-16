@@ -1,0 +1,53 @@
+TODO:
+- creating a story - need options to add chapters to existing story, also need a place to input the english + transliteration as well as the syllabary. You need to be able to separate all 3 by sentence at once.
+- splitting the sentences doesn't seem to work right now.
+
+- other forms - dont show repeat gloss forms
+- clicking root -> class -> verb goes back to root (page stays open behind i think)
+- search algo - make sure exact / shorter are better within ced, deprioritize other forms, prioritize personal dictionaries
+- gloss popup - add a quick other forms dropdown to see other forms in the search. maybe theres a form section too?
+- add auto translit to create word modal]
+- audio modal for other forms dont say recording for ___
+
+data
+- check bible for chapter errors + mismatched syl/phonetics
+- fix raven rock sentences
+- adverbs got marked as verbs tense wise
+- if theres only one form of a word dont display the word forms the same, its probably not "singular"
+
+to check
+- header text overflows on mobile now, make it smaller. top bar could be thinner in general
+
+
+- package fixes - they export properly but import gets tripped up, still expects old format. also audio names can be changed for readibility (put word in title)
+
+
+Other dynamic / default lists (CED Verbs / non-verbs)
+
+show error when importing zip that's not formatted correctly
+check new format with packages
+
+More:
+"editable" packages - make sure they're editable in all circumstances
+part of speech stuff
+Tone regex / tone conversion, tone options: tone dot under letter, syllabary tone?
+folders for lists (expandable)
+dialect info for sources
+fix backup
+
+MVP:
+All importing / exporting
+Full immersion text reader functionality + tie to sentences
+Settings menu revamp (search settings separate (button in search bar)
+UI Overhaul
+Intro tutorial
+API?
+
+Post-MVP:
+Widgets
+Finish mass editor
+Cherokee Narratives, other stories, etc (+ an import package screen w/ packages listed)
+Online saving / backup
+"Study" mode
+
+
