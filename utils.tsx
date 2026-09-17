@@ -71,6 +71,23 @@ export const sanitizeListName = (input: string): string => {
   return input.replace(/\|/g, '').trim();
 };
 
+export const isFormAudio = (audio: any): boolean => {
+  if (!audio) return false;
+  if (typeof audio === 'string') {
+    return /(?:_F|\.)\d+(?:_|$)/.test(audio);
+  }
+  if (audio.formIndex !== undefined && audio.formIndex !== null) return true;
+  if (audio.type === 'conjugation' || audio.type === 'form') return true;
+  if (audio.form_name || audio.normalized_key) return true;
+  if (audio.id && typeof audio.id === 'string' && /(?:_F|\.)\d+(?:_|$)/.test(audio.id)) return true;
+  return false;
+};
+
+export const isFormAudioId = (id: string): boolean => {
+  if (!id) return false;
+  return /(?:_F|\.)\d+(?:_|$)/.test(id);
+};
+
 
 const PRONOUN_MAP: Record<string, string> = {
     '1s': '1st person singular',

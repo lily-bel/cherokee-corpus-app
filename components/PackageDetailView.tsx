@@ -689,7 +689,15 @@ const AudioCard = ({ audio, pkg, onNavigate }: { audio: any, pkg: any, onNavigat
             const audioId = audio.id;
 
             if (isOfficial) {
-                url = audioId.startsWith('http') ? audioId : `https://cherokeenationdictionary.net/Audio/${audioId}`;
+                if (audioId.startsWith('http')) {
+                    url = audioId;
+                } else if (audioId.startsWith('word/')) {
+                    url = `https://cherokeenationdictionary.net/Audio/${audioId}`;
+                } else if (audioId.startsWith('Word_') || audioId.match(/^\d{4}\./) || audioId.endsWith('.m4a')) {
+                    url = `https://cherokeenationdictionary.net/Audio/word/${audioId}`;
+                } else {
+                    url = `https://cherokeenationdictionary.net/Audio/${audioId}`;
+                }
             } else if (audio.src) {
                 url = audio.src;
             } else {

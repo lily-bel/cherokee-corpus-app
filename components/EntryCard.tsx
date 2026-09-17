@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { StickyNote, ListIcon, Mic, SquaresPlus } from './Icons';
 import { SourceBadge } from './UI';
 import { useCorpus } from './CorpusContext';
-import { renderColorizedCherokee, renderSegmentedSurface, projectSegmentsOntoTone, segmentVerbForm, deriveSegmentedForm, getFormPronominalSet, VerbMorphologyTemplate } from '../utils';
+import { renderColorizedCherokee, renderSegmentedSurface, projectSegmentsOntoTone, segmentVerbForm, deriveSegmentedForm, getFormPronominalSet, VerbMorphologyTemplate, isFormAudio } from '../utils';
 import { usePackageManager } from './PackageManagerContext';
 
 
@@ -124,13 +124,20 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
     const cols = new Set<string>();
 
     // 1. Standard Official Audio
-    if (entry.Entry_Audio) {
+    if (entry.audio || entry.Entry_Audio || entry.entry_audio) {
       cols.add(getHexColor('slate'));
     }
 
     // 2. Extra Audio (User recorded or from Packages)
-    if (userAudioMeta && userAudioMeta[entry.Index]) {
-      userAudioMeta[entry.Index].forEach((a: any) => {
+    const entryAudioList = (
+      (entry.Index && userAudioMeta?.[entry.Index]) ||
+      (entry.id && userAudioMeta?.[entry.id]) ||
+      (entry.merged_id && userAudioMeta?.[entry.merged_id])
+    );
+
+    if (entryAudioList) {
+      entryAudioList.forEach((a: any) => {
+        if (isFormAudio(a)) return;
         const pkgId = a.packageId || 'user';
         const pkg = packages.find(p => p.id === pkgId);
 
@@ -143,6 +150,7 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
     }
     return Array.from(cols);
   }, [entry, userAudioMeta, packages, getPackageColor]);
+
 
   // --- Note Colors ---
   const noteColors = useMemo(() => {

@@ -3,7 +3,7 @@ import { Star, ListIcon, Trash2, Pencil, ChevronRight, ChevronDown, GripVertical
 import { Modal, SourceBadge, UserAuthButton } from './UI';
 import { usePackageManager } from './PackageManagerContext';
 import { useCorpus } from './CorpusContext';
-import { getAudioFromDB, renderStyledText, parseListName, formatListName, sanitizeListName, ColorizedCherokeeWord, VerbMorphologyTemplate } from '../utils';
+import { getAudioFromDB, renderStyledText, parseListName, formatListName, sanitizeListName, ColorizedCherokeeWord, VerbMorphologyTemplate, isFormAudio } from '../utils';
 
 export interface ListData {
     id: string;
@@ -40,7 +40,7 @@ interface ListsTabProps {
     onShowSettings?: () => void;
 }
 
-const MiniAudioButton = ({ audio, isOfficial = false, color }: { audio: any, isOfficial?: boolean, color?: string }) => {
+const MiniAudioButton = ({ audio, isOfficial = false, isWord = false, color }: { audio: any, isOfficial?: boolean, isWord?: boolean, color?: string }) => {
     const [isPlaying, setIsPlaying] = useState(false);
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -57,7 +57,15 @@ const MiniAudioButton = ({ audio, isOfficial = false, color }: { audio: any, isO
             const audioId = typeof audio === 'string' ? audio : audio.id;
 
             if (isOfficial) {
-                url = audioId.startsWith('http') ? audioId : `https://cherokeenationdictionary.net/Audio/${audioId}`;
+                if (audioId.startsWith('http')) {
+                    url = audioId;
+                } else if (audioId.startsWith('word/')) {
+                    url = `https://cherokeenationdictionary.net/Audio/${audioId}`;
+                } else if (isWord || audioId.startsWith('Word_') || audioId.match(/^\d{4}\./) || audioId.endsWith('.m4a')) {
+                    url = `https://cherokeenationdictionary.net/Audio/word/${audioId}`;
+                } else {
+                    url = `https://cherokeenationdictionary.net/Audio/${audioId}`;
+                }
             } else if (audio.src) {
                 url = audio.src;
             } else {
@@ -65,6 +73,8 @@ const MiniAudioButton = ({ audio, isOfficial = false, color }: { audio: any, isO
                 if (data) {
                     const blob = new Blob([data as Blob], { type: 'audio/mp3' });
                     url = URL.createObjectURL(blob);
+                } else if (audioId.startsWith('Word_') || audioId.match(/^\d{4}\./) || audioId.endsWith('.m4a')) {
+                    url = `https://cherokeenationdictionary.net/Audio/word/${audioId}`;
                 }
             }
 
@@ -74,12 +84,17 @@ const MiniAudioButton = ({ audio, isOfficial = false, color }: { audio: any, isO
                 a.onplay = () => setIsPlaying(true);
                 a.onended = () => {
                     setIsPlaying(false);
-                    if (!isOfficial && !audio.src) URL.revokeObjectURL(url);
+                    if (!isOfficial && !audio.src && url.startsWith('blob:')) URL.revokeObjectURL(url);
+                };
+                a.onerror = () => {
+                    setIsPlaying(false);
+                    if (!isOfficial && !audio.src && url.startsWith('blob:')) URL.revokeObjectURL(url);
                 };
                 a.play();
             }
         } catch (err) {
             console.error("Playback failed", err);
+            setIsPlaying(false);
         }
     };
 
@@ -103,7 +118,9 @@ const MiniAudioButton = ({ audio, isOfficial = false, color }: { audio: any, isO
     }
 
     const audioId = typeof audio === 'string' ? audio : audio.id;
-    const speakerName = isOfficial ? (audioId.split('_')[0] || "Official Audio") : (audio.speaker || "User Recording");
+    const speakerName = isOfficial
+        ? (audio?.speaker || (audioId.startsWith('Word_') ? "Official Audio" : (audioId.includes('_') ? audioId.split('_')[0] : "Official Audio")))
+        : (audio?.speaker || "User Recording");
 
     return (
         <button
@@ -116,6 +133,7 @@ const MiniAudioButton = ({ audio, isOfficial = false, color }: { audio: any, isO
         </button>
     );
 };
+
 
 const AddWordsModal = ({
     isOpen,
@@ -1502,19 +1520,38 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                     {displayedItems.map(({ type, data }) => {
                                         if (type === 'word') {
                                             const word = data;
+                                            const wordKey = word?.Index || word?.id || word?.merged_id;
                                             const rootEntry = word ? (rootMap?.get(word.Index) || rootMap?.get(word.id) || rootMap?.get(word.merged_id)) : null;
-                                            const userAudio = (effectiveUserAudioMeta?.[word.Index] || [])
-                                                .filter((audio: any) => {
-                                                    if (!audio.packageId) {
-                                                        const userPkg = packages.find(p => p.id === 'user');
-                                                        return userPkg ? userPkg.status === 'active' : true;
-                                                    }
-                                                    const pkg = packages.find(p => p.id === audio.packageId);
-                                                    return pkg && pkg.status === 'active';
-                                                });
+                                            const officialAudio = word?.audio || word?.Entry_Audio || word?.entry_audio || word?.Audio;
+                                            const entryAudioList = (
+                                                (word?.Index && effectiveUserAudioMeta?.[word.Index]) ||
+                                                (word?.id && effectiveUserAudioMeta?.[word.id]) ||
+                                                (word?.merged_id && effectiveUserAudioMeta?.[word.merged_id]) ||
+                                                []
+                                            );
+
+                                            const seenAudioIds = new Set<string>();
+                                            if (officialAudio) {
+                                                seenAudioIds.add(officialAudio);
+                                            }
+
+                                            const baseUserAudio = entryAudioList.filter((audio: any) => {
+                                                if (isFormAudio(audio)) return false;
+
+                                                const audioId = typeof audio === 'string' ? audio : audio.id;
+                                                if (audioId && seenAudioIds.has(audioId)) return false;
+                                                if (audioId) seenAudioIds.add(audioId);
+
+                                                if (!audio.packageId || audio.packageId === 'user') {
+                                                    const userPkg = packages.find(p => p.id === 'user');
+                                                    return userPkg ? userPkg.status === 'active' : true;
+                                                }
+                                                const pkg = packages.find(p => p.id === audio.packageId);
+                                                return pkg && pkg.status === 'active';
+                                            });
 
                                             return (
-                                                <tr key={word.Index} onClick={() => onEntryClick(word)} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors active:bg-amber-50 dark:active:bg-amber-900/20">
+                                                <tr key={wordKey || word?.Index} onClick={() => onEntryClick(word)} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors active:bg-amber-50 dark:active:bg-amber-900/20">
                                                     <td className="p-3 align-middle">
                                                         {isLinguist && rootEntry ? (
                                                             <div className="py-1">
@@ -1546,16 +1583,20 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                                     </td>
                                                     <td className="p-3 align-middle">
                                                         <div className="flex flex-wrap gap-1.5" onClick={e => e.stopPropagation()}>
-                                                            {(word.Entry_Audio || word.entry_audio) && (
-                                                                <MiniAudioButton audio={word.Entry_Audio || word.entry_audio} isOfficial={true} />
+                                                            {officialAudio && (
+                                                                <MiniAudioButton audio={officialAudio} isOfficial={true} isWord={true} />
                                                             )}
-                                                            {userAudio.map((audio: any) => {
-                                                                const isOfficialItem = audio.packageId === 'official-cherokee-data';
+                                                            {baseUserAudio.map((audio: any) => {
+                                                                const isOfficialItem = audio.packageId === 'official-cherokee-data' ||
+                                                                                       audio.packageId?.startsWith('official') ||
+                                                                                       audio.isOfficial ||
+                                                                                       (typeof audio.id === 'string' && (audio.id.startsWith('Word_') || audio.id.endsWith('.m4a')));
                                                                 return (
                                                                     <MiniAudioButton
-                                                                        key={audio.id}
-                                                                        audio={isOfficialItem ? audio.id : audio}
+                                                                        key={audio.id || audio}
+                                                                        audio={isOfficialItem ? (audio.id || audio) : audio}
                                                                         isOfficial={isOfficialItem}
+                                                                        isWord={true}
                                                                         color={isOfficialItem ? undefined : getPackageColor(audio.packageId || 'user')}
                                                                     />
                                                                 );
@@ -1564,7 +1605,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                                     </td>
                                                     <td className="p-3 text-right">
                                                         {canEdit && (
-                                                            <button onClick={(e) => { e.stopPropagation(); handleRemoveFromList(word!.Index); }} className="text-slate-300 hover:text-red-400 transition-colors">
+                                                            <button onClick={(e) => { e.stopPropagation(); handleRemoveFromList(word!.Index || wordKey); }} className="text-slate-300 hover:text-red-400 transition-colors">
                                                                 <X size={16} />
                                                             </button>
                                                         )}
@@ -1573,15 +1614,26 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                             );
                                         } else {
                                             const sentence = data;
-                                            const userAudio = (effectiveUserAudioMeta?.[sentence.id + '_sentence'] || [])
-                                                .filter((audio: any) => {
-                                                    if (!audio.packageId) {
-                                                        const userPkg = packages.find(p => p.id === 'user');
-                                                        return userPkg ? userPkg.status === 'active' : true;
-                                                    }
-                                                    const pkg = packages.find(p => p.id === audio.packageId);
-                                                    return pkg && pkg.status === 'active';
-                                                });
+                                            const sentenceAudio = sentence?.audio;
+                                            const rawSentenceAudioList = (effectiveUserAudioMeta?.[sentence.id + '_sentence'] || []);
+
+                                            const seenSentenceAudioIds = new Set<string>();
+                                            if (sentenceAudio) {
+                                                seenSentenceAudioIds.add(sentenceAudio);
+                                            }
+
+                                            const sentenceUserAudio = rawSentenceAudioList.filter((audio: any) => {
+                                                const audioId = typeof audio === 'string' ? audio : audio.id;
+                                                if (audioId && seenSentenceAudioIds.has(audioId)) return false;
+                                                if (audioId) seenSentenceAudioIds.add(audioId);
+
+                                                if (!audio.packageId || audio.packageId === 'user') {
+                                                    const userPkg = packages.find(p => p.id === 'user');
+                                                    return userPkg ? userPkg.status === 'active' : true;
+                                                }
+                                                const pkg = packages.find(p => p.id === audio.packageId);
+                                                return pkg && pkg.status === 'active';
+                                            });
 
                                             return (
                                                 <tr key={sentence.id} onClick={() => onEntryClick(sentence)} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors active:bg-amber-50 dark:active:bg-amber-900/20">
@@ -1612,16 +1664,19 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                                     </td>
                                                     <td className="p-3 align-middle">
                                                         <div className="flex flex-wrap gap-1.5" onClick={e => e.stopPropagation()}>
-                                                            {sentence.audio && (
-                                                                <MiniAudioButton audio={sentence.audio} isOfficial={true} />
+                                                            {sentenceAudio && (
+                                                                <MiniAudioButton audio={sentenceAudio} isOfficial={true} isWord={false} />
                                                             )}
-                                                            {userAudio.map((audio: any) => {
-                                                                const isOfficialItem = audio.packageId?.startsWith('official');
+                                                            {sentenceUserAudio.map((audio: any) => {
+                                                                const isOfficialItem = audio.packageId === 'official-cherokee-data' ||
+                                                                                       audio.packageId?.startsWith('official') ||
+                                                                                       audio.isOfficial;
                                                                 return (
                                                                     <MiniAudioButton
-                                                                        key={audio.id}
-                                                                        audio={isOfficialItem ? audio.id : audio}
+                                                                        key={audio.id || audio}
+                                                                        audio={isOfficialItem ? (audio.id || audio) : audio}
                                                                         isOfficial={isOfficialItem}
+                                                                        isWord={false}
                                                                         color={isOfficialItem ? undefined : getPackageColor(audio.packageId || 'user')}
                                                                     />
                                                                 );
@@ -1639,6 +1694,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                             );
                                         }
                                     })}
+
                                 </tbody>
                             </table>
                         </div>

@@ -14,7 +14,8 @@
   changed as well.                                                                                                 
   5. Dictionary Folder View Redesign                                                                               
   The dictionary folder view is sort of lacking; I don't like how it looks. I want to sort of redo the visual here.
-  The list of widgets could maybe match the new visual here too.                                                   
+  The list of widgets could maybe match the new visual here too. The 2 column look was chosen to differentiate from
+  other tabs but I think we can do this some other way.                                          
   6. Online Capabilities & Testing                                                                                 
   Online capabilities, specifically cloud backup and public packages, have not been tested yet.                    
   7. Reader Tab Sentence Organization & Bible Handling                                                             
