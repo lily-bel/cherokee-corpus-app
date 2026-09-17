@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, BookOpen, Globe, LinkIcon, ChevronDown, ChevronRight, Info } from './Icons';
+import { X, BookOpen, Globe, LinkIcon, ChevronDown, ChevronRight } from './Icons';
 
 interface OfficialSourcesModalProps {
     onClose: () => void;

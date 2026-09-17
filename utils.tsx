@@ -1979,62 +1979,65 @@ export function renderSegmentedSurface(
         if (!seg.text) return null;
         if (seg.role === 'prepronominal') {
           return (
-            <span key={idx} className="text-emerald-500 dark:text-emerald-300 font-bold" title="Prepronominal prefix">
+            <span key={idx} className="font-bold" style={{ color: 'rgb(48, 178, 133)' }} title="Prepronominal prefix">
               {seg.text}
             </span>
           );
         }
         if (seg.role === 'pronoun') {
-          const setType = seg.set || (seg.color === 'RoyalBlue' ? 'B' : seg.color === 'Purple' ? 'P2P' : 'A');
-          let colorClass = "text-red-600 dark:text-red-400 font-bold";
-          if (setType === 'B') {
-            colorClass = "text-blue-600 dark:text-blue-400 font-bold";
-          } else if (setType === 'P2P') {
-            colorClass = "text-purple-600 dark:text-purple-400 font-bold";
+          const rawSet = (seg.set || (seg.color === 'RoyalBlue' ? 'B' : seg.color === 'Purple' ? 'P2P' : 'A')).toUpperCase();
+          let color = 'rgb(219, 84, 84)';
+          let setLabel = seg.set || 'A';
+          if (rawSet === 'B') {
+            color = 'rgb(124, 165, 255)';
+            setLabel = 'B';
+          } else if (rawSet === 'P2P' || rawSet === 'PERSON TO PERSON' || rawSet === 'PURPLE') {
+            color = 'rgb(196, 131, 255)';
+            setLabel = 'P2P';
           }
           return (
-            <span key={idx} className={colorClass} title={`Pronoun (${setType})`}>
+            <span key={idx} className="font-bold" style={{ color }} title={`Pronoun (${setLabel})`}>
               {seg.text}
             </span>
           );
         }
         if (seg.role === 'middle_voice') {
           return (
-            <span key={idx} className="text-slate-700 dark:text-slate-300 font-bold" title="Middle voice">
+            <span key={idx} className="font-bold" style={{ color: 'rgb(172, 172, 172)' }} title="Middle voice">
               {seg.text}
             </span>
           );
         }
         if (seg.role === 'root') {
           return (
-            <span key={idx} className="text-slate-700 dark:text-slate-300 font-bold underline underline-offset-2" title="Root">
+            <span key={idx} className="font-bold underline underline-offset-2" style={{ color: '#000' }} title="Root">
               {seg.text}
             </span>
           );
         }
         if (seg.role === 'post_root') {
           return (
-            <span key={idx} className="text-slate-700 dark:text-slate-300 font-bold" title="Post-root morpheme">
+            <span key={idx} className="font-bold" style={{ color: 'rgb(172, 172, 172)' }} title="Post-root morpheme">
               {seg.text}
             </span>
           );
         }
         if (seg.role === 'aspect') {
           return (
-            <span key={idx} className="text-emerald-500 dark:text-emerald-300 font-bold" title="Aspect suffix / Class ending">
+            <span key={idx} className="font-bold" style={{ color: 'rgb(48, 178, 133)' }} title="Aspect suffix / Class ending">
               {seg.text}
             </span>
           );
         }
         if (seg.role === 'final') {
           return (
-            <span key={idx} className="text-slate-700 dark:text-slate-300 font-bold" title="Final suffix">
+            <span key={idx} className="font-bold" style={{ color: 'rgb(172, 172, 172)' }} title="Final suffix">
               {seg.text}
             </span>
           );
         }
         return (
-          <span key={idx} className="text-inherit font-bold">
+          <span key={idx} className="font-bold" style={{ color: 'rgb(172, 172, 172)' }}>
             {seg.text}
           </span>
         );

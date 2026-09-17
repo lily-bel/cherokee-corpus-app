@@ -13,9 +13,7 @@
   Cherokee Narratives and the Cherokee New Testament packages should become public packages uploaded by myself.                                       
   11. Glossing Feature Review                                                                                      
   I should look over glossing to see if any features are missing there. It's a pretty complex feature at this point,
-  so I want to look it over again.                                                                                 
-  12. Official Data Package Naming                                                                                 
-  The official data package is named weird again.                                                                  
+  so I want to look it over again.                                                                                
   13. Data Consolidation: Animate / Inanimate Distinction                                                          
   The data consolidation project does not keep track of the animate/inanimate words versus the just inanimate words.
   I need to maintain this distinction for Julie to have the 10 reference forms that the dictionary uses.           
@@ -27,17 +25,7 @@
   and then just pull them in the app. This also requires explanations for the different styles.                    
   16. Tone Regex & Superscript Typing                                                                              
   On that note, I don't know if I ever fixed regex for tone or typing tone and getting superscript when you create 
-  a word.                                                                                                          
-  17. Create Word Modal: Morphological Architecture                                                                
-  Creating words should allow you to just create the morphological architecture rather than creating a base form.  
-  This feature should probably be locked in linguist mode, but in general we should change the way the create word 
-  modal looks a bit to allow for creating the verb architecture. Maybe there is an advanced button on the create   
-  word modal that shows these options.                                                                             
-  18. Adding Roots and Classes to Existing Words                                                                   
-  There should probably be a way to add roots and classes to existing words, but hopefully we will cover all of the
-  CED eventually.                                                                                                  
-  19. Filter Sources Dropdown Titles                                                                               
-  The list of sources in the filter sources dropdown has been broken; the titles are wrong.                        
+  a word.                                                                                                      
   20. Part of Speech Representation                                                                                
   Part of speech is still not reflected in the app correctly. Not sure what I want to do with it given Julie's     
   different way of representing part of speech, I don't know.                                                      
