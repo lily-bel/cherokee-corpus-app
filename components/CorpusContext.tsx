@@ -255,7 +255,7 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 // Migration for legacy data
                 const words = JSON.parse(savedWords);
                 const defaultDictionaryId = 'nb_' + Date.now();
-                setCustomDictionaries({ [defaultDictionaryId]: { id: defaultDictionaryId, name: 'My Custom Dictionary', date: Date.now(), type: 'notebook' } });
+                setCustomDictionaries({ [defaultDictionaryId]: { id: defaultDictionaryId, name: 'My Collection', date: Date.now(), type: 'notebook' } });
                 setPersonalWords(words.map((w: any) => ({ ...w, customDictionaryId: defaultDictionaryId })));
             } else {
                 if (savedDictionaries) setCustomDictionaries(JSON.parse(savedDictionaries));

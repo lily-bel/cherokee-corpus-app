@@ -410,7 +410,7 @@ export const TextImporter: React.FC<TextImporterProps> = ({
 
                                 <div>
                                     <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                                        Save to Custom Dictionary / Notebook
+                                        Save to Collection
                                     </label>
                                     <div className="relative">
                                         <button
@@ -420,7 +420,7 @@ export const TextImporter: React.FC<TextImporterProps> = ({
                                         >
                                             <span className="truncate">
                                                 {selectedDictionary === '__new__'
-                                                    ? '+ Create New Custom Dictionary'
+                                                    ? '+ Create New Collection'
                                                     : selectedDictionary
                                                         ? customDictionaries[selectedDictionary]?.name || selectedDictionary
                                                         : 'Default (Create with Book Title)'
@@ -442,7 +442,7 @@ export const TextImporter: React.FC<TextImporterProps> = ({
                                                     onClick={() => { setSelectedDictionary('__new__'); setShowDictionaryDropdown(false); }}
                                                     className="w-full px-4 py-2.5 text-left hover:bg-amber-50 dark:hover:bg-amber-900/20 text-xs text-amber-600 font-bold border-b border-slate-100 dark:border-slate-800"
                                                 >
-                                                    + Create New Custom Dictionary
+                                                    + Create New Collection
                                                 </button>
                                                 {dictionaryArray.map(nb => (
                                                     <button
@@ -462,7 +462,7 @@ export const TextImporter: React.FC<TextImporterProps> = ({
                                 {selectedDictionary === '__new__' && (
                                     <div>
                                         <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                                            New Custom Dictionary Name *
+                                            New Collection Name *
                                         </label>
                                         <input
                                             type="text"

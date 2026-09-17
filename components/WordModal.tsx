@@ -206,13 +206,13 @@ export const WordModal: React.FC<WordModalProps> = ({
                 )}
 
                             <div>
-                                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">Custom Dictionary</label>
+                                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">Collection</label>
                                 <select
                                     value={formData?.customDictionaryId || ''}
                                     onChange={e => setFormData(prev => ({ ...(prev || {} as WordFormData), customDictionaryId: e.target.value, Entry: prev?.Entry || '', Syllabary: prev?.Syllabary || '', Definition: prev?.Definition || '', PoS: prev?.PoS || '', Entry_Tone: prev?.Entry_Tone || '', Notes: prev?.Notes || '' }))}
                                     className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-3 outline-none focus:ring-2 focus:ring-amber-500 dark:text-white"
                                 >
-                                    <option value="" disabled>Select a dictionary...</option>
+                                    <option value="" disabled>Select a collection...</option>
                                     {Object.values(customDictionaries).map((nb: any) => (
                                         <option key={nb.id} value={nb.id}>{nb.name}</option>
                                     ))}

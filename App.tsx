@@ -520,7 +520,7 @@ function App() {
     const allData = useMemo(() => {
         const isUserLibraryActive = packages.find(p => p.id === 'user')?.status === 'active';
         const dictionaryEntries = isUserLibraryActive
-            ? personalWords.map(w => ({ ...w, id: w.Index, Source: w.customDictionaryId, Source_Long: customDictionaries[w.customDictionaryId || '']?.name || 'Custom Dictionary' }))
+            ? personalWords.map(w => ({ ...w, id: w.Index, Source: w.customDictionaryId, Source_Long: customDictionaries[w.customDictionaryId || '']?.name || 'Collection' }))
             : [];
         return [...dictionaryEntries, ...csvData];
     }, [csvData, personalWords, customDictionaries, packages]);
@@ -1165,7 +1165,7 @@ function App() {
     };
 
 
-    const createDictionary = () => { if (!newDictionaryName.trim()) return; const id = 'nb_' + Date.now(); setCustomDictionaries(p => ({ ...p, [id]: { id, name: newDictionaryName, date: Date.now(), type: 'notebook' } })); setNewDictionaryName(''); setShowNewDictionaryModal(false); showToast("Dictionary created!", "success"); };
+    const createDictionary = () => { if (!newDictionaryName.trim()) return; const id = 'nb_' + Date.now(); setCustomDictionaries(p => ({ ...p, [id]: { id, name: newDictionaryName, date: Date.now(), type: 'notebook' } })); setNewDictionaryName(''); setShowNewDictionaryModal(false); showToast("Collection created!", "success"); };
     const deleteDictionary = (id) => {
         const next = { ...customDictionaries }; delete next[id]; setCustomDictionaries(next);
         setPersonalWords(prev => prev.filter(w => w.customDictionaryId !== id));
@@ -1186,7 +1186,7 @@ function App() {
         }
 
         setActiveDictionaryId(null);
-        setDictionaryToDelete(null); showToast("Dictionary deleted");
+        setDictionaryToDelete(null); showToast("Collection deleted");
     };
 
     const handleCreateList = () => {
@@ -1230,7 +1230,7 @@ function App() {
                 [target]: { ...prev[target], name: value }
             }));
             setShowNewDictionaryModal(false);
-            showToast("Dictionary renamed", "success");
+            showToast("Collection renamed", "success");
         } else if (type === 'list') {
             if (!target) { // This means it's a new list being created via rename modal
                 handleCreateList();
@@ -1331,12 +1331,12 @@ function App() {
         if ((!data.Entry && !data.Syllabary) || !data.Definition) { showToast("Missing fields"); return; }
 
         if (isSentenceMode) {
-            // Auto-create "My Custom Dictionary" if no customDictionaries exist
+            // Auto-create "My Collection" if no customDictionaries exist
             let targetSource = activeDictionaryId || 'user';
 
             if (!activeDictionaryId && Object.keys(customDictionaries).length === 0) {
                 const newDictionaryId = 'nb_' + Date.now();
-                const newDictionary = { id: newDictionaryId, name: "My Custom Dictionary", date: Date.now(), type: 'notebook' as const };
+                const newDictionary = { id: newDictionaryId, name: "My Collection", date: Date.now(), type: 'notebook' as const };
                 setCustomDictionaries(prev => ({ ...prev, [newDictionaryId]: newDictionary }));
                 targetSource = newDictionaryId;
             }
@@ -1365,7 +1365,7 @@ function App() {
             if (k.length) target = k[0];
             else {
                 const d = 'nb_' + Date.now();
-                setCustomDictionaries({ [d]: { id: d, name: "My Custom Dictionary", date: Date.now(), type: 'notebook' } });
+                setCustomDictionaries({ [d]: { id: d, name: "My Collection", date: Date.now(), type: 'notebook' } });
                 target = d;
             }
         }
@@ -2396,12 +2396,12 @@ function App() {
                             activeTab === 'personal' && (!activeDictionaryId ? (
                                 <div className="flex flex-col h-full bg-[#F9F9F7] dark:bg-slate-950">
                                     <div className="px-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0 h-12">
-                                        <h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">Dictionaries</h1>
+                                        <h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">Collections</h1>
                                         <div className="flex gap-1.5 items-center">
                                             <button
                                                 onClick={() => setShowNewDictionaryModal(true)}
                                                 className="bg-slate-900 dark:bg-slate-700 text-white p-1.5 rounded-full shadow-sm hover:bg-slate-800 transition-colors"
-                                                title="New Dictionary"
+                                                title="New Collection"
                                             >
                                                 <Plus size={18} />
                                             </button>
@@ -2445,7 +2445,7 @@ function App() {
                                         {dictionaryList.length === 0 && (
                                             <div className="text-center py-16 text-slate-400 flex flex-col items-center">
                                                 <BookSolid size={84} fill="#94a3b8" className="mb-4 opacity-30" />
-                                                <p className="text-base font-medium">No custom dictionaries yet.</p>
+                                                <p className="text-base font-medium">No collections yet.</p>
                                                 <button
                                                     onClick={() => setShowNewDictionaryModal(true)}
                                                     className="mt-4 px-4 py-2 bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white font-bold rounded-xl shadow-sm transition-colors text-sm"
@@ -2459,10 +2459,10 @@ function App() {
                             ) : (<div className="flex flex-col h-full"><div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col gap-2 shrink-0">
                                 <div className="flex items-center gap-3">
                                     <button onClick={() => setActiveDictionaryId(null)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full -ml-2"><ArrowLeft size={20} className="text-slate-500 dark:text-slate-400" /></button>
-                                    <div className="flex-1 flex items-center gap-2"><h2 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100">{customDictionaries[activeDictionaryId]?.name || dictionaryList.find(n => n.id === activeDictionaryId)?.name || 'Custom Dictionary'}</h2>
+                                    <div className="flex-1 flex items-center gap-2"><h2 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100">{customDictionaries[activeDictionaryId]?.name || dictionaryList.find(n => n.id === activeDictionaryId)?.name || 'Collection'}</h2>
                                         {customDictionaries[activeDictionaryId] && <button onClick={() => { setRenameData({ type: 'dictionary', target: activeDictionaryId, value: customDictionaries[activeDictionaryId].name }); setShowNewDictionaryModal(true); }} className="p-1 text-slate-400 hover:text-sky-600 rounded-full"><Pencil size={14} /></button>}
                                     </div>
-                                    <div className="flex gap-1.5 ml-auto items-center"><button onClick={() => setDictionaryToDelete(activeDictionaryId)} className="p-1.5 text-slate-400 hover:text-red-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Delete Dictionary"><Trash2 size={20} /></button><UserAuthButton /><button onClick={() => setShowSettingsModal(true)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" title="Settings"><Menu size={22} strokeWidth={1.5} /></button></div>
+                                    <div className="flex gap-1.5 ml-auto items-center"><button onClick={() => setDictionaryToDelete(activeDictionaryId)} className="p-1.5 text-slate-400 hover:text-red-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Delete Collection"><Trash2 size={20} /></button><UserAuthButton /><button onClick={() => setShowSettingsModal(true)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" title="Settings"><Menu size={22} strokeWidth={1.5} /></button></div>
                                 </div>
                                 <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
                                     <button onClick={() => setDictionaryMode('words')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${dictionaryMode === 'words' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'} `}>Words</button>
@@ -2471,7 +2471,7 @@ function App() {
                             </div>
                                 <div className="flex-1 overflow-y-auto p-4" key={activeDictionaryId + '-' + dictionaryMode}>
                                     {dictionaryMode === 'words' ? (
-                                        sortedDictionaryWords.length === 0 ? <div className="text-center py-12 text-slate-400">Empty dictionary.<br />Tap + to add a word.</div> : sortedDictionaryWords.map(entry => <EntryCard key={entry.Index} entry={entry} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} settings={settings} />)
+                                        sortedDictionaryWords.length === 0 ? <div className="text-center py-12 text-slate-400">Empty collection.<br />Tap + to add a word.</div> : sortedDictionaryWords.map(entry => <EntryCard key={entry.Index} entry={entry} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} settings={settings} />)
                                     ) : (
                                         (customDictionaries[activeDictionaryId] ? userSentences : sentences).filter(s => s.source === activeDictionaryId).length === 0 ? <div className="text-center py-12 text-slate-400">No sentences yet.<br />Tap + to add one.</div> : (customDictionaries[activeDictionaryId] ? userSentences : sentences).filter(s => s.source === activeDictionaryId).map(s => <SentenceCard key={s.id} sentence={s} customDictionaries={customDictionaries} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} personalWords={personalWords} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} onDeleteAudio={deleteAudio}
                                             favorites={favorites}
@@ -2505,7 +2505,7 @@ function App() {
                     <>
                         <button onClick={() => { if (activeTab === 'personal') setActiveDictionaryId(null); setActiveTab('personal'); }} className={`flex flex-col items-center gap-1 py-2 rounded-lg flex-1 min-w-0 transition-colors ${activeTab === 'personal' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
                             <Book size={22} strokeWidth={2} className="md:w-6 md:h-6" />
-                            <span className="text-[9px] md:text-[10px] font-bold tracking-tight md:tracking-wide truncate w-full px-1">Dicts</span>
+                            <span className="text-[9px] md:text-[10px] font-bold tracking-tight md:tracking-wide truncate w-full px-1">Collections</span>
                         </button>
                         <button onClick={() => { setActiveTab('packages'); }} className={`flex flex-col items-center gap-1 py-2 rounded-lg flex-1 min-w-0 transition-colors ${activeTab === 'packages' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
                             <Box size={22} strokeWidth={2} className="md:w-6 md:h-6" />
@@ -2691,10 +2691,10 @@ function App() {
             }
             {/* REUSED MODAL FOR NEW LIST / NEW DICTIONARY / RENAME */}
             {showNewListModal && (<Modal title={renameData.type === 'list' ? "Rename List" : "New List"} onClose={() => { setShowNewListModal(false); setRenameData({ type: null, target: null, value: '' }); }}><input type="text" autoFocus placeholder={renameData.type === 'list' ? "Rename list..." : "Enter list name..."} value={renameData.value || newListName} onChange={(e) => renameData.type === 'list' ? setRenameData({ ...renameData, value: e.target.value }) : setNewListName(e.target.value)} className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-4 py-3 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 dark:focus:ring-amber-900 transition-all dark:text-white" /><button onClick={renameData.type === 'list' ? handleRename : createNewList} disabled={!(renameData.type === 'list' ? renameData.value : newListName).trim()} className="w-full mt-4 bg-amber-600 text-white font-bold py-3 rounded-lg">Save</button></Modal>)}
-            {showNewDictionaryModal && (<Modal title={renameData.type === 'dictionary' ? "Rename Custom Dictionary" : "New Custom Dictionary"} onClose={() => { setShowNewDictionaryModal(false); setRenameData({ type: null, target: null, value: '' }); }}><input type="text" autoFocus placeholder={renameData.type === 'dictionary' ? "Rename dictionary..." : "Enter dictionary name..."} value={renameData.value || newDictionaryName} onChange={(e) => renameData.type === 'dictionary' ? setRenameData({ ...renameData, value: e.target.value }) : setNewDictionaryName(e.target.value)} className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-4 py-3 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 dark:focus:ring-amber-900 transition-all dark:text-white" /><button onClick={renameData.type === 'dictionary' ? handleRename : createDictionary} disabled={!(renameData.type === 'dictionary' ? renameData.value : newDictionaryName).trim()} className="w-full mt-4 bg-sky-700 text-white font-bold py-3 rounded-lg">{renameData.type === 'dictionary' ? "Rename" : "Create"}</button></Modal>)}
+            {showNewDictionaryModal && (<Modal title={renameData.type === 'dictionary' ? "Rename Collection" : "New Collection"} onClose={() => { setShowNewDictionaryModal(false); setRenameData({ type: null, target: null, value: '' }); }}><input type="text" autoFocus placeholder={renameData.type === 'dictionary' ? "Rename collection..." : "Enter collection name..."} value={renameData.value || newDictionaryName} onChange={(e) => renameData.type === 'dictionary' ? setRenameData({ ...renameData, value: e.target.value }) : setNewDictionaryName(e.target.value)} className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-4 py-3 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 dark:focus:ring-amber-900 transition-all dark:text-white" /><button onClick={renameData.type === 'dictionary' ? handleRename : createDictionary} disabled={!(renameData.type === 'dictionary' ? renameData.value : newDictionaryName).trim()} className="w-full mt-4 bg-sky-700 text-white font-bold py-3 rounded-lg">{renameData.type === 'dictionary' ? "Rename" : "Create"}</button></Modal>)}
 
             {wordToDelete && (<Modal title="Delete Word?" onClose={() => setWordToDelete(null)}><p className="text-slate-600 dark:text-slate-300 mb-6">Are you sure you want to delete this word? This will remove it from all your lists.</p><button onClick={confirmDeleteWord} className="w-full bg-red-600 text-white font-bold py-3 rounded-lg">Delete</button></Modal>)}
-            {dictionaryToDelete && (<Modal title="Delete Custom Dictionary?" onClose={() => setDictionaryToDelete(null)}><p className="text-slate-600 dark:text-slate-300 mb-6">Are you sure you want to delete this dictionary? All words inside it will be lost.</p><button onClick={() => deleteDictionary(dictionaryToDelete)} className="w-full bg-red-600 text-white font-bold py-3 rounded-lg">Delete</button></Modal>)}
+            {dictionaryToDelete && (<Modal title="Delete Collection?" onClose={() => setDictionaryToDelete(null)}><p className="text-slate-600 dark:text-slate-300 mb-6">Are you sure you want to delete this collection? All words inside it will be lost.</p><button onClick={() => deleteDictionary(dictionaryToDelete)} className="w-full bg-red-600 text-white font-bold py-3 rounded-lg">Delete</button></Modal>)}
             {sentenceToDelete && (() => {
                 const sObj = userSentences.find(s => s.id === sentenceToDelete) || sentences.find(s => s.id === sentenceToDelete);
                 const preview = sObj?.syllabary || sObj?.translit || sObj?.english;
@@ -2714,7 +2714,7 @@ function App() {
             {
                 showBackupConfirm && (
                     <Modal title="Restore Backup?" onClose={() => setShowBackupConfirm(false)}>
-                        <p className="text-slate-600 dark:text-slate-300 mb-6">This will <strong>overwrite</strong> all your current custom dictionaries, lists, and settings. This action cannot be undone.</p>
+                        <p className="text-slate-600 dark:text-slate-300 mb-6">This will <strong>overwrite</strong> all your current collections, lists, and settings. This action cannot be undone.</p>
                         <button onClick={() => handleRestore(restoreInputRef.current)} className="w-full bg-red-600 text-white font-bold py-3 rounded-lg">Yes, Overwrite Everything</button>
                     </Modal>
                 )
@@ -2752,13 +2752,13 @@ function App() {
             {/* MOVE DICTIONARY MODAL */}
             {
                 showMoveModal && (
-                    <Modal title="Move to Custom Dictionary" onClose={() => setShowMoveModal(false)}>
+                    <Modal title="Move to Collection" onClose={() => setShowMoveModal(false)}>
                         <div className="space-y-2 max-h-[60vh] overflow-y-auto">
-                            {Object.values(customDictionaries).length === 0 && <p className="text-slate-400 italic">No custom dictionaries available.</p>}
+                            {Object.values(customDictionaries).length === 0 && <p className="text-slate-400 italic">No collections available.</p>}
                             {Object.entries(customDictionaries).map(([id, dictionary]) => (
                                 <button key={id} onClick={() => handleMoveWord(id)} className="w-full text-left p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3">
                                     <Folder size={20} className="text-sky-600 dark:text-sky-400" />
-                                    <span className="font-bold text-slate-700 dark:text-slate-200">{dictionary.name || 'Unknown Dictionary'}</span>
+                                    <span className="font-bold text-slate-700 dark:text-slate-200">{dictionary.name || 'Unknown Collection'}</span>
                                 </button>
                             ))}
                         </div>

@@ -429,11 +429,11 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({
                     )}
                 </div>
 
-                        {/* Custom Dictionaries */}
+                        {/* Custom Dictionaries / Collections */}
                         <div className="space-y-2">
-                            <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Select Custom Dictionaries</h3>
+                            <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Select Collections</h3>
                             <div className="max-h-48 overflow-y-auto border border-slate-100 dark:border-slate-800 rounded-xl">
-                                {Object.values(customDictionaries).length === 0 && <p className="text-slate-400 text-sm italic p-2">No custom dictionaries available.</p>}
+                                {Object.values(customDictionaries).length === 0 && <p className="text-slate-400 text-sm italic p-2">No collections available.</p>}
                                 {Object.values(customDictionaries).map((nb: any) => (
                                     <div
                                         key={nb.id}
@@ -592,7 +592,7 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({
                         <div className="flex-1">
                             <h4 className="text-sm font-bold text-amber-800 dark:text-amber-200 mb-1">Dependency Entries Found</h4>
                             <p className="text-xs text-amber-700 dark:text-amber-300 mb-3">
-                                Found {dependencyEntries.length} entries (words/sentences) referenced by your selected lists/audio/glosses that are NOT in the selected custom dictionaries.
+                                Found {dependencyEntries.length} entries (words/sentences) referenced by your selected lists/audio/glosses that are NOT in the selected collections.
                             </p>
                             <label className="flex items-center gap-2 cursor-pointer">
                                 <input

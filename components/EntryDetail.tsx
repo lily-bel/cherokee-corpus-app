@@ -637,7 +637,7 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                 {isPersonal && !hideCustomization && (
                     <div className="mt-12 space-y-3">
                         <button onClick={() => onMove(e.Index)} className="w-full py-3 text-sky-700 dark:text-sky-400 font-bold bg-sky-50 dark:bg-sky-900/20 rounded-xl border border-sky-100 dark:border-sky-900/50 flex items-center justify-center gap-2">
-                            <Folder size={20} /> Move to Custom Dictionary
+                            <Folder size={20} /> Move to Collection
                         </button>
                         <button onClick={() => onDelete(e.Index)} className="w-full py-3 text-red-600 dark:text-red-400 font-bold bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-100 dark:border-red-900/50">Delete Word</button>
                     </div>
