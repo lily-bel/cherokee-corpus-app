@@ -2344,6 +2344,12 @@ function App() {
                                     setListsView('detail');
                                 } else if (type === 'word' || type === 'sentence') {
                                     handleEntryClick(payload);
+                                } else if (type === 'widget') {
+                                    const params = new URLSearchParams(window.location.search);
+                                    params.set('widget', payload);
+                                    window.history.pushState({}, '', '?' + params.toString());
+                                    window.dispatchEvent(new PopStateEvent('popstate'));
+                                    setActiveTab('widgets');
                                 }
                             }}
                             onShowSettings={() => setShowSettingsModal(true)}

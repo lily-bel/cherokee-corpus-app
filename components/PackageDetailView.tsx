@@ -11,12 +11,13 @@ import EntryCard from './EntryCard';
 import EntryDetail from './EntryDetail';
 import { getAudioFromDB, renderStyledText, parseListName, ColorizedCherokeeWord } from '../utils';
 import PackageExportModal from './PackageExportModal';
+import { getWidgetIcon } from '../widgetUtils';
 
 interface PackageDetailViewProps {
     packageId: string;
     onBack: () => void;
     customLists: Record<string, any>;
-    onNavigate: (type: 'dictionary' | 'list' | 'word' | 'sentence', payload: any) => void;
+    onNavigate: (type: 'dictionary' | 'list' | 'word' | 'sentence' | 'widget', payload: any) => void;
     onReadInContext?: (sentenceId: string) => void;
     onShowSettings: () => void;
     settings?: any;
@@ -230,7 +231,8 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({
                 glosses: userGlosses,
                 notes: notesList,
                 wordForms: formsList,
-                lists: userLists
+                lists: userLists,
+                widgets: []
             };
         } else {
             // Official / Imported Data
@@ -299,6 +301,8 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({
                 return { ...g, sentence: sent, linkedEntry };
             });
 
+            const widgets = pData.widgets || pkg.metadata?.widgets || [];
+
             return {
                 dictionaries: [],
                 words: pData.dictionary || [],
@@ -307,7 +311,8 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({
                 glosses: glosses,
                 lists: pData.lists || [],
                 notes: notes,
-                wordForms: wordForms
+                wordForms: wordForms,
+                widgets: widgets
             };
         }
     }, [isUser, isOfficial, pkg.id, importedData, customDictionaries, personalWords, userSentences, userAudioMeta, glosses, userNotes, userWordForms, dictionary, sentences, customLists]);
@@ -493,6 +498,15 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({
                     pkg={pkg}
                     onNavigate={onNavigate}
                 />
+
+                <SectionItem
+                    icon={null}
+                    label="Widgets"
+                    items={data.widgets || []}
+                    type="widget"
+                    pkg={pkg}
+                    onNavigate={onNavigate}
+                />
             </div>
         </div>
     );
@@ -513,11 +527,11 @@ const SectionItem = ({
     label: string,
     items: any[],
     searchable?: boolean,
-    type: 'word' | 'sentence' | 'audio' | 'gloss' | 'list' | 'note' | 'form' | 'dictionary',
+    type: 'word' | 'sentence' | 'audio' | 'gloss' | 'list' | 'note' | 'form' | 'dictionary' | 'widget',
     onItemClick?: (item: any) => void,
     extraProps?: any,
     pkg: any,
-    onNavigate?: (type: 'dictionary' | 'list' | 'word' | 'sentence', payload: any) => void
+    onNavigate?: (type: 'dictionary' | 'list' | 'word' | 'sentence' | 'widget', payload: any) => void
 }) => {
     const [expanded, setExpanded] = useState(false);
     const [query, setQuery] = useState('');
@@ -535,6 +549,8 @@ const SectionItem = ({
                 return (i.english && i.english.toLowerCase().includes(q)) ||
                     (i.translit && i.translit.toLowerCase().includes(q)) ||
                     (i.syllabary && i.syllabary.includes(q));
+            } else if (type === 'widget') {
+                return i.name && i.name.toLowerCase().includes(q);
             } else {
                 // Generic fallback
                 return JSON.stringify(i).toLowerCase().includes(q);
@@ -589,7 +605,7 @@ const SectionItem = ({
 
                     <div className="max-h-[600px] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
                         {filteredItems.slice(0, limit).map((item, idx) => (
-                            <div key={item.id || item.Index || idx} className="bg-white dark:bg-slate-900">
+                            <div key={item.id || item.Index || item.name || idx} className="bg-white dark:bg-slate-900">
                                 {type === 'word' && <EntryCard entry={item} onClick={onItemClick} {...extraProps} />}
                                 {type === 'sentence' && <CompactSentenceCard sentence={item} onClick={onItemClick} />}
                                 {type === 'audio' && <AudioCard audio={item} pkg={pkg} onNavigate={onNavigate} />}
@@ -597,6 +613,20 @@ const SectionItem = ({
                                 {type === 'form' && <WordFormCard form={item} onNavigate={onNavigate} />}
                                 {type === 'gloss' && <GlossCard gloss={item} onNavigate={onNavigate} />}
                                 {type === 'list' && <ListCard list={item} onNavigate={onNavigate} />}
+                                {type === 'widget' && (
+                                    <div
+                                        onClick={() => onNavigate && onNavigate('widget' as any, item.name)}
+                                        className="p-3 pl-4 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors flex items-center gap-3"
+                                    >
+                                        <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-base select-none shrink-0">
+                                            {getWidgetIcon(item)}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="font-bold text-sm text-slate-800 dark:text-slate-100 truncate">{item.name}</div>
+                                            {item.path && <div className="text-[10px] text-slate-400 truncate">{item.path}</div>}
+                                        </div>
+                                    </div>
+                                )}
                                 {type === 'dictionary' && (
                                     <div
                                         onClick={() => onNavigate && onNavigate('dictionary', item.id)}

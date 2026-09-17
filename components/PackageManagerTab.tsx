@@ -10,7 +10,7 @@ import { PackageImportModal } from './PackageImportModal';
 
 interface PackageManagerTabProps {
     customLists: Record<string, ListData | string[]>;
-    onNavigate: (type: 'dictionary' | 'list' | 'word' | 'sentence', payload: any) => void;
+    onNavigate: (type: 'dictionary' | 'list' | 'word' | 'sentence' | 'widget', payload: any) => void;
     onReadInContext?: (sentenceId: string) => void;
     onShowSettings: () => void;
     onShowAuth?: () => void;
@@ -304,6 +304,7 @@ const PackageItem = ({
                 : (pkg.metadata?.source_names ? Object.keys(pkg.metadata.source_names).length : 0)));
     const noteCount = isUser ? Object.keys(userNotes).length : (pkg.metadata?.stats?.notes || 0);
     const wordFormCount = isUser ? Object.keys(userWordForms).length : (pkg.metadata?.stats?.word_forms || 0);
+    const widgetCount = pkg.metadata?.stats?.widgets || 0;
 
     return (
         <div
@@ -365,6 +366,9 @@ const PackageItem = ({
                     )}
                     {(wordFormCount > 0) && (
                         <span className="flex items-center gap-1"><SquaresPlus size={14} className="opacity-70" /> Word Forms: {wordFormCount}</span>
+                    )}
+                    {(widgetCount > 0) && (
+                        <span className="flex items-center gap-1">Widgets: {widgetCount}</span>
                     )}
                 </div>
 

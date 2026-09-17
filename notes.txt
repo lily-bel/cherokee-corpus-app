@@ -1,9 +1,6 @@
 1. Word Colorization & Emphasis                                                                                  
   The way words are colored in de-emphasizes the root and emphasizes the green parts. There should be some sort of 
-  changing around of how it's colored to look better.                                                              
-  2. List Tab Audio & Word Forms                                                                                   
-  In the list tab, official audio is not shown next to the word, and it seems to show word form audio rather than  
-  just base form. Not sure how word forms should work in the list view.                                            
+  changing around of how it's colored to look better.                                                                                                        
   3. List Tab Study Tools & Integration                                                                            
   The list tab in general needs some work. It's meant to be a studying tab, but obviously it doesn't have those    
   features yet. Now that we're on the hanehla domain, we can do more with integration with Annette law / Hanehla,  

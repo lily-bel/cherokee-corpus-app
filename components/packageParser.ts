@@ -173,6 +173,57 @@ export async function parsePackageZip(
         }
     }
 
+    // 3.8 widgets.json / widgets/
+    const widgetsFile = zip.file('widgets.json');
+    let rawWidgets: any[] = [];
+    if (widgetsFile) {
+        try {
+            const text = await widgetsFile.async('string');
+            const parsed = JSON.parse(text);
+            if (Array.isArray(parsed)) rawWidgets = parsed;
+        } catch (e: any) {
+            throw new Error(`Corrupted widgets.json: Invalid JSON format (${e?.message || 'parse error'})`);
+        }
+    }
+
+    const widgetsFolder = zip.folder('widgets');
+    if (widgetsFolder) {
+        const widgetFiles: { path: string; file: JSZip.JSZipObject }[] = [];
+        widgetsFolder.forEach((path, file) => {
+            if (!file.dir && path.endsWith('.html')) {
+                widgetFiles.push({ path, file });
+            }
+        });
+        for (const { path, file } of widgetFiles) {
+            const content = await file.async('string');
+            const filename = path.split('/').pop() || path;
+            const name = filename.replace(/\.html$/i, '');
+            if (!rawWidgets.some((w: any) => w.name === name)) {
+                rawWidgets.push({ name, content, icon: '📄' });
+            }
+        }
+    }
+
+    if (Array.isArray((meta as any).widgets)) {
+        (meta as any).widgets.forEach((mw: any) => {
+            const existing = rawWidgets.find((w: any) => w.name === mw.name);
+            if (existing) {
+                if (!existing.icon && mw.icon) existing.icon = mw.icon;
+                if (!existing.path && mw.path) existing.path = mw.path;
+            } else {
+                rawWidgets.push(mw);
+            }
+        });
+    }
+
+    const normalizedWidgets = rawWidgets.map((w: any) => ({
+        name: w.name || 'Untitled Widget',
+        icon: w.icon || (w.path && (w.path.startsWith('http://') || w.path.startsWith('https://')) ? '🌐' : '📄'),
+        content: w.content || '',
+        path: w.path || undefined,
+        packageId: meta.id
+    }));
+
     // Step 4: Process Audio
     const audioByBaseForm: Record<string, string> = {};
     const audioBySentence: Record<string, string> = {};
@@ -462,7 +513,8 @@ export async function parsePackageZip(
         lists: lists.length,
         word_forms: normalizedWordForms.length,
         notes: importedNotes.length,
-        notebooks: meta.stats?.notebooks !== undefined ? meta.stats.notebooks : (normalizedDictionary.length === 0 ? 0 : undefined)
+        notebooks: meta.stats?.notebooks !== undefined ? meta.stats.notebooks : (normalizedDictionary.length === 0 ? 0 : undefined),
+        widgets: normalizedWidgets.length
     };
 
     const pkg: Package = {
@@ -480,7 +532,8 @@ export async function parsePackageZip(
         glosses: normalizedGlosses,
         lists,
         notes: importedNotes,
-        word_forms: normalizedWordForms
+        word_forms: normalizedWordForms,
+        widgets: normalizedWidgets
     };
 
     return { pkg, data, audioMeta: newAudioMeta };
@@ -530,6 +583,30 @@ export function parsePackageJsonData(
             });
         });
     }
+
+    let rawWidgets: any[] = [];
+    if (Array.isArray(packageData.widgets)) {
+        rawWidgets = [...packageData.widgets];
+    }
+    if (Array.isArray(meta.widgets)) {
+        meta.widgets.forEach((mw: any) => {
+            const existing = rawWidgets.find((w: any) => w.name === mw.name);
+            if (existing) {
+                if (!existing.icon && mw.icon) existing.icon = mw.icon;
+                if (!existing.path && mw.path) existing.path = mw.path;
+            } else {
+                rawWidgets.push(mw);
+            }
+        });
+    }
+
+    const normalizedWidgets = rawWidgets.map((w: any) => ({
+        name: w.name || 'Untitled Widget',
+        icon: w.icon || (w.path && (w.path.startsWith('http://') || w.path.startsWith('https://')) ? '🌐' : '📄'),
+        content: w.content || '',
+        path: w.path || undefined,
+        packageId: meta.id
+    }));
 
     const audioByBaseForm: Record<string, string> = {};
     const audioBySentence: Record<string, string> = {};
@@ -737,7 +814,8 @@ export function parsePackageJsonData(
         lists: lists.length,
         word_forms: normalizedWordForms.length,
         notes: importedNotes.length,
-        notebooks: meta.stats?.notebooks !== undefined ? meta.stats.notebooks : (normalizedDictionary.length === 0 ? 0 : undefined)
+        notebooks: meta.stats?.notebooks !== undefined ? meta.stats.notebooks : (normalizedDictionary.length === 0 ? 0 : undefined),
+        widgets: normalizedWidgets.length
     };
 
     const pkg: Package = {
@@ -755,7 +833,8 @@ export function parsePackageJsonData(
         glosses: normalizedGlosses,
         lists,
         notes: importedNotes,
-        word_forms: normalizedWordForms
+        word_forms: normalizedWordForms,
+        widgets: normalizedWidgets
     };
 
     return { pkg, data, audioMeta: newAudioMeta };

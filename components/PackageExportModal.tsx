@@ -8,6 +8,7 @@ import { ListData } from './ListsTab';
 import { useAuth } from './AuthContext';
 import { DictionaryDB } from '../firebase';
 import { PackageMetadata, usePackageManager } from './PackageManagerContext';
+import { getAllWidgets, Widget, getWidgetIcon } from '../widgetUtils';
 
 interface PackageExportModalProps {
     onClose: () => void;
@@ -29,6 +30,8 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({
 
     const [selectedDictionaries, setSelectedDictionaries] = useState<string[]>([]);
     const [selectedLists, setSelectedLists] = useState<Record<string, { selected: boolean, includeDependencies: boolean }>>({});
+    const [availableWidgets, setAvailableWidgets] = useState<Widget[]>([]);
+    const [selectedWidgets, setSelectedWidgets] = useState<string[]>([]);
     const [metadata, setMetadata] = useState({
         name: initialMetadata?.name || '',
         author: initialMetadata?.author || user?.displayName || '',
@@ -186,6 +189,18 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({
         loadUserPackages();
     }, [user, packages]);
 
+    useEffect(() => {
+        const fetchWidgets = async () => {
+            try {
+                const all = await getAllWidgets();
+                setAvailableWidgets(all.filter(w => !w.isBuiltIn));
+            } catch (e) {
+                console.warn("Failed to load widgets for export modal:", e);
+            }
+        };
+        fetchWidgets();
+    }, []);
+
     const toggleDictionary = (id: string) => {
         setSelectedDictionaries(prev =>
             prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
@@ -201,11 +216,17 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({
             };
         });
     };
+
+    const toggleWidget = (name: string) => {
+        setSelectedWidgets(prev =>
+            prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]
+        );
+    };
     
     // toggleListDeps removed as per request to move to Global Includes
 
     const handleExport = async () => {
-        if (!metadata.name || (selectedDictionaries.length === 0 && !Object.values(selectedLists).some(l => l.selected) && !includeAllAudio && !includeAllGlosses)) return;
+        if (!metadata.name || (selectedDictionaries.length === 0 && !Object.values(selectedLists).some(l => l.selected) && selectedWidgets.length === 0 && !includeAllAudio && !includeAllGlosses)) return;
 
         if (shareViaLink && !user) {
             alert("Please sign in first to share this package via a public link.");
@@ -235,7 +256,7 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({
             // Pass dependency entries if confirmed
             const depEntryIds = includeDependencies ? dependencyEntries.map(d => d.id) : [];
 
-            console.log("Calling exportPackage with:", { selectedDictionaries, metadata, finalListsConfig, depAudioIds, depEntryIds, includeAllNotesAndForms });
+            console.log("Calling exportPackage with:", { selectedDictionaries, metadata, finalListsConfig, depAudioIds, depEntryIds, includeAllNotesAndForms, selectedWidgets });
             const result = await exportPackage(
                 selectedDictionaries, 
                 metadata, 
@@ -244,7 +265,8 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({
                 depEntryIds, 
                 includeAllNotesAndForms,
                 shareViaLink,
-                isUpdate ? selectedUpdateOf : null
+                isUpdate ? selectedUpdateOf : null,
+                selectedWidgets
             );
 
             if (result && result.shared && result.publicUrl) {
@@ -486,6 +508,43 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({
                     </div>
                 </div>
 
+                {/* Widgets */}
+                {availableWidgets.length > 0 && (
+                    <div className="space-y-3">
+                        <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Select Included Widgets</h3>
+                        <div className="max-h-48 overflow-y-auto space-y-2 border border-slate-100 dark:border-slate-800 rounded-lg p-2">
+                            {availableWidgets.map((widget) => {
+                                const isSelected = selectedWidgets.includes(widget.name);
+                                const iconChar = getWidgetIcon(widget);
+                                return (
+                                    <div
+                                        key={widget.name}
+                                        onClick={() => toggleWidget(widget.name)}
+                                        className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${isSelected ? 'bg-amber-50 dark:bg-amber-900/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                                    >
+                                        <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 ${isSelected ? 'bg-amber-600 border-amber-600' : 'border-slate-300 dark:border-slate-600'}`}>
+                                            {isSelected && <Check size={14} className="text-white" />}
+                                        </div>
+                                        <div className="w-7 h-7 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-sm shrink-0 select-none">
+                                            {iconChar}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
+                                                {widget.name}
+                                            </div>
+                                            {widget.path && (
+                                                <div className="text-[10px] text-slate-400 truncate">
+                                                    {widget.path}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+
                 {/* Global Includes */}
                 <div className="space-y-3">
                      <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Global Includes</h3>
@@ -551,7 +610,7 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({
 
             <button
                 onClick={handleExport}
-                disabled={isExporting || !metadata.name || (selectedDictionaries.length === 0 && !Object.values(selectedLists).some(l => l.selected) && !includeAllAudio && !includeAllGlosses && !includeAllNotesAndForms)}
+                disabled={isExporting || !metadata.name || (selectedDictionaries.length === 0 && !Object.values(selectedLists).some(l => l.selected) && selectedWidgets.length === 0 && !includeAllAudio && !includeAllGlosses && !includeAllNotesAndForms)}
                 className="w-full bg-amber-600 text-white font-bold py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
                 {isExporting ? 'Exporting...' : <><Download size={20} /> Export Package</>}

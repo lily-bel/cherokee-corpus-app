@@ -5,6 +5,7 @@ import JSZip from 'jszip';
 import { downloadFile, getAudioFromDB } from '../utils';
 import { parsePackageZip, parsePackageJsonData } from './packageParser';
 import { auth, DictionaryDB } from '../firebase';
+import { getAllWidgets, saveWidget } from '../widgetUtils';
 
 const generateId = () => {
     try {
@@ -25,7 +26,8 @@ export const usePackageExport = () => {
         dependencyEntryIds: string[] = [],
         exportAllNotesAndForms: boolean = false,
         shareViaLink: boolean = false,
-        updateOf: string | null = null
+        updateOf: string | null = null,
+        selectedWidgetNames?: string[]
     ) => {
         try {
             const zip = new JSZip();
@@ -411,7 +413,31 @@ export const usePackageExport = () => {
                 zip.file('audio_mapping.json', JSON.stringify(audioMapping, null, 2));
             }
 
-            // 4. Metadata
+            // 4. Process Widgets
+            let exportedWidgetsPayload: any[] = [];
+            if (selectedWidgetNames && selectedWidgetNames.length > 0) {
+                const allWidgets = await getAllWidgets();
+                const widgetsToExport = allWidgets.filter(w => !w.isBuiltIn && selectedWidgetNames.includes(w.name));
+                const widgetsFolder = zip.folder('widgets');
+
+                exportedWidgetsPayload = widgetsToExport.map(w => {
+                    if (w.content) {
+                        widgetsFolder?.file(`${w.name.replace(/[^a-z0-9\-_]/gi, '_')}.html`, w.content);
+                    }
+                    return {
+                        name: w.name,
+                        icon: w.icon || (w.path && (w.path.startsWith('http://') || w.path.startsWith('https://')) ? '🌐' : '📄'),
+                        content: w.content || '',
+                        path: w.path || undefined
+                    };
+                });
+
+                if (exportedWidgetsPayload.length > 0) {
+                    zip.file('widgets.json', JSON.stringify(exportedWidgetsPayload, null, 2));
+                }
+            }
+
+            // 5. Metadata
             const sourceNamesMap: Record<string, string> = {};
             const sourceMetaMap: Record<string, "prioritize" | "filter" | "other"> = {};
 
@@ -446,8 +472,14 @@ export const usePackageExport = () => {
                     glosses: glossesToExport.length,
                     lists: exportedListCount,
                     word_forms: formsExport.length,
-                    notes: notesExport.length
+                    notes: notesExport.length,
+                    widgets: exportedWidgetsPayload.length
                 },
+                widgets: exportedWidgetsPayload.map(w => ({
+                    name: w.name,
+                    icon: w.icon,
+                    path: w.path
+                })),
                 source_names: sourceNamesMap,
                 source_meta: sourceMetaMap as any,
                 color: metadata.color || '#f59e0b',
@@ -493,6 +525,7 @@ export const usePackageExport = () => {
                     conjugations: formsExport,
                     entry_data: notesExport.length > 0 ? { notes: notesExport } : null,
                     lists: exportedListsPayload,
+                    widgets: exportedWidgetsPayload,
                     date_exported: Date.now()
                 };
 
@@ -525,6 +558,15 @@ export const usePackageImport = () => {
         if (audioMeta && Object.keys(audioMeta).length > 0) {
             importAudioMeta(audioMeta);
         }
+        if (data.widgets && Array.isArray(data.widgets)) {
+            for (const w of data.widgets) {
+                try {
+                    await saveWidget(w.name, w.content, w.path, w.icon, pkg.id);
+                } catch (e) {
+                    console.warn(`Failed to import widget ${w.name}:`, e);
+                }
+            }
+        }
         installPackage(pkg, data);
         if (auth.currentUser) {
             await DictionaryDB.setInstalledPackage(auth.currentUser.uid, pkg.id, true);
@@ -536,6 +578,15 @@ export const usePackageImport = () => {
         const { pkg, data, audioMeta } = parsePackageJsonData(packageData, color);
         if (audioMeta && Object.keys(audioMeta).length > 0) {
             importAudioMeta(audioMeta);
+        }
+        if (data.widgets && Array.isArray(data.widgets)) {
+            for (const w of data.widgets) {
+                try {
+                    await saveWidget(w.name, w.content, w.path, w.icon, pkg.id);
+                } catch (e) {
+                    console.warn(`Failed to import widget ${w.name}:`, e);
+                }
+            }
         }
         installPackage(pkg, data);
         if (auth.currentUser) {

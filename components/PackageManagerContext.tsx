@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getAllPackagesFromDB, savePackageToDB, deletePackageFromDB } from '../utils';
 import { parsePackageZip } from './packageParser';
+import { deleteWidgetsByPackageId } from '../widgetUtils';
 
 
 // --- Types ---
@@ -22,7 +23,9 @@ export interface PackageMetadata {
         notebooks?: number;
         notes?: number;
         word_forms?: number;
+        widgets?: number;
     };
+    widgets?: { name: string; icon?: string; path?: string }[];
     source_names?: Record<string, string>;
     source_meta?: Record<string, "prioritize" | "filter">;
     color?: string;
@@ -46,6 +49,7 @@ export interface ImportedPackageData {
     lists?: any[]; // ListData[]
     notes?: any[]; // [{ text, target_id, type }]
     word_forms?: any[]; // [{ word_index, order, form_name, syllabary, translit, tone, notes }]
+    widgets?: any[]; // [{ name, icon, content, path }]
 }
 
 interface PackageManagerContextType {
@@ -534,6 +538,7 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
             return next;
         });
         deletePackageFromDB(id);
+        deleteWidgetsByPackageId(id);
 
         // Mark as uninstalled so default packages don't auto-install on reload
         try {
