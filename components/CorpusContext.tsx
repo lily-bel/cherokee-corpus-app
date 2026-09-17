@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 
 import { usePackageManager } from './PackageManagerContext';
+import { getClassMascot } from '../classMascots';
 
 // --- Types ---
 
@@ -28,6 +29,8 @@ export interface DictionaryEntry {
     Sentence_Audio?: string;
     Definition_Long?: string;
     Cross_Reference?: string;
+    Notes?: string;
+    customDictionaryId?: string;
     surface_spelling?: string;
     surface_forms?: Record<string, string>;
     surface_segments?: Record<string, SurfaceSegment[]>;
@@ -101,6 +104,31 @@ export interface PersonalWord {
     Notes?: string;
     DateCreated?: number;
     Other_Forms?: string;
+    // Class + Root / Verb Morphology
+    root_slug?: string;
+    slug?: string;
+    root_h?: string;
+    root_g?: string;
+    class_name?: string;
+    class_mascot?: string;
+    post_root_morpheme?: string | null;
+    config?: {
+        pre?: {
+            distributive?: boolean;
+            translocutive?: boolean;
+            translocutiveImpOnly?: boolean;
+            partitive?: boolean;
+        };
+        pron?: {
+            set_type?: string;
+            stem_type?: string;
+            use_ka_variant?: boolean;
+            plural_pronouns?: boolean;
+            middle_voice?: string;
+            use_3rd_person_object?: boolean;
+        };
+    };
+    [key: string]: any;
 }
 
 export interface RootEntry {
@@ -438,6 +466,67 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             }
         });
 
+        // Index Personal Words & Extract Custom Roots/Morphology
+        personalWords.forEach(w => {
+            const id = w.id || w.Index;
+            if (id) {
+                const dictEntry: DictionaryEntry = {
+                    id,
+                    Index: id,
+                    syllabary: w.syllabary || w.Syllabary || '',
+                    translit: w.translit || w.Entry || '',
+                    definition: w.definition || w.Definition || '',
+                    source: w.source || 'user',
+                    Entry: w.Entry || w.translit || '',
+                    Syllabary: w.Syllabary || w.syllabary || '',
+                    Definition: w.Definition || w.definition || '',
+                    PoS: w.PoS || '',
+                    Entry_Tone: w.Entry_Tone || '',
+                    Notes: w.Notes || '',
+                    Other_Forms: w.Other_Forms || '',
+                    customDictionaryId: w.customDictionaryId || ''
+                };
+                dMap.set(id, dictEntry);
+                if (w.Index) dMap.set(w.Index, dictEntry);
+            }
+
+            const slugVal = w.root_slug || w.slug;
+            const rootH = w.root_h || '';
+            const rootG = w.root_g || '';
+            const className = w.class_name || '';
+            const classMascot = w.class_mascot || getClassMascot(className) || '';
+            const postRoot = w.post_root_morpheme || null;
+            const config = w.config;
+
+            if (slugVal || rootH || rootG || className || postRoot || (config && (config.pre || config.pron))) {
+                const rootSlug = slugVal || rootH || rootG || className || 'custom-root';
+                const rootEntry: RootEntry = {
+                    entry_id: id || '',
+                    root_h: rootH,
+                    root_g: rootG,
+                    root_slug: rootSlug,
+                    slug: rootSlug,
+                    definition: w.definition || w.Definition || '',
+                    class_name: className,
+                    class_mascot: classMascot,
+                    post_root_morpheme: postRoot,
+                    config: config || {
+                        pre: { distributive: false, translocutive: false, partitive: false, translocutiveImpOnly: false },
+                        pron: { set_type: 'a', use_ka_variant: false, plural_pronouns: false, middle_voice: 'none', use_3rd_person_object: false }
+                    }
+                };
+
+                rootsArr.push(rootEntry);
+                if (id) rMap.set(id, rootEntry);
+                if (w.Index && !rMap.has(w.Index)) rMap.set(w.Index, rootEntry);
+
+                if (!grMap.has(rootSlug)) {
+                    grMap.set(rootSlug, []);
+                }
+                grMap.get(rootSlug)!.push(rootEntry);
+            }
+        });
+
         // Index Sentences
         [...sentences, ...userSentences].forEach(s => {
             if (s.id) sMap.set(s.id, s);
@@ -492,7 +581,7 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             groupedRootsMap: grMap,
             derivedRoots: rootsArr
         };
-    }, [dictionary, sentences, combinedGlosses, userGlosses, userSentences]);
+    }, [dictionary, personalWords, sentences, combinedGlosses, userGlosses, userSentences]);
 
     // Actions
     const addUserGloss = (gloss: Gloss) => {

@@ -268,7 +268,7 @@ function App() {
     const [newListName, setNewListName] = useState('');
     const [toast, setToast] = useState({ show: false, message: '', type: 'error' });
     const [showWordModal, setShowWordModal] = useState(false);
-    const [wordForm, setWordForm] = useState({ Entry: '', Syllabary: '', Definition: '', PoS: '', Entry_Tone: '', Notes: '', customDictionaryId: '' });
+    const [wordForm, setWordForm] = useState<any>({ Entry: '', Syllabary: '', Definition: '', PoS: '', Entry_Tone: '', Notes: '', customDictionaryId: '' });
     const [isSentenceMode, setIsSentenceMode] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [pdSort] = useState('date');
@@ -1304,24 +1304,50 @@ function App() {
             // Priority: forceMode > dictionaryMode > default
             const mode = forceMode || (activeTab === 'search' ? (searchScope === 'sentences' ? 'sentence' : 'word') : (dictionaryMode === 'sentences' ? 'sentence' : 'word'));
             setIsSentenceMode(mode === 'sentence');
-            // Default dictionary: activeDictionaryId, or first available, or empty (to force selection if we want, but user said "force the user to choose", implying we can default but they must see it)
-            // Actually, "give a 2nd modal that forces the user to choose" -> or just a dropdown in the same modal.
-            // I'll put it in the same modal for better UX, but make it prominent.
             const defaultNb = activeDictionaryId || (Object.keys(customDictionaries).length > 0 ? Object.keys(customDictionaries)[0] : '');
 
-            setWordForm({ Entry: '', Syllabary: '', Definition: '', PoS: '', Entry_Tone: '', Notes: '', customDictionaryId: defaultNb });
+            setWordForm({
+                Entry: '',
+                Syllabary: '',
+                Definition: '',
+                PoS: '',
+                Entry_Tone: '',
+                Notes: '',
+                customDictionaryId: defaultNb,
+                root_slug: '',
+                root_h: '',
+                root_g: '',
+                class_name: '',
+                class_mascot: '',
+                post_root_morpheme: null,
+                config: {
+                    pre: { distributive: false, translocutive: false, partitive: false, translocutiveImpOnly: false },
+                    pron: { set_type: 'a', use_ka_variant: false, plural_pronouns: false, middle_voice: 'none', use_3rd_person_object: false }
+                }
+            });
             setEditingId(null);
         } else {
             // Editing existing item
             setIsSentenceMode(false); // Default to word, handleEditSentence will override if needed
             setWordForm({
-                Entry: w.Entry || '',
-                Syllabary: w.Syllabary || '',
-                Definition: w.Definition || '',
+                Entry: w.Entry || w.translit || '',
+                Syllabary: w.Syllabary || w.syllabary || '',
+                Definition: w.Definition || w.definition || '',
                 PoS: w.PoS || '',
                 Entry_Tone: w.Entry_Tone || '',
                 Notes: w.Notes || '',
-                customDictionaryId: w.customDictionaryId || w.source || '' // Handle both word and sentence source
+                customDictionaryId: w.customDictionaryId || w.source || '', // Handle both word and sentence source
+                Other_Forms: w.Other_Forms || '',
+                root_slug: w.root_slug || w.slug || '',
+                root_h: w.root_h || '',
+                root_g: w.root_g || '',
+                class_name: w.class_name || '',
+                class_mascot: w.class_mascot || '',
+                post_root_morpheme: w.post_root_morpheme || null,
+                config: w.config || {
+                    pre: { distributive: false, translocutive: false, partitive: false, translocutiveImpOnly: false },
+                    pron: { set_type: 'a', use_ka_variant: false, plural_pronouns: false, middle_voice: 'none', use_3rd_person_object: false }
+                }
             });
             setEditingId(w.Index || w.id);
         }
@@ -1384,7 +1410,16 @@ function App() {
             translit: data.Entry,
             definition: data.Definition,
             source: 'user',
-            Other_Forms: data.Other_Forms // Ensure Other_Forms is saved
+            Other_Forms: data.Other_Forms, // Ensure Other_Forms is saved
+            // Class + Root / Verb Morphology
+            root_slug: data.root_slug,
+            slug: data.root_slug,
+            root_h: data.root_h,
+            root_g: data.root_g,
+            class_name: data.class_name,
+            class_mascot: data.class_mascot,
+            post_root_morpheme: data.post_root_morpheme,
+            config: data.config
         };
         if (editingId) {
             setPersonalWords(p => p.map(w => w.Index === editingId ? nw : w));
@@ -1658,16 +1693,73 @@ function App() {
 
     const usedFormLabels = useMemo(() => {
         const labels = new Set<string>();
+
+        // 1. All official & custom entries in allData (Other_Forms)
         allData.forEach((entry: any) => {
             if (entry.Other_Forms) {
-                entry.Other_Forms.split('|').forEach(form => {
+                entry.Other_Forms.split('|').forEach((form: string) => {
                     const parts = form.split(':');
                     if (parts[0]) labels.add(parts[0].trim());
                 });
             }
         });
-        return Array.from(labels).sort();
-    }, [allData]);
+
+        // 2. Imported & official package word_forms
+        if (importedData) {
+            Object.values(importedData).forEach((pkgData: any) => {
+                if (pkgData?.word_forms && Array.isArray(pkgData.word_forms)) {
+                    pkgData.word_forms.forEach((f: any) => {
+                        if (f.form_name) labels.add(f.form_name.trim());
+                        if (f.displayLabel) labels.add(f.displayLabel.trim());
+                    });
+                }
+            });
+        }
+
+        // 3. User custom word forms (userWordForms)
+        if (userWordForms) {
+            Object.values(userWordForms).forEach((formsStr: any) => {
+                if (typeof formsStr === 'string') {
+                    formsStr.split('|').forEach((form: string) => {
+                        const parts = form.split(':');
+                        if (parts[0]) labels.add(parts[0].trim());
+                    });
+                }
+            });
+        }
+
+        // 4. Gloss form names
+        if (glosses && Array.isArray(glosses)) {
+            glosses.forEach((g: any) => {
+                if (g.form_name) labels.add(g.form_name.trim());
+            });
+        }
+
+        // 5. Common standard Cherokee grammatical form labels
+        const standardLabels = [
+            "Plural",
+            "Present Habitual",
+            "3rd person singular present habitual",
+            "1st person singular present (animate)",
+            "1st person singular present (inanimate)",
+            "2nd person singular imperative (animate)",
+            "2nd person singular imperative (inanimate)",
+            "3rd person singular completive past",
+            "3rd person singular habitual past",
+            "Infinitive",
+            "Immediate Past",
+            "Past Continuous",
+            "Future Continuous",
+            "Gerund",
+            "Singular",
+            "Dual",
+            "Noun",
+            "Verb"
+        ];
+        standardLabels.forEach(l => labels.add(l));
+
+        return Array.from(labels).filter(Boolean).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    }, [allData, importedData, userWordForms, glosses]);
 
     // --- SEARCH ALGORITHM ---
     const searchResults = useMemo(() => {

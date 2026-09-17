@@ -254,3 +254,20 @@
   5. Aligned base subclass and variant rows flush without indents, bullets, or arrows.
 - **Verification:** Built cleanly via `npm run build` (`vite v5.4.21 built in 2.08s`).
 
+---
+
+### Task 4.1: Custom Word Class, Root, and Verb Morphology Template System
+- **Completion Date:** 2026-09-17
+- **Status:** `[Completed]` (Ready for Review)
+- **Target Files:** [`components/WordModal.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/WordModal.tsx), [`components/WordFormsEditor.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/WordFormsEditor.tsx), [`components/CorpusContext.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/components/CorpusContext.tsx), [`utils.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/utils.tsx), [`App.tsx`](file:///C:/Users/lilyb/Desktop/cherokee/cherokee-corpus-app/App.tsx)
+- **Implementation Summary:**
+  1. **Root Abstraction (No Slugs in UI):** Root autocomplete searches on Cherokee spelling and English definition. Internal unique slugs (`generateRootSlug`) are automatically created for new custom roots on save.
+  2. **Class & Aspect Suffix Alignment:** Autocomplete suggests all existing verb classes with mascots and preview suffixes.
+  3. **Pronominal Set Filtering:** Constrained set selection strictly to Set A (with optional `ga-` prefix) and Set B (removing person-to-person).
+  4. **Dynamic Prepronominal Prefix & Post-Root Morpheme Lists:** Implemented dynamic ordered `+/-` lists with autocomplete across built-in and user morphemes.
+  5. **New Morpheme Definition Flow:** If a user types an unlisted prefix or post-root morpheme, saving triggers a structured modal prompt to capture the morpheme's name, phonetic form, and notes, storing them in `localStorage['cherokee_app_custom_morphology']`.
+  6. **Interactive Verb Template Preview:** Live visualization (`VerbMorphologyTemplate`) displays prefixes, pronominal set, root, post-root morphemes, and aspect suffixes.
+  7. **Form Name Autocomplete:** Enhanced `WordFormsEditor` to provide autocomplete suggestions across all sources (dictionary, packages, custom words, glosses, standard forms).
+  8. **Corpus Context Indexing:** Integrated custom word morphology into `dictionaryMap`, `rootMap`, `groupedRootsMap`, and `derivedRoots` in `CorpusContext.tsx`.
+- **Verification:** Built cleanly via `npm run build` (tsc + vite v5.4.21 with 0 errors).
+

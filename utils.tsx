@@ -1278,6 +1278,7 @@ export interface PostRootMorphemeData {
   key: string;
   form: string;
   classes: string[];
+  definition?: string;
 }
 
 export const POST_ROOT_MORPHEMES: PostRootMorphemeData[] = [
@@ -1302,18 +1303,99 @@ export const POST_ROOT_MORPHEMES: PostRootMorphemeData[] = [
   { name: 'in', subcase: null, key: 'in', form: 'in', classes: ['eg-vs'] }
 ];
 
-const POST_ROOT_MORPHEMES_MAP = new Map<string, PostRootMorphemeData>();
-POST_ROOT_MORPHEMES.forEach(m => {
-  POST_ROOT_MORPHEMES_MAP.set(m.key.toLowerCase(), m);
-  if (!POST_ROOT_MORPHEMES_MAP.has(m.name.toLowerCase())) {
-    POST_ROOT_MORPHEMES_MAP.set(m.name.toLowerCase(), m);
+export const POST_ROOT_MORPHEMES_MAP = new Map<string, PostRootMorphemeData>(
+  POST_ROOT_MORPHEMES.map(m => [m.key.toLowerCase(), m])
+);
+
+export interface PrefixData {
+  key: string;
+  name: string;
+  form: string;
+  definition?: string;
+}
+
+export const BUILTIN_PREFIXES: PrefixData[] = [
+  { key: 'wi', name: 'Translocutive (wi-)', form: 'wi', definition: 'Motion away from speaker' },
+  { key: 'ni', name: 'Partitive (ni-)', form: 'ni', definition: 'Partitive / condition / already' },
+  { key: 'te', name: 'Distributive (te-)', form: 'te', definition: 'Distributive / plural actions/objects' },
+  { key: 'de', name: 'Distributive (de-)', form: 'de', definition: 'Distributive / plural actions/objects' },
+  { key: 'da', name: 'Cisalpine (da-)', form: 'da', definition: 'Motion towards speaker' },
+  { key: 'yi', name: 'Negative / Conditional (yi-)', form: 'yi', definition: 'Negation or conditional' },
+  { key: 'ji', name: 'Relative (ji-)', form: 'ji', definition: 'Relative / when / who' },
+  { key: 'tsi', name: 'Relative (tsi-)', form: 'tsi', definition: 'Relative / when / who' },
+  { key: 'ga', name: 'Since (ga-)', form: 'ga', definition: 'Since / past time' },
+  { key: 'e', name: 'Passive / Distant (e-)', form: 'e', definition: 'Passive / distant imperative' },
+  { key: 'wi-imp', name: 'Translocutive (Imp only)', form: 'wi', definition: 'Translocutive on imperative only' }
+];
+
+export interface CustomMorphologyData {
+  prefixes: PrefixData[];
+  post_root_morphemes: PostRootMorphemeData[];
+  aspect_classes: any[];
+  roots: any[];
+}
+
+export function getCustomMorphology(): CustomMorphologyData {
+  try {
+    const saved = localStorage.getItem('cherokee_app_custom_morphology');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return {
+        prefixes: Array.isArray(parsed.prefixes) ? parsed.prefixes : [],
+        post_root_morphemes: Array.isArray(parsed.post_root_morphemes) ? parsed.post_root_morphemes : [],
+        aspect_classes: Array.isArray(parsed.aspect_classes) ? parsed.aspect_classes : [],
+        roots: Array.isArray(parsed.roots) ? parsed.roots : []
+      };
+    }
+  } catch (e) {
+    console.error('Failed to load custom morphology', e);
   }
-});
+  return { prefixes: [], post_root_morphemes: [], aspect_classes: [], roots: [] };
+}
+
+export function saveCustomMorphology(data: CustomMorphologyData): void {
+  try {
+    localStorage.setItem('cherokee_app_custom_morphology', JSON.stringify(data));
+  } catch (e) {
+    console.error('Failed to save custom morphology', e);
+  }
+}
+
+export function getAllPrefixes(): PrefixData[] {
+  const custom = getCustomMorphology();
+  const map = new Map<string, PrefixData>();
+  BUILTIN_PREFIXES.forEach(p => map.set(p.key.toLowerCase(), p));
+  custom.prefixes.forEach(p => map.set(p.key.toLowerCase(), p));
+  return Array.from(map.values());
+}
+
+export function getPrefixData(keyOrForm: string): PrefixData | null {
+  if (!keyOrForm) return null;
+  const clean = keyOrForm.trim().toLowerCase();
+  const all = getAllPrefixes();
+  const found = all.find(p => p.key.toLowerCase() === clean || p.form.toLowerCase() === clean || p.name.toLowerCase() === clean);
+  if (found) return found;
+  return { key: keyOrForm, name: keyOrForm, form: keyOrForm };
+}
+
+export function getAllPostRootMorphemes(): PostRootMorphemeData[] {
+  const custom = getCustomMorphology();
+  const map = new Map<string, PostRootMorphemeData>();
+  POST_ROOT_MORPHEMES.forEach(m => map.set(m.key.toLowerCase(), m));
+  custom.post_root_morphemes.forEach(m => map.set(m.key.toLowerCase(), m));
+  return Array.from(map.values());
+}
+
+export function generateRootSlug(hint?: string): string {
+  const safeHint = (hint || 'root').replace(/[^a-zA-Z0-9]/g, '').toLowerCase() || 'root';
+  return `cr_${safeHint}_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`;
+}
 
 export function getPostRootMorpheme(keyOrName: string): { form: string; name: string } | null {
   if (!keyOrName) return null;
   const clean = keyOrName.trim();
   const lower = clean.toLowerCase();
+
   const found = POST_ROOT_MORPHEMES_MAP.get(lower);
   if (found) {
     return { form: found.form, name: clean };
@@ -1323,7 +1405,15 @@ export function getPostRootMorpheme(keyOrName: string): { form: string; name: st
   if (byBase) {
     return { form: byBase.form, name: clean };
   }
-  return { form: '', name: clean };
+
+  // Check custom post-root morphemes
+  const custom = getCustomMorphology();
+  const customFound = custom.post_root_morphemes.find(m => m.key.toLowerCase() === lower || m.name.toLowerCase() === lower);
+  if (customFound) {
+    return { form: customFound.form || clean, name: customFound.name || clean };
+  }
+
+  return { form: clean, name: clean };
 }
 
 export function unrespellConsonants(s: string): string {
@@ -2217,29 +2307,55 @@ export const VerbMorphologyTemplate: React.FC<VerbMorphologyTemplateProps> = ({
   const elements: React.ReactNode[] = [];
 
   // 1. Prepronominals
-  if (config?.pre?.translocutive) {
-    elements.push(
-      <span key="pre-wi" className="font-semibold text-emerald-500 dark:text-emerald-300" title="Translocutive prefix">
-        wi
-      </span>
-    );
-  }
-  if (config?.pre?.partitive) {
-    elements.push(
-      <span key="pre-ni" className="font-semibold text-emerald-500 dark:text-emerald-300" title="Partitive prefix">
-        ni
-      </span>
-    );
-  }
-  if (config?.pre?.distributive) {
-    elements.push(
-      <span key="pre-te" className="font-semibold text-emerald-500 dark:text-emerald-300" title="Distributive prefix">
-        te
-      </span>
-    );
+  const rawPrefixes: string[] = Array.isArray(config?.pre?.prefixes)
+    ? config.pre.prefixes
+    : Array.isArray(rootEntry.prefixes)
+    ? rootEntry.prefixes
+    : [];
+
+  if (rawPrefixes.length > 0) {
+    rawPrefixes.filter(Boolean).forEach((pKey, pIdx) => {
+      const pData = getPrefixData(pKey);
+      const displayForm = pData?.form || pKey;
+      const titleName = pData?.name || pKey;
+      elements.push(
+        <span key={`pre-${pIdx}-${pKey}`} className="font-semibold text-emerald-500 dark:text-emerald-300" title={`Prefix: ${titleName}`}>
+          {displayForm}
+        </span>
+      );
+    });
+  } else {
+    // Legacy fallback
+    if (config?.pre?.translocutive) {
+      elements.push(
+        <span key="pre-wi" className="font-semibold text-emerald-500 dark:text-emerald-300" title="Translocutive prefix">
+          wi
+        </span>
+      );
+    } else if (config?.pre?.translocutiveImpOnly) {
+      elements.push(
+        <span key="pre-wi-imp" className="font-semibold text-emerald-500/80 dark:text-emerald-300/80 text-xs sm:text-sm" title="Translocutive prefix (imperative only)">
+          wi (imp)
+        </span>
+      );
+    }
+    if (config?.pre?.partitive) {
+      elements.push(
+        <span key="pre-ni" className="font-semibold text-emerald-500 dark:text-emerald-300" title="Partitive prefix">
+          ni
+        </span>
+      );
+    }
+    if (config?.pre?.distributive) {
+      elements.push(
+        <span key="pre-te" className="font-semibold text-emerald-500 dark:text-emerald-300" title="Distributive prefix">
+          te
+        </span>
+      );
+    }
   }
 
-  // 2. Pronominal set
+  // 2. Pronominal set (Set A or Set B only)
   let setLabel = 'Set A';
   const setType = (config?.pron?.set_type || '').toLowerCase();
   let setClass = 'text-red-600 dark:text-red-500 font-semibold';
@@ -2247,9 +2363,6 @@ export const VerbMorphologyTemplate: React.FC<VerbMorphologyTemplateProps> = ({
   if (setType === 'b') {
     setLabel = config?.pron?.plural_pronouns ? 'Set B (pl)' : 'Set B';
     setClass = 'text-blue-600 dark:text-blue-400 font-semibold';
-  } else if (setType === 'p2p' || setType === 'person_to_person') {
-    setLabel = 'Person-to-person';
-    setClass = 'text-purple-600 dark:text-purple-400 font-semibold';
   } else {
     setLabel = config?.pron?.use_ka_variant ? 'Set A (ga)' : 'Set A';
     if (config?.pron?.plural_pronouns) setLabel += ' (pl)';
@@ -2272,7 +2385,7 @@ export const VerbMorphologyTemplate: React.FC<VerbMorphologyTemplateProps> = ({
     );
   }
 
-  // 4. Root in Community Orthography
+  // 4. Root in Community Orthography (Never displays raw random slug)
   let rootLines: string[] = [];
   if (isEmptyRoot(rootEntry)) {
     rootLines = ['∅'];
@@ -2338,14 +2451,22 @@ export const VerbMorphologyTemplate: React.FC<VerbMorphologyTemplateProps> = ({
     );
   }
 
-  // 5. Post-root morpheme
-  if (rootEntry.post_root_morpheme) {
-    const prm = getPostRootMorpheme(rootEntry.post_root_morpheme);
+  // 5. Post-root morphemes (multiple or single)
+  const rawPostRoots: string[] = Array.isArray(rootEntry.post_root_morphemes)
+    ? rootEntry.post_root_morphemes
+    : Array.isArray(config?.post_root_morphemes)
+    ? config.post_root_morphemes
+    : rootEntry.post_root_morpheme
+    ? (typeof rootEntry.post_root_morpheme === 'string' && rootEntry.post_root_morpheme.includes(',') ? rootEntry.post_root_morpheme.split(',').map((s: string) => s.trim()) : [rootEntry.post_root_morpheme])
+    : [];
+
+  rawPostRoots.filter(Boolean).forEach((prmKey, prmIdx) => {
+    const prm = getPostRootMorpheme(prmKey);
     const prmForm = prm?.form || '';
-    const prmName = prm?.name || rootEntry.post_root_morpheme;
+    const prmName = prm?.name || prmKey;
 
     elements.push(
-      <div key="prm" className="inline-flex flex-col items-center align-middle leading-tight" title={`Post-root morpheme: ${prmName}`}>
+      <div key={`prm-${prmIdx}-${prmKey}`} className="inline-flex flex-col items-center align-middle leading-tight" title={`Post-root morpheme: ${prmName}`}>
         {prmForm ? (
           <>
             <span className="font-semibold text-slate-800 dark:text-slate-200 leading-none select-text">
@@ -2362,7 +2483,7 @@ export const VerbMorphologyTemplate: React.FC<VerbMorphologyTemplateProps> = ({
         )}
       </div>
     );
-  }
+  });
 
   // 6. Aspect class & mascot
   if (rootEntry.class_name) {

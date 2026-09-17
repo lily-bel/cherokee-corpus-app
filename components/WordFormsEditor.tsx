@@ -85,22 +85,31 @@ export const WordFormsEditor: React.FC<WordFormsEditorProps> = ({ forms, setForm
                                     className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg px-3 py-2 text-sm outline-none focus:border-amber-500 dark:text-white"
                                 />
                                 {showLabelSuggestions === row.id && (
-                                    <div className="absolute z-50 left-0 top-full mt-1 w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl max-h-40 overflow-y-auto">
+                                    <div className="absolute z-50 left-0 top-full mt-1 w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl max-h-52 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700/50">
+                                        <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider bg-slate-50 dark:bg-slate-800/80 sticky top-0 z-10 backdrop-blur-sm">
+                                            Suggested Form Names
+                                        </div>
                                         {usedFormLabels
-                                            .filter(l => l.toLowerCase().includes(row.label.toLowerCase()))
+                                            .filter(l => !row.label || l.toLowerCase().includes(row.label.toLowerCase()))
+                                            .slice(0, 50)
                                             .map(l => (
                                                 <button
                                                     key={l}
-                                                    onClick={() => {
+                                                    type="button"
+                                                    onMouseDown={(e) => {
+                                                        e.preventDefault();
                                                         updateFormRow(row.id, 'label', l);
                                                         setShowLabelSuggestions(null);
                                                     }}
-                                                    className="w-full text-left px-3 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200"
+                                                    className="w-full text-left px-3 py-2 text-sm hover:bg-amber-50 dark:hover:bg-slate-700/60 text-slate-700 dark:text-slate-200 transition-colors flex items-center justify-between"
                                                 >
-                                                    {l}
+                                                    <span>{l}</span>
                                                 </button>
                                             ))
                                         }
+                                        {usedFormLabels.filter(l => !row.label || l.toLowerCase().includes(row.label.toLowerCase())).length === 0 && (
+                                            <div className="px-3 py-2 text-xs text-slate-400 italic">No matching form names</div>
+                                        )}
                                     </div>
                                 )}
                             </div>
