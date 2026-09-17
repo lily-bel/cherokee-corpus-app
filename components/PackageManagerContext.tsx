@@ -602,7 +602,7 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
             }
         }
 
-        if (norm === 'official-cherokee-data' || norm === 'ced') return 'slate';
+        if (norm === 'official-cherokee-data' || norm === 'ced' || norm === 'other_official') return 'slate';
         if (norm === 'user') return '#f59e0b';
 
         return undefined;

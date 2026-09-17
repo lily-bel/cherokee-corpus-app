@@ -69,11 +69,11 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
 
     const handleStoryClick = (story: Story) => {
         const chapters = getChaptersForStory(story.id);
-        if (chapters.length === 1 && !story.isSequential) {
-            // If it's just individual sentences (unstructured collection), go straight to reader
+        if (chapters.length === 1) {
+            // Single chapter story (or collection): go straight to reader
             onNavigateToReader(story.bookId, chapters[0].id);
         } else {
-            // For sequential stories/books, open chapters view even if only 1 chapter
+            // Multi-chapter story (e.g. Matthew with 28 chapters): open chapters list
             setSelectedStory(story);
             setView('chapters');
         }
@@ -82,8 +82,22 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
     const handleBookClick = (book: Book) => {
         setSelectedBook(book);
         const stories = getStoriesForBook(book.id);
+
+        if (book.isCollection) {
+            // If it's a collection (unstructured), go straight to reader
+            if (stories.length > 0) {
+                const chapters = getChaptersForStory(stories[0].id);
+                if (chapters.length > 0) {
+                    onNavigateToReader(book.id, chapters[0].id);
+                    return;
+                }
+            }
+        }
+
         if (stories.length === 1) {
-            handleStoryClick(stories[0]);
+            // Single-story book (e.g. user book with chapters: Chapter 1, 2, ...): open chapters view directly
+            setSelectedStory(stories[0]);
+            setView('chapters');
         } else if (stories.length === 0) {
             // Empty book - open chapters view so user can add chapter
             const safeTitle = book.title || 'Untitled';
@@ -98,7 +112,7 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
             setSelectedStory(emptyStory);
             setView('chapters');
         } else if (stories.length > 1) {
-            // Multiple stories - show stories list (e.g. Bible)
+            // Multiple stories - show stories list (e.g. Bible with 27 books, Cherokee Narratives with 17 stories)
             setView('stories');
         } else {
             // Fallback
@@ -250,7 +264,9 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                                         {story.title}
                                     </h3>
                                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                                        {story.chapterCount} chapter{story.chapterCount !== 1 ? 's' : ''} • {story.sentenceCount} sentence{story.sentenceCount !== 1 ? 's' : ''}
+                                        {story.chapterCount > 1
+                                            ? `${story.chapterCount} chapters • ${story.sentenceCount} sentence${story.sentenceCount !== 1 ? 's' : ''}`
+                                            : `${story.sentenceCount} sentence${story.sentenceCount !== 1 ? 's' : ''}`}
                                     </p>
                                 </div>
                                 <ChevronRight size={20} className="text-slate-400 group-hover:text-amber-600 transition-colors shrink-0" />
@@ -279,16 +295,26 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                 <div className="sticky top-0 z-10 px-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0 h-12">
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                         <button
-                            onClick={() => { setView('stories'); setSelectedStory(null); }}
+                            onClick={() => {
+                                const stories = selectedBook ? getStoriesForBook(selectedBook.id) : [];
+                                if (stories.length > 1) {
+                                    setView('stories');
+                                    setSelectedStory(null);
+                                } else {
+                                    setView('books');
+                                    setSelectedBook(null);
+                                    setSelectedStory(null);
+                                }
+                            }}
                             className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                         >
                             <ArrowLeft size={20} className="text-slate-600 dark:text-slate-400" />
                         </button>
                         <div className="flex-1 min-w-0">
                             <h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">
-                                {selectedStory.title}
+                                {selectedStory.title === selectedBook?.title ? selectedStory.title : `${selectedBook?.title ? selectedBook.title + ' • ' : ''}${selectedStory.title}`}
                             </h1>
-                            {selectedBook && (
+                            {selectedBook && selectedStory.title !== selectedBook.title && (
                                 <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
                                     {selectedBook.title}
                                 </p>

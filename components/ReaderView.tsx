@@ -345,6 +345,27 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
         return sentences.slice(visibleRange.start, visibleRange.end);
     }, [sentences, visibleRange]);
 
+    const titleText = useMemo(() => {
+        if (!sentences || sentences.length === 0) return book?.title || 'Reader';
+        const first = sentences[0];
+        const bTitle = book?.title || '';
+        const story = first.story && first.story !== 'Individual Sentences' ? first.story : '';
+        const chapter = first.chapter;
+
+        if (story && story !== bTitle) {
+            if (chapter && chapter !== '1' && chapter !== story) {
+                const chName = chapter.toLowerCase().startsWith('chapter') ? chapter : `Chapter ${chapter}`;
+                return `${bTitle ? bTitle + ' • ' : ''}${story} (${chName})`;
+            }
+            return `${bTitle ? bTitle + ' • ' : ''}${story}`;
+        }
+        if (chapter && chapter !== '1' && chapter !== bTitle) {
+            const chName = chapter.toLowerCase().startsWith('chapter') ? chapter : `Chapter ${chapter}`;
+            return `${bTitle ? bTitle + ' • ' : ''}${chName}`;
+        }
+        return bTitle || 'Reader';
+    }, [sentences, book]);
+
     return (
         <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950">
             {/* Header */}
@@ -359,9 +380,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                         </button>
                         <div className="flex-1 min-w-0 flex items-baseline gap-2">
                             <h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">
-                                {sentences.length > 0 && sentences[0]?.chapter
-                                    ? `${book?.title || 'Reader'} • ${sentences[0].chapter}`
-                                    : (book?.title || 'Reader')}
+                                {titleText}
                             </h1>
                             <span className="text-xs text-slate-500 dark:text-slate-400 shrink-0">
                                 ({sentences.length} {sentences.length === 1 ? 'sent' : 'sents'})

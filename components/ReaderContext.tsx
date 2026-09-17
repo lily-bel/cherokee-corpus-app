@@ -117,21 +117,78 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const { books, storiesByBook, chaptersByStory, sentencesByChapter } = useMemo(() => {
         const sourceMap = new Map<string, Sentence[]>();
 
-        const officialPkg = packages.find(p => p.id === 'official-cherokee-data');
-        const officialSources = officialPkg?.metadata?.source_names 
-            ? Object.keys(officialPkg.metadata.source_names).map(s => s.toLowerCase()) 
-            : [];
+        const importedPackageSourceSet = new Set<string>();
+        packages.filter(p => p.type === 'imported').forEach(p => {
+            if (p.id) importedPackageSourceSet.add(p.id.toLowerCase());
+            if (p.metadata?.id) importedPackageSourceSet.add(p.metadata.id.toLowerCase());
+            if (p.metadata?.short_name) importedPackageSourceSet.add(p.metadata.short_name.toLowerCase());
+            if (p.metadata?.source_names) {
+                Object.keys(p.metadata.source_names).forEach(k => importedPackageSourceSet.add(k.toLowerCase()));
+            }
+        });
+
+        const isUserSource = (src: string) => {
+            const s = src.toLowerCase();
+            return s === 'user' || s.startsWith('nb_') || Boolean(userDictionaries && userDictionaries[src]);
+        };
+
+        const isImportedPackageSource = (src: string) => {
+            return importedPackageSourceSet.has(src.toLowerCase());
+        };
+
+        const isBibleSentence = (src: string, sentence: Sentence) => {
+            const s = src.toLowerCase();
+            if (s === 'bible' || s === 'cnt' || s === 'cherokee-new-testament') return true;
+            if (sentence.author && (sentence.author.toLowerCase().includes('bible') || sentence.author.toLowerCase().includes('new testament'))) return true;
+            return false;
+        };
 
         allSentences.forEach(sentence => {
             if (!sentence) return;
-            let mappedSource = (sentence.source && typeof sentence.source === 'string' && sentence.source.trim())
+            const rawSource = (sentence.source && typeof sentence.source === 'string' && sentence.source.trim())
                 ? sentence.source.trim()
-                : 'other_official';
-            const lowerSource = mappedSource.toLowerCase();
-            if (officialSources.includes(lowerSource)) {
-                if (!['ced', 'rrd'].includes(lowerSource)) {
-                    mappedSource = 'other_official';
+                : '';
+            const lowerSource = rawSource.toLowerCase();
+
+            const hasStory = Boolean(sentence.story && typeof sentence.story === 'string' && sentence.story.trim() && sentence.story.trim() !== 'Individual Sentences');
+
+            // 1. If sentence is connected to a story, it must belong ONLY to its corresponding book (never a sentence collection)
+            if (hasStory) {
+                const mappedSource = rawSource || 'unknown';
+                if (!sourceMap.has(mappedSource)) {
+                    sourceMap.set(mappedSource, []);
                 }
+                sourceMap.get(mappedSource)!.push(sentence);
+                return;
+            }
+
+            // 2. Bible sentences without stories (e.g. legacy excerpt verses) must NOT appear in "Other Official Sentences" or sentence collections
+            if (isBibleSentence(rawSource, sentence)) {
+                return;
+            }
+
+            // 3. User collections
+            if (isUserSource(rawSource)) {
+                if (!sourceMap.has(rawSource)) {
+                    sourceMap.set(rawSource, []);
+                }
+                sourceMap.get(rawSource)!.push(sentence);
+                return;
+            }
+
+            // 4. Imported package collections
+            if (isImportedPackageSource(rawSource)) {
+                if (!sourceMap.has(rawSource)) {
+                    sourceMap.set(rawSource, []);
+                }
+                sourceMap.get(rawSource)!.push(sentence);
+                return;
+            }
+
+            // 5. Official sentence collections
+            let mappedSource = 'other_official';
+            if (['ced', 'feeling & pulte ced', 'cherokee dictionary 1975 durbin feeling', 'cn-app-dictionary.csv'].includes(lowerSource)) {
+                mappedSource = 'ced';
             }
 
             if (!sourceMap.has(mappedSource)) {
@@ -162,6 +219,9 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
             if (safeSource === 'other_official') {
                 title = 'Other Official Sentences';
+            } else if (safeSource === 'ced') {
+                title = 'Cherokee English Dictionary Sentences';
+                if (!author) author = 'Durbin Feeling';
             } else if (userDictionaries && userDictionaries[safeSource]) {
                 title = userDictionaries[safeSource].name || safeSource;
             } else {
@@ -291,7 +351,8 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
             storiesByBook.set(bookId, stories);
 
-            const isCollection = (stories.length === 1 && !stories[0].isSequential) || (stories.length === 0 && userDictionaries[safeSource]?.type !== 'book');
+            const hasSequentialStories = stories.some(s => s.isSequential);
+            const isCollection = !hasSequentialStories && (userDictionaries[safeSource]?.type !== 'book');
 
             books.push({
                 id: bookId,
