@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Search, Book, Menu, X, Filter, Sliders, Clock, ListIcon, Folder, BookOpen, Download, ArrowLeft, Pencil, ChevronDown, Share, Trash2, Plus, ChevronUp, Minus, Check, ToggleLeft, ToggleRight, Box, Layout, UserIcon } from './components/Icons';
+import { Search, Book, Menu, X, Filter, Sliders, Clock, ListIcon, Folder, BookOpen, BookSolid, Download, ArrowLeft, Pencil, ChevronDown, Share, Trash2, Plus, ChevronUp, Minus, Check, ToggleLeft, ToggleRight, Box, Layout, UserIcon } from './components/Icons';
 import { Toast, Modal, UserAuthButton } from './components/UI';
 import EntryCard from './components/EntryCard';
 import EntryDetail from './components/EntryDetail';
@@ -1548,6 +1548,40 @@ function App() {
 
     // Audio Logic Moved to CorpusContext
 
+    const getDictionaryColor = (type: string, rawColor?: string) => {
+        if (type === 'user') {
+            return '#f59e0b'; // Gold for user
+        }
+        const namedColorMap: Record<string, string> = {
+            'amber': '#f59e0b',
+            'gold': '#f59e0b',
+            'slate': '#64748b',
+            'gray': '#64748b',
+            'grey': '#64748b',
+            'blue': '#3b82f6',
+            'sky': '#0ea5e9',
+            'red': '#ef4444',
+            'rose': '#f43f5e',
+            'green': '#22c55e',
+            'emerald': '#10b981',
+            'teal': '#14b8a6',
+            'purple': '#8b5cf6',
+            'violet': '#8b5cf6',
+            'indigo': '#6366f1',
+            'orange': '#f97316',
+            'yellow': '#eab308',
+            'pink': '#ec4899',
+            'fuchsia': '#d946ef',
+        };
+
+        if (rawColor) {
+            if (rawColor.startsWith('#')) return rawColor;
+            const lower = rawColor.toLowerCase();
+            if (namedColorMap[lower]) return namedColorMap[lower];
+        }
+        return '#6366f1';
+    };
+
     const dictionaryList = useMemo(() => {
         const list: any[] = Object.values(customDictionaries)
             .filter((nb: any) => nb.type !== 'book') // Hide books from Custom Dictionaries tab
@@ -1558,7 +1592,7 @@ function App() {
                 type: 'user',
                 countWords: personalWords.filter(w => w.customDictionaryId === nb.id).length,
                 countSentences: userSentences.filter(s => s.source === nb.id).length,
-                color: 'amber'
+                color: 'gold'
             }));
 
         packages.forEach(p => {
@@ -1571,13 +1605,15 @@ function App() {
                         if (countWords === 0 && countSentences === 0) return;
                         if (countWords === 0 && sentences.some(s => s.source === code && s.story)) return;
 
+                        if (list.some(item => item.id === code)) return;
+
                         list.push({
                             id: code,
                             name: name,
                             date: p.metadata?.date_created,
                             type: 'imported',
                             packageId: p.id,
-                            color: p.color,
+                            color: p.color || 'slate',
                             countWords,
                             countSentences
                         });
@@ -2357,14 +2393,70 @@ function App() {
                             settings={settings}
                         />}
                         {
-                            activeTab === 'personal' && (!activeDictionaryId ? (<div className="flex flex-col h-full"><div className="px-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0 h-12"><h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">Custom Dictionaries</h1><div className="flex gap-1.5 items-center"><button onClick={() => setShowNewDictionaryModal(true)} className="bg-slate-900 dark:bg-slate-700 text-white p-1.5 rounded-full shadow-sm hover:bg-slate-800 transition-colors" title="New Dictionary"><Plus size={18} /></button><UserAuthButton /><button onClick={() => setShowSettingsModal(true)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" title="Settings"><Menu size={22} strokeWidth={1.5} /></button></div></div><div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-4 content-start">{dictionaryList.map((nb: any) => {
-                                const isImported = nb.type === 'imported';
-                                const colorClass = isImported ? `text-${nb.color === 'amber' ? 'amber' : (nb.color === 'slate' ? 'slate' : nb.color)}-600 dark:text-${nb.color === 'amber' ? 'amber' : (nb.color === 'slate' ? 'slate' : nb.color)}-400` : 'text-amber-500 hover:text-amber-600';
-                                // Handle hex colors
-                                const style = (isImported && nb.color.startsWith('#')) ? { color: nb.color } : {};
-
-                                return (<div key={nb.id} onClick={() => setActiveDictionaryId(nb.id)} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 flex flex-col shadow-sm hover:shadow-md transition-shadow active:bg-slate-50 dark:active:bg-slate-800 cursor-pointer h-32 justify-between"><Folder size={32} className={isImported && nb.color.startsWith('#') ? "" : (isImported ? colorClass : "text-amber-500")} style={style} /><div><h3 className="font-bold text-slate-800 dark:text-slate-200 line-clamp-1">{nb.name}</h3><p className="text-xs text-slate-400">{nb.countWords} words, {nb.countSentences} sentences</p></div></div>);
-                            })}{dictionaryList.length === 0 && (<div className="col-span-2 text-center py-12 text-slate-400 flex flex-col items-center"><BookOpen size={48} className="mb-4 opacity-20" /><p>No custom dictionaries yet.</p><button onClick={() => setShowNewDictionaryModal(true)} className="mt-4 text-sky-600 dark:text-sky-400 font-bold">Create one</button></div>)}</div></div>) : (<div className="flex flex-col h-full"><div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col gap-2 shrink-0">
+                            activeTab === 'personal' && (!activeDictionaryId ? (
+                                <div className="flex flex-col h-full bg-[#F9F9F7] dark:bg-slate-950">
+                                    <div className="px-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0 h-12">
+                                        <h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">Dictionaries</h1>
+                                        <div className="flex gap-1.5 items-center">
+                                            <button
+                                                onClick={() => setShowNewDictionaryModal(true)}
+                                                className="bg-slate-900 dark:bg-slate-700 text-white p-1.5 rounded-full shadow-sm hover:bg-slate-800 transition-colors"
+                                                title="New Dictionary"
+                                            >
+                                                <Plus size={18} />
+                                            </button>
+                                            <UserAuthButton />
+                                            <button
+                                                onClick={() => setShowSettingsModal(true)}
+                                                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors"
+                                                title="Settings"
+                                            >
+                                                <Menu size={22} strokeWidth={1.5} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="flex-1 overflow-y-auto p-4 md:p-6">
+                                        <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:gap-x-8 sm:gap-y-8 content-start">
+                                            {dictionaryList.map((nb: any) => {
+                                                const fillColor = getDictionaryColor(nb.type, nb.color);
+                                                return (
+                                                    <div
+                                                        key={nb.id}
+                                                        onClick={() => setActiveDictionaryId(nb.id)}
+                                                        className="group flex flex-col items-center text-center cursor-pointer p-2.5 rounded-2xl hover:bg-slate-200/50 dark:hover:bg-slate-800/50 active:scale-95 transition-all select-none"
+                                                    >
+                                                        <div className="transition-transform duration-200 group-hover:-translate-y-1.5 group-hover:scale-105 flex items-center justify-center filter drop-shadow-sm group-hover:drop-shadow-md">
+                                                            <BookSolid
+                                                                size={84}
+                                                                fill={fillColor}
+                                                                className="w-20 h-20 sm:w-24 sm:h-24 shrink-0"
+                                                            />
+                                                        </div>
+                                                        <h3 className="font-bold text-sm sm:text-base text-slate-800 dark:text-slate-100 line-clamp-2 leading-tight mt-2.5 px-1 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                                                            {nb.name}
+                                                        </h3>
+                                                        <p className="text-[11px] sm:text-xs text-slate-400 dark:text-slate-500 mt-0.5 font-medium">
+                                                            {nb.countWords} {nb.countWords === 1 ? 'word' : 'words'}, {nb.countSentences} {nb.countSentences === 1 ? 'sentence' : 'sentences'}
+                                                        </p>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                        {dictionaryList.length === 0 && (
+                                            <div className="text-center py-16 text-slate-400 flex flex-col items-center">
+                                                <BookSolid size={84} fill="#94a3b8" className="mb-4 opacity-30" />
+                                                <p className="text-base font-medium">No custom dictionaries yet.</p>
+                                                <button
+                                                    onClick={() => setShowNewDictionaryModal(true)}
+                                                    className="mt-4 px-4 py-2 bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white font-bold rounded-xl shadow-sm transition-colors text-sm"
+                                                >
+                                                    Create one
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ) : (<div className="flex flex-col h-full"><div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col gap-2 shrink-0">
                                 <div className="flex items-center gap-3">
                                     <button onClick={() => setActiveDictionaryId(null)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full -ml-2"><ArrowLeft size={20} className="text-slate-500 dark:text-slate-400" /></button>
                                     <div className="flex-1 flex items-center gap-2"><h2 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100">{customDictionaries[activeDictionaryId]?.name || dictionaryList.find(n => n.id === activeDictionaryId)?.name || 'Custom Dictionary'}</h2>

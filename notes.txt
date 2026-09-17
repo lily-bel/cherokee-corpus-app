@@ -4,11 +4,7 @@
   3. List Tab Study Tools & Integration                                                                            
   The list tab in general needs some work. It's meant to be a studying tab, but obviously it doesn't have those    
   features yet. Now that we're on the hanehla domain, we can do more with integration with Annette law / Hanehla,  
-  but right now we don't have any study tools and the list tab is lacking.                                         
-  4. Widget Integration in Packages & Widgets Styling                                                              
-  There needs to be a way to integrate widgets into packages—you should be able to import and export widgets in    
-  packages. On that note, the widgets tab has weird coloring and icons for the widgets that would need to be       
-  changed as well.                                                                                                 
+  but right now we don't have any study tools and the list tab is lacking.                                                                                                                                        
   5. Dictionary Folder View Redesign                                                                               
   The dictionary folder view is sort of lacking; I don't like how it looks. I want to sort of redo the visual here.
   The list of widgets could maybe match the new visual here too. The 2 column look was chosen to differentiate from
