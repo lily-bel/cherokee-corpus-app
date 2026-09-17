@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Pencil, ListPlus, Star, ListIcon, X, Plus, Folder, Pause, MicPlus, Trash2, Mic, Menu } from './Icons';
 import { AudioPlayer, SourceBadge, UserAuthButton } from './UI';
-import { renderStyledText, getAudioFromDB, processFormsContextually, parseListName, renderColorizedCherokee, renderSegmentedSurface, projectSegmentsOntoTone, segmentVerbForm, VerbMorphologyTemplate } from '../utils';
+import { renderStyledText, getAudioFromDB, processFormsContextually, parseListName, renderColorizedCherokee, renderSegmentedSurface, projectSegmentsOntoTone, segmentVerbForm, VerbMorphologyTemplate, getFriendlyLabel } from '../utils';
 import { usePackageManager } from './PackageManagerContext';
 import AudioRecorder from './AudioRecorder';
 import { useCorpus } from './CorpusContext';
@@ -277,7 +277,7 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                     const values = parts[1].split('^');
                     list.push({
                         index: indexCounter++,
-                        label: parts[0],
+                        label: getFriendlyLabel(parts[0]) || parts[0],
                         translit: values[0],
                         syllabary: values[1],
                         tone: values[2],
@@ -291,7 +291,7 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
         importedForms.forEach(f => {
             list.push({
                 index: indexCounter++,
-                label: f.displayLabel || f.form_name,
+                label: f.displayLabel || getFriendlyLabel(f.form_name) || f.form_name,
                 translit: f.translit,
                 syllabary: f.syllabary,
                 tone: f.tone,
@@ -307,7 +307,7 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                     const values = parts[1].split('^');
                     list.push({
                         index: indexCounter++,
-                        label: parts[0],
+                        label: getFriendlyLabel(parts[0]) || parts[0],
                         translit: values[0],
                         syllabary: values[1],
                         tone: values[2],

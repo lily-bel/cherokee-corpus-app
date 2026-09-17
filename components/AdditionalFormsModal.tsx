@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from './UI';
 import { WordFormsEditor } from './WordFormsEditor';
+import { getFriendlyLabel } from '../utils';
 
 interface AdditionalFormsModalProps {
     isOpen: boolean;
@@ -25,7 +26,7 @@ export const AdditionalFormsModal: React.FC<AdditionalFormsModalProps> = ({
         if (initialForms) {
             const parsed = initialForms.split('|').map((raw, idx) => {
                 const parts = raw.split(':');
-                const label = parts[0] || '';
+                const label = getFriendlyLabel(parts[0]) || parts[0] || '';
                 const values = (parts[1] || '').split('^');
                 return {
                     id: `form_${Date.now()}_${idx}`,

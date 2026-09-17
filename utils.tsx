@@ -111,6 +111,7 @@ const OBJ_MAP: Record<string, string> = {
     '3s': 'singular',
     '3p': 'plural',
     '3a': 'animate',
+    '3pa': 'animate plural',
     '3i': 'inanimate',
     '1p': '1st person plural',
     '2p': '2nd person plural',
@@ -120,40 +121,63 @@ const OBJ_MAP: Record<string, string> = {
     '1p-ex': '1st person plural exclusive',
 };
 
-export const getFriendlyLabel = (key: string, showObject = false, hasAnimateContrast = false) => {
+export const getFriendlyLabel = (key: string, showObject = false, hasAnimateContrast = false): string => {
     if (!key) return '';
-    const parts = key.split('|');
+    const trimmed = key.trim();
+    if (!trimmed) return '';
+
+    // Legacy description normalizations
+    if (trimmed.includes('3rd person singular present habitual')) return '3rd person singular present habitual';
+    if (trimmed.includes('1st person singular with animate object') || trimmed.includes('1st person singular with animate/ inanimate object')) return '1st person singular present (animate)';
+    if (trimmed.includes('1st person singular with inanimate object')) return '1st person singular present (inanimate)';
+    if (trimmed.includes('imperative with animate direct') || trimmed.includes('imperative with animate/ inanimate direct')) return '2nd person singular imperative (animate)';
+    if (trimmed.includes('imperative with inanimate direct')) return '2nd person singular imperative (inanimate)';
+    if (trimmed.includes('non-progressive remote past')) return '3rd person singular completive past';
+    if (trimmed.includes('habitual past')) return '3rd person singular habitual past';
+
+    const parts = trimmed.split('|');
     if (parts.length >= 3) {
         if (parts[0] === 'noun') {
-            return parts[1] === 'singular' ? 'Singular' : 'Plural';
+            const nType = (parts[1] || '').trim().toLowerCase();
+            if (nType === 'singular' || nType === 'singular inanimate') return 'Singular';
+            if (nType === 'singular animate') return 'Singular (animate)';
+            if (nType === 'plural' || nType === 'plural inanimate') return 'Plural';
+            if (nType === 'plural animate') return 'Plural (animate)';
+            if (nType === 'unknown' || !nType) return 'Noun';
+            return nType.charAt(0).toUpperCase() + nType.slice(1);
         }
         
         const subj = PRONOUN_MAP[parts[0]] || parts[0];
         const tense = parts[2];
         
-        let label = `${subj} ${tense}`;
-        if (showObject && parts[1] && parts[1] !== 'none') {
-            let objStr = OBJ_MAP[parts[1]] || parts[1];
+        let label = `${subj} ${tense}`.trim();
+        const obj = (parts[1] || '').trim();
+        const isNonDefaultObject = obj && obj !== 'none' && obj !== '3s' && obj !== 'singular';
+        if ((showObject || isNonDefaultObject) && obj && obj !== 'none') {
+            let objStr = OBJ_MAP[obj] || obj;
             if (hasAnimateContrast) {
-                if (parts[1] === '3s') objStr = 'inanimate';
-                else if (parts[1] === '3p') objStr = 'inanimate plural';
+                if (obj === '3s') objStr = 'inanimate';
+                else if (obj === '3p') objStr = 'inanimate plural';
             }
             label += ` (${objStr} object)`;
         }
         return label;
     }
     
-    // Fallback
-    if (key === 'noun|singular|') return 'Singular';
-    if (key === 'noun|plural|') return 'Plural';
-    return key;
+    // Fallback for 2-part noun shorthand or direct noun shorthands
+    if (trimmed === 'noun|singular|' || trimmed === 'noun|singular' || trimmed === 'noun:singular') return 'Singular';
+    if (trimmed === 'noun|plural|' || trimmed === 'noun|plural' || trimmed === 'noun:plural') return 'Plural';
+    if (trimmed === 'noun|plural animate|' || trimmed === 'noun|plural animate') return 'Plural (animate)';
+    if (trimmed === 'noun|plural inanimate|' || trimmed === 'noun|plural inanimate') return 'Plural (inanimate)';
+    if (trimmed === 'noun|singular animate|' || trimmed === 'noun|singular animate') return 'Singular (animate)';
+    return trimmed;
 };
 
 export const processFormsContextually = (forms: any[]) => {
     const subjectTenseMap = new Map<string, Set<string>>();
     
     forms.forEach(f => {
-        const key = f.form_name;
+        const key = f.form_name || f.label;
         if (!key) return;
         const parts = key.split('|');
         if (parts.length >= 3 && parts[0] !== 'noun') {
@@ -164,7 +188,7 @@ export const processFormsContextually = (forms: any[]) => {
     });
 
     return forms.map(f => {
-        const key = f.form_name;
+        const key = f.form_name || f.label;
         if (!key) return { ...f, displayLabel: key };
         
         const parts = key.split('|');
@@ -1141,7 +1165,7 @@ export function getAllFormsForEntry(
                 const values = parts[1].split('^');
                 forms.push({
                     type: 'official',
-                    label: parts[0],
+                    label: getFriendlyLabel(parts[0]) || parts[0],
                     translit: values[0] || '',
                     syllabary: values[1] || '',
                     tone: values[2] || '',
@@ -1158,10 +1182,11 @@ export function getAllFormsForEntry(
         const lookup = wordFormsLookupMap.get(id);
         if (lookup) {
             lookup.forEach((f: any) => {
-                if (!forms.some(existing => existing.syllabary === f.syllabary && existing.translit === f.translit && existing.label === (f.form_name || f.label))) {
+                const friendly = f.displayLabel || getFriendlyLabel(f.form_name || f.label) || f.label || 'Form';
+                if (!forms.some(existing => existing.syllabary === f.syllabary && existing.translit === f.translit && (existing.label === friendly || existing.label === (f.form_name || f.label)))) {
                     forms.push({
                         type: 'imported',
-                        label: f.form_name || f.label || f.displayLabel || 'Form',
+                        label: friendly,
                         translit: f.translit || '',
                         syllabary: f.syllabary || '',
                         tone: f.tone || '',
@@ -1176,10 +1201,11 @@ export function getAllFormsForEntry(
             if (p.status === 'active' && importedData[p.id]?.word_forms) {
                 const pForms = importedData[p.id].word_forms.filter((f: any) => String(f.word_index) === id);
                 pForms.forEach((f: any) => {
-                    if (!forms.some(existing => existing.syllabary === f.syllabary && existing.translit === f.translit && existing.label === f.form_name)) {
+                    const friendly = f.displayLabel || getFriendlyLabel(f.form_name || f.label) || f.label || 'Form';
+                    if (!forms.some(existing => existing.syllabary === f.syllabary && existing.translit === f.translit && (existing.label === friendly || existing.label === f.form_name))) {
                         forms.push({
                             type: 'imported',
-                            label: f.form_name || f.label || 'Form',
+                            label: friendly,
                             translit: f.translit || '',
                             syllabary: f.syllabary || '',
                             tone: f.tone || '',
@@ -1198,10 +1224,11 @@ export function getAllFormsForEntry(
             const parts = form.split(':');
             if (parts.length >= 2) {
                 const values = parts[1].split('^');
-                if (!forms.some(existing => existing.syllabary === values[1] && existing.translit === values[0] && existing.label === parts[0])) {
+                const customLabel = getFriendlyLabel(parts[0]) || parts[0];
+                if (!forms.some(existing => existing.syllabary === values[1] && existing.translit === values[0] && existing.label === customLabel)) {
                     forms.push({
                         type: 'custom',
-                        label: parts[0],
+                        label: customLabel,
                         translit: values[0] || '',
                         syllabary: values[1] || '',
                         tone: values[2] || '',

@@ -14,7 +14,8 @@ import {
     saveCustomMorphology, 
     VerbMorphologyTemplate,
     PrefixData,
-    PostRootMorphemeData
+    PostRootMorphemeData,
+    getFriendlyLabel
 } from '../utils';
 import { WordFormsEditor } from './WordFormsEditor';
 import { TranslateCherokee, Sliders, ChevronDown, ChevronUp, Check, Plus, Trash2, AlertCircle } from './Icons';
@@ -139,7 +140,7 @@ export const WordModal: React.FC<WordModalProps> = ({
         if (initialData?.Other_Forms) {
             const forms = initialData.Other_Forms.split('|').map((raw, idx) => {
                 const parts = raw.split(':');
-                const label = parts[0] || '';
+                const label = getFriendlyLabel(parts[0]) || parts[0] || '';
                 const values = (parts[1] || '').split('^');
                 return {
                     id: `form_${Date.now()}_${idx}`,

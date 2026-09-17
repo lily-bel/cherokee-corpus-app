@@ -7,7 +7,7 @@ import EntryDetail from './components/EntryDetail';
 
 import PackageManagerTab from './components/PackageManagerTab';
 import { useCorpus } from './components/CorpusContext';
-import { downloadFile, performSearch, buildWordFormsLookupMap, isEmptyRoot } from './utils';
+import { downloadFile, performSearch, buildWordFormsLookupMap, isEmptyRoot, getFriendlyLabel, processFormsContextually } from './utils';
 import { SentenceCard } from './components/SentenceCard';
 import WidgetsTab from './components/WidgetsTab';
 
@@ -1694,12 +1694,24 @@ function App() {
     const usedFormLabels = useMemo(() => {
         const labels = new Set<string>();
 
+        const addLabel = (rawLabel: string) => {
+            if (!rawLabel) return;
+            const trimmed = rawLabel.trim();
+            if (!trimmed) return;
+            const friendly = getFriendlyLabel(trimmed);
+            if (friendly && !friendly.includes('|')) {
+                labels.add(friendly);
+            } else if (!trimmed.includes('|')) {
+                labels.add(trimmed);
+            }
+        };
+
         // 1. All official & custom entries in allData (Other_Forms)
         allData.forEach((entry: any) => {
             if (entry.Other_Forms) {
                 entry.Other_Forms.split('|').forEach((form: string) => {
                     const parts = form.split(':');
-                    if (parts[0]) labels.add(parts[0].trim());
+                    if (parts[0]) addLabel(parts[0]);
                 });
             }
         });
@@ -1708,9 +1720,10 @@ function App() {
         if (importedData) {
             Object.values(importedData).forEach((pkgData: any) => {
                 if (pkgData?.word_forms && Array.isArray(pkgData.word_forms)) {
-                    pkgData.word_forms.forEach((f: any) => {
-                        if (f.form_name) labels.add(f.form_name.trim());
-                        if (f.displayLabel) labels.add(f.displayLabel.trim());
+                    const processed = processFormsContextually(pkgData.word_forms);
+                    processed.forEach((f: any) => {
+                        if (f.displayLabel) addLabel(f.displayLabel);
+                        else if (f.form_name) addLabel(f.form_name);
                     });
                 }
             });
@@ -1722,7 +1735,7 @@ function App() {
                 if (typeof formsStr === 'string') {
                     formsStr.split('|').forEach((form: string) => {
                         const parts = form.split(':');
-                        if (parts[0]) labels.add(parts[0].trim());
+                        if (parts[0]) addLabel(parts[0]);
                     });
                 }
             });
@@ -1731,7 +1744,7 @@ function App() {
         // 4. Gloss form names
         if (glosses && Array.isArray(glosses)) {
             glosses.forEach((g: any) => {
-                if (g.form_name) labels.add(g.form_name.trim());
+                if (g.form_name) addLabel(g.form_name);
             });
         }
 
@@ -1756,9 +1769,11 @@ function App() {
             "Noun",
             "Verb"
         ];
-        standardLabels.forEach(l => labels.add(l));
+        standardLabels.forEach(l => addLabel(l));
 
-        return Array.from(labels).filter(Boolean).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+        return Array.from(labels)
+            .filter(l => Boolean(l) && !l.includes('|'))
+            .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
     }, [allData, importedData, userWordForms, glosses]);
 
     // --- SEARCH ALGORITHM ---

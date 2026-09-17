@@ -1,42 +1,9 @@
-1. Word Colorization & Emphasis                                                                                  
-  The way words are colored in de-emphasizes the root and emphasizes the green parts. There should be some sort of 
-  changing around of how it's colored to look better.                                                                                                        
-  3. List Tab Study Tools & Integration                                                                            
+BIG QUESTIONS:                                                                                                     
+3. List Tab Study Tools & Integration                                                                            
   The list tab in general needs some work. It's meant to be a studying tab, but obviously it doesn't have those    
   features yet. Now that we're on the hanehla domain, we can do more with integration with Hanehla,  
   but right now we don't have any study tools and the list tab is lacking.                                                                                                                                                    
-  6. Online Capabilities & Testing                                                                                 
-  Online capabilities, specifically cloud backup and public packages, have not been tested yet.                                                                                                                     
-  8. Cherokee Narratives Data Fix                                                                                  
-  Cherokee Narratives needs to be edited and fixed on the data side.                                               
-  9. Public Packages for Narratives & New Testament                                                                
-  Cherokee Narratives and the Cherokee New Testament packages should become public packages uploaded by myself.                                       
-  11. Glossing Feature Review                                                                                      
-  I should look over glossing to see if any features are missing there. It's a pretty complex feature at this point,
-  so I want to look it over again.                                                                                
-  13. Data Consolidation: Animate / Inanimate Distinction                                                          
-  The data consolidation project does not keep track of the animate/inanimate words versus the just inanimate words.
-  I need to maintain this distinction for Julie to have the 10 reference forms that the dictionary uses.           
-  14. Noun Roots                                                                                                   
-  Eventually we will implement roots for nouns as well, but that is through the data side and through Julie.       
-  15. Transliteration & Tone Styling in Settings                                                                   
-  The transliteration and tone styling in the settings is not implemented yet. Now that we're pulling data directly
-  from King-recreation, we should be able to generate all the different spellings in the data consolidation project
-  and then just pull them in the app. This also requires explanations for the different styles.                    
-  16. Tone Regex & Superscript Typing                                                                              
-  On that note, I don't know if I ever fixed regex for tone or typing tone and getting superscript when you create 
-  a word.                                                                                                      
-  20. Part of Speech Representation                                                                                
-  Part of speech is still not reflected in the app correctly. Not sure what I want to do with it given Julie's     
-  different way of representing part of speech, I don't know.                                                      
-  21. Shorthand Form Ambiguity                                                                                     
-  The shorthand form for words should probably be fixed to change all of the ambiguous ones to just a              
-  straightforward "no form" form, rather than defaulting to noun singular or third person present.                 
-  22. Editable & Shared Packages                                                                                   
-  Implement editable packages and sharing packages between people.                                                 
-  23. Basic & Advanced Modes Polish                                                                                
-  Basic and advanced modes need to be polished.                                                                    
-  24. Startup Onboarding Tutorial                                                                                  
+24. Startup Onboarding Tutorial                                                                                  
   I would like to create a first launch startup onboarding tutorial. This will be a simple explanation of the app, 
   with some of the settings available to turn on or off as you go through the tutorial so we can demonstrate the   
   different modes of the dictionary.                                                                               
@@ -45,9 +12,50 @@
       back buttons).                                                                                               
       • Follow that .md file, filling in what it asks for whenever brackets [...] are used on that page.           
       • Add a button in Settings to view the startup tutorial at any time.                                         
-  25. App Visual Style Overhaul                                                                                    
+25. App Visual Style Overhaul                                                                                    
   Consider overhauling the visual style of the app somewhat.                                                       
-  26. Mass Editor Tool Update                                                                                      
+26. Mass Editor Tool Update                                                                                      
   The mass editor tool should be updated.                                                                          
-  27. API Consideration                                                                                            
+27. API Consideration                                                                                            
   API?
+
+TEST:
+6. Online Capabilities & Testing                                                                                 
+  Online capabilities, specifically cloud backup and public packages, have not been tested yet.                                                                                                                     
+11. Glossing Feature Review                                                                                      
+  I should look over glossing to see if any features are missing there. It's a pretty complex feature at this point,
+  so I want to look it over again.  
+
+
+DATA:
+8. Cherokee Narratives Data Fix                                                                                  
+  Cherokee Narratives needs to be edited and fixed on the data side.
+13. Data Consolidation: Animate / Inanimate Distinction                                                          
+  The data consolidation project does not keep track of the animate/inanimate words versus the just inanimate words.
+  I need to maintain this distinction for Julie to have the 10 reference forms that the dictionary uses.           
+14. Noun Roots                                                                                                   
+  Eventually we will implement roots for nouns as well, but that is through the data side and through Julie.  
+20. Part of Speech Representation                                                                                
+  Part of speech is still not reflected in the app correctly. Not sure what I want to do with it given Julie's     
+  different way of representing part of speech, I don't know.         
+
+21. Shorthand Form Ambiguity                                                                                     
+  The shorthand form for words should probably be fixed to change all of the ambiguous ones to just a              
+  straightforward "no form" form, rather than defaulting to noun singular or third person present. 
+
+15. Transliteration & Tone Styling in Settings                                                                   
+  The transliteration and tone styling in the settings is not implemented yet. Now that we're pulling data directly
+  from King-recreation, we should be able to generate all the different spellings in the data consolidation project
+  and then just pull them in the app. This also requires explanations for the different styles.                    
+16. Tone Regex & Superscript Typing                                                                              
+  On that note, I don't know if I ever fixed regex for tone or typing tone and getting superscript when you create 
+  a word.   
+  
+
+SMALL
+9. Public Packages for Narratives & New Testament                                                                
+  Cherokee Narratives and the Cherokee New Testament packages should become public packages uploaded by myself. 
+22. Editable & Shared Packages                                                                                   
+  Implement editable packages and sharing packages between people.                                                                                                                                  
+23. Basic & Advanced Modes Polish                                                                                
+  Basic and advanced modes need to be polished.                                                                    
