@@ -27,7 +27,7 @@ export interface PackageMetadata {
     };
     widgets?: { name: string; icon?: string; path?: string }[];
     source_names?: Record<string, string>;
-    source_meta?: Record<string, "prioritize" | "filter">;
+    source_meta?: Record<string, "prioritize" | "filter" | "other" | string>;
     color?: string;
     locked?: string;
     editable?: string;
@@ -100,9 +100,9 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                 // Default Official Metadata fallback
                 const defaultMetadata: PackageMetadata = {
                     id: 'official-cherokee-data',
-                    name: 'Official Cherokee Reference Data',
+                    name: 'Official Sources',
                     author: 'Cherokee Nation & Durbin Feeling',
-                    description: 'Official Cherokee Nation Language Department dictionary, King Recreation verb morphology, and reference corpus.',
+                    description: 'All data built into the app, from various sources.',
                     date_created: Date.now(),
                     app_version: '1.0',
                     color: 'slate',
@@ -114,16 +114,51 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                         'learning-to-use-the-cherokee-verb.csv': 'Learning to Use the Cherokee Verb',
                         'hierarchical-dict.json': 'King Recreation Verb Morphology',
                         'ced': 'Feeling & Pulte CED',
-                        'ltu': 'Learning to Use the Cherokee Verb',
                         'kirk': 'Kirk Verb Database',
-                        'cnt': 'Cherokee New Testament'
+                        'ltu': 'Learning to Use the Cherokee Verb',
+                        'rrd': 'Raven Rock Dictionary',
+                        'cn': 'Cherokee Nation',
+                        'cwl': 'Consortium Word List',
+                        'noq': 'Noquisi Word List',
+                        'mds': "Moondove's Spiral",
+                        'msct': 'Microsoft Computer Terms',
+                        'cnmed': 'Medical terms provided by Cherokee Nation (western dialect)',
+                        'cnld': 'CN Language Documents',
+                        'ncmed': 'Medical terms in Giduwa (North Carolina/eastern dialect), based on class notes provided by Bo Taylor of the Eastern Band.',
+                        'banks': 'Banks, William H. Jr. (1953), "Ethnobotany of the Cherokee Indians." Master\'s Thesis, University of Tennessee',
+                        'cnt': 'Cherokee New Testament',
+                        'bible': 'Cherokee New Testament Full Text',
+                        'hsbc': 'Holmes, R. B., & Smith, B. S. (1997). Beginning Cherokee. Norman: University of Oklahoma Press.',
+                        'sskil': 'The Shadow of Sequoyah: Social Documents of the Cherokees, 1862-1964',
+                        'fbgp': 'CED FB Group',
+                        'magok': 'Montgomery-Anderson, B. (2008). A reference grammar of Oklahoma Cherokee.',
+                        'kpep': 'Kituwah Preservation & Education Program, EBCI',
+                        'vrb': 'Kirk, W. (2012). Verb Reference Book Didehloqwasgi. Northeastern State University',
+                        'cccc': 'Carnegie Corporation Cross-Cultural Education Project'
                     },
                     source_meta: {
                         'cn-app-dictionary.csv': 'prioritize',
                         'lily-dict.csv': 'prioritize',
                         'kirk-book-data.csv': 'prioritize',
                         'learning-to-use-the-cherokee-verb.csv': 'prioritize',
-                        'hierarchical-dict.json': 'prioritize'
+                        'hierarchical-dict.json': 'prioritize',
+                        'ced': 'prioritize',
+                        'kirk': 'other',
+                        'ltu': 'other',
+                        'mds': 'filter',
+                        'msct': 'filter',
+                        'cnmed': 'other',
+                        'cnld': 'other',
+                        'ncmed': 'other',
+                        'banks': 'other',
+                        'cnt': 'other',
+                        'hsbc': 'other',
+                        'sskil': 'other',
+                        'fbgp': 'other',
+                        'magok': 'other',
+                        'kpep': 'other',
+                        'vrb': 'other',
+                        'cccc': 'other'
                     },
                     locked: 'yes',
                     editable: 'No'

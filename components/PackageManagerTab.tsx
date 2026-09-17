@@ -3,10 +3,11 @@ import { useCorpus } from './CorpusContext';
 import { usePackageManager, Package } from './PackageManagerContext';
 import PackageExportModal from './PackageExportModal';
 import { ListData } from './ListsTab';
-import { Upload, Download, Trash2, ToggleLeft, ToggleRight, Box, Mic, StickyNote, ListIcon, SquaresPlus, Book, ListPlus, Menu } from './Icons';
+import { Upload, Download, Trash2, ToggleLeft, ToggleRight, Box, Mic, StickyNote, ListIcon, SquaresPlus, Book, ListPlus, Menu, Info } from './Icons';
 import { Toast, SourceBadge, UserAuthButton } from './UI';
 import { PackageDetailView } from './PackageDetailView';
 import { PackageImportModal } from './PackageImportModal';
+import { OfficialSourcesModal } from './OfficialSourcesModal';
 
 interface PackageManagerTabProps {
     customLists: Record<string, ListData | string[]>;
@@ -23,6 +24,7 @@ const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists, onNa
 
     const [showExportModal, setShowExportModal] = useState(false);
     const [showImportModal, setShowImportModal] = useState(false);
+    const [showSourcesModal, setShowSourcesModal] = useState(false);
     const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
     const [colorPicker, setColorPicker] = useState<{ show: boolean, pkgId: string | null }>({ show: false, pkgId: null });
@@ -101,6 +103,7 @@ const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists, onNa
                             togglePackage={togglePackage}
                             removePackage={removePackage}
                             onClick={() => setSelectedPackageId(p.id)}
+                            onShowSources={() => setShowSourcesModal(true)}
                         />;
                     })}
                 </div>
@@ -171,6 +174,9 @@ const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists, onNa
                     onSuccess={(msg) => showToast(msg, 'success')}
                     onError={(msg) => showToast(msg, 'error')}
                 />
+            )}
+            {showSourcesModal && (
+                <OfficialSourcesModal onClose={() => setShowSourcesModal(false)} />
             )}
             {colorPicker.show && colorPicker.pkgId && (
                 <ColorPickerModal pkgId={colorPicker.pkgId} onClose={() => setColorPicker({ show: false, pkgId: null })} />
@@ -273,14 +279,16 @@ const PackageItem = ({
     showToast,
     togglePackage,
     removePackage,
-    onClick
+    onClick,
+    onShowSources
 }: {
     pkg: Package,
     onColorClick: (id: string) => void,
     showToast: (message: string, type?: string) => void,
     togglePackage: (id: string) => void,
     removePackage: (id: string) => void,
-    onClick: () => void
+    onClick: () => void,
+    onShowSources?: () => void
 }) => {
     const {
         personalWords, userSentences, glosses: allGlosses,
@@ -325,7 +333,25 @@ const PackageItem = ({
                                 </span>
                             )}
                         </div>
-                        <p className="text-xs text-slate-400">{pkg.metadata?.description || (isOfficial ? "Official Cherokee Data" : "Your personal data")}</p>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            <p className="text-xs text-slate-400">
+                                {pkg.metadata?.description || (isOfficial ? "All data built into the app, from various sources." : "Your personal data")}
+                            </p>
+                            {isOfficial && onShowSources && (
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onShowSources();
+                                    }}
+                                    className="inline-flex items-center justify-center p-0.5 text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+                                    title="View Sources"
+                                    aria-label="View Sources"
+                                >
+                                    <Info size={13} className="stroke-[2.2]" />
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">

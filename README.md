@@ -20,6 +20,7 @@ Lexical sources were synthesized over time from various sources.
 - _Cherokee Verb Reference Guide_ by Wyman Kirk - A print book containing verbs mostly accounted for in CED, but with additional tables of 5x5 conjugations.
 - [_Learning to use the Cherokee Verb_](https://language.cherokee.org/media/vnihnhms/learning-to-use-the-cherokee-verb.pdf) by Durbin Feeling - A print book with deep conjugations of a small number of verbs.
 - [Cherokee New Testament](https://www.cherokeedictionary.net/cnt/) - The New Testament translated into Cherokee. Used as an optional full text for reading + glossing.
+- _Cherokee Narratives_ - A book of Cherokee stories compiled by Durbin Feeling.
 
 I converted the print sources to CSVs and consolidated everything [here](https://github.com/lily-bel/cherokee-data-consolidation). This pre-processing allows for maintained sources like the CN dictionary and the root word project to be updated and used downstream in the app.
 

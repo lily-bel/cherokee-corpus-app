@@ -4,13 +4,14 @@ import { useCorpus } from './CorpusContext';
 import {
     ArrowLeft, Folder, Mic, StickyNote,
     ChevronDown, ChevronRight, ListIcon, ListPlus, SquaresPlus,
-    Search, Pause, Volume2, Menu, Upload, LinkIcon, Check
+    Search, Pause, Volume2, Menu, Upload, LinkIcon, Check, Info
 } from './Icons';
 import { SourceBadge, UserAuthButton } from './UI';
 import EntryCard from './EntryCard';
 import EntryDetail from './EntryDetail';
 import { getAudioFromDB, renderStyledText, parseListName, ColorizedCherokeeWord } from '../utils';
 import PackageExportModal from './PackageExportModal';
+import { OfficialSourcesModal } from './OfficialSourcesModal';
 import { getWidgetIcon } from '../widgetUtils';
 
 interface PackageDetailViewProps {
@@ -97,6 +98,7 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({
 
     const [selectedEntry, setSelectedEntry] = useState<any | null>(null);
     const [showExportModal, setShowExportModal] = useState(false);
+    const [showSourcesModal, setShowSourcesModal] = useState(false);
     const [copiedLink, setCopiedLink] = useState(false);
 
     const pkg = packages.find(p => p.id === packageId);
@@ -375,6 +377,16 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({
                 </div>
 
                 <div className="flex items-center gap-1.5 shrink-0">
+                    {pkg.type === 'official' && (
+                        <button
+                            onClick={() => setShowSourcesModal(true)}
+                            className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5"
+                            title="View Official Sources"
+                        >
+                            <Info size={14} />
+                            <span className="hidden sm:inline">Sources</span>
+                        </button>
+                    )}
                     {pkg.type !== 'official' && (
                         <button
                             onClick={() => setShowExportModal(true)}
@@ -418,9 +430,29 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({
                     initialMetadata={pkg.metadata}
                 />
             )}
+            {showSourcesModal && (
+                <OfficialSourcesModal onClose={() => setShowSourcesModal(false)} />
+            )}
 
             {/* Content Stats List */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                {pkg.metadata?.description && (
+                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-3.5 flex items-center justify-between gap-3 shadow-xs">
+                        <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                            {pkg.metadata.description}
+                        </p>
+                        {isOfficial && (
+                            <button
+                                onClick={() => setShowSourcesModal(true)}
+                                className="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors"
+                                title="View Data Sources"
+                            >
+                                <Info size={13} />
+                                <span>Sources</span>
+                            </button>
+                        )}
+                    </div>
+                )}
                     {data.dictionaries && data.dictionaries.length > 0 && (
                         <ContentSection
                             label="Dictionaries"

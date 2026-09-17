@@ -10,9 +10,7 @@
   8. Cherokee Narratives Data Fix                                                                                  
   Cherokee Narratives needs to be edited and fixed on the data side.                                               
   9. Public Packages for Narratives & New Testament                                                                
-  Cherokee Narratives and the Cherokee New Testament packages should become public packages uploaded by myself.    
-  10. Class & Root System for Custom Words                                                                         
-  You need to be able to work with the class and root system on custom words.                                      
+  Cherokee Narratives and the Cherokee New Testament packages should become public packages uploaded by myself.                                       
   11. Glossing Feature Review                                                                                      
   I should look over glossing to see if any features are missing there. It's a pretty complex feature at this point,
   so I want to look it over again.                                                                                 
