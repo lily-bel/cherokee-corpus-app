@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import { getAllPackagesFromDB, savePackageToDB, deletePackageFromDB } from '../utils';
+import { getAllPackagesFromDB, savePackageToDB, deletePackageFromDB, transliterateToSyllabary } from '../utils';
 import { parsePackageZip } from './packageParser';
 import { deleteWidgetsByPackageId } from '../widgetUtils';
 
@@ -466,6 +466,117 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                         shim_class: c['hierarchical-dict.json_shim_class'] || c.shim_class || undefined
                     };
                 });
+
+                // Synthesize Combined CED Verb Part B (_b) entries & forms
+                const partBEntries: any[] = [];
+                const partBWordForms: any[] = [];
+                const formsByWord = new Map<string, any[]>();
+                normalizedWordForms.forEach((wf: any) => {
+                    if (!wf.word_index) return;
+                    if (!formsByWord.has(wf.word_index)) formsByWord.set(wf.word_index, []);
+                    formsByWord.get(wf.word_index)!.push(wf);
+                });
+
+                normalizedDictionary.forEach((d: any) => {
+                    const shimFormsList: string[] = Array.isArray(d.shim_forms) ? d.shim_forms : (Array.isArray(d.sources?.['hierarchical-dict.json']?.shim_forms) ? d.sources['hierarchical-dict.json'].shim_forms : []);
+                    if (shimFormsList.length === 0) return;
+
+                    const parentId = d.id || d.Index || d.merged_id;
+                    if (!parentId) return;
+
+                    const partBId = `${parentId}_b`;
+                    d.combined_part_b_id = partBId;
+
+                    const wForms = formsByWord.get(parentId) || [];
+                    const shimWForms = wForms.filter((wf: any) => {
+                        if (wf.is_shim) return true;
+                        const fn = (wf.form_name || '').toLowerCase();
+                        if ((fn.includes('infinitive') && shimFormsList.includes('infinitive')) || (fn.includes('imperative') && shimFormsList.includes('imperative'))) {
+                            return true;
+                        }
+                        return false;
+                    });
+
+                    const infForm = shimWForms.find((wf: any) => (wf.form_name || '').toLowerCase().includes('infinitive'));
+                    const hd = d.sources?.['hierarchical-dict.json'] || {};
+
+                    const infTranslit = infForm?.translit || infForm?.surface_spelling || d.surface_forms?.infinitive || hd.surface_forms?.infinitive || '';
+                    const rawInfSyllabary = infForm?.syllabary || '';
+                    const isAutoSyl = !rawInfSyllabary && Boolean(infTranslit);
+                    const finalSyllabary = rawInfSyllabary || (infTranslit ? transliterateToSyllabary(infTranslit, 'classic') : '');
+
+                    const infTranslation = (infForm?.notes || '').trim();
+                    const hasInfDef = Boolean(infTranslation);
+                    const finalDef = hasInfDef ? infTranslation : (d.Definition || d.definition || '');
+                    const defSourceType: 'infinitive' | 'parent' = hasInfDef ? 'infinitive' : 'parent';
+
+                    const infTone = infForm?.tone || infForm?.tone1 || infForm?.tone2 || '';
+                    const infAudio = infForm?.audio || '';
+
+                    // Filter surface_forms, surface_segments, segmented_* to only shim slots
+                    const pickShimKeys = (obj: any) => {
+                        if (!obj || typeof obj !== 'object') return undefined;
+                        const res: Record<string, any> = {};
+                        shimFormsList.forEach(slot => {
+                            if (obj[slot] !== undefined) res[slot] = obj[slot];
+                        });
+                        return Object.keys(res).length > 0 ? res : undefined;
+                    };
+
+                    const partBEntry = {
+                        ...d,
+                        id: partBId,
+                        Index: partBId,
+                        merged_id: partBId,
+                        is_combined_part_b: true,
+                        combined_parent_id: parentId,
+                        combined_part_b_id: undefined,
+                        base_form_slot: 'infinitive',
+                        translit: infTranslit,
+                        Entry: infTranslit,
+                        surface_spelling: infTranslit,
+                        syllabary: finalSyllabary,
+                        Syllabary: finalSyllabary,
+                        is_auto_syllabary: isAutoSyl,
+                        definition: finalDef,
+                        Definition: finalDef,
+                        definition_source_type: defSourceType,
+                        Entry_Tone: infTone,
+                        audio: infAudio,
+                        Entry_Audio: infAudio,
+                        surface_forms: pickShimKeys(d.surface_forms || hd.surface_forms),
+                        surface_segments: pickShimKeys(d.surface_segments || hd.surface_segments),
+                        segmented_raw: pickShimKeys(d.segmented_raw || hd.segmented_raw),
+                        segmented_aspiration: pickShimKeys(d.segmented_aspiration || hd.segmented_aspiration),
+                        segmented_reverse_aspiration: pickShimKeys(d.segmented_reverse_aspiration || hd.segmented_reverse_aspiration),
+                        segmented_surface: pickShimKeys(d.segmented_surface || hd.segmented_surface),
+                        shim_forms: shimFormsList,
+                        shim_class: hd['shim.morphology.class_name'] || d.shim_class || undefined
+                    };
+
+                    partBEntries.push(partBEntry);
+
+                    shimWForms.forEach((wf: any) => {
+                        const wfRawSyl = wf.syllabary || '';
+                        const wfTranslit = wf.translit || wf.surface_spelling || '';
+                        const wfIsAutoSyl = !wfRawSyl && Boolean(wfTranslit);
+                        const wfFinalSyl = wfRawSyl || (wfTranslit ? transliterateToSyllabary(wfTranslit, 'classic') : '');
+                        wf.is_auto_syllabary = wfIsAutoSyl;
+                        if (!wf.syllabary && wfFinalSyl) {
+                            wf.syllabary = wfFinalSyl;
+                        }
+                        partBWordForms.push({
+                            ...wf,
+                            word_index: partBId,
+                            syllabary: wfFinalSyl,
+                            is_auto_syllabary: wfIsAutoSyl,
+                            is_shim: false
+                        });
+                    });
+                });
+
+                normalizedDictionary.push(...partBEntries);
+                normalizedWordForms.push(...partBWordForms);
 
                 const officialPackage: Package = {
                     id: 'official-cherokee-data',

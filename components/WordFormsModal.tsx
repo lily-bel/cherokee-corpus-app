@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { X, Mic, Trash2, Pause, Volume2, Plus } from './Icons';
-import { getFriendlyLabel, processFormsContextually, renderStyledText, ColorizedCherokeeWord, getColorWordSegmentsSetting, getFormTransliteration, resolveHdFormName } from '../utils';
+import { X, Mic, Trash2, Pause, Volume2, Plus, TranslateCherokee } from './Icons';
+import { getFriendlyLabel, processFormsContextually, renderStyledText, ColorizedCherokeeWord, getColorWordSegmentsSetting, getFormTransliteration, resolveHdFormName, getCombinedCedVerbsMode } from '../utils';
 import { useCorpus } from './CorpusContext';
 
 interface WordFormsModalProps {
@@ -147,7 +147,8 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
     const importedFormsForThisEntry: any[] = [];
     packages.forEach(p => {
         if (p.status === 'active' && importedData[p.id]?.word_forms) {
-            const forms = importedData[p.id].word_forms!.filter((f: any) => f.word_index === entry.Index);
+            const hidePartBFromParent = !entry.is_combined_part_b && getCombinedCedVerbsMode(settings) === 'full';
+            const forms = importedData[p.id].word_forms!.filter((f: any) => f.word_index === entry.Index && !(hidePartBFromParent && f.is_shim));
             if (forms.length > 0) {
                 forms.forEach(f => importedFormsForThisEntry.push({ ...f, color: p.color, pkgName: p.name }));
             }
@@ -294,7 +295,12 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
                                         </td>
                                         <td className="p-3 align-top">
                                             <div className="flex flex-col gap-0.5 overflow-hidden">
-                                                <div className="font-noto-cherokee text-lg text-slate-800 dark:text-slate-100 break-words leading-snug">{form.syllabary}</div>
+                                                <div className="font-noto-cherokee text-lg text-slate-800 dark:text-slate-100 break-words leading-snug flex items-center gap-1.5">
+                                                    <span>{form.syllabary}</span>
+                                                    {form.is_auto_syllabary && (
+                                                        <TranslateCherokee size={14} className="inline-block text-amber-600 dark:text-amber-400 opacity-80 shrink-0" title="Auto-transliterated syllabary" />
+                                                    )}
+                                                </div>
                                                 <div className="font-noto-serif text-sm text-amber-700 dark:text-amber-400 font-bold break-words leading-snug">
                                                     <ColorizedCherokeeWord
                                                         word={form.translit}

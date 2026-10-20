@@ -509,9 +509,15 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
   }
 
   const normQuery = cleanStr(query);
+  const combinedMode = getCombinedCedVerbsMode(settings);
 
   // --- DICTIONARY MODE LOOP: O(N) where N is number of base entries. ---
   const mappedResults = allData.map(entry => {
+    if (entry.is_combined_part_b && combinedMode !== 'full') {
+      return { ...entry, score: 0 };
+    }
+    const hidePartBFromParent = !entry.is_combined_part_b && Boolean(entry.combined_part_b_id) && combinedMode === 'full';
+    const parentShimFormsSet = new Set<string>(Array.isArray(entry.shim?.forms) ? entry.shim.forms : []);
     let score = 0;
     let matchedForm: { syllabary?: string; translit?: string; label?: string } | null = null;
     let mainMatchScore = 0;
@@ -562,7 +568,8 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
         if (entry.surface_spelling) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.surface_spelling));
         if (entry.practical) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.practical));
         if (entry.surface_forms) {
-          for (const val of Object.values(entry.surface_forms)) {
+          for (const [k, val] of Object.entries(entry.surface_forms)) {
+            if (hidePartBFromParent && parentShimFormsSet.has(k)) continue;
             if (typeof val === 'string') mainMatchScore = Math.max(mainMatchScore, testMatchScore(val));
           }
         }
@@ -656,6 +663,7 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
         const entryForms = wordFormsLookupMap.get(idStr);
         if (entryForms) {
           entryForms.forEach((f: any) => {
+            if (hidePartBFromParent && f.is_shim) return;
             let fScore = 0;
             if (activeLangs.translit) {
               if (f.translit) fScore = Math.max(fScore, testMatchScore(f.translit));
@@ -765,7 +773,7 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
           activeMatchedForm = {
             syllabary: entry.Syllabary || entry.syllabary,
             translit: entry.Entry || entry.translit || entry.surface_spelling,
-            label: 'present'
+            label: entry.is_combined_part_b ? 'infinitive' : 'present'
           };
         }
       }
@@ -2228,26 +2236,38 @@ export function getTransliterationStyleSetting(settings?: any): 'classic' | 'asp
   return 'classic';
 }
 
-export function getSeparateStativeShimsSetting(settings?: any): boolean {
+export type CombinedCedVerbsMode = 'none' | 'forms' | 'full';
+
+export function getCombinedCedVerbsMode(settings?: any): CombinedCedVerbsMode {
+  if (settings?.combinedCedVerbs === 'none' || settings?.combinedCedVerbs === 'forms' || settings?.combinedCedVerbs === 'full') {
+    return settings.combinedCedVerbs;
+  }
   if (settings?.separateStativeShims !== undefined) {
-    return Boolean(settings.separateStativeShims);
+    return settings.separateStativeShims ? 'forms' : 'none';
   }
   if (settings?.dictionaryLevel === 'linguist') {
-    return true;
+    return 'full';
   }
   try {
     const s = localStorage.getItem('cherokee_app_settings');
     if (s) {
       const parsed = JSON.parse(s);
+      if (parsed.combinedCedVerbs === 'none' || parsed.combinedCedVerbs === 'forms' || parsed.combinedCedVerbs === 'full') {
+        return parsed.combinedCedVerbs;
+      }
       if (parsed.separateStativeShims !== undefined) {
-        return Boolean(parsed.separateStativeShims);
+        return parsed.separateStativeShims ? 'forms' : 'none';
       }
       if (parsed.dictionaryLevel === 'linguist') {
-        return true;
+        return 'full';
       }
     }
   } catch {}
-  return false;
+  return 'none';
+}
+
+export function getSeparateStativeShimsSetting(settings?: any): boolean {
+  return getCombinedCedVerbsMode(settings) !== 'none';
 }
 
 export function resolveRoleTaggedSegments(
@@ -2351,12 +2371,13 @@ export const ColorizedCherokeeWord: React.FC<ColorizedCherokeeWordProps> = ({
     return <span className={`font-bold ${className}`.trim()}>{text}</span>;
   }
 
+  const defaultEntrySlot = (entry?.is_combined_part_b || rEntry?.is_combined_part_b) ? 'infinitive' : 'present';
   const candidateKey = formKey ||
     form?.normalized_key ||
     form?.form_name ||
     form?.label ||
     form?.slotKey ||
-    (entry && !form ? 'present' : undefined);
+    (entry && !form ? defaultEntrySlot : undefined);
 
   const hdSlot = resolveHdFormName(candidateKey);
 
@@ -2398,9 +2419,9 @@ export const ColorizedCherokeeWord: React.FC<ColorizedCherokeeWordProps> = ({
     }
 
     // If headword or present
-    if ((!form || hdSlot === 'present') && rEntry.segmented_forms.present) {
-      const groups = segmentVerbForm(rEntry.segmented_forms.present, 'present', rEntry.config, rEntry.class_name, rEntry.post_root_morpheme);
-      const pSet = rEntry.config?.pron?.set_type === 'b' ? 'B' : 'A';
+    if ((!form || hdSlot === defaultEntrySlot) && rEntry.segmented_forms[defaultEntrySlot]) {
+      const groups = segmentVerbForm(rEntry.segmented_forms[defaultEntrySlot], defaultEntrySlot, rEntry.config, rEntry.class_name, rEntry.post_root_morpheme);
+      const pSet = defaultEntrySlot === 'infinitive' ? 'B' : (rEntry.config?.pron?.set_type === 'b' ? 'B' : 'A');
       return (
         <span className={className}>
           {renderColorizedCherokee(text, groups, pSet, colored)}

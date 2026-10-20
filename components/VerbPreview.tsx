@@ -12,7 +12,7 @@ import {
     getFormTransliteration
 } from '../utils';
 import ReferenceFormsPreview, { getReferencePreviewMatchedForms } from './ReferenceFormsPreview';
-import { BookOpen, ChevronDown, ChevronUp } from './Icons';
+import { BookOpen, ChevronDown, ChevronUp, TranslateCherokee } from './Icons';
 
 export interface VerbPreviewProps {
     rootEntry: RootEntry;
@@ -124,11 +124,13 @@ export const VerbPreview: React.FC<VerbPreviewProps> = ({
     }, [packages, importedData, entry]);
 
     const presGroups = useMemo(() => {
-        const seg = rootEntry.segmented_forms?.present;
-        return seg ? segmentVerbForm(seg, 'present', rootEntry.config, rootEntry.class_name, rootEntry.post_root_morpheme) : null;
+        const baseSlot = (entry.is_combined_part_b || rootEntry.is_combined_part_b) ? 'infinitive' : 'present';
+        const seg = rootEntry.segmented_forms?.[baseSlot] || rootEntry.segmented_forms?.present;
+        return seg ? segmentVerbForm(seg, baseSlot, rootEntry.config, rootEntry.class_name, rootEntry.post_root_morpheme) : null;
     }, [rootEntry]);
 
-    const pronounSet = rootEntry.config?.pron?.set_type === 'b' ? 'B' : 'A';
+    const baseSlot = (entry.is_combined_part_b || rootEntry.is_combined_part_b) ? 'infinitive' : 'present';
+    const pronounSet = (entry.is_combined_part_b || rootEntry.is_combined_part_b) ? 'B' : (rootEntry.config?.pron?.set_type === 'b' ? 'B' : 'A');
 
     return (
         <div className={`border-t border-slate-200 dark:border-slate-800 pt-6 first:border-t-0 first:pt-0 ${className}`}>
@@ -139,22 +141,30 @@ export const VerbPreview: React.FC<VerbPreviewProps> = ({
                     onClick={() => onViewEntry(entry)}
                 >
                     <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200 leading-snug mb-1 group-hover/item:text-amber-600 dark:group-hover/item:text-amber-400 transition-colors">
+                        {entry.is_combined_part_b && entry.definition_source_type && (
+                            <span className="block text-[10px] font-sans font-bold uppercase tracking-wider text-amber-700/80 dark:text-amber-400/80 mb-0.5">
+                                {entry.definition_source_type === 'infinitive' ? 'Infinitive definition:' : 'Parent definition:'}
+                            </span>
+                        )}
                         {renderStyledText(entry.Definition || '')}
                     </h2>
                     <div className="flex items-baseline gap-2.5 flex-wrap">
                         {entry.Syllabary && (
                             <span className="font-noto-cherokee text-base font-bold text-slate-800 dark:text-slate-200">
-                                {entry.Syllabary}
+                                <span>{entry.Syllabary}</span>
+                                {entry.is_auto_syllabary && (
+                                    <TranslateCherokee size={14} className="inline-block ml-1 text-amber-600 dark:text-amber-400 shrink-0 opacity-85" title="Auto-transliterated syllabary" />
+                                )}
                             </span>
                         )}
                         <span className="text-sm font-noto-serif text-amber-700 dark:text-amber-400 font-bold">
                             {(() => {
-                                const presSegs = resolveRoleTaggedSegments(null, rootEntry, 'present', settings);
+                                const presSegs = resolveRoleTaggedSegments(null, rootEntry, baseSlot, settings);
                                 return presSegs
                                     ? renderSegmentedSurface(presSegs, isColored)
                                     : (presGroups
                                         ? renderColorizedCherokee(entry.Entry, presGroups, pronounSet, isColored)
-                                        : (getFormTransliteration(null, rootEntry, 'present', settings) || rootEntry.surface_spelling || entry.Entry));
+                                        : (getFormTransliteration(null, rootEntry, baseSlot, settings) || rootEntry.surface_spelling || entry.Entry));
                             })()}
                         </span>
                     </div>
@@ -197,7 +207,7 @@ export const VerbPreview: React.FC<VerbPreviewProps> = ({
                     <div className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-3 px-1">
                         CED Conjugations
                     </div>
-                    {finalCedForms.length > 0 && getReferencePreviewMatchedForms(finalCedForms, entry, rootEntry).hasMiniPreview ? (
+                    {finalCedForms.length > 0 && getReferencePreviewMatchedForms(finalCedForms, entry, rootEntry, settings).hasMiniPreview ? (
                         <ReferenceFormsPreview
                             forms={finalCedForms}
                             entry={entry}

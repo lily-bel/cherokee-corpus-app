@@ -3,7 +3,7 @@ import { ArrowLeft, Menu, Share } from './Icons';
 import { UserAuthButton } from './UI';
 import { useCorpus } from './CorpusContext';
 import VerbPreview from './VerbPreview';
-import { isEmptyRoot } from '../utils';
+import { isEmptyRoot, getCombinedCedVerbsMode } from '../utils';
 
 interface RootViewProps {
     slug: string;
@@ -27,14 +27,16 @@ const RootView: React.FC<RootViewProps> = ({ slug, onClose, onViewEntry, onViewC
 
     const rootEntries = useMemo(() => {
         if (!slug) return [];
+        const includePartB = getCombinedCedVerbsMode(settings) === 'full';
+        const filterFn = (list: any[]) => includePartB ? list : list.filter(r => !r.is_combined_part_b);
         const direct = groupedRootsMap.get(slug);
-        if (direct && direct.length > 0) return direct;
+        if (direct && direct.length > 0) return filterFn(direct);
         const lower = slug.toLowerCase();
         for (const [key, entries] of groupedRootsMap.entries()) {
-            if (key.toLowerCase() === lower) return entries;
+            if (key.toLowerCase() === lower) return filterFn(entries);
         }
         return [];
-    }, [slug, groupedRootsMap]);
+    }, [slug, groupedRootsMap, settings]);
 
     const rootInfo = rootEntries[0];
 

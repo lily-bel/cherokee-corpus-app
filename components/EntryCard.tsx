@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { StickyNote, ListIcon, Mic, SquaresPlus } from './Icons';
+import { StickyNote, ListIcon, Mic, SquaresPlus, TranslateCherokee } from './Icons';
 import { SourceBadge } from './UI';
 import { useCorpus } from './CorpusContext';
 import { renderColorizedCherokee, renderSegmentedSurface, projectSegmentsOntoTone, segmentVerbForm, deriveSegmentedForm, getFormPronominalSet, VerbMorphologyTemplate, isFormAudio, resolveRoleTaggedSegments, getTransliterationStyleSetting, hasToneMarks } from '../utils';
@@ -72,13 +72,14 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
 
   const entryId = entry.id || entry.Index || entry.merged_id;
   const rootEntry = entry.rootEntry || (entryId ? rootMap?.get(entryId) : null);
+  const baseSlot = (entry.is_combined_part_b || rootEntry?.is_combined_part_b) ? 'infinitive' : 'present';
 
-  const mainPresSeg = rootEntry?.segmented_forms?.present;
+  const mainPresSeg = rootEntry?.segmented_forms?.[baseSlot] || rootEntry?.segmented_forms?.present;
   const mainPresGroups = useMemo(() => {
     if (!rootEntry || !mainPresSeg) return null;
-    return segmentVerbForm(mainPresSeg, 'present', rootEntry.config, rootEntry.class_name, rootEntry.post_root_morpheme);
-  }, [rootEntry, mainPresSeg]);
-  const mainPronounSet = rootEntry?.config?.pron?.set_type === 'b' ? 'B' : 'A';
+    return segmentVerbForm(mainPresSeg, baseSlot, rootEntry.config, rootEntry.class_name, rootEntry.post_root_morpheme);
+  }, [rootEntry, mainPresSeg, baseSlot]);
+  const mainPronounSet = (entry.is_combined_part_b || rootEntry?.is_combined_part_b) ? 'B' : (rootEntry?.config?.pron?.set_type === 'b' ? 'B' : 'A');
 
   const matchedHdSegments = useMemo(() => {
     if (!rootEntry || !entry.matchedForm) return null;
@@ -146,8 +147,8 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
   }, [entryId, entry.Index, wordFormsByWordIndex, userWordForms]);
 
   const { hasMiniPreview } = useMemo(() => {
-    return getReferencePreviewMatchedForms(entryForms, entry, rootEntry);
-  }, [entryForms, entry, rootEntry]);
+    return getReferencePreviewMatchedForms(entryForms, entry, rootEntry, settings);
+  }, [entryForms, entry, rootEntry, settings]);
 
   // --- Audio Colors ---
 
@@ -250,10 +251,17 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
               </div>
             ) : (
               <div className="flex-1 min-w-0 flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-                {entry.Syllabary && <span className="font-noto-cherokee text-lg font-bold text-slate-800 dark:text-slate-100">{entry.Syllabary}</span>}
+                {entry.Syllabary && (
+                  <span className="font-noto-cherokee text-lg font-bold text-slate-800 dark:text-slate-100 inline-flex items-center gap-1">
+                    <span>{entry.Syllabary}</span>
+                    {entry.is_auto_syllabary && (
+                      <TranslateCherokee size={14} className="text-amber-600 dark:text-amber-400 shrink-0 opacity-85" title="Auto-transliterated syllabary" />
+                    )}
+                  </span>
+                )}
                 <span className="font-noto-serif text-base text-amber-700 dark:text-amber-400 font-bold [overflow-wrap:anywhere] [word-break:normal]">
-                  {resolveRoleTaggedSegments(null, rootEntry, 'present', settings)
-                    ? renderSegmentedSurface(resolveRoleTaggedSegments(null, rootEntry, 'present', settings), isColored)
+                  {resolveRoleTaggedSegments(null, rootEntry, baseSlot, settings)
+                    ? renderSegmentedSurface(resolveRoleTaggedSegments(null, rootEntry, baseSlot, settings), isColored)
                     : (rootEntry && mainPresGroups
                       ? renderColorizedCherokee(entry.Entry, mainPresGroups, mainPronounSet, isColored)
                       : entry.Entry)}
@@ -285,8 +293,8 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
                           : matchedHdSegments,
                         isColored
                       )
-                    : (entry.matchedForm.translit === entry.Entry && rootEntry?.surface_segments?.present
-                      ? renderSegmentedSurface(resolveRoleTaggedSegments(null, rootEntry, 'present', settings), isColored)
+                    : (entry.matchedForm.translit === entry.Entry && rootEntry?.surface_segments?.[baseSlot]
+                      ? renderSegmentedSurface(resolveRoleTaggedSegments(null, rootEntry, baseSlot, settings), isColored)
                       : (rootEntry && matchedFormGroups
                         ? renderColorizedCherokee(entry.matchedForm.translit, matchedFormGroups, matchedPronounSet, isColored)
                         : entry.matchedForm.translit))}
@@ -295,6 +303,11 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
             </div>
           )}
           <p className="font-noto-serif text-slate-600 dark:text-slate-400 text-xs line-clamp-2">
+            {entry.is_combined_part_b && entry.definition_source_type && (
+              <span className="font-sans font-bold uppercase tracking-wider text-[10px] text-amber-700/80 dark:text-amber-400/80 mr-1.5">
+                {entry.definition_source_type === 'infinitive' ? 'Infinitive definition:' : 'Parent definition:'}
+              </span>
+            )}
             {entry.Definition}
             {/* PoS Moved After Definition */}
             {showPos && entry.PoS && <span className="text-slate-400 dark:text-slate-500 italic ml-1 lowercase">({entry.PoS})</span>}

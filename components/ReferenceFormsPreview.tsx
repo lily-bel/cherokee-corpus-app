@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { Volume2, Pause } from './Icons';
+import { Volume2, Pause, TranslateCherokee } from './Icons';
 import {
     renderColorizedCherokee,
     renderSegmentedSurface,
@@ -10,7 +10,7 @@ import {
     cleanStr,
     SegmentGroup,
     resolveRoleTaggedSegments,
-    getSeparateStativeShimsSetting,
+    getCombinedCedVerbsMode,
     getTransliterationStyleSetting,
     hasToneMarks,
     getFormTransliteration
@@ -79,6 +79,10 @@ export interface ReferenceFormCardData {
     category: 'p2p' | 'ab' | 'set_b' | 'noun';
     form?: any;
     pronominalSet: 'A' | 'B' | 'P2P';
+    crossRef?: {
+        label: string;
+        targetId: string;
+    };
 }
 
 interface ReferenceFormsPreviewProps {
@@ -105,9 +109,10 @@ export interface ReferencePreviewRow {
 }
 
 export function getReferencePreviewMatchedForms(
-    forms: any[] = [],
+    rawFormsInput: any[] = [],
     entry?: any,
-    rootEntry?: any
+    rootEntry?: any,
+    settings?: any
 ): {
     rows: ReferencePreviewRow[];
     displayedCards: ReferenceFormCardData[];
@@ -115,6 +120,24 @@ export function getReferencePreviewMatchedForms(
     hasMiniPreview: boolean;
 } {
     const verbConfig = rootEntry?.config || entry?.config;
+    const isPartB = Boolean(entry?.is_combined_part_b || rootEntry?.is_combined_part_b);
+    const combinedMode = getCombinedCedVerbsMode(settings);
+    const isParentWithPartB = !isPartB && Boolean(entry?.combined_part_b_id || (Array.isArray(entry?.shim_forms) && entry.shim_forms.length > 0) || (Array.isArray(rootEntry?.shim_forms) && rootEntry.shim_forms.length > 0));
+    const hidePartBFromParent = isParentWithPartB && combinedMode === 'full';
+
+    const shimFormsSet = new Set<string>(
+        (entry?.shim_forms || rootEntry?.shim_forms || []).map((s: string) => s.toLowerCase())
+    );
+
+    const forms = hidePartBFromParent
+        ? rawFormsInput.filter(f => {
+            if (f.is_shim) return false;
+            const k = (f.normalized_key || f.form_name || '').toLowerCase();
+            if (k.includes('infinitive') && shimFormsSet.has('infinitive')) return false;
+            if (k.includes('imperative') && !k.includes('3a') && !k.includes('animate') && shimFormsSet.has('imperative')) return false;
+            return true;
+        })
+        : rawFormsInput;
 
     // Helper to find a form matching normalized_key or label
     const findForm = (
@@ -245,7 +268,7 @@ export function getReferencePreviewMatchedForms(
             ['3s|3s|present', '3s|present'],
             ['3rd present', '3rd person singular present']
         );
-        const pres3 = pPres3 || (entry && !forms.some(f => (f.normalized_key || f.form_name) === '3s|3s|present') ? {
+        const pres3 = pPres3 || (!isPartB && entry && !forms.some(f => (f.normalized_key || f.form_name) === '3s|3s|present') ? {
             translit: entry.Entry || entry.translit,
             tone: entry.Entry_Tone || entry.tone,
             tone2: entry.Entry_Tone || entry.tone2,
@@ -260,16 +283,27 @@ export function getReferencePreviewMatchedForms(
         );
 
         // Slot 7 & 8: Always Set B
-        const inf3 = findForm(
+        const pInf3 = findForm(
             ['3s|3s|infinitive', '3s|infinitive'],
             ['infinitive', '3rd person singular infinitive']
         );
+        const inf3 = pInf3 || (isPartB && entry && !forms.some(f => (f.normalized_key || f.form_name || '').includes('infinitive')) ? {
+            translit: entry.Entry || entry.translit,
+            tone: entry.Entry_Tone || entry.tone,
+            tone2: entry.Entry_Tone || entry.tone2,
+            syllabary: entry.Syllabary || entry.syllabary,
+            is_auto_syllabary: entry.is_auto_syllabary,
+            audio: entry.Entry_Audio || entry.audio,
+            form_name: '3s|3s|infinitive'
+        } : undefined);
         const past3 = findForm(
             ['3s|3s|completive past', '3s|3s|past', '3s|past', 'completive past'],
             ['completive past', 'remote past', '3rd past']
         );
 
         const defaultAbPronounSet: 'A' | 'B' = verbConfig?.pron?.set_type === 'b' ? 'B' : 'A';
+        const partBCrossRefId = entry?.combined_part_b_id || ((entry?.id || entry?.Index) ? `${entry.id || entry.Index}_b` : '');
+        const partACrossRefId = entry?.combined_parent_id || ((entry?.id || entry?.Index || '').replace(/_b$/, ''));
 
         // Row 1: Person-to-person (only if at least one P2P form is present)
         if (p2p1 || p2p2) {
@@ -293,7 +327,18 @@ export function getReferencePreviewMatchedForms(
         }
 
         // Row 2: 1st present & 2nd imperative
-        if (pres1 || imp2) {
+        const imp2CrossRef = (!imp2 && hidePartBFromParent && shimFormsSet.has('imperative') && partBCrossRefId) ? {
+            slotKey: '2s|3s|imperative',
+            label: '2nd imperative',
+            category: 'ab' as const,
+            pronominalSet: defaultAbPronounSet,
+            crossRef: {
+                label: 'See CED Entry Part B',
+                targetId: partBCrossRefId
+            }
+        } : null;
+
+        if (pres1 || imp2 || imp2CrossRef) {
             const hasAnimateContrast = !!(p2p1 || p2p2);
             rows.push({
                 category: 'ab',
@@ -310,12 +355,23 @@ export function getReferencePreviewMatchedForms(
                     category: 'ab',
                     form: imp2,
                     pronominalSet: defaultAbPronounSet
-                } : null
+                } : imp2CrossRef
             });
         }
 
         // Row 3: 3rd present & 3rd habitual
-        if (pres3 || hab3) {
+        const pres3CrossRef = (!pres3 && isPartB && partACrossRefId) ? {
+            slotKey: '3s|3s|present',
+            label: '3rd present',
+            category: 'ab' as const,
+            pronominalSet: defaultAbPronounSet,
+            crossRef: {
+                label: 'See CED Entry Part A',
+                targetId: partACrossRefId
+            }
+        } : null;
+
+        if (pres3 || hab3 || pres3CrossRef) {
             rows.push({
                 category: 'ab',
                 left: pres3 ? {
@@ -324,7 +380,7 @@ export function getReferencePreviewMatchedForms(
                     category: 'ab',
                     form: pres3,
                     pronominalSet: defaultAbPronounSet
-                } : null,
+                } : pres3CrossRef,
                 right: hab3 ? {
                     slotKey: '3s|3s|habitual',
                     label: '3rd habitual',
@@ -336,7 +392,18 @@ export function getReferencePreviewMatchedForms(
         }
 
         // Row 4: 3rd infinitive & 3rd past
-        if (inf3 || past3) {
+        const inf3CrossRef = (!inf3 && hidePartBFromParent && shimFormsSet.has('infinitive') && partBCrossRefId) ? {
+            slotKey: '3s|3s|infinitive',
+            label: '3rd infinitive',
+            category: 'set_b' as const,
+            pronominalSet: 'B' as const,
+            crossRef: {
+                label: 'See CED Entry Part B',
+                targetId: partBCrossRefId
+            }
+        } : null;
+
+        if (inf3 || past3 || inf3CrossRef) {
             rows.push({
                 category: 'set_b',
                 left: inf3 ? {
@@ -345,7 +412,7 @@ export function getReferencePreviewMatchedForms(
                     category: 'set_b',
                     form: inf3,
                     pronominalSet: 'B'
-                } : null,
+                } : inf3CrossRef,
                 right: past3 ? {
                     slotKey: '3s|3s|completive past',
                     label: '3rd past',
@@ -356,11 +423,11 @@ export function getReferencePreviewMatchedForms(
             });
         }
 
-        matchedForms = new Set([p2p1, p2p2, pres1, imp2, pPres3, hab3, inf3, past3].filter(Boolean));
+        matchedForms = new Set([p2p1, p2p2, pres1, imp2, pPres3, hab3, pInf3, past3].filter(Boolean));
     }
 
-    const displayedCards = rows.flatMap(r => [r.left, r.right]).filter((c): c is ReferenceFormCardData => c != null && c.form != null);
-    const hasMiniPreview = displayedCards.length > 1;
+    const displayedCards = rows.flatMap(r => [r.left, r.right]).filter((c): c is ReferenceFormCardData => c != null && (c.form != null || c.crossRef != null));
+    const hasMiniPreview = isPartB ? displayedCards.length >= 1 : displayedCards.length > 1;
 
     return {
         rows,
@@ -397,10 +464,12 @@ export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
     } catch (_) {}
 
     let corpusAudioMeta: Record<string, any[]> = {};
+    let corpusDictionaryMap: Map<string, any> | undefined;
     try {
         const corpus = useCorpus();
         if (corpus) {
             corpusAudioMeta = corpus.userAudioMeta;
+            corpusDictionaryMap = corpus.dictionaryMap;
         }
     } catch (_) {}
 
@@ -571,14 +640,39 @@ export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
     };
 
     const { rows, hasMiniPreview } = useMemo(() => {
-        return getReferencePreviewMatchedForms(forms, entry, rootEntry);
-    }, [forms, entry, rootEntry]);
+        return getReferencePreviewMatchedForms(forms, entry, rootEntry, settings);
+    }, [forms, entry, rootEntry, settings]);
 
     if (!hasMiniPreview) {
         return null;
     }
 
     const renderCard = (cardData: ReferenceFormCardData | null, fallbackKey: string) => {
+        if (cardData && cardData.crossRef && !cardData.form) {
+            const style = CATEGORY_STYLES[cardData.category] || CATEGORY_STYLES.ab;
+            return (
+                <button
+                    key={cardData.slotKey}
+                    type="button"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        const target = corpusDictionaryMap?.get(cardData.crossRef!.targetId);
+                        if (target && _onViewEntry) {
+                            _onViewEntry(target);
+                        }
+                    }}
+                    className="p-3 rounded-xl border-2 border-dashed border-amber-300/80 dark:border-amber-700/60 hover:border-amber-500 dark:hover:border-amber-500 hover:bg-amber-50/40 dark:hover:bg-amber-900/20 flex flex-col justify-between items-start text-left transition-all min-h-[84px] cursor-pointer group"
+                >
+                    <span className={`text-[10px] sm:text-[11px] uppercase tracking-wider truncate leading-tight ${style.label}`}>
+                        {cardData.label}
+                    </span>
+                    <span className="text-xs font-bold text-amber-700 dark:text-amber-400 group-hover:underline my-auto">
+                        {cardData.crossRef.label} →
+                    </span>
+                </button>
+            );
+        }
+
         if (!cardData || !cardData.form) {
             return (
                 <div
@@ -722,14 +816,18 @@ export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
                 </div>
 
                 {/* Swapped: Syllabary on bottom */}
-                <div className={`font-noto-cherokee text-lg sm:text-xl font-medium leading-tight truncate mt-0.5 ${style.syllabary}`}>
-                    {syllabary}
+                <div className={`font-noto-cherokee text-lg sm:text-xl font-medium leading-tight truncate mt-0.5 flex items-center gap-1.5 ${style.syllabary}`}>
+                    <span className="truncate">{syllabary}</span>
+                    {form.is_auto_syllabary && (
+                        <TranslateCherokee size={14} className="inline-block text-amber-600 dark:text-amber-400 opacity-80 shrink-0" title="Auto-transliterated syllabary" />
+                    )}
                 </div>
             </div>
         );
     };
 
-    const separateShims = getSeparateStativeShimsSetting(settings);
+    const combinedMode = getCombinedCedVerbsMode(settings);
+    const separateFormsInEntry = combinedMode === 'forms' && !entry?.is_combined_part_b && !rootEntry?.is_combined_part_b;
     const isCardShim = (card: ReferenceFormCardData | null): boolean => {
         if (!card || !card.form) return false;
         if (card.form.is_shim) return true;
@@ -737,11 +835,11 @@ export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
         return Boolean(hdName && rootEntry?.shim_forms?.includes(hdName));
     };
 
-    const shimCards = separateShims
+    const shimCards = separateFormsInEntry
         ? rows.flatMap(r => [r.left, r.right]).filter((c): c is ReferenceFormCardData => c != null && isCardShim(c))
         : [];
 
-    const mainRows = separateShims && shimCards.length > 0
+    const mainRows = separateFormsInEntry && shimCards.length > 0
         ? rows.map(r => ({
             ...r,
             left: isCardShim(r.left) ? null : r.left,
@@ -765,7 +863,7 @@ export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
             {shimCards.length > 0 && (
                 <div className="pt-2 border-t border-dashed border-slate-200 dark:border-slate-700/70">
                     <div className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 mb-2 px-0.5">
-                        Eventive Shim Derivation{shimClass ? ` (${shimClass})` : ''}
+                        Combined CED Verb — Part B{shimClass ? ` (${shimClass})` : ''}
                     </div>
                     <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
                         {shimCards.map((card, idx) => renderCard(card, `shim-${idx}`))}
@@ -809,8 +907,8 @@ export const DesktopHorizontalFormsStrip: React.FC<DesktopHorizontalFormsStripPr
     const verbConfig = rootEntry?.config || entry?.config;
 
     const { displayedCards, hasMiniPreview } = useMemo(() => {
-        return getReferencePreviewMatchedForms(forms, entry, rootEntry);
-    }, [forms, entry, rootEntry]);
+        return getReferencePreviewMatchedForms(forms, entry, rootEntry, settings);
+    }, [forms, entry, rootEntry, settings]);
 
     if (!hasMiniPreview || displayedCards.length === 0) {
         return null;
@@ -822,7 +920,11 @@ export const DesktopHorizontalFormsStrip: React.FC<DesktopHorizontalFormsStripPr
 
     const renderCardCell = (cardData: ReferenceFormCardData) => {
         const { form, label, category, pronominalSet } = cardData;
+        if (!form) return null;
+
         const style = CATEGORY_STYLES[category] || CATEGORY_STYLES.ab;
+        const compactLabel = COMPACT_SLOT_LABELS[cardData.slotKey] || label;
+
         const hdFormName = SLOT_TO_HD_FORM[cardData.slotKey];
         const hdSegments = resolveRoleTaggedSegments(form, rootEntry, hdFormName, settings);
 
@@ -849,8 +951,6 @@ export const DesktopHorizontalFormsStrip: React.FC<DesktopHorizontalFormsStripPr
             }
         }
 
-        const compactLabel = COMPACT_SLOT_LABELS[cardData.slotKey] || label;
-
         return (
             <div
                 key={cardData.slotKey}
@@ -876,8 +976,11 @@ export const DesktopHorizontalFormsStrip: React.FC<DesktopHorizontalFormsStripPr
                     )}
                 </div>
                 {syllabary && (
-                    <span className={`font-noto-cherokee text-[11px] leading-snug break-words mt-0.5 ${style.syllabary}`}>
-                        {syllabary}
+                    <span className={`font-noto-cherokee text-[11px] leading-snug break-words mt-0.5 inline-flex items-center justify-center gap-0.5 ${style.syllabary}`}>
+                        <span>{syllabary}</span>
+                        {form.is_auto_syllabary && (
+                            <TranslateCherokee size={10} className="inline-block text-amber-600 dark:text-amber-400 opacity-80 shrink-0" title="Auto-transliterated syllabary" />
+                        )}
                     </span>
                 )}
             </div>
@@ -892,7 +995,7 @@ export const DesktopHorizontalFormsStrip: React.FC<DesktopHorizontalFormsStripPr
         >
             {slotsToRender.map(slotKey => {
                 const card = cardsBySlot.get(slotKey);
-                if (!card) {
+                if (!card || !card.form) {
                     return (
                         <div
                             key={`empty-${slotKey}`}

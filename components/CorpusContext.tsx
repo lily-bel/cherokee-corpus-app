@@ -40,6 +40,12 @@ export interface DictionaryEntry {
     segmented_surface?: Record<string, string>;
     shim_forms?: string[];
     shim_class?: string;
+    is_combined_part_b?: boolean;
+    combined_parent_id?: string;
+    combined_part_b_id?: string;
+    definition_source_type?: 'infinitive' | 'parent';
+    is_auto_syllabary?: boolean;
+    base_form_slot?: string;
 }
 
 export interface SurfaceSegment {
@@ -406,17 +412,27 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             if (d.Index) dMap.set(d.Index, d);
             if ((d as any).merged_id) dMap.set((d as any).merged_id, d);
 
-            // Also index by lily-dict Index for root mapping
-            const lilyIndex = (d as any).sources?.['lily-dict.csv']?.Index;
+            const isPartB = Boolean((d as any).is_combined_part_b);
+
+            // Also index by lily-dict Index for root mapping (only for primary entry)
+            const lilyIndex = !isPartB ? (d as any).sources?.['lily-dict.csv']?.Index : undefined;
             if (lilyIndex) dMap.set(lilyIndex, d);
 
             // Extract Root Info from hierarchical-dict or direct slug
             const hd = (d as any).sources?.['hierarchical-dict.json'];
             const slugVal = hd?.slug || (d as any).slug || hd?.root_slug || (d as any).root_slug;
-            const rootH = hd?.h_grade_root || (d as any).root_h || (d as any).h_grade_root || '';
-            const rootG = hd?.glottal_grade_root || (d as any).root_g || (d as any).glottal_grade_root || '';
-            const className = hd?.class_name || (d as any).class_name || '';
-            const classMascot = hd?.class_mascot || (d as any).class_mascot || '';
+            const rootH = isPartB
+                ? (hd?.['shim.morphology.h_grade_root'] || hd?.h_grade_root || (d as any).root_h || '')
+                : (hd?.h_grade_root || (d as any).root_h || (d as any).h_grade_root || '');
+            const rootG = isPartB
+                ? (hd?.['shim.morphology.glottal_grade_root'] || hd?.glottal_grade_root || (d as any).root_g || '')
+                : (hd?.glottal_grade_root || (d as any).root_g || (d as any).glottal_grade_root || '');
+            const className = isPartB
+                ? (hd?.['shim.morphology.class_name'] || (d as any).shim_class || (d as any).class_name || '')
+                : (hd?.class_name || (d as any).class_name || '');
+            const classMascot = isPartB
+                ? (className ? getClassMascot(className) || '' : '')
+                : (hd?.class_mascot || (d as any).class_mascot || '');
             const surfaceSpelling = (d as any).surface_spelling || hd?.surface_spelling || '';
             const surfaceForms = (d as any).surface_forms || hd?.surface_forms || undefined;
             const surfaceSegments = (d as any).surface_segments || hd?.surface_segments || undefined;
@@ -430,7 +446,7 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                     root_g: rootG,
                     root_slug: rootSlug,
                     slug: rootSlug,
-                    definition: hd?.definition || d.Definition || (d as any).definition || '',
+                    definition: isPartB ? (d.Definition || (d as any).definition || '') : (hd?.definition || d.Definition || (d as any).definition || ''),
                     class_name: className,
                     class_mascot: classMascot,
                     surface_spelling: surfaceSpelling,
@@ -442,7 +458,18 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                     segmented_surface: (d as any).segmented_surface || hd?.segmented_surface || undefined,
                     shim_forms: (d as any).shim_forms || hd?.shim_forms || undefined,
                     shim_class: hd?.['shim.morphology.class_name'] || (d as any)?.['shim.morphology.class_name'] || undefined,
-                    segmented_forms: {
+                    is_combined_part_b: isPartB,
+                    combined_parent_id: (d as any).combined_parent_id,
+                    combined_part_b_id: (d as any).combined_part_b_id,
+                    base_form_slot: (d as any).base_form_slot,
+                    segmented_forms: isPartB ? {
+                        present: '',
+                        present_1sg: '',
+                        imperfective: '',
+                        perfective: '',
+                        imperative: ((d as any).shim_forms?.includes('imperative')) ? (hd?.['shim.segmented_forms.imperative'] || hd?.['segmented_forms.imperative'] || '') : '',
+                        infinitive: ((d as any).shim_forms?.includes('infinitive')) ? (hd?.['shim.segmented_forms.infinitive'] || hd?.['segmented_forms.infinitive'] || '') : ''
+                    } : {
                         present: hd?.['segmented_forms.present'] || hd?.['morphology.segmented_forms.present'] || hd?.['shim.segmented_forms.present'] || hd?.segmented_forms?.present || (d as any)?.segmented_forms?.present || (d as any)?.['segmented_forms.present'] || '',
                         present_1sg: hd?.['segmented_forms.present_1sg'] || hd?.['morphology.segmented_forms.present_1sg'] || hd?.['shim.segmented_forms.present_1sg'] || hd?.segmented_forms?.present_1sg || (d as any)?.segmented_forms?.present_1sg || (d as any)?.['segmented_forms.present_1sg'] || '',
                         imperfective: hd?.['segmented_forms.imperfective'] || hd?.['morphology.segmented_forms.imperfective'] || hd?.['shim.segmented_forms.imperfective'] || hd?.segmented_forms?.imperfective || (d as any)?.segmented_forms?.imperfective || (d as any)?.['segmented_forms.imperfective'] || '',
@@ -450,7 +477,22 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                         imperative: hd?.['segmented_forms.imperative'] || hd?.['morphology.segmented_forms.imperative'] || hd?.['shim.segmented_forms.imperative'] || hd?.segmented_forms?.imperative || (d as any)?.segmented_forms?.imperative || (d as any)?.['segmented_forms.imperative'] || '',
                         infinitive: hd?.['segmented_forms.infinitive'] || hd?.['morphology.segmented_forms.infinitive'] || hd?.['shim.segmented_forms.infinitive'] || hd?.segmented_forms?.infinitive || (d as any)?.segmented_forms?.infinitive || (d as any)?.['segmented_forms.infinitive'] || ''
                     },
-                    config: {
+                    config: isPartB ? {
+                        pre: {
+                            distributive: hd?.['shim.morphology.config.pre.distributive'] === true || hd?.['shim.morphology.config.pre.distributive'] === 'true',
+                            translocutive: hd?.['shim.morphology.config.pre.translocutive'] === true || hd?.['shim.morphology.config.pre.translocutive'] === 'true',
+                            translocutiveImpOnly: hd?.['shim.morphology.config.pre.translocutiveImpOnly'] === true || hd?.['shim.morphology.config.pre.translocutiveImpOnly'] === 'true',
+                            partitive: hd?.['shim.morphology.config.pre.partitive'] === true || hd?.['shim.morphology.config.pre.partitive'] === 'true'
+                        },
+                        pron: {
+                            set_type: hd?.['shim.morphology.config.pron.set_type'] || 'a',
+                            stem_type: hd?.['shim.morphology.config.pron.stem_type'] || '',
+                            use_ka_variant: hd?.['shim.morphology.config.pron.use_ka_variant'] === true || hd?.['shim.morphology.config.pron.use_ka_variant'] === 'true',
+                            plural_pronouns: hd?.['shim.morphology.config.pron.plural_pronouns'] === true || hd?.['shim.morphology.config.pron.plural_pronouns'] === 'true',
+                            middle_voice: hd?.['shim.morphology.config.pron.middle_voice'] || 'none',
+                            use_3rd_person_object: hd?.['shim.morphology.config.pron.use_3rd_person_object'] === true || hd?.['shim.morphology.config.pron.use_3rd_person_object'] === 'true'
+                        }
+                    } : {
                         pre: {
                             distributive: hd?.['config.pre.distributive'] === true || hd?.['config.pre.distributive'] === 'true' || (d as any)?.['config.pre.distributive'] === true || (d as any)?.config?.pre?.distributive === true,
                             translocutive: hd?.['config.pre.translocutive'] === true || hd?.['config.pre.translocutive'] === 'true' || (d as any)?.['config.pre.translocutive'] === true || (d as any)?.config?.pre?.translocutive === true,
@@ -466,7 +508,9 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                             use_3rd_person_object: hd?.['config.pron.use_3rd_person_object'] === true || hd?.['config.pron.use_3rd_person_object'] === 'true' || (d as any)?.['config.pron.use_3rd_person_object'] === true || (d as any)?.config?.pron?.use_3rd_person_object === true
                         }
                     },
-                    post_root_morpheme: hd?.['post_root_morpheme'] || hd?.['morphology.post_root_morpheme'] || (d as any).post_root_morpheme || hd?.['shim.morphology.post_root_morpheme'] || (d as any)?.['morphology.post_root_morpheme'] || null,
+                    post_root_morpheme: isPartB
+                        ? (hd?.['shim.morphology.post_root_morpheme'] || null)
+                        : (hd?.['post_root_morpheme'] || hd?.['morphology.post_root_morpheme'] || (d as any).post_root_morpheme || null),
                     _is_transitive: hd?.['_is_transitive'] === true || hd?.['_is_transitive'] === 'true' || (d as any)?._is_transitive === true
                 };
                 

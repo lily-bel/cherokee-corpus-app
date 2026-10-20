@@ -3,6 +3,7 @@ import { ArrowLeft, Menu, Share } from './Icons';
 import { UserAuthButton } from './UI';
 import { useCorpus } from './CorpusContext';
 import VerbPreview from './VerbPreview';
+import { getCombinedCedVerbsMode } from '../utils';
 import { 
     getParentClassName, 
     getAspectClass, 
@@ -86,12 +87,14 @@ const ClassView: React.FC<ClassViewProps> = ({
 
     // 3. All verbs belonging to this parent class
     const allVerbsInClass = useMemo(() => {
+        const includePartB = getCombinedCedVerbsMode(settings) === 'full';
         return roots.filter(r => {
+            if (!includePartB && r.is_combined_part_b) return false;
             if (!r.class_name) return false;
             const parent = getParentClassName(r.class_name);
             return parent === parentClassName || r.class_name === parentClassName || r.class_name.startsWith(parentClassName + '-');
         });
-    }, [parentClassName, roots]);
+    }, [parentClassName, roots, settings]);
 
     // 4. Known Subclasses under this Class
     const subclassesList = useMemo(() => {

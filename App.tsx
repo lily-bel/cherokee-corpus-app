@@ -7,7 +7,7 @@ import EntryDetail from './components/EntryDetail';
 
 import PackageManagerTab from './components/PackageManagerTab';
 import { useCorpus } from './components/CorpusContext';
-import { downloadFile, performSearch, buildWordFormsLookupMap, isEmptyRoot, getFriendlyLabel, processFormsContextually } from './utils';
+import { downloadFile, performSearch, buildWordFormsLookupMap, isEmptyRoot, getFriendlyLabel, processFormsContextually, getCombinedCedVerbsMode, CombinedCedVerbsMode } from './utils';
 import { SentenceCard } from './components/SentenceCard';
 import WidgetsTab from './components/WidgetsTab';
 
@@ -39,6 +39,7 @@ const DEFAULT_SETTINGS = {
     colorWordSegments: true,
     showClassMascots: false,
     separateStativeShims: false,
+    combinedCedVerbs: 'none' as CombinedCedVerbsMode,
     dictionaryLevel: 'default' as 'basic' | 'default' | 'linguist',
     hideCustomization: false,
 };
@@ -107,6 +108,7 @@ function App() {
 
     const [settings, setSettings] = useState(DEFAULT_SETTINGS);
     const [showSettingsModal, setShowSettingsModal] = useState(false);
+    const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
     const [showSearchSettingsPopover, setShowSearchSettingsPopover] = useState(false);
 
     useEffect(() => {
@@ -776,7 +778,9 @@ function App() {
 
     const sourceStats = useMemo(() => {
         const counts = {};
+        const includePartB = getCombinedCedVerbsMode(settings) === 'full';
         allData.forEach(d => {
+            if (!includePartB && (d as any).is_combined_part_b) return;
             const src = d.Source;
             if (src) counts[src] = (counts[src] || 0) + 1;
         });
@@ -803,7 +807,7 @@ function App() {
         });
 
         return { counts, smallSourceCodes };
-    }, [allData, packages]);
+    }, [allData, packages, settings]);
 
     const sourceNames = useMemo(() => {
         const names: Record<string, string> = {};
@@ -1143,7 +1147,9 @@ function App() {
             return sentences.length + userSentences.length;
         }
 
+        const includePartB = getCombinedCedVerbsMode(settings) === 'full';
         return allData.reduce((acc, entry) => {
+            if (!includePartB && (entry as any).is_combined_part_b) return acc;
             if (posFilter !== "All" && entry.PoS !== posFilter) return acc;
             return acc + (isEntrySearchable(entry, settings) ? 1 : 0);
         }, 0);
@@ -2219,36 +2225,12 @@ function App() {
                                                 </div>
 
                                                 <div className="flex items-center justify-between pt-1">
-                                                    <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Enable Regex Search</span>
-                                                    <button
-                                                        onClick={() => setSettings(s => ({ ...s, enableRegex: !s.enableRegex }))}
-                                                        className={`transition-colors ${settings.enableRegex ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}
-                                                    >
-                                                        {settings.enableRegex ? <ToggleRight size={24} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={24} />}
-                                                    </button>
-                                                </div>
-
-                                                <div className="flex items-center justify-between">
                                                     <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Show Part of Speech</span>
                                                     <button
                                                         onClick={() => setSettings(s => ({ ...s, showPosInLists: !s.showPosInLists }))}
                                                         className={`transition-colors ${settings.showPosInLists ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}
                                                     >
                                                         {settings.showPosInLists ? <ToggleRight size={24} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={24} />}
-                                                    </button>
-                                                </div>
-
-                                                <div className={`flex items-center justify-between ${settings?.dictionaryLevel === 'basic' ? 'opacity-40 pointer-events-none' : ''}`}>
-                                                    <div className="flex flex-col">
-                                                        <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Show Root Headers</span>
-                                                        {settings?.dictionaryLevel === 'basic' && <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold">(Disabled in Basic Mode)</span>}
-                                                    </div>
-                                                    <button
-                                                        onClick={() => setSettings(s => ({ ...s, showRootHeaders: !s.showRootHeaders }))}
-                                                        disabled={settings?.dictionaryLevel === 'basic'}
-                                                        className={`transition-colors ${settings.showRootHeaders && settings?.dictionaryLevel !== 'basic' ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}
-                                                    >
-                                                        {settings.showRootHeaders && settings?.dictionaryLevel !== 'basic' ? <ToggleRight size={24} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={24} />}
                                                     </button>
                                                 </div>
 
@@ -2281,7 +2263,7 @@ function App() {
                                     } else {
                                         const itemId = item.id || item.Index || (item as any).merged_id;
                                         const rootEntry = itemId ? rootMap?.get(itemId) : null;
-                                        const showRootHeaders = settings?.dictionaryLevel !== 'basic' && settings?.showRootHeaders !== false;
+                                        const showRootHeaders = settings?.dictionaryLevel !== 'basic';
                                         
                                         // Look back to see if same root was rendered
                                         let showRootHeader = false;
@@ -2341,7 +2323,7 @@ function App() {
                                         
                                         const entryId = entry.id || entry.Index || (entry as any).merged_id;
                                         const rootEntry = entryId ? rootMap?.get(entryId) : null;
-                                        const showRootHeaders = settings?.dictionaryLevel !== 'basic' && settings?.showRootHeaders !== false;
+                                        const showRootHeaders = settings?.dictionaryLevel !== 'basic';
                                         let showRootHeader = false;
                                         if (rootEntry && showRootHeaders) {
                                             const prevItem = index > 0 ? array[index - 1] : null;
@@ -2705,7 +2687,12 @@ function App() {
                                             <button
                                                 key={level}
                                                 type="button"
-                                                onClick={() => setSettings(s => ({ ...s, dictionaryLevel: level, separateStativeShims: level === 'linguist' }))}
+                                                onClick={() => setSettings(s => ({
+                                                    ...s,
+                                                    dictionaryLevel: level,
+                                                    combinedCedVerbs: level === 'linguist' ? 'full' : s.combinedCedVerbs,
+                                                    separateStativeShims: level === 'linguist'
+                                                }))}
                                                 className={`py-2 px-2 rounded-lg font-bold transition-all text-center ${
                                                     isSelected
                                                         ? 'bg-amber-600 text-white shadow-sm'
@@ -2797,41 +2784,120 @@ function App() {
                                 </select>
                             </div>
                             <hr className="border-slate-100 dark:border-slate-800" />
-                            <div className="flex items-center justify-between">
-                                <div className="flex flex-col">
-                                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Show Tone in Reference Forms</span>
-                                    <span className="text-xs text-slate-400">Display tone diacritics in mini forms preview</span>
-                                </div>
-                                <button onClick={() => setSettings(s => ({ ...s, showToneInForms: s.showToneInForms === false ? true : false }))} className={`transition-colors ${settings.showToneInForms !== false ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}>
-                                    {settings.showToneInForms !== false ? <ToggleRight size={32} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={32} />}
+                            <div>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowAdvancedSettings(prev => !prev)}
+                                    className="w-full flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider transition-colors"
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <Sliders size={15} className="text-amber-600 dark:text-amber-400" />
+                                        Advanced Settings
+                                    </span>
+                                    {showAdvancedSettings ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
                                 </button>
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <div className="flex flex-col">
-                                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Color-Code Word Segments</span>
-                                    <span className="text-xs text-slate-400">Highlight prefixes (green), pronouns, and aspect endings</span>
-                                </div>
-                                <button onClick={() => setSettings(s => ({ ...s, colorWordSegments: s.colorWordSegments === false ? true : false }))} className={`transition-colors ${settings.colorWordSegments !== false ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}>
-                                    {settings.colorWordSegments !== false ? <ToggleRight size={32} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={32} />}
-                                </button>
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <div className="flex flex-col">
-                                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Show Aspect Class Mascots</span>
-                                    <span className="text-xs text-slate-400">Display the mascot verb under class names in verb breakdowns</span>
-                                </div>
-                                <button onClick={() => setSettings(s => ({ ...s, showClassMascots: !s.showClassMascots }))} className={`transition-colors ${settings.showClassMascots ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}>
-                                    {settings.showClassMascots ? <ToggleRight size={32} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={32} />}
-                                </button>
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <div className="flex flex-col pr-4">
-                                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Separate Stative Shim Forms</span>
-                                    <span className="text-xs text-slate-400">Display eventive imperative/infinitive shim derivations separately from stative verb paradigms (enabled by default in Linguist mode)</span>
-                                </div>
-                                <button onClick={() => setSettings(s => ({ ...s, separateStativeShims: !(s.separateStativeShims ?? (s.dictionaryLevel === 'linguist')) }))} className={`transition-colors shrink-0 ${(settings.separateStativeShims ?? (settings.dictionaryLevel === 'linguist')) ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}>
-                                    {(settings.separateStativeShims ?? (settings.dictionaryLevel === 'linguist')) ? <ToggleRight size={32} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={32} />}
-                                </button>
+
+                                {showAdvancedSettings && (
+                                    <div className="mt-3 p-4 bg-slate-50/60 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-5 animate-fade-in">
+                                        {/* Combined CED Verbs (3-option selector) */}
+                                        <div>
+                                            <label className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-1 block">Combined CED Verbs</label>
+                                            <p className="text-xs text-slate-400 mb-2.5">
+                                                Some entries in the 1975 Cherokee-English Dictionary combine a stative verb with a related eventive verb for the imperative and infinitive. Choose how to display them (defaults to Full Separation in Linguist mode).
+                                            </p>
+                                            <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 font-medium text-xs">
+                                                {([
+                                                    { value: 'none', label: 'No Separation' },
+                                                    { value: 'forms', label: 'Separate Forms' },
+                                                    { value: 'full', label: 'Full Separation' },
+                                                ] as const).map(opt => {
+                                                    const currentMode = getCombinedCedVerbsMode(settings);
+                                                    const isSelected = currentMode === opt.value;
+                                                    return (
+                                                        <button
+                                                            key={opt.value}
+                                                            type="button"
+                                                            onClick={() => setSettings(s => ({
+                                                                ...s,
+                                                                combinedCedVerbs: opt.value,
+                                                                separateStativeShims: opt.value !== 'none'
+                                                            }))}
+                                                            className={`py-2 px-2 rounded-lg font-bold transition-all text-center ${
+                                                                isSelected
+                                                                    ? 'bg-amber-600 text-white shadow-sm'
+                                                                    : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-slate-700/60'
+                                                            }`}
+                                                        >
+                                                            {opt.label}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+
+                                        <hr className="border-slate-200/70 dark:border-slate-800" />
+
+                                        {/* Enable Regex Search */}
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex flex-col pr-4">
+                                                <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Enable Regex Search</span>
+                                                <span className="text-xs text-slate-400">Allow regular expressions in dictionary and sentence searches</span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setSettings(s => ({ ...s, enableRegex: !s.enableRegex }))}
+                                                className={`transition-colors shrink-0 ${settings.enableRegex ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}
+                                            >
+                                                {settings.enableRegex ? <ToggleRight size={32} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={32} />}
+                                            </button>
+                                        </div>
+
+                                        {/* Show Tone in Reference Forms */}
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex flex-col pr-4">
+                                                <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Show Tone in Reference Forms</span>
+                                                <span className="text-xs text-slate-400">Display tone diacritics in mini forms preview</span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setSettings(s => ({ ...s, showToneInForms: s.showToneInForms === false ? true : false }))}
+                                                className={`transition-colors shrink-0 ${settings.showToneInForms !== false ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}
+                                            >
+                                                {settings.showToneInForms !== false ? <ToggleRight size={32} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={32} />}
+                                            </button>
+                                        </div>
+
+                                        {/* Color-Code Word Segments */}
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex flex-col pr-4">
+                                                <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Color-Code Word Segments</span>
+                                                <span className="text-xs text-slate-400">Highlight prefixes (green), pronouns, and aspect endings</span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setSettings(s => ({ ...s, colorWordSegments: s.colorWordSegments === false ? true : false }))}
+                                                className={`transition-colors shrink-0 ${settings.colorWordSegments !== false ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}
+                                            >
+                                                {settings.colorWordSegments !== false ? <ToggleRight size={32} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={32} />}
+                                            </button>
+                                        </div>
+
+                                        {/* Show Aspect Class Mascots */}
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex flex-col pr-4">
+                                                <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Show Aspect Class Mascots</span>
+                                                <span className="text-xs text-slate-400">Display the mascot verb under class names in verb breakdowns</span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setSettings(s => ({ ...s, showClassMascots: !s.showClassMascots }))}
+                                                className={`transition-colors shrink-0 ${settings.showClassMascots ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}
+                                            >
+                                                {settings.showClassMascots ? <ToggleRight size={32} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={32} />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                             <hr className="border-slate-100 dark:border-slate-800" />
                             <div>
@@ -2989,6 +3055,7 @@ function App() {
                             onClose={() => popNavStack('entry')}
                             onViewRoot={(slug) => handleViewRoot(slug)}
                             onViewClass={(cls) => handleViewClass(cls)}
+                            onViewEntry={(entry) => handleEntryClick(entry)}
                             customDictionaries={customDictionaries}
                             userNotes={userNotes}
                             userAudioMeta={userAudioMeta}

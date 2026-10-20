@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Pencil, ListPlus, Star, ListIcon, X, Plus, Folder, Pause, MicPlus, Trash2, Mic, Menu, Share } from './Icons';
+import { ArrowLeft, Pencil, ListPlus, Star, ListIcon, X, Plus, Folder, Pause, MicPlus, Trash2, Mic, Menu, Share, TranslateCherokee } from './Icons';
 import { AudioPlayer, SourceBadge, UserAuthButton } from './UI';
-import { renderStyledText, getAudioFromDB, processFormsContextually, parseListName, renderColorizedCherokee, renderSegmentedSurface, projectSegmentsOntoTone, segmentVerbForm, VerbMorphologyTemplate, getFriendlyLabel, resolveRoleTaggedSegments, getTransliterationStyleSetting, hasToneMarks } from '../utils';
+import { renderStyledText, getAudioFromDB, processFormsContextually, parseListName, renderColorizedCherokee, renderSegmentedSurface, projectSegmentsOntoTone, segmentVerbForm, VerbMorphologyTemplate, getFriendlyLabel, resolveRoleTaggedSegments, getTransliterationStyleSetting, hasToneMarks, getCombinedCedVerbsMode } from '../utils';
 import { usePackageManager } from './PackageManagerContext';
 import AudioRecorder from './AudioRecorder';
 import { useCorpus } from './CorpusContext';
@@ -30,7 +30,7 @@ const getHexColor = (col: string) => {
 
 const isFormAudioId = (id: string) => /(?:_F|\.)\d+(?:_|$)/.test(id);
 
-const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudioMeta, userWordForms, onSaveAudio, onDeleteAudio, favorites, customLists, customListOrder, onClose, onEdit, onToggleFavorite, onToggleList, onDelete, onSearchTerm, onOpenNewListModal, onMove, personalWords, onEditSentence, onDeleteSentence, onCreateWord, onManageForms, onReadInContext, onShowSettings, onViewRoot, onViewClass, showToast, style }: any) => {
+const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudioMeta, userWordForms, onSaveAudio, onDeleteAudio, favorites, customLists, customListOrder, onClose, onEdit, onToggleFavorite, onToggleList, onDelete, onSearchTerm, onOpenNewListModal, onMove, personalWords, onEditSentence, onDeleteSentence, onCreateWord, onManageForms, onReadInContext, onShowSettings, onViewRoot, onViewClass, onViewEntry, showToast, style }: any) => {
     const [showListSheet, setShowListSheet] = useState(false);
     const [showRecorder, setShowRecorder] = useState(false);
     const [recorderTarget, setRecorderTarget] = useState<'entry' | 'sentence' | string>('entry');
@@ -181,9 +181,10 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
     const rawImportedForms = React.useMemo(() => {
         const list: any[] = [];
         const entryIndex = e.Index || e.id;
+        const hidePartBFromParent = !e.is_combined_part_b && getCombinedCedVerbsMode(settings) === 'full';
         packages.forEach(p => {
             if (p.status === 'active' && importedData[p.id]?.word_forms) {
-                const forms = importedData[p.id].word_forms!.filter((f: any) => f.word_index === entryIndex);
+                const forms = importedData[p.id].word_forms!.filter((f: any) => f.word_index === entryIndex && !(hidePartBFromParent && f.is_shim));
                 if (forms.length > 0) {
                     forms.forEach((f, idx) => list.push({
                         ...f,
@@ -202,7 +203,7 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
             ...f,
             index: legacyOfficialFormsCount + idx + 1
         }));
-    }, [packages, importedData, e.Index, e.id, e.Other_Forms]);
+    }, [packages, importedData, e.Index, e.id, e.Other_Forms, e.is_combined_part_b, settings]);
 
     // For standard uses and counting (preserves full global overlap context)
     const importedForms = React.useMemo(() => {
@@ -225,8 +226,8 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
         if (!cedForms || cedForms.length === 0) {
             return { hasMiniPreview: false, matchedForms: new Set<any>() };
         }
-        return getReferencePreviewMatchedForms(cedForms, e, rootEntry);
-    }, [cedForms, e, rootEntry]);
+        return getReferencePreviewMatchedForms(cedForms, e, rootEntry, settings);
+    }, [cedForms, e, rootEntry, settings]);
 
     const totalFormsCount = rawImportedForms.length + legacyOfficialFormsCount + userFormsCount;
 
@@ -321,13 +322,14 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
         return list.find(f => f.index === targetIndex) || null;
     }, [recorderTarget, e, importedForms, userWordForms]);
 
-    const mainPresSeg = rootEntry?.segmented_forms?.present;
+    const baseSlot = e.is_combined_part_b ? 'infinitive' : 'present';
+    const mainPresSeg = rootEntry?.segmented_forms?.[baseSlot] || rootEntry?.segmented_forms?.present;
     const mainVerbConfig = rootEntry?.config;
     const mainPresGroups = React.useMemo(() => {
         if (!rootEntry || !mainPresSeg) return null;
-        return segmentVerbForm(mainPresSeg, 'present', mainVerbConfig, rootEntry?.class_name, rootEntry?.post_root_morpheme);
-    }, [mainPresSeg, mainVerbConfig, rootEntry]);
-    const mainPronounSet = mainVerbConfig?.pron?.set_type === 'b' ? 'B' : 'A';
+        return segmentVerbForm(mainPresSeg, baseSlot, mainVerbConfig, rootEntry?.class_name, rootEntry?.post_root_morpheme);
+    }, [mainPresSeg, baseSlot, mainVerbConfig, rootEntry]);
+    const mainPronounSet = e.is_combined_part_b ? 'B' : (mainVerbConfig?.pron?.set_type === 'b' ? 'B' : 'A');
 
     return (
         <div style={style} className="fixed inset-0 z-[10000] bg-[#F9F9F7] dark:bg-slate-950 flex flex-col overflow-hidden">
@@ -381,8 +383,11 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                     ) : (
                         <div className="flex items-start justify-between mb-4">
                             <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-3 mb-1">
+                                <div className="flex items-center gap-2.5 mb-1">
                                     <h1 className="font-noto-cherokee text-4xl font-bold text-slate-900 dark:text-slate-100 leading-tight truncate">{e.Syllabary}</h1>
+                                    {e.is_auto_syllabary && (
+                                        <TranslateCherokee size={22} className="text-amber-600 dark:text-amber-400 shrink-0 opacity-85" title="Auto-transliterated syllabary" />
+                                    )}
                                     {canEdit && !hideCustomization && (
                                         <button onClick={() => onEdit(e)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-300 hover:text-amber-600 transition-colors">
                                             <Pencil size={20} />
@@ -391,19 +396,19 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                                 </div>
                                 <div className="flex items-baseline gap-3 flex-wrap">
                                     <h2 className="font-noto-serif text-2xl text-amber-800 dark:text-amber-400 font-bold">
-                                        {resolveRoleTaggedSegments(null, rootEntry, 'present', settings)
-                                            ? renderSegmentedSurface(resolveRoleTaggedSegments(null, rootEntry, 'present', settings), settings?.colorWordSegments !== false)
+                                        {resolveRoleTaggedSegments(null, rootEntry, baseSlot, settings)
+                                            ? renderSegmentedSurface(resolveRoleTaggedSegments(null, rootEntry, baseSlot, settings), settings?.colorWordSegments !== false)
                                             : (rootEntry && mainPresGroups
                                                 ? renderColorizedCherokee(e.Entry, mainPresGroups, mainPronounSet, settings?.colorWordSegments !== false)
                                                 : e.Entry)}
                                     </h2>
                                     {e.Entry_Tone && (
                                         <span className="font-serif text-base text-slate-500 dark:text-slate-400 font-bold italic">
-                                            {resolveRoleTaggedSegments(null, rootEntry, 'present', settings)
+                                            {resolveRoleTaggedSegments(null, rootEntry, baseSlot, settings)
                                                 ? renderSegmentedSurface(
                                                     (getTransliterationStyleSetting(settings) === 'classic' && hasToneMarks(e.Entry_Tone))
-                                                        ? projectSegmentsOntoTone(resolveRoleTaggedSegments(null, rootEntry, 'present', settings) || [], e.Entry_Tone)
-                                                        : resolveRoleTaggedSegments(null, rootEntry, 'present', settings),
+                                                        ? projectSegmentsOntoTone(resolveRoleTaggedSegments(null, rootEntry, baseSlot, settings) || [], e.Entry_Tone)
+                                                        : resolveRoleTaggedSegments(null, rootEntry, baseSlot, settings),
                                                     settings?.colorWordSegments !== false
                                                   )
                                                 : (rootEntry && mainPresGroups
@@ -524,6 +529,11 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                     )}
 
                     <div className="pt-2">
+                        {e.is_combined_part_b && e.definition_source_type && (
+                            <span className="block text-[11px] font-sans font-bold uppercase tracking-wider text-amber-700/80 dark:text-amber-400/80 mb-1">
+                                {e.definition_source_type === 'infinitive' ? 'Infinitive definition:' : 'Parent definition:'}
+                            </span>
+                        )}
                         <p className="font-noto-serif text-xl text-slate-800 dark:text-slate-100 leading-snug">
                             {renderStyledText(e.Definition)}
                             {e.PoS && (
@@ -546,6 +556,7 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                                     entry={e}
                                     rootEntry={rootEntry}
                                     settings={settings}
+                                    onViewEntry={onViewEntry}
                                     onPlayAudio={handlePlayUserAudio}
                                     playingAudioId={playingAudioId}
                                     onOpenAllForms={() => setShowWordFormsModal(true)}
