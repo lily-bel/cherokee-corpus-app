@@ -391,7 +391,7 @@ export function getReferencePreviewMatchedForms(
             });
         }
 
-        // Row 4: 3rd infinitive & 3rd past
+        // Row 4: 3rd past & 3rd infinitive
         const inf3CrossRef = (!inf3 && hidePartBFromParent && shimFormsSet.has('infinitive') && partBCrossRefId) ? {
             slotKey: '3s|3s|infinitive',
             label: '3rd infinitive',
@@ -403,23 +403,23 @@ export function getReferencePreviewMatchedForms(
             }
         } : null;
 
-        if (inf3 || past3 || inf3CrossRef) {
+        if (past3 || inf3 || inf3CrossRef) {
             rows.push({
                 category: 'set_b',
-                left: inf3 ? {
-                    slotKey: '3s|3s|infinitive',
-                    label: '3rd infinitive',
-                    category: 'set_b',
-                    form: inf3,
-                    pronominalSet: 'B'
-                } : inf3CrossRef,
-                right: past3 ? {
+                left: past3 ? {
                     slotKey: '3s|3s|completive past',
                     label: '3rd past',
                     category: 'set_b',
                     form: past3,
                     pronominalSet: 'B'
-                } : null
+                } : null,
+                right: inf3 ? {
+                    slotKey: '3s|3s|infinitive',
+                    label: '3rd infinitive',
+                    category: 'set_b',
+                    form: inf3,
+                    pronominalSet: 'B'
+                } : inf3CrossRef
             });
         }
 
@@ -890,8 +890,8 @@ const VERB_CANONICAL_SLOTS = [
     '2s|3s|imperative',
     '3s|3s|present',
     '3s|3s|habitual',
-    '3s|3s|infinitive',
     '3s|3s|completive past',
+    '3s|3s|infinitive',
 ];
 
 export const DesktopHorizontalFormsStrip: React.FC<DesktopHorizontalFormsStripProps> = ({
