@@ -4,7 +4,7 @@ import { usePackageManager } from './PackageManagerContext';
 import { Search, Check, Trash2 } from './Icons';
 import { Modal, SourceBadge } from './UI';
 
-import { performSearch, buildWordFormsLookupMap, getAllFormsForEntry, renderColorizedCherokee, renderSegmentedSurface, projectSegmentsOntoTone, segmentVerbForm, deriveSegmentedForm, getFormPronominalSet, SegmentGroup, isEmptyRoot } from '../utils';
+import { performSearch, buildWordFormsLookupMap, getAllFormsForEntry, renderColorizedCherokee, renderSegmentedSurface, projectSegmentsOntoTone, segmentVerbForm, deriveSegmentedForm, getFormPronominalSet, SegmentGroup, isEmptyRoot, resolveRoleTaggedSegments } from '../utils';
 
 
 
@@ -264,8 +264,8 @@ export const LinkerModal: React.FC<LinkerModalProps> = ({ initialQuery, targetWo
                                                         <SourceBadge source={entry.source || entry.Source} name={customDictionaries?.[entry.source || entry.Source]?.name || entry.source} customColor={srcColor} />
                                                     </div>
                                                     <span className="font-serif text-sm font-bold text-slate-700 dark:text-slate-300">
-                                                        {rootEntry?.surface_segments?.present
-                                                            ? renderSegmentedSurface(rootEntry.surface_segments.present, isColored)
+                                                        {resolveRoleTaggedSegments(null, rootEntry, 'present')
+                                                            ? renderSegmentedSurface(resolveRoleTaggedSegments(null, rootEntry, 'present'), isColored)
                                                             : (rootEntry && mainPresGroups
                                                                 ? renderColorizedCherokee(entry.translit || entry.Entry, mainPresGroups, mainPronounSet, isColored)
                                                                 : (entry.translit || entry.Entry))}
@@ -289,7 +289,7 @@ export const LinkerModal: React.FC<LinkerModalProps> = ({ initialQuery, targetWo
                                                                             'infinitive': 'infinitive', '3s|3s|infinitive': 'infinitive'
                                                                         };
                                                                         const fn = map[k];
-                                                                        const matchedHd = fn && rootEntry?.surface_segments ? rootEntry.surface_segments[fn] : undefined;
+                                                                        const matchedHd = resolveRoleTaggedSegments(entry.matchedForm, rootEntry, fn);
                                                                         if (matchedHd) return renderSegmentedSurface(
                                                                             entry.matchedForm.translit ? projectSegmentsOntoTone(matchedHd, entry.matchedForm.translit) : matchedHd,
                                                                             isColored

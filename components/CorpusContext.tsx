@@ -34,6 +34,12 @@ export interface DictionaryEntry {
     surface_spelling?: string;
     surface_forms?: Record<string, string>;
     surface_segments?: Record<string, SurfaceSegment[]>;
+    segmented_raw?: Record<string, string>;
+    segmented_aspiration?: Record<string, string>;
+    segmented_reverse_aspiration?: Record<string, string>;
+    segmented_surface?: Record<string, string>;
+    shim_forms?: string[];
+    shim_class?: string;
 }
 
 export interface SurfaceSegment {
@@ -143,6 +149,12 @@ export interface RootEntry {
     surface_spelling?: string;
     surface_forms?: Record<string, string>;
     surface_segments?: Record<string, SurfaceSegment[]>;
+    segmented_raw?: Record<string, string>;
+    segmented_aspiration?: Record<string, string>;
+    segmented_reverse_aspiration?: Record<string, string>;
+    segmented_surface?: Record<string, string>;
+    shim_forms?: string[];
+    shim_class?: string;
     is_derivation?: boolean;
     parent_entry_no?: number;
     segmented_forms?: {
@@ -423,6 +435,12 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                     surface_spelling: surfaceSpelling,
                     surface_forms: surfaceForms,
                     surface_segments: surfaceSegments,
+                    segmented_raw: (d as any).segmented_raw || hd?.segmented_raw || undefined,
+                    segmented_aspiration: (d as any).segmented_aspiration || hd?.segmented_aspiration || undefined,
+                    segmented_reverse_aspiration: (d as any).segmented_reverse_aspiration || hd?.segmented_reverse_aspiration || undefined,
+                    segmented_surface: (d as any).segmented_surface || hd?.segmented_surface || undefined,
+                    shim_forms: (d as any).shim_forms || hd?.shim_forms || undefined,
+                    shim_class: hd?.['shim.morphology.class_name'] || (d as any)?.['shim.morphology.class_name'] || undefined,
                     segmented_forms: {
                         present: hd?.['segmented_forms.present'] || hd?.['morphology.segmented_forms.present'] || hd?.['shim.segmented_forms.present'] || hd?.segmented_forms?.present || (d as any)?.segmented_forms?.present || (d as any)?.['segmented_forms.present'] || '',
                         present_1sg: hd?.['segmented_forms.present_1sg'] || hd?.['morphology.segmented_forms.present_1sg'] || hd?.['shim.segmented_forms.present_1sg'] || hd?.segmented_forms?.present_1sg || (d as any)?.segmented_forms?.present_1sg || (d as any)?.['segmented_forms.present_1sg'] || '',

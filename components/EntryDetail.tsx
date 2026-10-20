@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Pencil, ListPlus, Star, ListIcon, X, Plus, Folder, Pause, MicPlus, Trash2, Mic, Menu } from './Icons';
 import { AudioPlayer, SourceBadge, UserAuthButton } from './UI';
-import { renderStyledText, getAudioFromDB, processFormsContextually, parseListName, renderColorizedCherokee, renderSegmentedSurface, projectSegmentsOntoTone, segmentVerbForm, VerbMorphologyTemplate, getFriendlyLabel } from '../utils';
+import { renderStyledText, getAudioFromDB, processFormsContextually, parseListName, renderColorizedCherokee, renderSegmentedSurface, projectSegmentsOntoTone, segmentVerbForm, VerbMorphologyTemplate, getFriendlyLabel, resolveRoleTaggedSegments } from '../utils';
 import { usePackageManager } from './PackageManagerContext';
 import AudioRecorder from './AudioRecorder';
 import { useCorpus } from './CorpusContext';
@@ -378,17 +378,17 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                                 </div>
                                 <div className="flex items-baseline gap-3 flex-wrap">
                                     <h2 className="font-noto-serif text-2xl text-amber-800 dark:text-amber-400 font-bold">
-                                        {rootEntry?.surface_segments?.present
-                                            ? renderSegmentedSurface(rootEntry.surface_segments.present, settings?.colorWordSegments !== false)
+                                        {resolveRoleTaggedSegments(null, rootEntry, 'present', settings)
+                                            ? renderSegmentedSurface(resolveRoleTaggedSegments(null, rootEntry, 'present', settings), settings?.colorWordSegments !== false)
                                             : (rootEntry && mainPresGroups
                                                 ? renderColorizedCherokee(e.Entry, mainPresGroups, mainPronounSet, settings?.colorWordSegments !== false)
                                                 : e.Entry)}
                                     </h2>
                                     {e.Entry_Tone && (
                                         <span className="font-serif text-base text-slate-500 dark:text-slate-400 font-bold italic">
-                                            {rootEntry?.surface_segments?.present
+                                            {resolveRoleTaggedSegments(null, rootEntry, 'present', settings)
                                                 ? renderSegmentedSurface(
-                                                    projectSegmentsOntoTone(rootEntry.surface_segments.present, e.Entry_Tone),
+                                                    projectSegmentsOntoTone(resolveRoleTaggedSegments(null, rootEntry, 'present', settings) || [], e.Entry_Tone),
                                                     settings?.colorWordSegments !== false
                                                   )
                                                 : (rootEntry && mainPresGroups

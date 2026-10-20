@@ -38,6 +38,7 @@ const DEFAULT_SETTINGS = {
     showToneInForms: true,
     colorWordSegments: true,
     showClassMascots: false,
+    separateStativeShims: false,
     dictionaryLevel: 'default' as 'basic' | 'default' | 'linguist',
     hideCustomization: false,
 };
@@ -2649,7 +2650,7 @@ function App() {
                                             <button
                                                 key={level}
                                                 type="button"
-                                                onClick={() => setSettings(s => ({ ...s, dictionaryLevel: level }))}
+                                                onClick={() => setSettings(s => ({ ...s, dictionaryLevel: level, separateStativeShims: level === 'linguist' }))}
                                                 className={`py-2 px-2 rounded-lg font-bold transition-all text-center ${
                                                     isSelected
                                                         ? 'bg-amber-600 text-white shadow-sm'
@@ -2766,6 +2767,15 @@ function App() {
                                 </div>
                                 <button onClick={() => setSettings(s => ({ ...s, showClassMascots: !s.showClassMascots }))} className={`transition-colors ${settings.showClassMascots ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}>
                                     {settings.showClassMascots ? <ToggleRight size={32} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={32} />}
+                                </button>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <div className="flex flex-col pr-4">
+                                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Separate Stative Shim Forms</span>
+                                    <span className="text-xs text-slate-400">Display eventive imperative/infinitive shim derivations separately from stative verb paradigms (enabled by default in Linguist mode)</span>
+                                </div>
+                                <button onClick={() => setSettings(s => ({ ...s, separateStativeShims: !(s.separateStativeShims ?? (s.dictionaryLevel === 'linguist')) }))} className={`transition-colors shrink-0 ${(settings.separateStativeShims ?? (settings.dictionaryLevel === 'linguist')) ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}>
+                                    {(settings.separateStativeShims ?? (settings.dictionaryLevel === 'linguist')) ? <ToggleRight size={32} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={32} />}
                                 </button>
                             </div>
                             <hr className="border-slate-100 dark:border-slate-800" />

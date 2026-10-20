@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { StickyNote, ListIcon, Mic, SquaresPlus } from './Icons';
 import { SourceBadge } from './UI';
 import { useCorpus } from './CorpusContext';
-import { renderColorizedCherokee, renderSegmentedSurface, projectSegmentsOntoTone, segmentVerbForm, deriveSegmentedForm, getFormPronominalSet, VerbMorphologyTemplate, isFormAudio } from '../utils';
+import { renderColorizedCherokee, renderSegmentedSurface, projectSegmentsOntoTone, segmentVerbForm, deriveSegmentedForm, getFormPronominalSet, VerbMorphologyTemplate, isFormAudio, resolveRoleTaggedSegments } from '../utils';
 import { usePackageManager } from './PackageManagerContext';
 
 
@@ -80,7 +80,7 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
   const mainPronounSet = rootEntry?.config?.pron?.set_type === 'b' ? 'B' : 'A';
 
   const matchedHdSegments = useMemo(() => {
-    if (!rootEntry?.surface_segments || !entry.matchedForm) return null;
+    if (!rootEntry || !entry.matchedForm) return null;
     const k = (entry.matchedForm.normalized_key || entry.matchedForm.form_name || '').toLowerCase();
     const map: Record<string, string> = {
       'present': 'present',
@@ -102,7 +102,7 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
       '3s|3s|infinitive': 'infinitive',
     };
     const fn = map[k];
-    if (fn && rootEntry.surface_segments[fn]) return rootEntry.surface_segments[fn];
+    return resolveRoleTaggedSegments(entry.matchedForm, rootEntry, fn, settings);
     return null;
   }, [rootEntry, entry.matchedForm]);
 
@@ -218,8 +218,8 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
           <div className="flex-1 min-w-0 flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
             {entry.Syllabary && <span className="font-noto-cherokee text-lg font-bold text-slate-800 dark:text-slate-100">{entry.Syllabary}</span>}
             <span className="font-noto-serif text-base text-amber-700 dark:text-amber-400 font-bold [overflow-wrap:anywhere] [word-break:normal]">
-              {rootEntry?.surface_segments?.present
-                ? renderSegmentedSurface(rootEntry.surface_segments.present, isColored)
+              {resolveRoleTaggedSegments(null, rootEntry, 'present', settings)
+                ? renderSegmentedSurface(resolveRoleTaggedSegments(null, rootEntry, 'present', settings), isColored)
                 : (rootEntry && mainPresGroups
                   ? renderColorizedCherokee(entry.Entry, mainPresGroups, mainPronounSet, isColored)
                   : entry.Entry)}
@@ -252,7 +252,7 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
                     isColored
                   )
                 : (entry.matchedForm.translit === entry.Entry && rootEntry?.surface_segments?.present
-                  ? renderSegmentedSurface(rootEntry.surface_segments.present, isColored)
+                  ? renderSegmentedSurface(resolveRoleTaggedSegments(null, rootEntry, 'present', settings), isColored)
                   : (rootEntry && matchedFormGroups
                     ? renderColorizedCherokee(entry.matchedForm.translit, matchedFormGroups, matchedPronounSet, isColored)
                     : entry.matchedForm.translit))}

@@ -672,7 +672,7 @@ export const WordModal: React.FC<WordModalProps> = ({
                             value={formData?.Entry || ''}
                             onChange={e => setFormData(prev => ({ ...(prev || {} as WordFormData), Entry: e.target.value, Syllabary: prev?.Syllabary || '', Definition: prev?.Definition || '', PoS: prev?.PoS || '', Entry_Tone: prev?.Entry_Tone || '', Notes: prev?.Notes || '', customDictionaryId: prev?.customDictionaryId || '' }))}
                             className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 font-noto-serif outline-none focus:border-amber-500 dark:text-white"
-                            placeholder="e.g. adelohohi"
+                            placeholder="e.g. gigage ajvysdi adanedliyvna."
                         />
                     </div>
                     <div>
@@ -683,7 +683,7 @@ export const WordModal: React.FC<WordModalProps> = ({
                                 value={formData?.Syllabary || ''}
                                 onChange={e => setFormData(prev => ({ ...(prev || {} as WordFormData), Syllabary: e.target.value, Entry: prev?.Entry || '', Definition: prev?.Definition || '', PoS: prev?.PoS || '', Entry_Tone: prev?.Entry_Tone || '', Notes: prev?.Notes || '', customDictionaryId: prev?.customDictionaryId || '' }))}
                                 className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg pl-3 pr-10 py-2 font-noto-cherokee text-lg outline-none focus:border-amber-500 dark:text-white"
-                                placeholder="e.g. ᎠᏕᎶᎰᎯ"
+                                placeholder="e.g. ᎩᎦᎨ ᎠᏨᏍᏛ ᎠᏓᏁᏟᏴᎾ."
                             />
                             <button
                                 type="button"
@@ -702,7 +702,7 @@ export const WordModal: React.FC<WordModalProps> = ({
                             value={formData?.Definition || ''}
                             onChange={e => setFormData(prev => ({ ...(prev || {} as WordFormData), Definition: e.target.value, Entry: prev?.Entry || '', Syllabary: prev?.Syllabary || '', PoS: prev?.PoS || '', Entry_Tone: prev?.Entry_Tone || '', Notes: prev?.Notes || '', customDictionaryId: prev?.customDictionaryId || '' }))}
                             className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 font-noto-serif outline-none focus:border-amber-500 dark:text-white"
-                            placeholder="e.g. he/she understands it"
+                            placeholder="e.g. The red light just changed."
                         />
                     </div>
 
@@ -725,7 +725,7 @@ export const WordModal: React.FC<WordModalProps> = ({
                                         type="text"
                                         value={formData?.Entry_Tone || ''}
                                         onChange={e => setFormData(prev => ({ ...(prev || {} as WordFormData), Entry_Tone: formatToneInput(e.target.value), Entry: prev?.Entry || '', Syllabary: prev?.Syllabary || '', Definition: prev?.Definition || '', PoS: prev?.PoS || '', Notes: prev?.Notes || '', customDictionaryId: prev?.customDictionaryId || '' }))}
-                                        placeholder="e.g. a1de2lo3ho2hi"
+                                        placeholder=""
                                         className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 outline-none focus:border-amber-500 font-serif dark:text-white"
                                     />
                                 </div>
@@ -807,7 +807,7 @@ export const WordModal: React.FC<WordModalProps> = ({
                                                 }}
                                                 onFocus={() => setShowRootSuggestions(true)}
                                                 onBlur={() => setTimeout(() => setShowRootSuggestions(false), 200)}
-                                                placeholder="e.g. adehl, atsvs, gohv..."
+                                                placeholder=""
                                                 className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 outline-none focus:border-amber-500 dark:text-white font-mono text-sm"
                                             />
 
@@ -880,7 +880,7 @@ export const WordModal: React.FC<WordModalProps> = ({
                                                             type="text"
                                                             value={rootH}
                                                             onChange={e => setRootH(e.target.value)}
-                                                            placeholder={rootText || "e.g. adelohos"}
+                                                            placeholder={rootText || ""}
                                                             className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg px-2.5 py-1.5 outline-none focus:border-amber-500 dark:text-white font-mono text-xs"
                                                         />
                                                     </div>
@@ -892,7 +892,7 @@ export const WordModal: React.FC<WordModalProps> = ({
                                                             type="text"
                                                             value={rootG}
                                                             onChange={e => setRootG(e.target.value)}
-                                                            placeholder={rootText || "e.g. ade?lohos"}
+                                                            placeholder={rootText || ""}
                                                             className="w-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg px-2.5 py-1.5 outline-none focus:border-amber-500 dark:text-white font-mono text-xs"
                                                         />
                                                     </div>
@@ -917,7 +917,7 @@ export const WordModal: React.FC<WordModalProps> = ({
                                                     }}
                                                     onFocus={() => setShowClassSuggestions(true)}
                                                     onBlur={() => setTimeout(() => setShowClassSuggestions(false), 200)}
-                                                    placeholder="e.g. g-ts[*], v-vhs, a, i-a-i..."
+                                                    placeholder=""
                                                     className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 outline-none focus:border-amber-500 dark:text-white font-mono text-sm"
                                                 />
                                                 {classMascot && (
@@ -1014,7 +1014,7 @@ export const WordModal: React.FC<WordModalProps> = ({
                                                                     }}
                                                                     onFocus={() => setActivePrefixDropdownId(row.id)}
                                                                     onBlur={() => setTimeout(() => setActivePrefixDropdownId(null), 200)}
-                                                                    placeholder="e.g. wi, ni, de, yi..."
+                                                                    placeholder=""
                                                                     className="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-amber-500 font-mono dark:text-white"
                                                                 />
                                                                 {row.value && matchedData?.name && matchedData.name !== row.value && (
@@ -1188,7 +1188,7 @@ export const WordModal: React.FC<WordModalProps> = ({
                                                                     }}
                                                                     onFocus={() => setActivePostRootDropdownId(row.id)}
                                                                     onBlur={() => setTimeout(() => setActivePostRootDropdownId(null), 200)}
-                                                                    placeholder="e.g. change-out, iterative, hitting..."
+                                                                    placeholder=""
                                                                     className="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-amber-500 font-mono dark:text-white"
                                                                 />
                                                                 {row.value && matchedPrm?.form && (
@@ -1266,7 +1266,7 @@ export const WordModal: React.FC<WordModalProps> = ({
                                     onChange={e => setFormData(prev => ({ ...(prev || {} as WordFormData), Notes: e.target.value, Entry: prev?.Entry || '', Syllabary: prev?.Syllabary || '', Definition: prev?.Definition || '', PoS: prev?.PoS || '', Entry_Tone: prev?.Entry_Tone || '', customDictionaryId: prev?.customDictionaryId || '' }))}
                                     rows={3}
                                     className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 outline-none focus:border-amber-500 resize-none dark:text-white"
-                                    placeholder="Add conjugations, examples, or extra info here..."
+                                    placeholder=""
                                 ></textarea>
                             </div>
                         </>
@@ -1322,7 +1322,7 @@ export const WordModal: React.FC<WordModalProps> = ({
                                 type="text"
                                 value={currentMorphemePrompt.name}
                                 onChange={e => setCurrentMorphemePrompt({ ...currentMorphemePrompt, name: e.target.value })}
-                                placeholder="e.g. Negative prefix, Causative suffix..."
+                                placeholder=""
                                 className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 text-sm outline-none focus:border-amber-500 dark:text-white"
                             />
                         </div>
@@ -1335,7 +1335,7 @@ export const WordModal: React.FC<WordModalProps> = ({
                                 type="text"
                                 value={currentMorphemePrompt.form}
                                 onChange={e => setCurrentMorphemePrompt({ ...currentMorphemePrompt, form: e.target.value })}
-                                placeholder="e.g. yi, iy, ohts..."
+                                placeholder=""
                                 className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 font-mono text-sm outline-none focus:border-amber-500 dark:text-white"
                             />
                         </div>
@@ -1348,7 +1348,7 @@ export const WordModal: React.FC<WordModalProps> = ({
                                 type="text"
                                 value={currentMorphemePrompt.definition}
                                 onChange={e => setCurrentMorphemePrompt({ ...currentMorphemePrompt, definition: e.target.value })}
-                                placeholder="e.g. Used for negation or conditions..."
+                                placeholder=""
                                 className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 text-sm outline-none focus:border-amber-500 dark:text-white"
                             />
                         </div>

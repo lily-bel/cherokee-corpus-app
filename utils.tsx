@@ -2166,6 +2166,97 @@ export function resolveHdFormName(keyOrLabel: string | undefined): string | null
   return null;
 }
 
+export function parseRoleTaggedSegmentation(taggedStr: string | undefined): SurfaceSegment[] {
+  if (!taggedStr || taggedStr === '---') return [];
+  const roleMap: Record<string, { role: SurfaceSegment['role']; color?: string; set?: 'A' | 'B' | 'P2P' }> = {
+    pre: { role: 'prepronominal' },
+    pron_a: { role: 'pronoun', color: 'Red', set: 'A' },
+    pron_b: { role: 'pronoun', color: 'RoyalBlue', set: 'B' },
+    pron_p2p: { role: 'pronoun', color: 'Purple', set: 'P2P' },
+    mv: { role: 'middle_voice' },
+    root: { role: 'root' },
+    prm: { role: 'post_root' },
+    asp: { role: 'aspect' },
+    fin: { role: 'final' },
+  };
+  const segments: SurfaceSegment[] = [];
+  for (const part of String(taggedStr).split('-')) {
+    const pipeIdx = part.indexOf('|');
+    if (pipeIdx === -1) continue;
+    const rTag = part.slice(0, pipeIdx);
+    const text = part.slice(pipeIdx + 1).replace(/’/g, "'");
+    if (!text) continue;
+    const info = roleMap[rTag] || { role: 'stem' };
+    const seg: SurfaceSegment = { role: info.role, text };
+    if (info.color) seg.color = info.color;
+    if (info.set) seg.set = info.set;
+    segments.push(seg);
+  }
+  return segments;
+}
+
+export function getTransliterationStyleSetting(settings?: any): 'classic' | 'aspiration' | 'reverse_aspiration' {
+  if (settings?.transliterationStyle) return settings.transliterationStyle;
+  try {
+    const s = localStorage.getItem('cherokee_app_settings');
+    if (s) {
+      const parsed = JSON.parse(s);
+      if (parsed.transliterationStyle) return parsed.transliterationStyle;
+    }
+  } catch {}
+  return 'classic';
+}
+
+export function getSeparateStativeShimsSetting(settings?: any): boolean {
+  if (settings?.separateStativeShims !== undefined) {
+    return Boolean(settings.separateStativeShims);
+  }
+  if (settings?.dictionaryLevel === 'linguist') {
+    return true;
+  }
+  try {
+    const s = localStorage.getItem('cherokee_app_settings');
+    if (s) {
+      const parsed = JSON.parse(s);
+      if (parsed.separateStativeShims !== undefined) {
+        return Boolean(parsed.separateStativeShims);
+      }
+      if (parsed.dictionaryLevel === 'linguist') {
+        return true;
+      }
+    }
+  } catch {}
+  return false;
+}
+
+export function resolveRoleTaggedSegments(
+  form: any,
+  rootEntry: any,
+  hdSlot: string | null | undefined,
+  settings?: any
+): SurfaceSegment[] | null {
+  const style = getTransliterationStyleSetting(settings);
+  const slot = hdSlot || undefined;
+
+  let taggedStr: string | undefined;
+  if (style === 'aspiration') {
+    taggedStr = form?.segmented_aspiration || (slot && rootEntry?.segmented_aspiration?.[slot]);
+  } else if (style === 'reverse_aspiration') {
+    taggedStr = form?.segmented_reverse_aspiration || (slot && rootEntry?.segmented_reverse_aspiration?.[slot]);
+  } else {
+    taggedStr = form?.segmented_surface || (slot && rootEntry?.segmented_surface?.[slot]);
+  }
+
+  if (taggedStr && typeof taggedStr === 'string') {
+    const parsed = parseRoleTaggedSegmentation(taggedStr);
+    if (parsed.length > 0) return parsed;
+  }
+
+  const fallback = form?.surface_segments || (slot && rootEntry?.surface_segments?.[slot]);
+  if (Array.isArray(fallback) && fallback.length > 0) return fallback;
+  return null;
+}
+
 export function getColorWordSegmentsSetting(settings?: any): boolean {
   if (settings?.colorWordSegments !== undefined) {
     return settings.colorWordSegments !== false;
@@ -2253,7 +2344,7 @@ export const ColorizedCherokeeWord: React.FC<ColorizedCherokeeWordProps> = ({
   const hdSlot = resolveHdFormName(candidateKey);
 
   // 1. Exact match in surface_segments (either directly on form, or on rEntry)
-  const exactSegs = form?.surface_segments || (hdSlot && rEntry.surface_segments?.[hdSlot]);
+  const exactSegs = resolveRoleTaggedSegments(form, rEntry, hdSlot, settings);
   if (exactSegs) {
     const projected = projectSegmentsOntoTone(exactSegs, text);
     return (

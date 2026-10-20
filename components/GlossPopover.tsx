@@ -3,7 +3,7 @@ import { Gloss, DictionaryEntry, useCorpus } from './CorpusContext';
 import { SourceBadge } from './UI';
 import { ChevronRight, Trash2, Pencil, Plus, Search } from './Icons';
 import { usePackageManager } from './PackageManagerContext';
-import { buildWordFormsLookupMap, getAllFormsForEntry, renderColorizedCherokee, renderSegmentedSurface, projectSegmentsOntoTone, segmentVerbForm, deriveSegmentedForm, getFormPronominalSet, SegmentGroup } from '../utils';
+import { buildWordFormsLookupMap, getAllFormsForEntry, renderColorizedCherokee, renderSegmentedSurface, projectSegmentsOntoTone, segmentVerbForm, deriveSegmentedForm, getFormPronominalSet, SegmentGroup, resolveRoleTaggedSegments } from '../utils';
 
 
 
@@ -194,8 +194,8 @@ export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord,
                                     <div className="mb-3">
                                         <div className="font-serif font-bold text-lg text-slate-900 dark:text-slate-100 mb-0.5">{entry.syllabary || entry.Syllabary}</div>
                                         <div className="text-base font-bold text-amber-800 dark:text-amber-500 mb-1">
-                                            {rootEntry?.surface_segments?.present
-                                                ? renderSegmentedSurface(rootEntry.surface_segments.present, isColored)
+                                            {resolveRoleTaggedSegments(null, rootEntry, 'present')
+                                                ? renderSegmentedSurface(resolveRoleTaggedSegments(null, rootEntry, 'present'), isColored)
                                                 : (rootEntry && mainPresGroups
                                                     ? renderColorizedCherokee(entry.translit || entry.Entry, mainPresGroups, mainPronounSet, isColored)
                                                     : (entry.translit || entry.Entry))}
@@ -221,7 +221,7 @@ export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord,
                                                                 'infinitive': 'infinitive', '3s|3s|infinitive': 'infinitive'
                                                             };
                                                             const fn = map[k];
-                                                            const matchedHd = fn && rootEntry?.surface_segments ? rootEntry.surface_segments[fn] : undefined;
+                                                            const matchedHd = resolveRoleTaggedSegments(null, rootEntry, fn);
                                                             if (matchedHd) return renderSegmentedSurface(
                                                                 gloss.form_translit ? projectSegmentsOntoTone(matchedHd, gloss.form_translit) : matchedHd,
                                                                 isColored

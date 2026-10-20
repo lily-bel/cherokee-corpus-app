@@ -292,6 +292,11 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                         surface_spelling: surfaceSpelling || undefined,
                         surface_forms: d.surface_forms,
                         surface_segments: d.surface_segments,
+                        segmented_raw: d.segmented_raw,
+                        segmented_aspiration: d.segmented_aspiration,
+                        segmented_reverse_aspiration: d.segmented_reverse_aspiration,
+                        segmented_surface: d.segmented_surface,
+                        shim_forms: d.shim_forms,
                         // Legacy
                         Index: d.merged_id,
                         Entry: translit,
@@ -451,7 +456,13 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                         slug: c.slug || c.root_slug || undefined,
                         segmented_form: c['hierarchical-dict.json_Cherokee'] || c.segmented_form || undefined,
                         segmented_name: c['hierarchical-dict.json_Segmented Form'] || c.segmented_name || undefined,
-                        surface_segments: surfaceSegments
+                        surface_segments: surfaceSegments,
+                        segmented_raw: c['hierarchical-dict.json_segmented_raw'] || c.segmented_raw || undefined,
+                        segmented_aspiration: c['hierarchical-dict.json_segmented_aspiration'] || c.segmented_aspiration || undefined,
+                        segmented_reverse_aspiration: c['hierarchical-dict.json_segmented_reverse_aspiration'] || c.segmented_reverse_aspiration || undefined,
+                        segmented_surface: c['hierarchical-dict.json_segmented_surface'] || c.segmented_surface || undefined,
+                        is_shim: c['hierarchical-dict.json_is_shim'] === 'true' || c.is_shim === true || c.is_shim === 'true' || false,
+                        shim_class: c['hierarchical-dict.json_shim_class'] || c.shim_class || undefined
                     };
                 });
 

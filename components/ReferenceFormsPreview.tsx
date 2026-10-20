@@ -8,7 +8,9 @@ import {
     deriveSegmentedForm,
     getAudioFromDB,
     cleanStr,
-    SegmentGroup
+    SegmentGroup,
+    resolveRoleTaggedSegments,
+    getSeparateStativeShimsSetting
 } from '../utils';
 import { usePackageManager } from './PackageManagerContext';
 import { useCorpus } from './CorpusContext';
@@ -577,7 +579,7 @@ export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
         const style = CATEGORY_STYLES[category] || CATEGORY_STYLES.ab;
 
         const hdFormName = SLOT_TO_HD_FORM[cardData.slotKey];
-        const hdSegments = form.surface_segments || (hdFormName && rootEntry?.surface_segments ? rootEntry.surface_segments[hdFormName] : undefined);
+        const hdSegments = resolveRoleTaggedSegments(form, rootEntry, hdFormName, settings);
 
         // Determine surface text
         let surface = '';
@@ -710,17 +712,49 @@ export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
         );
     };
 
+    const separateShims = getSeparateStativeShimsSetting(settings);
+    const isCardShim = (card: ReferenceFormCardData | null): boolean => {
+        if (!card || !card.form) return false;
+        if (card.form.is_shim) return true;
+        const hdName = SLOT_TO_HD_FORM[card.slotKey];
+        return Boolean(hdName && rootEntry?.shim_forms?.includes(hdName));
+    };
+
+    const shimCards = separateShims
+        ? rows.flatMap(r => [r.left, r.right]).filter((c): c is ReferenceFormCardData => c != null && isCardShim(c))
+        : [];
+
+    const mainRows = separateShims && shimCards.length > 0
+        ? rows.map(r => ({
+            ...r,
+            left: isCardShim(r.left) ? null : r.left,
+            right: isCardShim(r.right) ? null : r.right,
+        })).filter(r => r.left != null || r.right != null)
+        : rows;
+
+    const shimClass = shimCards.find(c => c.form?.shim_class)?.form?.shim_class || rootEntry?.shim_class;
+
     return (
         <div className={`space-y-2.5 ${className}`}>
             {/* Main 2-Column Grid */}
             <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
-                {rows.map((row, idx) => (
+                {mainRows.map((row, idx) => (
                     <React.Fragment key={idx}>
                         {renderCard(row.left, `row-${idx}-left`)}
                         {renderCard(row.right, `row-${idx}-right`)}
                     </React.Fragment>
                 ))}
             </div>
+            {shimCards.length > 0 && (
+                <div className="pt-2 border-t border-dashed border-slate-200 dark:border-slate-700/70">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 mb-2 px-0.5">
+                        Eventive Shim Derivation{shimClass ? ` (${shimClass})` : ''}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+                        {shimCards.map((card, idx) => renderCard(card, `shim-${idx}`))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

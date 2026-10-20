@@ -7,7 +7,8 @@ import {
     renderColorizedCherokee, 
     segmentVerbForm, 
     processFormsContextually, 
-    VerbMorphologyTemplate 
+    VerbMorphologyTemplate,
+    resolveRoleTaggedSegments
 } from '../utils';
 import ReferenceFormsPreview, { getReferencePreviewMatchedForms } from './ReferenceFormsPreview';
 import { BookOpen, ChevronDown, ChevronUp } from './Icons';
@@ -146,11 +147,14 @@ export const VerbPreview: React.FC<VerbPreviewProps> = ({
                             </span>
                         )}
                         <span className="text-sm font-noto-serif text-amber-700 dark:text-amber-400 font-bold">
-                            {rootEntry?.surface_segments?.present
-                                ? renderSegmentedSurface(rootEntry.surface_segments.present, isColored)
-                                : (presGroups
-                                    ? renderColorizedCherokee(entry.Entry, presGroups, pronounSet, isColored)
-                                    : (rootEntry.surface_spelling || entry.Entry))}
+                            {(() => {
+                                const presSegs = resolveRoleTaggedSegments(null, rootEntry, 'present', settings);
+                                return presSegs
+                                    ? renderSegmentedSurface(presSegs, isColored)
+                                    : (presGroups
+                                        ? renderColorizedCherokee(entry.Entry, presGroups, pronounSet, isColored)
+                                        : (rootEntry.surface_spelling || entry.Entry));
+                            })()}
                         </span>
                     </div>
                 </div>
