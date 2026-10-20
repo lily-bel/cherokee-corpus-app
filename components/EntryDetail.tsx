@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Pencil, ListPlus, Star, ListIcon, X, Plus, Folder, Pause, MicPlus, Trash2, Mic, Menu } from './Icons';
 import { AudioPlayer, SourceBadge, UserAuthButton } from './UI';
-import { renderStyledText, getAudioFromDB, processFormsContextually, parseListName, renderColorizedCherokee, renderSegmentedSurface, projectSegmentsOntoTone, segmentVerbForm, VerbMorphologyTemplate, getFriendlyLabel, resolveRoleTaggedSegments } from '../utils';
+import { renderStyledText, getAudioFromDB, processFormsContextually, parseListName, renderColorizedCherokee, renderSegmentedSurface, projectSegmentsOntoTone, segmentVerbForm, VerbMorphologyTemplate, getFriendlyLabel, resolveRoleTaggedSegments, getTransliterationStyleSetting, hasToneMarks } from '../utils';
 import { usePackageManager } from './PackageManagerContext';
 import AudioRecorder from './AudioRecorder';
 import { useCorpus } from './CorpusContext';
@@ -388,7 +388,9 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                                         <span className="font-serif text-base text-slate-500 dark:text-slate-400 font-bold italic">
                                             {resolveRoleTaggedSegments(null, rootEntry, 'present', settings)
                                                 ? renderSegmentedSurface(
-                                                    projectSegmentsOntoTone(resolveRoleTaggedSegments(null, rootEntry, 'present', settings) || [], e.Entry_Tone),
+                                                    (getTransliterationStyleSetting(settings) === 'classic' && hasToneMarks(e.Entry_Tone))
+                                                        ? projectSegmentsOntoTone(resolveRoleTaggedSegments(null, rootEntry, 'present', settings) || [], e.Entry_Tone)
+                                                        : resolveRoleTaggedSegments(null, rootEntry, 'present', settings),
                                                     settings?.colorWordSegments !== false
                                                   )
                                                 : (rootEntry && mainPresGroups

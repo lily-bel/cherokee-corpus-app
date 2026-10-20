@@ -2,7 +2,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { X, Mic, Trash2, Pause, Volume2, Plus } from './Icons';
-import { getFriendlyLabel, processFormsContextually, renderStyledText, ColorizedCherokeeWord, getColorWordSegmentsSetting } from '../utils';
+import { getFriendlyLabel, processFormsContextually, renderStyledText, ColorizedCherokeeWord, getColorWordSegmentsSetting, getFormTransliteration, resolveHdFormName } from '../utils';
 import { useCorpus } from './CorpusContext';
 
 interface WordFormsModalProps {
@@ -157,19 +157,29 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
     const processedImportedForms = processFormsContextually(importedFormsForThisEntry);
 
     processedImportedForms.sort((a, b) => (a.order || 0) - (b.order || 0)).forEach(f => {
+        const slot = resolveHdFormName(f.normalized_key || f.form_name);
+        const dynamicTranslit = getFormTransliteration(f, effectiveRootEntry, slot, settings) || f.translit;
         allForms.push({
+            ...f,
             type: 'imported',
             label: f.displayLabel || getFriendlyLabel(f.form_name),
             form_name: f.form_name,
             normalized_key: f.normalized_key,
-            translit: f.translit,
+            translit: dynamicTranslit,
             syllabary: f.syllabary,
             tone: f.tone,
             notes: f.notes,
             index: formCounter++,
             color: f.color,
             source: f.source,
-            audio: f.audio
+            audio: f.audio,
+            segmented_raw: f.segmented_raw,
+            segmented_aspiration: f.segmented_aspiration,
+            segmented_reverse_aspiration: f.segmented_reverse_aspiration,
+            segmented_surface: f.segmented_surface,
+            surface_segments: f.surface_segments,
+            is_shim: f.is_shim,
+            shim_class: f.shim_class
         });
     });
 
@@ -293,6 +303,7 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
                                                         rootEntry={effectiveRootEntry}
                                                         allForms={allForms}
                                                         isColored={isColored}
+                                                        settings={settings}
                                                     />
                                                 </div>
                                                 {form.tone && (
@@ -304,6 +315,7 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
                                                             rootEntry={effectiveRootEntry}
                                                             allForms={allForms}
                                                             isColored={isColored}
+                                                            settings={settings}
                                                         />
                                                     </div>
                                                 )}

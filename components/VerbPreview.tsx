@@ -8,7 +8,8 @@ import {
     segmentVerbForm, 
     processFormsContextually, 
     VerbMorphologyTemplate,
-    resolveRoleTaggedSegments
+    resolveRoleTaggedSegments,
+    getFormTransliteration
 } from '../utils';
 import ReferenceFormsPreview, { getReferencePreviewMatchedForms } from './ReferenceFormsPreview';
 import { BookOpen, ChevronDown, ChevronUp } from './Icons';
@@ -153,7 +154,7 @@ export const VerbPreview: React.FC<VerbPreviewProps> = ({
                                     ? renderSegmentedSurface(presSegs, isColored)
                                     : (presGroups
                                         ? renderColorizedCherokee(entry.Entry, presGroups, pronounSet, isColored)
-                                        : (rootEntry.surface_spelling || entry.Entry));
+                                        : (getFormTransliteration(null, rootEntry, 'present', settings) || rootEntry.surface_spelling || entry.Entry));
                             })()}
                         </span>
                     </div>

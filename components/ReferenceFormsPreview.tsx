@@ -10,7 +10,10 @@ import {
     cleanStr,
     SegmentGroup,
     resolveRoleTaggedSegments,
-    getSeparateStativeShimsSetting
+    getSeparateStativeShimsSetting,
+    getTransliterationStyleSetting,
+    hasToneMarks,
+    getFormTransliteration
 } from '../utils';
 import { usePackageManager } from './PackageManagerContext';
 import { useCorpus } from './CorpusContext';
@@ -586,7 +589,7 @@ export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
         if (showTone) {
             surface = form.tone2 || form.tone || form.Entry_Tone || form.translit || form.Practical || form.Entry || '';
         } else {
-            surface = form.translit || form.Practical || form.Entry || form.tone || '';
+            surface = getFormTransliteration(form, rootEntry, hdFormName, settings) || form.translit || form.Practical || form.Entry || form.tone || '';
         }
 
         // Split on semicolon if multiple forms exist: color the primary form matching King parse, render remainder uncolored
@@ -684,12 +687,14 @@ export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
                 <div className={`font-serif text-base sm:text-lg font-bold leading-tight truncate my-0.5 ${style.translit}`}>
                     {hdSegments ? (
                         <>
-                            {renderSegmentedSurface(
-                                showTone && primarySurface
+                            {(() => {
+                                const isClassic = getTransliterationStyleSetting(settings) === 'classic';
+                                const useToneProjection = showTone && isClassic && hasToneMarks(primarySurface);
+                                const displaySegments = useToneProjection
                                     ? projectSegmentsOntoTone(hdSegments, primarySurface)
-                                    : hdSegments,
-                                colorSegments
-                            )}
+                                    : hdSegments;
+                                return renderSegmentedSurface(displaySegments, colorSegments);
+                            })()}
                             {remainderSurface && (
                                 <span className="font-normal opacity-75">{remainderSurface}</span>
                             )}

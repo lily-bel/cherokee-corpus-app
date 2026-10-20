@@ -18,6 +18,19 @@ BIG QUESTIONS:
   The mass editor tool should be updated.                                                                          
 27. API Consideration                                                                                            
   API?
+28. Better desktop views
+  on desktop, more information can be visible in the search view. The 6 to 8 forms shown in the mini other forms area
+  can be visible in the search view horizontally like a table. Popup windows need to appear fully visible and not cutoff
+  by the bottom of the screen on desktop.
+29. Better linking / embedding
+  We need to be able to share pages (entries, class/root pages) and have these pages show a nice embedding externally.
+  This may require prerendering pages or something. Obviously this only applies to official/built-in words
+30. gloss bug
+  creating a word in the gloss modal when you have no dictionaries does not allow you to create a dictionary to put that
+  word into.
+31. Precalculate segmentation
+  king-recreation branch for passing through premade segmentation for the words for color coding in app.
+32. dark mode color coding needs the fully black segments to be fully white instead
 
 TEST:
 6. Online Capabilities & Testing                                                                                 

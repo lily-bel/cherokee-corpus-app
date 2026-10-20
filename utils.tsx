@@ -1852,6 +1852,9 @@ export function projectSegmentsOntoTone(
   if (!segments || segments.length === 0) {
     return [{ role: 'root', text: tone }];
   }
+  if (!hasToneMarks(tone)) {
+    return segments;
+  }
   if (segments.length === 1) {
     return [{ ...segments[0], text: tone }];
   }
@@ -2195,6 +2198,24 @@ export function parseRoleTaggedSegmentation(taggedStr: string | undefined): Surf
   return segments;
 }
 
+export function hasToneMarks(text: string | null | undefined): boolean {
+  if (!text) return false;
+  return /[¹²³⁴]|\b[1-4]\b|[a-zA-Z][1-4]|[:\u0300-\u036f\u02c0\u02c1\u0294]|[áàâéèêíìîóòôúùûv́v̀v̂]/.test(text);
+}
+
+export function getFormTransliteration(
+  form: any,
+  rootEntry?: any,
+  hdSlot?: string | null | undefined,
+  settings?: any
+): string {
+  const segs = resolveRoleTaggedSegments(form, rootEntry, hdSlot, settings);
+  if (segs && segs.length > 0) {
+    return segs.map(s => s.text).join('');
+  }
+  return form?.translit || form?.Practical || form?.Entry || form?.surface_spelling || rootEntry?.surface_spelling || '';
+}
+
 export function getTransliterationStyleSetting(settings?: any): 'classic' | 'aspiration' | 'reverse_aspiration' {
   if (settings?.transliterationStyle) return settings.transliterationStyle;
   try {
@@ -2308,10 +2329,6 @@ export const ColorizedCherokeeWord: React.FC<ColorizedCherokeeWordProps> = ({
     ? isColored
     : getColorWordSegmentsSetting(settings);
 
-  if (!colored) {
-    return <span className={`font-bold ${className}`.trim()}>{text}</span>;
-  }
-
   let rEntry = rootEntry;
   if (!rEntry && entry) {
     rEntry = entry.rootEntry;
@@ -2346,12 +2363,19 @@ export const ColorizedCherokeeWord: React.FC<ColorizedCherokeeWordProps> = ({
   // 1. Exact match in surface_segments (either directly on form, or on rEntry)
   const exactSegs = resolveRoleTaggedSegments(form, rEntry, hdSlot, settings);
   if (exactSegs) {
-    const projected = projectSegmentsOntoTone(exactSegs, text);
+    const isClassic = getTransliterationStyleSetting(settings) === 'classic';
+    const displaySegs = (isClassic && hasToneMarks(text))
+      ? projectSegmentsOntoTone(exactSegs, text)
+      : exactSegs;
     return (
       <span className={className}>
-        {renderSegmentedSurface(projected, colored)}
+        {renderSegmentedSurface(displaySegs, colored)}
       </span>
     );
+  }
+
+  if (!colored) {
+    return <span className={`font-bold ${className}`.trim()}>{text}</span>;
   }
 
   // 2. Derive segmented form if available

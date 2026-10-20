@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { StickyNote, ListIcon, Mic, SquaresPlus } from './Icons';
 import { SourceBadge } from './UI';
 import { useCorpus } from './CorpusContext';
-import { renderColorizedCherokee, renderSegmentedSurface, projectSegmentsOntoTone, segmentVerbForm, deriveSegmentedForm, getFormPronominalSet, VerbMorphologyTemplate, isFormAudio, resolveRoleTaggedSegments } from '../utils';
+import { renderColorizedCherokee, renderSegmentedSurface, projectSegmentsOntoTone, segmentVerbForm, deriveSegmentedForm, getFormPronominalSet, VerbMorphologyTemplate, isFormAudio, resolveRoleTaggedSegments, getTransliterationStyleSetting, hasToneMarks } from '../utils';
 import { usePackageManager } from './PackageManagerContext';
 
 
@@ -246,7 +246,7 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
             <span className="font-noto-serif font-bold">
               {matchedHdSegments
                 ? renderSegmentedSurface(
-                    entry.matchedForm.translit
+                    (getTransliterationStyleSetting(settings) === 'classic' && hasToneMarks(entry.matchedForm.translit))
                       ? projectSegmentsOntoTone(matchedHdSegments, entry.matchedForm.translit)
                       : matchedHdSegments,
                     isColored
