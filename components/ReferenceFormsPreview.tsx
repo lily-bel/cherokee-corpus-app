@@ -661,12 +661,12 @@ export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
                             _onViewEntry(target);
                         }
                     }}
-                    className="p-3 rounded-xl border-2 border-dashed border-amber-300/80 dark:border-amber-700/60 hover:border-amber-500 dark:hover:border-amber-500 hover:bg-amber-50/40 dark:hover:bg-amber-900/20 flex flex-col justify-between items-start text-left transition-all min-h-[84px] cursor-pointer group"
+                    className="p-3 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 flex flex-col justify-between items-start text-left transition-all min-h-[84px] cursor-pointer group"
                 >
                     <span className={`text-[10px] sm:text-[11px] uppercase tracking-wider truncate leading-tight ${style.label}`}>
                         {cardData.label}
                     </span>
-                    <span className="text-xs font-bold text-amber-700 dark:text-amber-400 group-hover:underline my-auto">
+                    <span className="text-xs font-bold text-slate-600 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200 group-hover:underline my-auto">
                         {cardData.crossRef.label} →
                     </span>
                 </button>
