@@ -221,26 +221,26 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
         return (
             <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950">
                 {/* Header */}
-                <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 h-12 flex items-center shrink-0">
-                    <div className="flex items-center gap-3">
+                <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 h-12 flex items-center justify-between shrink-0">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
                         <button
                             onClick={() => { setView('books'); setSelectedBook(null); }}
-                            className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                            className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
                         >
                             <ArrowLeft size={20} className="text-slate-600 dark:text-slate-400" />
                         </button>
                         <div className="flex-1 min-w-0">
-                            <h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">
+                            <h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate leading-tight">
                                 {selectedBook.title}
                             </h1>
                             {selectedBook.author && (
-                                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                                <p className="text-xs text-slate-500 dark:text-slate-400 truncate leading-tight">
                                     by {selectedBook.author}
                                 </p>
                             )}
                         </div>
                     </div>
-                    <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                    <div className="flex items-center gap-1.5 shrink-0 ml-auto pl-2">
                         <UserAuthButton />
                         {onShowSettings && (
                             <button onClick={onShowSettings} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" title="Settings">
@@ -306,22 +306,28 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                                     setSelectedStory(null);
                                 }
                             }}
-                            className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                            className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
                         >
                             <ArrowLeft size={20} className="text-slate-600 dark:text-slate-400" />
                         </button>
                         <div className="flex-1 min-w-0">
-                            <h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">
+                            <h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate leading-tight">
                                 {selectedStory.title === selectedBook?.title ? selectedStory.title : `${selectedBook?.title ? selectedBook.title + ' • ' : ''}${selectedStory.title}`}
                             </h1>
-                            {selectedBook && selectedStory.title !== selectedBook.title && (
-                                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                                    {selectedBook.title}
+                            {selectedBook && selectedStory.title !== selectedBook.title ? (
+                                <p className="text-xs text-slate-500 dark:text-slate-400 truncate leading-tight">
+                                    {selectedBook.title}{selectedBook.author ? ` • by ${selectedBook.author}` : ''}
                                 </p>
+                            ) : (
+                                selectedBook?.author && (
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate leading-tight">
+                                        by {selectedBook.author}
+                                    </p>
+                                )
                             )}
                         </div>
                     </div>
-                    <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                    <div className="flex items-center gap-1.5 shrink-0 ml-auto pl-2">
                         {canEdit && !hideCustomization && (
                             <button
                                 onClick={() => onOpenImporter(selectedBook?.source, selectedStory.title, 'append')}

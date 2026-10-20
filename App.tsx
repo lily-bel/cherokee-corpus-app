@@ -1210,7 +1210,15 @@ function App() {
     };
 
 
-    const createDictionary = () => { if (!newDictionaryName.trim()) return; const id = 'nb_' + Date.now(); setCustomDictionaries(p => ({ ...p, [id]: { id, name: newDictionaryName, date: Date.now(), type: 'notebook' } })); setNewDictionaryName(''); setShowNewDictionaryModal(false); showToast("Collection created!", "success"); };
+    const handleCreateDictionary = (name: string): string => {
+        const trimmed = name.trim();
+        if (!trimmed) return '';
+        const id = 'nb_' + Date.now();
+        setCustomDictionaries(p => ({ ...p, [id]: { id, name: trimmed, date: Date.now(), type: 'notebook' } }));
+        showToast("Collection created!", "success");
+        return id;
+    };
+    const createDictionary = () => { if (!newDictionaryName.trim()) return; handleCreateDictionary(newDictionaryName); setNewDictionaryName(''); setShowNewDictionaryModal(false); };
     const deleteDictionary = (id) => {
         const next = { ...customDictionaries }; delete next[id]; setCustomDictionaries(next);
         setPersonalWords(prev => prev.filter(w => w.customDictionaryId !== id));
@@ -1349,7 +1357,10 @@ function App() {
             // Priority: forceMode > dictionaryMode > default
             const mode = forceMode || (activeTab === 'search' ? (searchScope === 'sentences' ? 'sentence' : 'word') : (dictionaryMode === 'sentences' ? 'sentence' : 'word'));
             setIsSentenceMode(mode === 'sentence');
-            const defaultNb = activeDictionaryId || (Object.keys(customDictionaries).length > 0 ? Object.keys(customDictionaries)[0] : '');
+            const validColls = Object.values(customDictionaries).filter((nb: any) => nb && (mode === 'sentence' || nb.type !== 'book'));
+            const defaultNb = (activeDictionaryId && (mode === 'sentence' || customDictionaries[activeDictionaryId]?.type !== 'book'))
+                ? activeDictionaryId
+                : (validColls.length > 0 ? validColls[0].id : '');
 
             setWordForm({
                 Entry: '',
@@ -1365,15 +1376,14 @@ function App() {
                 class_name: '',
                 class_mascot: '',
                 post_root_morpheme: null,
-                config: {
-                    pre: { distributive: false, translocutive: false, partitive: false, translocutiveImpOnly: false },
-                    pron: { set_type: 'a', use_ka_variant: false, plural_pronouns: false, middle_voice: 'none', use_3rd_person_object: false }
-                }
+                config: undefined
             });
             setEditingId(null);
         } else {
             // Editing existing item
             setIsSentenceMode(false); // Default to word, handleEditSentence will override if needed
+            const existingNb = w.customDictionaryId || w.source || '';
+            const validNb = customDictionaries[existingNb]?.type === 'book' ? '' : existingNb;
             setWordForm({
                 Entry: w.Entry || w.translit || '',
                 Syllabary: w.Syllabary || w.syllabary || '',
@@ -1381,18 +1391,15 @@ function App() {
                 PoS: w.PoS || '',
                 Entry_Tone: w.Entry_Tone || '',
                 Notes: w.Notes || '',
-                customDictionaryId: w.customDictionaryId || w.source || '', // Handle both word and sentence source
+                customDictionaryId: validNb, // Handle both word and sentence source
                 Other_Forms: w.Other_Forms || '',
-                root_slug: w.root_slug || w.slug || '',
+                root_slug: (w.root_slug && w.root_slug !== 'custom-root') ? w.root_slug : (w.slug && w.slug !== 'custom-root' ? w.slug : ''),
                 root_h: w.root_h || '',
                 root_g: w.root_g || '',
                 class_name: w.class_name || '',
                 class_mascot: w.class_mascot || '',
                 post_root_morpheme: w.post_root_morpheme || null,
-                config: w.config || {
-                    pre: { distributive: false, translocutive: false, partitive: false, translocutiveImpOnly: false },
-                    pron: { set_type: 'a', use_ka_variant: false, plural_pronouns: false, middle_voice: 'none', use_3rd_person_object: false }
-                }
+                config: w.config || undefined
             });
             setEditingId(w.Index || w.id);
         }
@@ -1426,23 +1433,23 @@ function App() {
             return;
         }
 
-        let target = activeDictionaryId;
+        let target = (activeDictionaryId && customDictionaries[activeDictionaryId]?.type !== 'book') ? activeDictionaryId : undefined;
         if (editingId) {
             const o = personalWords.find(w => w.Index === editingId);
-            if (o) target = o.customDictionaryId;
+            if (o && customDictionaries[o.customDictionaryId]?.type !== 'book') target = o.customDictionaryId;
         }
         if (!target && !editingId) {
-            const k = Object.keys(customDictionaries);
-            if (k.length) target = k[0];
+            const validColls = Object.values(customDictionaries).filter((nb: any) => nb && nb.type !== 'book');
+            if (validColls.length) target = validColls[0].id;
             else {
                 const d = 'nb_' + Date.now();
-                setCustomDictionaries({ [d]: { id: d, name: "My Collection", date: Date.now(), type: 'notebook' } });
+                setCustomDictionaries(prev => ({ ...prev, [d]: { id: d, name: "My Collection", date: Date.now(), type: 'notebook' } }));
                 target = d;
             }
         }
 
-        // Ensure data.customDictionaryId is used if set (from modal dropdown)
-        if (data.customDictionaryId) target = data.customDictionaryId;
+        // Ensure data.customDictionaryId is used if set (from modal dropdown), verifying it's not a book
+        if (data.customDictionaryId && customDictionaries[data.customDictionaryId]?.type !== 'book') target = data.customDictionaryId;
 
         const nw = {
             ...data,
@@ -2895,6 +2902,7 @@ function App() {
                         editingId={editingId}
                         customDictionaries={customDictionaries}
                         usedFormLabels={usedFormLabels}
+                        onCreateDictionary={handleCreateDictionary}
                         settings={settings}
                     />
                 )
@@ -2919,8 +2927,8 @@ function App() {
                 showMoveModal && (
                     <Modal title="Move to Collection" onClose={() => setShowMoveModal(false)}>
                         <div className="space-y-2 max-h-[60vh] overflow-y-auto">
-                            {Object.values(customDictionaries).length === 0 && <p className="text-slate-400 italic">No collections available.</p>}
-                            {Object.entries(customDictionaries).map(([id, dictionary]) => (
+                            {Object.values(customDictionaries).filter((d: any) => d && d.type !== 'book').length === 0 && <p className="text-slate-400 italic">No collections available.</p>}
+                            {Object.entries(customDictionaries).filter(([_, dictionary]) => (dictionary as any)?.type !== 'book').map(([id, dictionary]) => (
                                 <button key={id} onClick={() => handleMoveWord(id)} className="w-full text-left p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3">
                                     <Folder size={20} className="text-sky-600 dark:text-sky-400" />
                                     <span className="font-bold text-slate-700 dark:text-slate-200">{dictionary.name || 'Unknown Collection'}</span>

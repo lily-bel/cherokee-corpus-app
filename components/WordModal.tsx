@@ -69,6 +69,7 @@ interface WordModalProps {
     customDictionaries: Record<string, any>;
     usedFormLabels?: string[];
     settings?: any;
+    onCreateDictionary?: (name: string) => string;
 }
 
 interface MorphemeRow {
@@ -93,7 +94,8 @@ export const WordModal: React.FC<WordModalProps> = ({
     editingId,
     customDictionaries,
     usedFormLabels = [],
-    settings
+    settings,
+    onCreateDictionary
 }) => {
     const { roots } = useCorpus();
 
@@ -113,6 +115,65 @@ export const WordModal: React.FC<WordModalProps> = ({
     // Prepronominal prefixes list (+ / -)
     const [prefixRows, setPrefixRows] = useState<MorphemeRow[]>([]);
     const [activePrefixDropdownId, setActivePrefixDropdownId] = useState<string | null>(null);
+
+    // Collection creation state
+    const validCollections = useMemo(() => {
+        return Object.values(customDictionaries || {}).filter((nb: any) => {
+            if (!nb) return false;
+            if (!isSentenceMode) {
+                return nb.type !== 'book';
+            }
+            return true;
+        });
+    }, [customDictionaries, isSentenceMode]);
+
+    const hasExistingCollections = validCollections.length > 0;
+    const [isCreatingCollection, setIsCreatingCollection] = useState(!hasExistingCollections);
+    const [newCollectionName, setNewCollectionName] = useState('');
+
+    useEffect(() => {
+        if (!hasExistingCollections) {
+            setIsCreatingCollection(true);
+        } else if (formData?.customDictionaryId && !validCollections.some(c => c.id === formData.customDictionaryId)) {
+            // Remap if current collection points to an invalid collection (e.g. a book)
+            setFormData(prev => ({
+                ...(prev || {} as WordFormData),
+                customDictionaryId: validCollections[0]?.id || '',
+                Entry: prev?.Entry || '',
+                Syllabary: prev?.Syllabary || '',
+                Definition: prev?.Definition || '',
+                PoS: prev?.PoS || '',
+                Entry_Tone: prev?.Entry_Tone || '',
+                Notes: prev?.Notes || ''
+            }));
+        }
+    }, [hasExistingCollections, validCollections, formData?.customDictionaryId]);
+
+    const handleCreateNewCollection = (nameOverride?: string) => {
+        const nameToUse = (typeof nameOverride === 'string' ? nameOverride : newCollectionName).trim();
+        if (!nameToUse) return '';
+        let newId = '';
+        if (onCreateDictionary) {
+            newId = onCreateDictionary(nameToUse);
+        } else {
+            newId = 'nb_' + Date.now();
+        }
+        if (newId) {
+            setFormData(prev => ({
+                ...(prev || {} as WordFormData),
+                customDictionaryId: newId,
+                Entry: prev?.Entry || '',
+                Syllabary: prev?.Syllabary || '',
+                Definition: prev?.Definition || '',
+                PoS: prev?.PoS || '',
+                Entry_Tone: prev?.Entry_Tone || '',
+                Notes: prev?.Notes || ''
+            }));
+            setIsCreatingCollection(false);
+            setNewCollectionName('');
+        }
+        return newId;
+    };
 
     // Post-root morphemes list (+ / -)
     const [postRootRows, setPostRootRows] = useState<MorphemeRow[]>([]);
@@ -157,7 +218,9 @@ export const WordModal: React.FC<WordModalProps> = ({
         }
 
         // Initialize Advanced Morphology fields
-        const slug = initialData?.root_slug || initialData?.slug || '';
+        const slug = (initialData?.root_slug && initialData.root_slug !== 'custom-root')
+            ? initialData.root_slug
+            : (initialData?.slug && initialData.slug !== 'custom-root' ? initialData.slug : '');
         const h = initialData?.root_h || '';
         const g = initialData?.root_g || '';
         const displaySpelling = h ? formatCommunityRoot(h) : (slug ? formatCommunityRoot(slug) : '');
@@ -208,8 +271,15 @@ export const WordModal: React.FC<WordModalProps> = ({
         setPronUse3rdPersonObj(Boolean(config?.pron?.use_3rd_person_object));
         setMiddleVoice(config?.pron?.middle_voice || 'none');
 
+        const hasLegacyPrefixes = Boolean(
+            initialData?.config?.pre?.translocutive ||
+            initialData?.config?.pre?.partitive ||
+            initialData?.config?.pre?.distributive ||
+            initialData?.config?.pre?.translocutiveImpOnly
+        );
+
         // Auto-open advanced section if morphology is configured
-        if (slug || h || g || cName || (initialData?.post_root_morpheme) || (rawPost && rawPost.length > 0) || (rawPre && rawPre.length > 0) || config?.pron?.set_type === 'b' || (config?.pron?.middle_voice && config?.pron?.middle_voice !== 'none')) {
+        if (slug || h || g || cName || (initialData?.post_root_morpheme) || (rawPost && rawPost.length > 0) || (rawPre && rawPre.length > 0) || hasLegacyPrefixes || config?.pron?.set_type === 'b' || (config?.pron?.middle_voice && config?.pron?.middle_voice !== 'none')) {
             setIsAdvancedOpen(true);
         } else {
             setIsAdvancedOpen(false);
@@ -522,9 +592,28 @@ export const WordModal: React.FC<WordModalProps> = ({
         const effectivePostRoots = postRootRows.map(p => p.value.trim()).filter(Boolean);
 
         // Generate backend slug for new roots if not selected from existing
-        const finalSlug = existingRootSlug || (effectiveDisplay ? generateRootSlug(effectiveDisplay) : undefined);
+        // Check if user specified any morphology
+        const hasMorphology = Boolean(
+            effectiveDisplay ||
+            (existingRootSlug && existingRootSlug !== 'custom-root') ||
+            rootH.trim() ||
+            rootG.trim() ||
+            effectiveClass ||
+            effectivePrefixes.length > 0 ||
+            effectivePostRoots.length > 0 ||
+            pronSet === 'b' ||
+            pronUseKaVariant ||
+            pronPlural ||
+            pronUse3rdPersonObj ||
+            (middleVoice && middleVoice !== 'none')
+        );
 
-        const finalConfig = {
+        // Generate backend slug for new roots if not selected from existing
+        const finalSlug = hasMorphology
+            ? ((existingRootSlug && existingRootSlug !== 'custom-root' ? existingRootSlug : null) || (effectiveDisplay ? generateRootSlug(effectiveDisplay) : undefined))
+            : undefined;
+
+        const finalConfig = hasMorphology ? {
             pre: {
                 prefixes: effectivePrefixes,
                 distributive: effectivePrefixes.includes('de') || effectivePrefixes.includes('te'),
@@ -539,27 +628,39 @@ export const WordModal: React.FC<WordModalProps> = ({
                 middle_voice: middleVoice === 'none' ? undefined : middleVoice,
                 use_3rd_person_object: pronUse3rdPersonObj
             }
-        };
+        } : undefined;
+
+        let effectiveDictId = formData?.customDictionaryId;
+        if (!isSentenceMode && effectiveDictId && customDictionaries[effectiveDictId]?.type === 'book') {
+            effectiveDictId = validCollections[0]?.id || '';
+        }
+        if ((!effectiveDictId || effectiveDictId === '__new__') && newCollectionName.trim()) {
+            effectiveDictId = handleCreateNewCollection(newCollectionName.trim());
+        } else if (!effectiveDictId && !hasExistingCollections) {
+            effectiveDictId = handleCreateNewCollection("My Collection");
+        } else if (!effectiveDictId && validCollections.length > 0) {
+            effectiveDictId = validCollections[0].id;
+        }
 
         onSave({
             ...formData,
-            Entry: formData.Entry || '',
-            Syllabary: formData.Syllabary || '',
-            Definition: formData.Definition || '',
-            PoS: formData.PoS || '',
-            Entry_Tone: formData.Entry_Tone || '',
-            Notes: formData.Notes || '',
-            customDictionaryId: formData.customDictionaryId || '',
+            Entry: formData?.Entry || '',
+            Syllabary: formData?.Syllabary || '',
+            Definition: formData?.Definition || '',
+            PoS: formData?.PoS || '',
+            Entry_Tone: formData?.Entry_Tone || '',
+            Notes: formData?.Notes || '',
+            customDictionaryId: effectiveDictId || formData?.customDictionaryId || '',
             Other_Forms: serializedForms,
             // Class + Root / Verb Morphology
-            root_slug: finalSlug,
-            slug: finalSlug,
-            root_h: effectiveH || undefined,
-            root_g: effectiveG || undefined,
-            class_name: effectiveClass || undefined,
-            class_mascot: effectiveMascot || undefined,
-            post_root_morphemes: effectivePostRoots,
-            post_root_morpheme: effectivePostRoots.join(', ') || null,
+            root_slug: hasMorphology ? finalSlug : undefined,
+            slug: hasMorphology ? finalSlug : undefined,
+            root_h: hasMorphology ? (effectiveH || undefined) : undefined,
+            root_g: hasMorphology ? (effectiveG || undefined) : undefined,
+            class_name: hasMorphology ? (effectiveClass || undefined) : undefined,
+            class_mascot: hasMorphology ? (effectiveMascot || undefined) : undefined,
+            post_root_morphemes: hasMorphology ? (effectivePostRoots.length > 0 ? effectivePostRoots : undefined) : undefined,
+            post_root_morpheme: hasMorphology ? (effectivePostRoots.join(', ') || null) : null,
             config: finalConfig
         });
     };
@@ -1273,17 +1374,71 @@ export const WordModal: React.FC<WordModalProps> = ({
                     )}
 
                     <div>
-                        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">Collection</label>
-                        <select
-                            value={formData?.customDictionaryId || ''}
-                            onChange={e => setFormData(prev => ({ ...(prev || {} as WordFormData), customDictionaryId: e.target.value, Entry: prev?.Entry || '', Syllabary: prev?.Syllabary || '', Definition: prev?.Definition || '', PoS: prev?.PoS || '', Entry_Tone: prev?.Entry_Tone || '', Notes: prev?.Notes || '' }))}
-                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-3 outline-none focus:ring-2 focus:ring-amber-500 dark:text-white"
-                        >
-                            <option value="" disabled>Select a collection...</option>
-                            {Object.values(customDictionaries).map((nb: any) => (
-                                <option key={nb.id} value={nb.id}>{nb.name}</option>
-                            ))}
-                        </select>
+                        <div className="flex justify-between items-center mb-1">
+                            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                                Collection
+                            </label>
+                            {hasExistingCollections && (
+                                <button
+                                    type="button"
+                                    onClick={() => setIsCreatingCollection(prev => !prev)}
+                                    className="text-xs text-amber-600 dark:text-amber-400 hover:underline font-semibold flex items-center gap-1"
+                                >
+                                    {isCreatingCollection ? "Choose existing" : <><Plus size={12} /> New Collection</>}
+                                </button>
+                            )}
+                        </div>
+
+                        {(!hasExistingCollections || isCreatingCollection) ? (
+                            <div className="space-y-1.5">
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={newCollectionName}
+                                        onChange={e => setNewCollectionName(e.target.value)}
+                                        placeholder="New collection name (e.g. My Words)..."
+                                        className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 dark:text-white"
+                                        onKeyDown={e => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                handleCreateNewCollection();
+                                            }
+                                        }}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => handleCreateNewCollection()}
+                                        disabled={!newCollectionName.trim()}
+                                        className="px-3 py-2 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-colors shrink-0"
+                                    >
+                                        Create
+                                    </button>
+                                </div>
+                                {!hasExistingCollections && (
+                                    <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                                        No collections exist yet. Create a collection to save your words into.
+                                    </p>
+                                )}
+                            </div>
+                        ) : (
+                            <select
+                                value={formData?.customDictionaryId || (validCollections[0]?.id || '')}
+                                onChange={e => {
+                                    if (e.target.value === '__new__') {
+                                        setIsCreatingCollection(true);
+                                    } else {
+                                        setFormData(prev => ({ ...(prev || {} as WordFormData), customDictionaryId: e.target.value, Entry: prev?.Entry || '', Syllabary: prev?.Syllabary || '', Definition: prev?.Definition || '', PoS: prev?.PoS || '', Entry_Tone: prev?.Entry_Tone || '', Notes: prev?.Notes || '' }));
+                                    }
+                                }}
+                                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-3 outline-none focus:ring-2 focus:ring-amber-500 dark:text-white"
+                            >
+                                <option value="" disabled>Select a collection...</option>
+                                {validCollections.map((nb: any) => (
+                                    <option key={nb.id} value={nb.id}>{nb.name}</option>
+                                ))}
+                                <option value="__new__">+ Create new collection...</option>
+                            </select>
+                        )}
                     </div>
                 </div>
                 <button onClick={handleSaveClick} className="w-full mt-6 bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 rounded-lg transition-colors shadow-sm">

@@ -124,6 +124,7 @@ export interface PersonalWord {
             translocutive?: boolean;
             translocutiveImpOnly?: boolean;
             partitive?: boolean;
+            prefixes?: string[];
         };
         pron?: {
             set_type?: string;
@@ -508,15 +509,22 @@ export const CorpusProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 if (w.Index) dMap.set(w.Index, dictEntry);
             }
 
-            const slugVal = w.root_slug || w.slug;
-            const rootH = w.root_h || '';
-            const rootG = w.root_g || '';
-            const className = w.class_name || '';
-            const classMascot = w.class_mascot || getClassMascot(className) || '';
+            const slugVal = (w.root_slug && w.root_slug !== 'custom-root') ? w.root_slug : (w.slug && w.slug !== 'custom-root' ? w.slug : '');
+            const rootH = (w.root_h || '').trim();
+            const rootG = (w.root_g || '').trim();
+            const className = (w.class_name || '').trim();
+            const classMascot = w.class_mascot || (className ? getClassMascot(className) : '') || '';
             const postRoot = w.post_root_morpheme || null;
             const config = w.config;
+            const prefixes = (Array.isArray(config?.pre?.prefixes) && config.pre.prefixes.filter(Boolean).length > 0)
+                ? config.pre.prefixes.filter(Boolean)
+                : ((config?.pre?.distributive || config?.pre?.translocutive || config?.pre?.partitive || config?.pre?.translocutiveImpOnly) ? ['prefix'] : []);
+            const hasMiddleVoice = Boolean(config?.pron?.middle_voice && config.pron.middle_voice !== 'none');
+            const hasPronModifier = Boolean(config?.pron?.set_type === 'b' || config?.pron?.use_ka_variant || config?.pron?.plural_pronouns || config?.pron?.use_3rd_person_object);
 
-            if (slugVal || rootH || rootG || className || postRoot || (config && (config.pre || config.pron))) {
+            const hasCustomMorphology = Boolean(slugVal || rootH || rootG || className || postRoot || prefixes.length > 0 || hasMiddleVoice || hasPronModifier);
+
+            if (hasCustomMorphology) {
                 const rootSlug = slugVal || rootH || rootG || className || 'custom-root';
                 const rootEntry: RootEntry = {
                     entry_id: id || '',
