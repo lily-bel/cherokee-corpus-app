@@ -2040,7 +2040,7 @@ export function renderSegmentedSurface(
         }
         if (seg.role === 'root') {
           return (
-            <span key={idx} className="font-bold underline underline-offset-2" style={{ color: '#000' }} title="Root">
+            <span key={idx} className="font-bold underline underline-offset-2 text-black dark:text-white" title="Root">
               {seg.text}
             </span>
           );

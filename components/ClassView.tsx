@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowLeft, Menu } from './Icons';
+import { ArrowLeft, Menu, Share } from './Icons';
 import { UserAuthButton } from './UI';
 import { useCorpus } from './CorpusContext';
 import VerbPreview from './VerbPreview';
@@ -18,6 +18,7 @@ interface ClassViewProps {
     onViewEntry: (entry: any) => void;
     onViewRoot?: (slug: string) => void;
     onShowSettings?: () => void;
+    showToast?: (message: string, type?: string) => void;
     settings?: {
         showToneInForms?: boolean;
         colorWordSegments?: boolean;
@@ -39,6 +40,7 @@ const ClassView: React.FC<ClassViewProps> = ({
     onViewEntry, 
     onViewRoot, 
     onShowSettings, 
+    showToast,
     settings, 
     style 
 }) => {
@@ -210,6 +212,18 @@ const ClassView: React.FC<ClassViewProps> = ({
                     </button>
                 </div>
                 <div className="flex gap-1.5 items-center">
+                    <button 
+                        onClick={() => {
+                            if (navigator.clipboard) {
+                                navigator.clipboard.writeText(window.location.href);
+                                showToast?.("Link copied to clipboard", "success");
+                            }
+                        }} 
+                        className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200" 
+                        title="Copy link"
+                    >
+                        <Share size={18} />
+                    </button>
                     <UserAuthButton />
                     {onShowSettings && (
                         <button 

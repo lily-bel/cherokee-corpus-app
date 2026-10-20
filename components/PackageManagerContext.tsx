@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { getAllPackagesFromDB, savePackageToDB, deletePackageFromDB } from '../utils';
 import { parsePackageZip } from './packageParser';
 import { deleteWidgetsByPackageId } from '../widgetUtils';
@@ -55,6 +55,7 @@ export interface ImportedPackageData {
 interface PackageManagerContextType {
     packages: Package[];
     importedData: Record<string, ImportedPackageData>;
+    wordFormsByWordIndex: Map<string, any[]>;
     installPackage: (pkg: Package, data: ImportedPackageData) => void;
     removePackage: (id: string) => void;
     togglePackage: (id: string) => void;
@@ -654,10 +655,30 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
         return undefined;
     };
 
+    const wordFormsByWordIndex = useMemo(() => {
+        const map = new Map<string, any[]>();
+        packages.forEach(p => {
+            if (p.status === 'active' && importedData[p.id]?.word_forms) {
+                importedData[p.id].word_forms!.forEach(f => {
+                    const idx = f.word_index;
+                    if (!idx) return;
+                    let list = map.get(idx);
+                    if (!list) {
+                        list = [];
+                        map.set(idx, list);
+                    }
+                    list.push({ ...f, color: p.color, pkgName: p.name });
+                });
+            }
+        });
+        return map;
+    }, [packages, importedData]);
+
     return (
         <PackageManagerContext.Provider value={{
             packages,
             importedData,
+            wordFormsByWordIndex,
             installPackage,
             removePackage,
             togglePackage,

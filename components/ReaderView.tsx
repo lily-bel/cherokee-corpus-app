@@ -35,6 +35,7 @@ interface ReaderViewProps {
     onToggleFavorite?: (id: string) => void;
     onToggleList?: (listId: string, id: string) => void;
     onOpenNewListModal?: (id: string) => void;
+    showToast?: (message: string, type?: string) => void;
     settings?: any;
 }
 
@@ -63,6 +64,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
     onToggleFavorite,
     onToggleList,
     onOpenNewListModal,
+    showToast,
     settings
 }) => {
     const hideCustomization = !!settings?.hideCustomization;
@@ -75,7 +77,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
     const [activePopover, setActivePopover] = useState<{
         sentenceId: string;
         wordIndex: number;
-        position: { x: number; y: number };
+        position: { x: number; y: number; anchorTop?: number; anchorBottom?: number };
     } | null>(null);
     const [showLinker, setShowLinker] = useState<{
         sentenceId: string;
@@ -289,7 +291,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
         setActivePopover({
             sentenceId: sentence.id,
             wordIndex,
-            position: { x: rect.left, y: rect.bottom }
+            position: { x: rect.left, y: rect.bottom, anchorTop: rect.top, anchorBottom: rect.bottom }
         });
     };
 
@@ -471,6 +473,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                                         onToggleList={onToggleList}
                                         onOpenNewListModal={onOpenNewListModal}
                                         onCollapse={() => setExpandedSentenceId(null)}
+                                        showToast={showToast}
                                         settings={settings}
                                     />
                                 ) : (
@@ -594,7 +597,8 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                         onClose={() => setActivePopover(null)}
                         onEntryClick={(id) => {
                             const url = new URL(window.location.href);
-                            url.searchParams.set('word', id);
+                            url.pathname = `/word/${encodeURIComponent(id)}`;
+                            url.searchParams.delete('word');
                             window.history.pushState({}, '', url.toString());
                             window.dispatchEvent(new PopStateEvent('popstate'));
                             setActivePopover(null);

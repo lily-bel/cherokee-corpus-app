@@ -5,7 +5,7 @@ import { AlertCircle, Volume2, ChevronUp, ChevronDown, Pencil, ArrowUp, ArrowDow
 export const Toast = ({ show, message, type = 'error' }) => {
   if (!show) return null;
   return (
-    <div className="fixed bottom-24 left-4 right-4 z-[80] flex justify-center pointer-events-none animate-slide-up-toast">
+    <div className="fixed bottom-24 left-4 right-4 z-[99999] flex justify-center pointer-events-none animate-slide-up-toast">
       <div className={`px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 ${type === 'error' ? 'bg-red-100 dark:bg-red-900/80 text-red-800 dark:text-red-100 border border-red-200 dark:border-red-800' : 'bg-green-100 dark:bg-green-900/80 text-green-800 dark:text-green-100 border border-green-200 dark:border-green-800'}`}>
         <AlertCircle size={20} />
         <span className="font-bold text-sm">{message}</span>

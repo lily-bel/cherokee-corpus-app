@@ -29,6 +29,50 @@ const SLOT_TO_HD_FORM: Record<string, string> = {
     '3s|3s|completive past': 'perfective',
 };
 
+export const COMPACT_SLOT_LABELS: Record<string, string> = {
+    '1s|3a|present': '1st Pres (an)',
+    '2s|3a|imperative': '2nd Imp (an)',
+    '1s|3s|present': '1st Pres',
+    '2s|3s|imperative': '2nd Imp',
+    '3s|3s|present': '3rd Pres',
+    '3s|3s|habitual': '3rd Hab',
+    '3s|3s|infinitive': '3rd Infinitive',
+    '3s|3s|completive past': '3rd Past',
+    'noun|singular|': 'Singular',
+    'noun|plural|': 'Plural',
+};
+
+export const CATEGORY_STYLES: Record<string, any> = {
+    p2p: {
+        bg: 'bg-transparent',
+        border: 'border-0',
+        label: 'text-purple-700 dark:text-purple-300 font-bold',
+        translit: 'text-slate-900 dark:text-slate-100 font-semibold',
+        syllabary: 'text-slate-600 dark:text-slate-400 font-medium'
+    },
+    ab: {
+        bg: 'bg-transparent',
+        border: 'border-0',
+        label: 'text-rose-700 dark:text-rose-300 font-bold',
+        translit: 'text-slate-900 dark:text-slate-100 font-semibold',
+        syllabary: 'text-slate-600 dark:text-slate-400 font-medium'
+    },
+    set_b: {
+        bg: 'bg-transparent',
+        border: 'border-0',
+        label: 'text-sky-700 dark:text-sky-300 font-bold',
+        translit: 'text-slate-900 dark:text-slate-100 font-semibold',
+        syllabary: 'text-slate-600 dark:text-slate-400 font-medium'
+    },
+    noun: {
+        bg: 'bg-transparent',
+        border: 'border-0',
+        label: 'text-slate-700 dark:text-slate-300 font-bold',
+        translit: 'text-slate-900 dark:text-slate-100 font-semibold',
+        syllabary: 'text-slate-600 dark:text-slate-400 font-medium'
+    }
+};
+
 export interface ReferenceFormCardData {
     slotKey: string;
     label: string;
@@ -534,38 +578,6 @@ export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
         return null;
     }
 
-    // Styling constants: transparent background with colored border
-    const CATEGORY_STYLES: Record<string, any> = {
-        p2p: {
-            bg: 'bg-transparent hover:bg-slate-50/60 dark:hover:bg-slate-800/40',
-            border: 'border-2 border-purple-300 dark:border-purple-700/60',
-            label: 'text-purple-700 dark:text-purple-300 font-bold',
-            translit: 'text-slate-900 dark:text-slate-100 font-medium',
-            syllabary: 'text-slate-600 dark:text-slate-400'
-        },
-        ab: {
-            bg: 'bg-transparent hover:bg-slate-50/60 dark:hover:bg-slate-800/40',
-            border: 'border-2 border-rose-300 dark:border-rose-700/60',
-            label: 'text-rose-700 dark:text-rose-300 font-bold',
-            translit: 'text-slate-900 dark:text-slate-100 font-medium',
-            syllabary: 'text-slate-600 dark:text-slate-400'
-        },
-        set_b: {
-            bg: 'bg-transparent hover:bg-slate-50/60 dark:hover:bg-slate-800/40',
-            border: 'border-2 border-sky-300 dark:border-sky-700/60',
-            label: 'text-sky-700 dark:text-sky-300 font-bold',
-            translit: 'text-slate-900 dark:text-slate-100 font-medium',
-            syllabary: 'text-slate-600 dark:text-slate-400'
-        },
-        noun: {
-            bg: 'bg-transparent hover:bg-slate-50/60 dark:hover:bg-slate-800/40',
-            border: 'border-2 border-slate-300 dark:border-slate-700',
-            label: 'text-slate-600 dark:text-slate-400 font-bold',
-            translit: 'text-slate-900 dark:text-slate-100 font-medium',
-            syllabary: 'text-slate-600 dark:text-slate-400'
-        }
-    };
-
     const renderCard = (cardData: ReferenceFormCardData | null, fallbackKey: string) => {
         if (!cardData || !cardData.form) {
             return (
@@ -760,6 +772,137 @@ export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
                     </div>
                 </div>
             )}
+        </div>
+    );
+};
+
+export interface DesktopHorizontalFormsStripProps {
+    entry?: any;
+    forms: any[];
+    rootEntry?: any;
+    settings?: any;
+    onOpenAllForms?: () => void;
+    className?: string;
+}
+
+const VERB_CANONICAL_SLOTS = [
+    '1s|3a|present',
+    '2s|3a|imperative',
+    '1s|3s|present',
+    '2s|3s|imperative',
+    '3s|3s|present',
+    '3s|3s|habitual',
+    '3s|3s|infinitive',
+    '3s|3s|completive past',
+];
+
+export const DesktopHorizontalFormsStrip: React.FC<DesktopHorizontalFormsStripProps> = ({
+    entry,
+    forms = [],
+    rootEntry,
+    settings,
+    onOpenAllForms,
+    className = ""
+}) => {
+    const showTone = settings?.showToneInForms !== false;
+    const colorSegments = settings?.colorWordSegments !== false;
+    const verbConfig = rootEntry?.config || entry?.config;
+
+    const { displayedCards, hasMiniPreview } = useMemo(() => {
+        return getReferencePreviewMatchedForms(forms, entry, rootEntry);
+    }, [forms, entry, rootEntry]);
+
+    if (!hasMiniPreview || displayedCards.length === 0) {
+        return null;
+    }
+
+    const isNoun = displayedCards.some(c => c.slotKey.startsWith('noun|'));
+    const slotsToRender = isNoun ? displayedCards.map(c => c.slotKey) : VERB_CANONICAL_SLOTS;
+    const cardsBySlot = new Map(displayedCards.map(c => [c.slotKey, c]));
+
+    const renderCardCell = (cardData: ReferenceFormCardData) => {
+        const { form, label, category, pronominalSet } = cardData;
+        const style = CATEGORY_STYLES[category] || CATEGORY_STYLES.ab;
+        const hdFormName = SLOT_TO_HD_FORM[cardData.slotKey];
+        const hdSegments = resolveRoleTaggedSegments(form, rootEntry, hdFormName, settings);
+
+        let surface = '';
+        if (showTone) {
+            surface = form.tone2 || form.tone || form.Entry_Tone || form.translit || form.Practical || form.Entry || '';
+        } else {
+            surface = getFormTransliteration(form, rootEntry, hdFormName, settings) || form.translit || form.Practical || form.Entry || form.tone || '';
+        }
+
+        let primarySurface = surface;
+        if (surface.includes(';')) {
+            primarySurface = surface.split(';')[0].trim();
+        }
+
+        const syllabary = form.syllabary || form.Syllabary || '';
+
+        let groups: SegmentGroup[] | null = null;
+        if (rootEntry && !hdSegments) {
+            const derivedSeg = deriveSegmentedForm(form, forms, rootEntry);
+            if (derivedSeg) {
+                const formName = cardData.slotKey.split('|')[2] || 'present';
+                groups = segmentVerbForm(derivedSeg, formName, verbConfig, rootEntry?.class_name, rootEntry?.post_root_morpheme);
+            }
+        }
+
+        const compactLabel = COMPACT_SLOT_LABELS[cardData.slotKey] || label;
+
+        return (
+            <div
+                key={cardData.slotKey}
+                className={`min-w-0 p-[2px] rounded-lg text-center flex flex-col justify-between transition-all duration-150 ${style.bg} ${style.border}`}
+            >
+                <span className={`text-[9px] uppercase tracking-wider leading-tight font-bold mb-0.5 whitespace-nowrap overflow-hidden text-ellipsis ${style.label}`}>
+                    {compactLabel}
+                </span>
+                <div className={`font-serif text-xs font-bold leading-snug break-words my-0.5 ${style.translit}`}>
+                    {hdSegments ? (
+                        <>
+                            {(() => {
+                                const isClassic = getTransliterationStyleSetting(settings) === 'classic';
+                                const useToneProjection = showTone && isClassic && hasToneMarks(primarySurface);
+                                const displaySegments = useToneProjection
+                                    ? projectSegmentsOntoTone(hdSegments, primarySurface)
+                                    : hdSegments;
+                                return renderSegmentedSurface(displaySegments, colorSegments);
+                            })()}
+                        </>
+                    ) : (
+                        renderColorizedCherokee(primarySurface, groups, pronominalSet, colorSegments)
+                    )}
+                </div>
+                {syllabary && (
+                    <span className={`font-noto-cherokee text-[11px] leading-snug break-words mt-0.5 ${style.syllabary}`}>
+                        {syllabary}
+                    </span>
+                )}
+            </div>
+        );
+    };
+
+    return (
+        <div
+            onClick={onOpenAllForms}
+            className={`grid ${isNoun ? 'grid-cols-2 max-w-sm' : 'grid-cols-8 min-w-[760px]'} gap-2 w-full py-0.5 ${onOpenAllForms ? 'cursor-pointer' : ''} ${className}`}
+            title={onOpenAllForms ? 'Click to view all forms' : undefined}
+        >
+            {slotsToRender.map(slotKey => {
+                const card = cardsBySlot.get(slotKey);
+                if (!card) {
+                    return (
+                        <div
+                            key={`empty-${slotKey}`}
+                            className="min-w-0 p-[2px] rounded-lg border border-transparent"
+                            aria-hidden="true"
+                        />
+                    );
+                }
+                return renderCardCell(card);
+            })}
         </div>
     );
 };

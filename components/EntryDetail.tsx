@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Pencil, ListPlus, Star, ListIcon, X, Plus, Folder, Pause, MicPlus, Trash2, Mic, Menu } from './Icons';
+import { ArrowLeft, Pencil, ListPlus, Star, ListIcon, X, Plus, Folder, Pause, MicPlus, Trash2, Mic, Menu, Share } from './Icons';
 import { AudioPlayer, SourceBadge, UserAuthButton } from './UI';
 import { renderStyledText, getAudioFromDB, processFormsContextually, parseListName, renderColorizedCherokee, renderSegmentedSurface, projectSegmentsOntoTone, segmentVerbForm, VerbMorphologyTemplate, getFriendlyLabel, resolveRoleTaggedSegments, getTransliterationStyleSetting, hasToneMarks } from '../utils';
 import { usePackageManager } from './PackageManagerContext';
@@ -30,7 +30,7 @@ const getHexColor = (col: string) => {
 
 const isFormAudioId = (id: string) => /(?:_F|\.)\d+(?:_|$)/.test(id);
 
-const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudioMeta, userWordForms, onSaveAudio, onDeleteAudio, favorites, customLists, customListOrder, onClose, onEdit, onToggleFavorite, onToggleList, onDelete, onSearchTerm, onOpenNewListModal, onMove, personalWords, onEditSentence, onDeleteSentence, onCreateWord, onManageForms, onReadInContext, onShowSettings, onViewRoot, onViewClass, style }: any) => {
+const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudioMeta, userWordForms, onSaveAudio, onDeleteAudio, favorites, customLists, customListOrder, onClose, onEdit, onToggleFavorite, onToggleList, onDelete, onSearchTerm, onOpenNewListModal, onMove, personalWords, onEditSentence, onDeleteSentence, onCreateWord, onManageForms, onReadInContext, onShowSettings, onViewRoot, onViewClass, showToast, style }: any) => {
     const [showListSheet, setShowListSheet] = useState(false);
     const [showRecorder, setShowRecorder] = useState(false);
     const [recorderTarget, setRecorderTarget] = useState<'entry' | 'sentence' | string>('entry');
@@ -150,6 +150,7 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                         onReadInContext={onReadInContext}
                         onEditSentence={onEditSentence}
                         onDeleteSentence={onDeleteSentence}
+                        showToast={showToast}
                         settings={settings}
                     />
                     <div className="mt-12 text-xs text-slate-300 font-mono text-center">Ref ID: {e.id}</div>
@@ -338,6 +339,18 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                     </button>
                 </div>
                 <div className="flex items-center gap-1.5">
+                    <button 
+                        onClick={() => {
+                            if (navigator.clipboard) {
+                                navigator.clipboard.writeText(window.location.href);
+                                showToast?.("Link copied to clipboard", "success");
+                            }
+                        }} 
+                        className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200" 
+                        title="Copy link"
+                    >
+                        <Share size={18} />
+                    </button>
                     <button onClick={() => onToggleFavorite(e.Index)} className="p-1.5 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-full transition-colors" title="Toggle Favorite">
                         <Star size={18} className={isFav ? "fill-amber-400 text-amber-400" : "text-slate-400 dark:text-slate-500"} />
                     </button>
@@ -591,6 +604,7 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                                             onToggleList={onToggleList}
                                             onOpenNewListModal={onOpenNewListModal}
                                             onReadInContext={onReadInContext}
+                                            showToast={showToast}
                                             settings={settings}
                                         />
                                     </div>

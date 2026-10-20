@@ -4,6 +4,7 @@ import { SourceBadge } from './UI';
 import { useCorpus } from './CorpusContext';
 import { renderColorizedCherokee, renderSegmentedSurface, projectSegmentsOntoTone, segmentVerbForm, deriveSegmentedForm, getFormPronominalSet, VerbMorphologyTemplate, isFormAudio, resolveRoleTaggedSegments, getTransliterationStyleSetting, hasToneMarks } from '../utils';
 import { usePackageManager } from './PackageManagerContext';
+import { DesktopHorizontalFormsStrip, getReferencePreviewMatchedForms } from './ReferenceFormsPreview';
 
 
 const getHexColor = (col: string) => {
@@ -53,7 +54,7 @@ const MultiSourceIcon = ({ Icon, colors, size = 14 }: { Icon: any, colors: strin
 };
 
 const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWordForms, favorites, customLists, onClick, isDimmed = false, showPos = false, settings, onViewRoot, onViewClass }: any) => {
-  const { getPackageColor, packages, importedData } = usePackageManager();
+  const { getPackageColor, packages, importedData, wordFormsByWordIndex } = usePackageManager();
   const { rootMap } = useCorpus();
 
   const isLinguist = settings?.dictionaryLevel === 'linguist';
@@ -117,6 +118,36 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
     if (!entry.matchedForm) return 'A';
     return getFormPronominalSet(entry.matchedForm.normalized_key || entry.matchedForm.form_name, rootEntry?.config);
   }, [entry.matchedForm, rootEntry]);
+
+  // --- Entry Forms for Desktop Preview ---
+  const entryForms = useMemo(() => {
+    const list: any[] = [];
+    const directForms = entryId ? wordFormsByWordIndex?.get(entryId) : undefined;
+    if (directForms && directForms.length > 0) {
+      list.push(...directForms);
+    }
+    if (userWordForms && entry.Index && userWordForms[entry.Index]) {
+      userWordForms[entry.Index].split('|').forEach((form: string) => {
+        const parts = form.split(':');
+        if (parts.length >= 2) {
+          const values = parts[1].split('^');
+          list.push({
+            form_name: parts[0],
+            translit: values[0],
+            syllabary: values[1],
+            tone: values[2],
+            notes: values[3],
+            color: 'gold'
+          });
+        }
+      });
+    }
+    return list;
+  }, [entryId, entry.Index, wordFormsByWordIndex, userWordForms]);
+
+  const { hasMiniPreview } = useMemo(() => {
+    return getReferencePreviewMatchedForms(entryForms, entry, rootEntry);
+  }, [entryForms, entry, rootEntry]);
 
   // --- Audio Colors ---
 
@@ -202,69 +233,86 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
 
 
   return (
-    <div key={entry.Index} onClick={() => onClick(entry)} className={`bg-white dark:bg-slate-900 p-4 border-b border-slate-100 dark:border-slate-800 active:bg-slate-50 dark:active:bg-slate-800 transition-colors cursor-pointer ${isDimmed ? 'opacity-50 grayscale' : ''} `}>
-      <div className="flex justify-between items-start mb-2 gap-3">
-        {isLinguist && rootEntry ? (
-          <div className="flex-1 min-w-0">
-            <VerbMorphologyTemplate
+    <div key={entry.Index} onClick={() => onClick(entry)} className={`bg-white dark:bg-slate-900 p-4 border-b border-slate-100 dark:border-slate-800 active:bg-slate-50 dark:active:bg-slate-800 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer ${isDimmed ? 'opacity-50 grayscale' : ''} `}>
+      <div className="flex flex-col lg:flex-row lg:items-center lg:gap-6">
+        {/* Left Column: Primary entry info */}
+        <div className={`min-w-0 ${hasMiniPreview ? 'lg:w-[280px] xl:w-[320px] 2xl:w-[360px] shrink-0' : 'flex-1'}`}>
+          <div className="flex justify-between items-start mb-2 gap-3">
+            {isLinguist && rootEntry ? (
+              <div className="flex-1 min-w-0">
+                <VerbMorphologyTemplate
+                  rootEntry={rootEntry}
+                  showMascot={settings?.showClassMascots}
+                  onViewRoot={onViewRoot}
+                  onViewClass={onViewClass}
+                  className="text-base font-bold"
+                />
+              </div>
+            ) : (
+              <div className="flex-1 min-w-0 flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+                {entry.Syllabary && <span className="font-noto-cherokee text-lg font-bold text-slate-800 dark:text-slate-100">{entry.Syllabary}</span>}
+                <span className="font-noto-serif text-base text-amber-700 dark:text-amber-400 font-bold [overflow-wrap:anywhere] [word-break:normal]">
+                  {resolveRoleTaggedSegments(null, rootEntry, 'present', settings)
+                    ? renderSegmentedSurface(resolveRoleTaggedSegments(null, rootEntry, 'present', settings), isColored)
+                    : (rootEntry && mainPresGroups
+                      ? renderColorizedCherokee(entry.Entry, mainPresGroups, mainPronounSet, isColored)
+                      : entry.Entry)}
+                </span>
+              </div>
+            )}
+            <div className="shrink-0 flex flex-col items-end gap-1">
+              <div className="flex items-center gap-2">
+                <MultiSourceIcon Icon={StickyNote} colors={noteColors} size={15} />
+                <MultiSourceIcon Icon={SquaresPlus} colors={formColors} size={13} />
+                <MultiSourceIcon Icon={Mic} colors={audioColors} size={13} />
+                <SourceBadge source={entry.Source || entry.source} name={customDictionaries[entry.Source || entry.source]?.name} customColor={getPackageColor(entry.Source || entry.source)} />
+              </div>
+              {totalLists > 0 && <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-0.5"><ListIcon size={10} /> {totalLists}</span>}
+            </div>
+          </div>
+          {entry.matchedForm && (
+            <div className="text-xs text-amber-600 dark:text-amber-400 italic mb-1.5 font-medium flex items-center flex-wrap gap-x-1.5 gap-y-0.5">
+              <span className="text-slate-400 dark:text-slate-500 not-italic">matched form:</span>
+              {entry.matchedForm.syllabary && (
+                <span className="font-noto-cherokee font-semibold">{entry.matchedForm.syllabary}</span>
+              )}
+              {entry.matchedForm.translit && (
+                <span className="font-noto-serif font-bold">
+                  {matchedHdSegments
+                    ? renderSegmentedSurface(
+                        (getTransliterationStyleSetting(settings) === 'classic' && hasToneMarks(entry.matchedForm.translit))
+                          ? projectSegmentsOntoTone(matchedHdSegments, entry.matchedForm.translit)
+                          : matchedHdSegments,
+                        isColored
+                      )
+                    : (entry.matchedForm.translit === entry.Entry && rootEntry?.surface_segments?.present
+                      ? renderSegmentedSurface(resolveRoleTaggedSegments(null, rootEntry, 'present', settings), isColored)
+                      : (rootEntry && matchedFormGroups
+                        ? renderColorizedCherokee(entry.matchedForm.translit, matchedFormGroups, matchedPronounSet, isColored)
+                        : entry.matchedForm.translit))}
+                </span>
+              )}
+            </div>
+          )}
+          <p className="font-noto-serif text-slate-600 dark:text-slate-400 text-xs line-clamp-2">
+            {entry.Definition}
+            {/* PoS Moved After Definition */}
+            {showPos && entry.PoS && <span className="text-slate-400 dark:text-slate-500 italic ml-1 lowercase">({entry.PoS})</span>}
+          </p>
+        </div>
+
+        {/* Right Column (Desktop only): Horizontal forms strip */}
+        {hasMiniPreview && (
+          <div className="hidden lg:block flex-1 min-w-0 overflow-x-auto py-1">
+            <DesktopHorizontalFormsStrip
+              entry={entry}
+              forms={entryForms}
               rootEntry={rootEntry}
-              showMascot={settings?.showClassMascots}
-              onViewRoot={onViewRoot}
-              onViewClass={onViewClass}
-              className="text-base font-bold"
+              settings={settings}
             />
           </div>
-        ) : (
-          <div className="flex-1 min-w-0 flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-            {entry.Syllabary && <span className="font-noto-cherokee text-lg font-bold text-slate-800 dark:text-slate-100">{entry.Syllabary}</span>}
-            <span className="font-noto-serif text-base text-amber-700 dark:text-amber-400 font-bold [overflow-wrap:anywhere] [word-break:normal]">
-              {resolveRoleTaggedSegments(null, rootEntry, 'present', settings)
-                ? renderSegmentedSurface(resolveRoleTaggedSegments(null, rootEntry, 'present', settings), isColored)
-                : (rootEntry && mainPresGroups
-                  ? renderColorizedCherokee(entry.Entry, mainPresGroups, mainPronounSet, isColored)
-                  : entry.Entry)}
-            </span>
-          </div>
         )}
-        <div className="shrink-0 flex flex-col items-end gap-1">
-          <div className="flex items-center gap-2">
-            <MultiSourceIcon Icon={StickyNote} colors={noteColors} size={15} />
-            <MultiSourceIcon Icon={SquaresPlus} colors={formColors} size={13} />
-            <MultiSourceIcon Icon={Mic} colors={audioColors} size={13} />
-            <SourceBadge source={entry.Source || entry.source} name={customDictionaries[entry.Source || entry.source]?.name} customColor={getPackageColor(entry.Source || entry.source)} />
-          </div>
-          {totalLists > 0 && <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-0.5"><ListIcon size={10} /> {totalLists}</span>}
-        </div>
       </div>
-      {entry.matchedForm && (
-        <div className="text-xs text-amber-600 dark:text-amber-400 italic mb-1.5 font-medium flex items-center flex-wrap gap-x-1.5 gap-y-0.5">
-          <span className="text-slate-400 dark:text-slate-500 not-italic">matched form:</span>
-          {entry.matchedForm.syllabary && (
-            <span className="font-noto-cherokee font-semibold">{entry.matchedForm.syllabary}</span>
-          )}
-          {entry.matchedForm.translit && (
-            <span className="font-noto-serif font-bold">
-              {matchedHdSegments
-                ? renderSegmentedSurface(
-                    (getTransliterationStyleSetting(settings) === 'classic' && hasToneMarks(entry.matchedForm.translit))
-                      ? projectSegmentsOntoTone(matchedHdSegments, entry.matchedForm.translit)
-                      : matchedHdSegments,
-                    isColored
-                  )
-                : (entry.matchedForm.translit === entry.Entry && rootEntry?.surface_segments?.present
-                  ? renderSegmentedSurface(resolveRoleTaggedSegments(null, rootEntry, 'present', settings), isColored)
-                  : (rootEntry && matchedFormGroups
-                    ? renderColorizedCherokee(entry.matchedForm.translit, matchedFormGroups, matchedPronounSet, isColored)
-                    : entry.matchedForm.translit))}
-            </span>
-          )}
-        </div>
-      )}
-      <p className="font-noto-serif text-slate-600 dark:text-slate-400 text-xs line-clamp-2">
-        {entry.Definition}
-        {/* PoS Moved After Definition */}
-        {showPos && entry.PoS && <span className="text-slate-400 dark:text-slate-500 italic ml-1 lowercase">({entry.PoS})</span>}
-      </p>
     </div>
   );
 };

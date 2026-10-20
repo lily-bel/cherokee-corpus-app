@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { ArrowLeft, Menu } from './Icons';
+import { ArrowLeft, Menu, Share } from './Icons';
 import { UserAuthButton } from './UI';
 import { useCorpus } from './CorpusContext';
 import VerbPreview from './VerbPreview';
@@ -12,6 +12,7 @@ interface RootViewProps {
     onViewClass: (className: string) => void;
     onViewRoot?: (slug: string) => void;
     onShowSettings?: () => void;
+    showToast?: (message: string, type?: string) => void;
     settings?: {
         showToneInForms?: boolean;
         colorWordSegments?: boolean;
@@ -21,7 +22,7 @@ interface RootViewProps {
     style?: React.CSSProperties;
 }
 
-const RootView: React.FC<RootViewProps> = ({ slug, onClose, onViewEntry, onViewClass, onViewRoot, onShowSettings, settings, style }) => {
+const RootView: React.FC<RootViewProps> = ({ slug, onClose, onViewEntry, onViewClass, onViewRoot, onShowSettings, showToast, settings, style }) => {
     const { groupedRootsMap } = useCorpus();
 
     const rootEntries = useMemo(() => {
@@ -52,6 +53,18 @@ const RootView: React.FC<RootViewProps> = ({ slug, onClose, onViewEntry, onViewC
                     </button>
                 </div>
                 <div className="flex gap-1.5 items-center">
+                    <button 
+                        onClick={() => {
+                            if (navigator.clipboard) {
+                                navigator.clipboard.writeText(window.location.href);
+                                showToast?.("Link copied to clipboard", "success");
+                            }
+                        }} 
+                        className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200" 
+                        title="Copy link"
+                    >
+                        <Share size={18} />
+                    </button>
                     <UserAuthButton />
                     {onShowSettings && (
                         <button onClick={onShowSettings} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" title="Settings">

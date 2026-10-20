@@ -18,26 +18,18 @@ BIG QUESTIONS:
   The mass editor tool should be updated.                                                                          
 27. API Consideration                                                                                            
   API?
-28. Better desktop views
-  on desktop, more information can be visible in the search view. The 6 to 8 forms shown in the mini other forms area
-  can be visible in the search view horizontally like a table. Popup windows need to appear fully visible and not cutoff
-  by the bottom of the screen on desktop.
-29. Better linking / embedding
-  We need to be able to share pages (entries, class/root pages) and have these pages show a nice embedding externally.
-  This may require prerendering pages or something. Obviously this only applies to official/built-in words
-30. gloss bug
+30. gloss bug:
   creating a word in the gloss modal when you have no dictionaries does not allow you to create a dictionary to put that
   word into.
-31. Precalculate segmentation
-  king-recreation branch for passing through premade segmentation for the words for color coding in app.
-32. dark mode color coding needs the fully black segments to be fully white instead
+Shim stuff
 
 TEST:
-6. Online Capabilities & Testing                                                                                 
+Online Capabilities & Testing                                                                                 
   Online capabilities, specifically cloud backup and public packages, have not been tested yet.                                                                                                                     
-11. Glossing Feature Review                                                                                      
+Glossing Feature Review                                                                                      
   I should look over glossing to see if any features are missing there. It's a pretty complex feature at this point,
   so I want to look it over again.  
+Linking + embedding for words, sentences, classes, roots
 
 
 DATA:
@@ -56,10 +48,7 @@ DATA:
   The shorthand form for words should probably be fixed to change all of the ambiguous ones to just a              
   straightforward "no form" form, rather than defaulting to noun singular or third person present. 
 
-15. Transliteration & Tone Styling in Settings                                                                   
-  The transliteration and tone styling in the settings is not implemented yet. Now that we're pulling data directly
-  from King-recreation, we should be able to generate all the different spellings in the data consolidation project
-  and then just pull them in the app. This also requires explanations for the different styles.                    
+15. Tone styling settings                   
 16. Tone Regex & Superscript Typing                                                                              
   On that note, I don't know if I ever fixed regex for tone or typing tone and getting superscript when you create 
   a word.   

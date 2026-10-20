@@ -4,7 +4,7 @@ import { usePackageManager } from './PackageManagerContext';
 import { GlossPopover } from './GlossPopover';
 import { LinkerModal } from './LinkerModal';
 import { AudioPlayer, SourceBadge, Modal } from './UI';
-import { Check, Plus, Mic, Pencil, MicPlus, Trash2, Pause, ListIcon, Star, X, ListPlus, BookOpen, ChevronUp } from './Icons';
+import { Check, Plus, Mic, Pencil, MicPlus, Trash2, Pause, ListIcon, Star, X, ListPlus, BookOpen, ChevronUp, Share } from './Icons';
 import { getAudioFromDB, renderStyledText } from '../utils';
 
 import AudioRecorder from './AudioRecorder';
@@ -33,14 +33,15 @@ interface SentenceCardProps {
     // Reader Props
     onReadInContext?: (sentenceId: string) => void;
     onCollapse?: () => void;
+    showToast?: (message: string, type?: string) => void;
     settings?: any;
 }
 
-export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, isDimmed, customDictionaries, userNotes, onEditNote, onEditSentence, sourceMap, onSaveAudio, userAudioMeta, personalWords, onDeleteSentence, onDeleteAudio, onCreateWord, favorites, customLists, onToggleFavorite, onToggleList, onOpenNewListModal, onReadInContext, onCollapse, settings }) => {
+export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, isDimmed, customDictionaries, userNotes, onEditNote, onEditSentence, sourceMap, onSaveAudio, userAudioMeta, personalWords, onDeleteSentence, onDeleteAudio, onCreateWord, favorites, customLists, onToggleFavorite, onToggleList, onOpenNewListModal, onReadInContext, onCollapse, showToast, settings }) => {
     const hideCustomization = !!settings?.hideCustomization;
     const { dictionary, glossMap, dictionaryMap, addUserGloss, removeUserGloss, removeUserSentence } = useCorpus();
     const { packages, getPackageColor, importedData } = usePackageManager(); // Add this line
-    const [activePopover, setActivePopover] = useState<{ index: number, rect: { x: number, y: number } } | null>(null);
+    const [activePopover, setActivePopover] = useState<{ index: number, rect: { x: number, y: number, anchorTop?: number, anchorBottom?: number } } | null>(null);
     const [showRecorder, setShowRecorder] = useState(false);
     const [showListSheet, setShowListSheet] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -182,7 +183,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
         if (wordGlosses.length > 0) {
             // Open Popover
             const rect = (event.target as HTMLElement).getBoundingClientRect();
-            setActivePopover({ index, rect: { x: rect.left, y: rect.bottom } });
+            setActivePopover({ index, rect: { x: rect.left, y: rect.bottom, anchorTop: rect.top, anchorBottom: rect.bottom } });
         } else {
             if (hideCustomization) return;
             // Open Linker
@@ -326,6 +327,22 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                             See in Context
                         </button>
                     )}
+
+                    {/* Share Sentence Button */}
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            const url = `${window.location.origin}/sentence/${sentence.id}`;
+                            if (navigator.clipboard) {
+                                navigator.clipboard.writeText(url);
+                                showToast?.("Sentence link copied to clipboard", "success");
+                            }
+                        }}
+                        className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        title="Copy share link"
+                    >
+                        <Share size={13} />
+                    </button>
                     
                     {/* List Add Button */}
                     {(onToggleFavorite || onToggleList) && (
@@ -577,7 +594,8 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                     onEntryClick={(id) => {
                         // Navigate to entry
                         const url = new URL(window.location.href);
-                        url.searchParams.set('word', id);
+                        url.pathname = `/word/${encodeURIComponent(id)}`;
+                        url.searchParams.delete('word');
                         window.history.pushState({}, '', url.toString());
                         window.dispatchEvent(new PopStateEvent('popstate'));
                         setActivePopover(null);

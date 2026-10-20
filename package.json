@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && node scripts/prerender_embeds.mjs",
     "preview": "vite preview",
     "deploy": "npm run build && npx gh-pages -d dist"
   },

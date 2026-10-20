@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
 import { Gloss, DictionaryEntry, useCorpus } from './CorpusContext';
 import { SourceBadge } from './UI';
 import { ChevronRight, Trash2, Pencil, Plus, Search } from './Icons';
@@ -12,7 +12,7 @@ interface GlossPopoverProps {
     glosses: Gloss[];
     targetWord?: { syllabary: string, translit: string };
     dictionaryMap: Map<string, DictionaryEntry>;
-    position: { x: number, y: number };
+    position: { x: number, y: number, anchorTop?: number, anchorBottom?: number };
     onClose: () => void;
     onEntryClick: (id: string) => void;
     onEdit?: (gloss: Gloss) => void;
@@ -33,6 +33,40 @@ export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord,
     const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
     const [showActionsFor, setShowActionsFor] = useState<string | null>(null); // gloss entry_id
     const [expandedForms, setExpandedForms] = useState<Record<string, boolean>>({});
+
+    const [coords, setCoords] = useState<{ top: number; left: number; maxHeight?: number }>({
+        top: position.y + 8,
+        left: Math.max(16, Math.min(position.x, typeof window !== 'undefined' ? window.innerWidth - 336 : 0))
+    });
+
+    useLayoutEffect(() => {
+        if (!popoverRef.current || typeof window === 'undefined') return;
+        const rect = popoverRef.current.getBoundingClientRect();
+        const popoverWidth = rect.width || 320;
+        const popoverHeight = rect.height || 200;
+
+        // 1. Horizontal clamping
+        const left = Math.max(16, Math.min(position.x, window.innerWidth - popoverWidth - 16));
+
+        // 2. Vertical positioning & clamping
+        const anchorBottom = position.anchorBottom ?? position.y;
+        const anchorTop = position.anchorTop ?? (position.y - 24);
+
+        let top = anchorBottom + 8;
+        let maxHeight = window.innerHeight - 32;
+
+        if (top + popoverHeight > window.innerHeight - 16) {
+            const topAbove = anchorTop - popoverHeight - 8;
+            if (topAbove >= 16) {
+                top = topAbove;
+            } else {
+                top = Math.max(16, window.innerHeight - popoverHeight - 16);
+                maxHeight = Math.max(160, window.innerHeight - top - 16);
+            }
+        }
+
+        setCoords({ top, left, maxHeight });
+    }, [position, expandedForms]);
 
     const isColored = (() => {
         try {
@@ -71,8 +105,12 @@ export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord,
     return (
         <div
             ref={popoverRef}
-            className="fixed z-50 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 w-80 max-h-96 overflow-y-auto animate-in fade-in zoom-in-95 duration-200"
-            style={{ top: position.y + 8, left: Math.min(position.x, window.innerWidth - 330) }}
+            className="fixed z-50 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 w-80 overflow-y-auto animate-in fade-in zoom-in-95 duration-200"
+            style={{
+                top: coords.top,
+                left: coords.left,
+                maxHeight: coords.maxHeight ? `${coords.maxHeight}px` : '24rem'
+            }}
         >
             {/* Header with Target Word */}
             {targetWord && (

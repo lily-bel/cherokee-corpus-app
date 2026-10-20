@@ -554,6 +554,25 @@ function App() {
         return result;
     };
 
+    const parsePathRoute = (pathname: string, searchParams: URLSearchParams) => {
+        const cleanPath = pathname.replace(/\.html$/, '').replace(/\/+$/, '');
+        const segments = cleanPath.split('/').filter(Boolean);
+        if (segments.length >= 2) {
+            const prefix = segments[0];
+            const val = decodeURIComponent(segments.slice(1).join('/'));
+            if (prefix === 'word') return { word: val };
+            if (prefix === 'root') return { root: val };
+            if (prefix === 'class') return { class: val };
+            if (prefix === 'sentence') return { sentence: val };
+        }
+        return {
+            word: searchParams.get('word') || undefined,
+            sentence: searchParams.get('sentence') || undefined,
+            root: searchParams.get('root') || undefined,
+            class: searchParams.get('class') || undefined,
+        };
+    };
+
     const updateUrlAndHistory = (stack: NavItem[], action: 'push' | 'replace' = 'push') => {
         try {
             const url = new URL(window.location.href);
@@ -564,15 +583,20 @@ function App() {
 
             const top = stack[stack.length - 1];
             if (top) {
-                const rootItem = stack.find(item => item.type === 'root') as { type: 'root'; slug: string } | undefined;
-                const classItem = stack.find(item => item.type === 'class') as { type: 'class'; className: string } | undefined;
-                const entryItem = stack.find(item => item.type === 'entry') as { type: 'entry'; entry: any } | undefined;
-
-                if (rootItem) url.searchParams.set('root', rootItem.slug);
-                if (classItem) url.searchParams.set('class', classItem.className);
-                if (entryItem) {
-                    if (entryItem.entry.Index) url.searchParams.set('word', entryItem.entry.Index);
-                    else if (entryItem.entry.id) url.searchParams.set('sentence', entryItem.entry.id);
+                if (top.type === 'root') {
+                    url.pathname = `/root/${encodeURIComponent(top.slug)}`;
+                } else if (top.type === 'class') {
+                    url.pathname = `/class/${encodeURIComponent(top.className)}`;
+                } else if (top.type === 'entry') {
+                    if (top.entry.Index) {
+                        url.pathname = `/word/${encodeURIComponent(top.entry.Index)}`;
+                    } else if (top.entry.id) {
+                        url.pathname = `/sentence/${encodeURIComponent(top.entry.id)}`;
+                    }
+                }
+            } else {
+                if (!url.pathname.startsWith('/sentence/')) {
+                    url.pathname = '/';
                 }
             }
 
@@ -675,21 +699,27 @@ function App() {
                 const restored = deserializeStack(e.state.navStack);
                 setNavStack(restored);
             } else {
-                const rootSlug = params.get('root');
-                const className = params.get('class');
-                const idx = params.get('word');
-                const sId = params.get('sentence');
+                const route = parsePathRoute(window.location.pathname, params);
 
                 const newStack: NavItem[] = [];
-                if (rootSlug) newStack.push({ type: 'root', slug: rootSlug });
-                if (className) newStack.push({ type: 'class', className: className });
+                if (route.root) newStack.push({ type: 'root', slug: route.root });
+                if (route.class) newStack.push({ type: 'class', className: route.class });
 
-                if (idx) {
-                    const found = allData.find(d => d.Index === idx);
+                if (route.word) {
+                    const found = allData.find(d => String(d.Index) === String(route.word));
                     if (found) newStack.push({ type: 'entry', entry: found });
-                } else if (sId) {
-                    const found = [...sentences, ...userSentences].find(s => s.id === sId);
-                    if (found) newStack.push({ type: 'entry', entry: found });
+                } else if (route.sentence) {
+                    const location = findBookAndChapterForSentence(route.sentence);
+                    if (location) {
+                        setActiveBookId(location.bookId);
+                        setActiveChapterId(location.chapterId);
+                        setScrollToSentenceId(route.sentence);
+                        setReaderView('reading');
+                        setActiveTab('reader');
+                    } else {
+                        const found = [...sentences, ...userSentences].find(s => String(s.id) === String(route.sentence));
+                        if (found) newStack.push({ type: 'entry', entry: found });
+                    }
                 }
                 setNavStack(newStack);
             }
@@ -709,25 +739,33 @@ function App() {
                 setNavStack(restored);
             } else {
                 const params = new URLSearchParams(window.location.search);
-                const rootSlug = params.get('root');
-                const className = params.get('class');
-                const idx = params.get('word');
-                const sId = params.get('sentence');
+                const route = parsePathRoute(window.location.pathname, params);
 
-                if (rootSlug || className || idx || sId) {
+                if (route.root || route.class || route.word || route.sentence) {
                     const newStack: NavItem[] = [];
-                    if (rootSlug) newStack.push({ type: 'root', slug: rootSlug });
-                    if (className) newStack.push({ type: 'class', className: className });
+                    if (route.root) newStack.push({ type: 'root', slug: route.root });
+                    if (route.class) newStack.push({ type: 'class', className: route.class });
 
-                    if (idx) {
-                        const found = allData.find(d => d.Index === idx);
+                    if (route.word) {
+                        const found = allData.find(d => String(d.Index) === String(route.word));
                         if (found) newStack.push({ type: 'entry', entry: found });
-                    } else if (sId) {
-                        const found = [...sentences, ...userSentences].find(s => s.id === sId);
-                        if (found) newStack.push({ type: 'entry', entry: found });
+                    } else if (route.sentence) {
+                        const location = findBookAndChapterForSentence(route.sentence);
+                        if (location) {
+                            setActiveBookId(location.bookId);
+                            setActiveChapterId(location.chapterId);
+                            setScrollToSentenceId(route.sentence);
+                            setReaderView('reading');
+                            setActiveTab('reader');
+                        } else {
+                            const found = [...sentences, ...userSentences].find(s => String(s.id) === String(route.sentence));
+                            if (found) newStack.push({ type: 'entry', entry: found });
+                        }
                     }
                     setNavStack(newStack);
-                    updateUrlAndHistory(newStack, 'replace');
+                    if (newStack.length > 0) {
+                        updateUrlAndHistory(newStack, 'replace');
+                    }
                 } else {
                     updateUrlAndHistory([], 'replace');
                 }
@@ -1136,7 +1174,13 @@ function App() {
         const location = findBookAndChapterForSentence(sentenceId);
         if (location) {
             setNavStack([]);
-            updateUrlAndHistory([], 'push');
+            const url = new URL(window.location.href);
+            url.pathname = `/sentence/${encodeURIComponent(sentenceId)}`;
+            url.searchParams.delete('sentence');
+            url.searchParams.delete('word');
+            url.searchParams.delete('root');
+            url.searchParams.delete('class');
+            window.history.pushState({ sentenceId, navStack: [] }, '', url.toString());
             setActiveBookId(location.bookId);
             setActiveChapterId(location.chapterId);
             setScrollToSentenceId(sentenceId);
@@ -2223,6 +2267,7 @@ function App() {
                                                 onToggleList={toggleInList}
                                                 onOpenNewListModal={() => setShowNewListModal(true)}
                                                 onReadInContext={handleReadInContext}
+                                                showToast={showToast}
                                                 settings={settings}
                                             />
                                         );
@@ -2282,6 +2327,7 @@ function App() {
                                                 onToggleList={toggleInList}
                                                 onOpenNewListModal={() => setShowNewListModal(true)}
                                                 onReadInContext={handleReadInContext}
+                                                showToast={showToast}
                                                 settings={settings}
                                             />;
                                         }
@@ -2454,6 +2500,7 @@ function App() {
                                     onToggleFavorite={toggleFavorite}
                                     onToggleList={toggleInList}
                                     onOpenNewListModal={() => setShowNewListModal(true)}
+                                    showToast={showToast}
                                 />
                             ) : (
                                 <ReaderTab
@@ -2588,6 +2635,7 @@ function App() {
                                             onToggleList={toggleInList}
                                             onOpenNewListModal={() => setShowNewListModal(true)}
                                             onReadInContext={handleReadInContext}
+                                            showToast={showToast}
                                             settings={settings}
                                         />)
                                     )}
@@ -2883,8 +2931,6 @@ function App() {
                 )
             }
 
-            <Toast show={toast.show} message={toast.message} type={toast.type} />
-
             {showAuthModal && (
                 <AuthModal
                     onClose={() => setShowAuthModal(false)}
@@ -2905,6 +2951,7 @@ function App() {
                             onViewClass={(cls) => handleViewClass(cls)}
                             onViewRoot={(slug) => handleViewRoot(slug)}
                             onShowSettings={() => setShowSettingsModal(true)}
+                            showToast={showToast}
                             style={{ zIndex: baseZIndex }}
                         />
                     );
@@ -2920,6 +2967,7 @@ function App() {
                             onViewRoot={(slug) => handleViewRoot(slug)}
                             onViewEntry={(entry) => handleEntryClick(entry)}
                             onShowSettings={() => setShowSettingsModal(true)}
+                            showToast={showToast}
                             style={{ zIndex: baseZIndex }}
                         />
                     );
@@ -2956,12 +3004,15 @@ function App() {
                             onManageForms={handleManageForms}
                             onReadInContext={handleReadInContext}
                             onShowSettings={() => setShowSettingsModal(true)}
+                            showToast={showToast}
                             style={{ zIndex: baseZIndex }}
                         />
                     );
                 }
                 return null;
             })}
+
+            <Toast show={toast.show} message={toast.message} type={toast.type} />
         </div >
     );
 }
