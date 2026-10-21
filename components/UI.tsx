@@ -67,24 +67,42 @@ export const AudioPlayer = ({ src, label = "Audio", icon: Icon = Volume2, varian
   );
 };
 
-export const SourceBadge = ({ source, name, customColor }: { source: string, name?: string, customColor?: string }) => {
-  let colorClass = "bg-gray-200 text-gray-600 dark:bg-slate-700 dark:text-slate-300";
-  let style = {};
+const BADGE_COLOR_MAP: Record<string, string> = {
+  slate: '#94a3b8',
+  amber: '#f59e0b',
+  red: '#ef4444',
+  blue: '#3b82f6',
+  green: '#10b981',
+  purple: '#8b5cf6',
+  pink: '#ec4899',
+  orange: '#f97316',
+  indigo: '#6366f1',
+  teal: '#14b8a6',
+  rose: '#f43f5e'
+};
 
-  if (customColor) {
-    style = { backgroundColor: customColor, color: '#fff' }; // Assuming white text for custom colors, or could calculate contrast
-    colorClass = "";
+export const SourceBadge = ({ source, name, customColor }: { source: string, name?: string, customColor?: string }) => {
+  if (!source) return null;
+  let colorClass = "bg-gray-200 text-gray-600 dark:bg-slate-700 dark:text-slate-300";
+  let style: React.CSSProperties = {};
+
+  if (customColor && customColor !== 'slate') {
+    const hex = customColor.startsWith('#') ? customColor : BADGE_COLOR_MAP[customColor];
+    if (hex) {
+      style = { backgroundColor: hex, color: '#fff' };
+      colorClass = "";
+    }
   }
 
   if (source && (source === 'pd' || source.startsWith('nb_') || source === 'user')) {
     let initials = "NB";
     if (name) { initials = name.substring(0, 4).trim().toUpperCase(); }
 
-    // Respect customColor if provided, otherwise default to a thematic amber/gold for user content
-    const style = customColor ? { backgroundColor: customColor, color: '#fff', borderColor: 'transparent' } : {};
-    const colorClasses = customColor ? "" : "bg-amber-500 text-white border-transparent";
+    const hex = customColor && customColor !== 'amber' && (customColor.startsWith('#') ? customColor : BADGE_COLOR_MAP[customColor]);
+    const styleObj: React.CSSProperties = hex ? { backgroundColor: hex, color: '#fff', borderColor: 'transparent' } : {};
+    const colorClasses = hex ? "" : "bg-amber-500 text-white border-transparent";
 
-    return <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border uppercase tracking-wide ${colorClasses}`} style={style}>{initials}</span>;
+    return <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border uppercase tracking-wide ${colorClasses}`} style={styleObj}>{initials}</span>;
   }
   return <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${colorClass}`} style={style}>{source?.toUpperCase()}</span>;
 };
