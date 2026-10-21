@@ -140,20 +140,20 @@ const WidgetsTab = ({ onShowSettings }: { onShowSettings?: () => void }) => {
     }
 
     return (
-        <div className="flex flex-col h-full bg-[#F9F9F7] dark:bg-slate-950">
-            <div className="px-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0 h-12">
-                <h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">Widgets</h1>
+        <div className="flex flex-col h-full bg-[#F9F7F7] dark:bg-slate-950">
+            <div className="px-4 border-b border-slate-200 dark:border-slate-800 bg-[#af615d] dark:bg-slate-900 flex items-center justify-between shrink-0 h-12">
+                <h1 className="font-noto-serif text-lg font-bold text-white dark:text-slate-100 truncate">Widgets</h1>
                 <div className="flex gap-1.5 items-center">
                     <button
                         onClick={() => setShowImportModal(true)}
-                        className="bg-slate-900 dark:bg-slate-700 text-white p-1.5 rounded-full shadow-sm hover:bg-slate-800 dark:hover:bg-slate-600 transition-colors"
+                        className="bg-white/20 hover:bg-white/30 text-white dark:bg-slate-700 dark:hover:bg-slate-600 p-1.5 rounded-full shadow-sm transition-colors"
                         title="Add Widget"
                     >
                         <Plus size={18} />
                     </button>
                     <UserAuthButton />
                     {onShowSettings && (
-                        <button onClick={onShowSettings} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" title="Settings">
+                        <button onClick={onShowSettings} className="p-1.5 hover:bg-white/10 dark:hover:bg-slate-800 rounded-full text-white dark:text-slate-300 transition-colors" title="Settings">
                             <Menu size={22} strokeWidth={1.5} />
                         </button>
                     )}

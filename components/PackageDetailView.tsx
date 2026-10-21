@@ -357,12 +357,12 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({
     }
 
     return (
-        <div className="flex flex-col h-full bg-[#F9F9F7] dark:bg-slate-950 text-slate-800 dark:text-slate-100">
+        <div className="flex flex-col h-full bg-[#F9F7F7] dark:bg-slate-950 text-slate-800 dark:text-slate-100">
             {/* Header */}
-            <div className="px-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center gap-3 shrink-0 sticky top-0 z-10 h-12">
+            <div className="px-4 border-b border-slate-200 dark:border-slate-800 bg-[#af615d] dark:bg-slate-900 flex items-center gap-3 shrink-0 sticky top-0 z-10 h-12">
                 <button
                     onClick={onBack}
-                    className="p-1.5 -ml-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    className="p-1.5 -ml-2 text-white/80 hover:text-white dark:text-slate-400 dark:hover:text-slate-200 rounded-full hover:bg-white/10 dark:hover:bg-slate-800 transition-colors"
                 >
                     <ArrowLeft size={20} />
                 </button>
@@ -373,14 +373,14 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({
                     {(pkg.name.split(' ').length > 1 ? (pkg.name.split(' ')[0][0] + pkg.name.split(' ')[1][0]).toUpperCase() : pkg.name.substring(0, 2).toUpperCase())}
                 </div>
                 <div className="flex-1 min-w-0">
-                    <h2 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">{pkg.name}</h2>
+                    <h2 className="font-noto-serif text-lg font-bold text-white dark:text-slate-100 truncate">{pkg.name}</h2>
                 </div>
 
                 <div className="flex items-center gap-1.5 shrink-0">
                     {pkg.type === 'official' && (
                         <button
                             onClick={() => setShowSourcesModal(true)}
-                            className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5"
+                            className="bg-white/20 hover:bg-white/30 text-white dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5"
                             title="View Official Sources"
                         >
                             <Info size={14} />
@@ -390,7 +390,7 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({
                     {pkg.type !== 'official' && (
                         <button
                             onClick={() => setShowExportModal(true)}
-                            className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5"
+                            className="bg-white/20 hover:bg-white/30 text-white dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5"
                             title="Export New Version of this Package"
                         >
                             <Upload size={14} />
@@ -407,7 +407,7 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({
                                 setCopiedLink(true);
                                 setTimeout(() => setCopiedLink(false), 2000);
                             }}
-                            className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-500 hover:text-amber-600 dark:text-slate-400 dark:hover:text-amber-400 transition-colors"
+                            className="p-1.5 hover:bg-white/10 dark:hover:bg-slate-800 rounded-full text-white/80 hover:text-white dark:text-slate-400 dark:hover:text-amber-400 transition-colors"
                             title={copiedLink ? "Link Copied!" : "Copy Public Link"}
                         >
                             {copiedLink ? <Check size={18} className="text-emerald-500" /> : <LinkIcon size={18} />}
@@ -415,7 +415,7 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({
                     )}
                     <UserAuthButton />
                     {onShowSettings && (
-                        <button onClick={onShowSettings} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" title="Settings">
+                        <button onClick={onShowSettings} className="p-1.5 hover:bg-white/10 dark:hover:bg-slate-800 rounded-full text-white dark:text-slate-300 transition-colors" title="Settings">
                             <Menu size={22} strokeWidth={1.5} />
                         </button>
                     )}

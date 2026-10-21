@@ -16,7 +16,7 @@ export const UserAuthButton: React.FC<UserAuthButtonProps> = ({ className, onCli
     <button
       type="button"
       onClick={handleClick}
-      className={className || "p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors relative"}
+      className={className || "p-1.5 hover:bg-white/10 dark:hover:bg-slate-800 rounded-full text-white dark:text-slate-300 transition-colors relative"}
       title={user ? `${user.displayName || user.email || 'Account'} (${syncStatus === 'synced' ? 'Backed Up' : syncStatus === 'syncing' ? 'Backing Up...' : syncStatus === 'error' ? 'Sync Error' : 'Online'})` : "Sign In / Cloud Backup"}
     >
       {user?.photoURL ? (

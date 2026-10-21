@@ -219,22 +219,22 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
         const stories = getStoriesForBook(selectedBook.id);
 
         return (
-            <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950">
+            <div className="flex flex-col h-full bg-[#F9F7F7] dark:bg-slate-950">
                 {/* Header */}
-                <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 h-12 flex items-center justify-between shrink-0">
+                <div className="sticky top-0 z-10 bg-[#af615d] dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 h-12 flex items-center justify-between shrink-0">
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                         <button
                             onClick={() => { setView('books'); setSelectedBook(null); }}
-                            className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
+                            className="p-2 -ml-2 rounded-full hover:bg-white/10 dark:hover:bg-slate-800 text-white dark:text-slate-400 transition-colors shrink-0"
                         >
-                            <ArrowLeft size={20} className="text-slate-600 dark:text-slate-400" />
+                            <ArrowLeft size={20} />
                         </button>
                         <div className="flex-1 min-w-0">
-                            <h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate leading-tight">
+                            <h1 className="font-noto-serif text-lg font-bold text-white dark:text-slate-100 truncate leading-tight">
                                 {selectedBook.title}
                             </h1>
                             {selectedBook.author && (
-                                <p className="text-xs text-slate-500 dark:text-slate-400 truncate leading-tight">
+                                <p className="text-xs text-white/80 dark:text-slate-400 truncate leading-tight">
                                     by {selectedBook.author}
                                 </p>
                             )}
@@ -243,7 +243,7 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                     <div className="flex items-center gap-1.5 shrink-0 ml-auto pl-2">
                         <UserAuthButton />
                         {onShowSettings && (
-                            <button onClick={onShowSettings} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" title="Settings">
+                            <button onClick={onShowSettings} className="p-1.5 hover:bg-white/10 dark:hover:bg-slate-800 rounded-full text-white dark:text-slate-300 transition-colors" title="Settings">
                                 <Menu size={22} strokeWidth={1.5} />
                             </button>
                         )}
@@ -290,9 +290,9 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
         const canEdit = selectedBook?.source && (selectedBook.source === 'personal' || selectedBook.source.startsWith('custom_') || (customDictionaries && customDictionaries[selectedBook.source]));
 
         return (
-            <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950">
+            <div className="flex flex-col h-full bg-[#F9F7F7] dark:bg-slate-950">
                 {/* Header */}
-                <div className="sticky top-0 z-10 px-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0 h-12">
+                <div className="sticky top-0 z-10 px-4 border-b border-slate-200 dark:border-slate-800 bg-[#af615d] dark:bg-slate-900 flex items-center justify-between shrink-0 h-12">
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                         <button
                             onClick={() => {
@@ -306,21 +306,21 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                                     setSelectedStory(null);
                                 }
                             }}
-                            className="p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
+                            className="p-2 -ml-2 rounded-full hover:bg-white/10 dark:hover:bg-slate-800 text-white dark:text-slate-400 transition-colors shrink-0"
                         >
-                            <ArrowLeft size={20} className="text-slate-600 dark:text-slate-400" />
+                            <ArrowLeft size={20} />
                         </button>
                         <div className="flex-1 min-w-0">
-                            <h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate leading-tight">
+                            <h1 className="font-noto-serif text-lg font-bold text-white dark:text-slate-100 truncate leading-tight">
                                 {selectedStory.title === selectedBook?.title ? selectedStory.title : `${selectedBook?.title ? selectedBook.title + ' • ' : ''}${selectedStory.title}`}
                             </h1>
                             {selectedBook && selectedStory.title !== selectedBook.title ? (
-                                <p className="text-xs text-slate-500 dark:text-slate-400 truncate leading-tight">
+                                <p className="text-xs text-white/80 dark:text-slate-400 truncate leading-tight">
                                     {selectedBook.title}{selectedBook.author ? ` • by ${selectedBook.author}` : ''}
                                 </p>
                             ) : (
                                 selectedBook?.author && (
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate leading-tight">
+                                    <p className="text-xs text-white/80 dark:text-slate-400 truncate leading-tight">
                                         by {selectedBook.author}
                                     </p>
                                 )
@@ -331,7 +331,7 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                         {canEdit && !hideCustomization && (
                             <button
                                 onClick={() => onOpenImporter(selectedBook?.source, selectedStory.title, 'append')}
-                                className="bg-slate-900 dark:bg-slate-700 text-white p-1.5 rounded-full shadow-sm hover:bg-slate-800 transition-colors"
+                                className="bg-white/20 hover:bg-white/30 text-white dark:bg-slate-700 dark:hover:bg-slate-600 p-1.5 rounded-full shadow-sm transition-colors"
                                 title="Add new chapter"
                             >
                                 <Plus size={18} />
@@ -339,7 +339,7 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                         )}
                         <UserAuthButton />
                         {onShowSettings && (
-                            <button onClick={onShowSettings} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" title="Settings">
+                            <button onClick={onShowSettings} className="p-1.5 hover:bg-white/10 dark:hover:bg-slate-800 rounded-full text-white dark:text-slate-300 transition-colors" title="Settings">
                                 <Menu size={22} strokeWidth={1.5} />
                             </button>
                         )}
@@ -448,17 +448,17 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
 
     // Render Books View (Main)
     return (
-        <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950">
+        <div className="flex flex-col h-full bg-[#F9F7F7] dark:bg-slate-950">
             {/* Header */}
-            <div className="sticky top-0 z-10 px-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0 h-12">
-                <h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">
+            <div className="sticky top-0 z-10 px-4 border-b border-slate-200 dark:border-slate-800 bg-[#af615d] dark:bg-slate-900 flex items-center justify-between shrink-0 h-12">
+                <h1 className="font-noto-serif text-lg font-bold text-white dark:text-slate-100 truncate">
                     Reader
                 </h1>
                 <div className="flex gap-1.5 items-center">
                     {!hideCustomization && (
                         <button
                             onClick={() => setShowNewBookModal(true)}
-                            className="bg-slate-900 dark:bg-slate-700 text-white p-1.5 rounded-full shadow-sm hover:bg-slate-800 transition-colors"
+                            className="bg-white/20 hover:bg-white/30 text-white dark:bg-slate-700 dark:hover:bg-slate-600 p-1.5 rounded-full shadow-sm transition-colors"
                             title="New Book / Story"
                         >
                             <Plus size={18} />
@@ -466,7 +466,7 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                     )}
                     <UserAuthButton />
                     {onShowSettings && (
-                        <button onClick={onShowSettings} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" title="Settings">
+                        <button onClick={onShowSettings} className="p-1.5 hover:bg-white/10 dark:hover:bg-slate-800 rounded-full text-white dark:text-slate-300 transition-colors" title="Settings">
                             <Menu size={22} strokeWidth={1.5} />
                         </button>
                     )}

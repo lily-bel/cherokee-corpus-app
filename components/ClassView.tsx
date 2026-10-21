@@ -202,13 +202,13 @@ const ClassView: React.FC<ClassViewProps> = ({
     }, [selectedItem, verbsByExactClass, verbsBySubclass, allVerbsInClass]);
 
     return (
-        <div style={style} className="fixed inset-0 z-[10002] bg-[#F9F9F7] dark:bg-slate-950 flex flex-col overflow-hidden font-sans">
+        <div style={style} className="fixed inset-0 z-[10002] bg-[#F9F7F7] dark:bg-slate-950 flex flex-col overflow-hidden font-sans">
             {/* Standard Top Header */}
-            <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 flex items-center justify-between shadow-sm shrink-0 h-12">
+            <div className="bg-[#af615d] dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 flex items-center justify-between shadow-sm shrink-0 h-12">
                 <div className="flex items-center gap-2">
                     <button 
                         onClick={onClose} 
-                        className="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full flex items-center gap-2 text-slate-700 dark:text-slate-200 transition-colors"
+                        className="p-2 -ml-2 hover:bg-white/10 dark:hover:bg-slate-800 rounded-full flex items-center gap-2 text-white dark:text-slate-200 transition-colors"
                     >
                         <ArrowLeft size={24} />
                         <span className="text-xs font-bold uppercase tracking-wider hidden sm:inline">Back</span>
@@ -222,7 +222,7 @@ const ClassView: React.FC<ClassViewProps> = ({
                                 showToast?.("Link copied to clipboard", "success");
                             }
                         }} 
-                        className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200" 
+                        className="p-1.5 hover:bg-white/10 dark:hover:bg-slate-800 rounded-full transition-colors text-white/80 dark:text-slate-500 hover:text-white dark:hover:text-slate-200" 
                         title="Copy link"
                     >
                         <Share size={18} />
@@ -231,7 +231,7 @@ const ClassView: React.FC<ClassViewProps> = ({
                     {onShowSettings && (
                         <button 
                             onClick={onShowSettings} 
-                            className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" 
+                            className="p-1.5 hover:bg-white/10 dark:hover:bg-slate-800 rounded-full text-white dark:text-slate-300 transition-colors" 
                             title="Settings"
                         >
                             <Menu size={22} strokeWidth={1.5} />

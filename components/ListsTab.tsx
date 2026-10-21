@@ -1450,38 +1450,38 @@ const ListsTab: React.FC<ListsTabProps> = ({
         const { folder: activeListFolder, name: activeListDisplayName } = parseListName(activeList.name);
 
         return (
-            <div className="flex flex-col h-full bg-[#F9F9F7] dark:bg-slate-950">
+            <div className="flex flex-col h-full bg-[#F9F7F7] dark:bg-slate-950">
                 {/* Header */}
-                <div className="px-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center gap-3 shrink-0 h-12">
-                    <button onClick={() => setView('all')} className="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-500 dark:text-slate-400">
+                <div className="px-4 border-b border-slate-200 dark:border-slate-800 bg-[#af615d] dark:bg-slate-900 flex items-center gap-3 shrink-0 h-12">
+                    <button onClick={() => setView('all')} className="p-2 -ml-2 hover:bg-white/10 dark:hover:bg-slate-800 rounded-full text-white dark:text-slate-400 transition-colors">
                         <ArrowLeft size={24} />
                     </button>
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                             {activeListFolder && (
-                                <span className="text-xs font-bold text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 rounded shrink-0">
+                                <span className="text-xs font-bold text-white bg-white/20 dark:text-amber-500 dark:bg-amber-900/30 px-2 py-0.5 rounded shrink-0">
                                     {activeListFolder}
                                 </span>
                             )}
-                            <h2 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 truncate">
+                            <h2 className="font-noto-serif text-lg font-bold text-white dark:text-slate-100 flex items-center gap-2 truncate">
                                 {activeListDisplayName}
                                 {activeList.type === 'user' && (
-                                    <button onClick={() => { setRenameTargetId(activeList.id); setNewListName(activeListDisplayName); setNewListFolder(activeListFolder || ''); setShowNewListModal(true); }} className="text-slate-400 hover:text-amber-600">
+                                    <button onClick={() => { setRenameTargetId(activeList.id); setNewListName(activeListDisplayName); setNewListFolder(activeListFolder || ''); setShowNewListModal(true); }} className="text-white/80 hover:text-white dark:text-slate-400 dark:hover:text-amber-600 transition-colors">
                                         <Pencil size={16} />
                                     </button>
                                 )}
                             </h2>
                         </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">{listItems.length} items</p>
+                        <p className="text-xs text-white/80 dark:text-slate-400">{listItems.length} items</p>
                     </div>
                     {activeList.type === 'user' && (
-                        <button onClick={() => setDeleteTargetId(activeList.id)} className="p-1.5 text-slate-400 hover:text-red-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Delete List">
+                        <button onClick={() => setDeleteTargetId(activeList.id)} className="p-1.5 text-white/80 hover:text-red-200 dark:text-slate-400 dark:hover:text-red-500 rounded-full hover:bg-white/10 dark:hover:bg-slate-800 transition-colors" title="Delete List">
                             <Trash2 size={20} />
                         </button>
                     )}
                     <UserAuthButton />
                     {onShowSettings && (
-                        <button onClick={onShowSettings} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" title="Settings">
+                        <button onClick={onShowSettings} className="p-1.5 hover:bg-white/10 dark:hover:bg-slate-800 rounded-full text-white dark:text-slate-300 transition-colors" title="Settings">
                             <Menu size={22} strokeWidth={1.5} />
                         </button>
                     )}
@@ -2051,26 +2051,26 @@ const ListsTab: React.FC<ListsTabProps> = ({
 
     return (
         <div className="flex flex-col h-full">
-            <div className="px-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0 h-12">
-                <h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">My Lists</h1>
+            <div className="px-4 border-b border-slate-200 dark:border-slate-800 bg-[#af615d] dark:bg-slate-900 flex items-center justify-between shrink-0 h-12">
+                <h1 className="font-noto-serif text-lg font-bold text-white dark:text-slate-100 truncate">My Lists</h1>
                 <div className="flex gap-1.5 items-center">
                     <button
                         onClick={() => { setNewFolderName(''); setShowNewFolderModal(true); }}
-                        className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 p-1.5 rounded-full shadow-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                        className="bg-white/20 hover:bg-white/30 text-white dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 p-1.5 rounded-full shadow-sm transition-colors"
                         title="New Folder"
                     >
                         <FolderPlus size={18} />
                     </button>
                     <button
                         onClick={() => { setNewListName(''); setNewListFolder(''); setShowNewListModal(true); }}
-                        className="bg-amber-500 text-white p-1.5 rounded-full shadow-sm hover:bg-amber-600 transition-colors"
+                        className="bg-white/20 hover:bg-white/30 text-white dark:bg-amber-500 dark:hover:bg-amber-600 p-1.5 rounded-full shadow-sm transition-colors"
                         title="New List"
                     >
                         <Plus size={18} />
                     </button>
                     <UserAuthButton />
                     {onShowSettings && (
-                        <button onClick={onShowSettings} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" title="Settings">
+                        <button onClick={onShowSettings} className="p-1.5 hover:bg-white/10 dark:hover:bg-slate-800 rounded-full text-white dark:text-slate-300 transition-colors" title="Settings">
                             <Menu size={22} strokeWidth={1.5} />
                         </button>
                     )}

@@ -13,10 +13,16 @@ customization features are on or off, and choosing basic/default/linguist mode.
 I think the pages should go something like this.
 
 1. Very short welcome to app page.
-2. Explanation + choice of I want to add / create entries or I only want the dictionary
-3. Explanation and choice for basic/default/linguist mode. Can be explained with 3 screenshots of what words
+2. Explanation of basic non-customization features of the app.
+3. Explanation + choice of I want to add / create entries or I only want the dictionary (customization features)
+3b. If YES - an explanation of customization tabs - Collections + Packages
+3c. Would you like to log in to save your custom data? login button here.
+4. Explanation and choice for basic/default/linguist mode. Can be explained with 3 screenshots of what words
 in the entry view look like in each mode. Color-coding can also be an option on this slide so you can choose
 both at once. so really 6 screenshots. The choices can be Basic / Default / Linguistics mode and something like
 Show parts of verb when available vs not. So the fact that some words have segmentation and some do not is
-explained elegantly within the question if you see what i mean.
-
+explained elegantly within the question if you see what i mean. This tab should, when default / linguist is selected,
+have a button that says "What is this?" that give a popup box that explains segmentation in more detail and where
+the data comes from (A project based on the CED)
+5. Would you like to watch a more detailed explanation of what the app has to offer? (if yes, plays embedded video).
+I don't have the video made yet, but I put a placeholder in public/data/tutorial

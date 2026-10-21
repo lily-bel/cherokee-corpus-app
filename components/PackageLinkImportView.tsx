@@ -76,7 +76,7 @@ export const PackageLinkImportView: React.FC<PackageLinkImportViewProps> = ({
   // 1. Not Logged In View: Prompt login
   if (!user) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#F9F9F7] dark:bg-slate-950 p-4">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#F9F7F7] dark:bg-slate-950 p-4">
         <div className="max-w-md w-full bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-6 space-y-6 text-center">
           <div className="w-14 h-14 bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 rounded-2xl flex items-center justify-center mx-auto shadow-inner">
             <Box size={28} />
@@ -135,7 +135,7 @@ export const PackageLinkImportView: React.FC<PackageLinkImportViewProps> = ({
   // 2. Loading State
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#F9F9F7] dark:bg-slate-950 p-4">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#F9F7F7] dark:bg-slate-950 p-4">
         <div className="p-8 text-center space-y-3">
           <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-sm font-medium text-slate-600 dark:text-slate-300 font-noto-serif">
@@ -149,7 +149,7 @@ export const PackageLinkImportView: React.FC<PackageLinkImportViewProps> = ({
   // 3. Error State (Package not found or deleted)
   if (error || !packageData) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#F9F9F7] dark:bg-slate-950 p-4">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#F9F7F7] dark:bg-slate-950 p-4">
         <div className="max-w-md w-full bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-6 space-y-5 text-center">
           <div className="w-12 h-12 bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 rounded-2xl flex items-center justify-center mx-auto">
             <AlertCircle size={26} />
@@ -185,17 +185,17 @@ export const PackageLinkImportView: React.FC<PackageLinkImportViewProps> = ({
   const initials = meta.name ? (meta.name.split(' ').length > 1 ? (meta.name.split(' ')[0][0] + meta.name.split(' ')[1][0]).toUpperCase() : meta.name.substring(0, 2).toUpperCase()) : 'PK';
 
   return (
-    <div className="min-h-screen bg-[#F9F9F7] dark:bg-slate-950 flex flex-col justify-between">
+    <div className="min-h-screen bg-[#F9F7F7] dark:bg-slate-950 flex flex-col justify-between">
       {/* Top bar */}
-      <header className="px-4 h-12 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between">
+      <header className="px-4 h-12 border-b border-slate-200 dark:border-slate-800 bg-[#af615d] dark:bg-slate-900 flex items-center justify-between">
         <button
           onClick={onDismiss}
-          className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-amber-600 transition-colors"
+          className="flex items-center gap-1.5 text-xs font-semibold text-white dark:text-slate-300 hover:text-white/80 transition-colors"
         >
           <ArrowLeft size={16} />
           <span>Back to Dictionary</span>
         </button>
-        <span className="text-xs font-mono text-slate-400">
+        <span className="text-xs font-mono text-white/80 dark:text-slate-400">
           Public Package Link
         </span>
       </header>

@@ -299,24 +299,24 @@ export const TextImporter: React.FC<TextImporterProps> = ({
     }, [mode, bookTitle, chapterName, selectedBookId]);
 
     return (
-        <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950">
+        <div className="flex flex-col h-full bg-[#F9F7F7] dark:bg-slate-950">
             {/* Header */}
-            <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3 shrink-0">
+            <div className="sticky top-0 z-10 bg-[#af615d] dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3 shrink-0">
                 <div className="flex items-center gap-3 w-full">
                     <button
                         onClick={onBack}
-                        className="p-1.5 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        className="p-1.5 -ml-2 rounded-full hover:bg-white/10 dark:hover:bg-slate-800 text-white dark:text-slate-400 transition-colors"
                     >
-                        <ArrowLeft size={20} className="text-slate-600 dark:text-slate-400" />
+                        <ArrowLeft size={20} />
                     </button>
                     <div className="flex-1 min-w-0">
-                        <h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">
+                        <h1 className="font-noto-serif text-lg font-bold text-white dark:text-slate-100 truncate">
                             {mode === 'new' ? 'Create Book / Story' : 'Add Chapter'}
                         </h1>
                     </div>
                     <UserAuthButton />
                     {onShowSettings && (
-                        <button onClick={onShowSettings} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" title="Settings">
+                        <button onClick={onShowSettings} className="p-1.5 hover:bg-white/10 dark:hover:bg-slate-800 rounded-full text-white dark:text-slate-300 transition-colors" title="Settings">
                             <Menu size={22} strokeWidth={1.5} />
                         </button>
                     )}

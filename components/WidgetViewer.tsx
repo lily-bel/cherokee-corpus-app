@@ -27,16 +27,16 @@ const WidgetViewer: React.FC<WidgetViewerProps> = ({ widget, onClose }) => {
 
     return (
         <div className="fixed inset-0 z-50 bg-white dark:bg-slate-950 flex flex-col">
-            <div className="h-12 border-b border-slate-200 dark:border-slate-800 flex items-center px-4 justify-between bg-white dark:bg-slate-900 shrink-0">
+            <div className="h-12 border-b border-slate-200 dark:border-slate-800 flex items-center px-4 justify-between bg-[#af615d] dark:bg-slate-900 shrink-0">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                     <button 
                         onClick={onClose} 
-                        className="flex items-center gap-1.5 p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg -ml-2 text-slate-600 dark:text-slate-300 font-bold transition-colors shrink-0"
+                        className="flex items-center gap-1.5 p-1.5 hover:bg-white/10 dark:hover:bg-slate-800 rounded-lg -ml-2 text-white dark:text-slate-300 font-bold transition-colors shrink-0"
                     >
                         <ArrowLeft size={20} />
                         <span className="text-xs uppercase tracking-wider hidden sm:inline">Back</span>
                     </button>
-                    <h2 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">{widget.name}</h2>
+                    <h2 className="font-noto-serif text-lg font-bold text-white dark:text-slate-100 truncate">{widget.name}</h2>
                 </div>
             </div>
             <div className="flex-1 relative bg-slate-100 dark:bg-slate-900">

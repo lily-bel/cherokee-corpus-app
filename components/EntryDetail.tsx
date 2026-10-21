@@ -140,9 +140,9 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
     // HANDLE SENTENCE VIEW (If entry is a sentence object)
     if (e.english && !e.Definition) {
         return (
-            <div style={style} className="fixed inset-0 z-[10000] bg-[#F9F9F7] dark:bg-slate-950 flex flex-col overflow-hidden">
-                <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex items-center justify-between shadow-sm shrink-0 h-[60px]">
-                    <button onClick={onClose} className="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full"><ArrowLeft size={24} className="text-slate-700 dark:text-slate-200" /></button>
+            <div style={style} className="fixed inset-0 z-[10000] bg-[#F9F7F7] dark:bg-slate-950 flex flex-col overflow-hidden">
+                <div className="bg-[#af615d] dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex items-center justify-between shadow-sm shrink-0 h-[60px]">
+                    <button onClick={onClose} className="p-2 -ml-2 hover:bg-white/10 dark:hover:bg-slate-800 rounded-full"><ArrowLeft size={24} className="text-white dark:text-slate-200" /></button>
                 </div>
                 <div className="flex-1 overflow-y-auto p-5 pb-24">
                     <SentenceCard sentence={e} onSaveAudio={onSaveAudio} userAudioMeta={userAudioMeta} personalWords={personalWords} onDeleteAudio={onDeleteAudio}
@@ -332,12 +332,12 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
     const mainPronounSet = e.is_combined_part_b ? 'B' : (mainVerbConfig?.pron?.set_type === 'b' ? 'B' : 'A');
 
     return (
-        <div style={style} className="fixed inset-0 z-[10000] bg-[#F9F9F7] dark:bg-slate-950 flex flex-col overflow-hidden">
+        <div style={style} className="fixed inset-0 z-[10000] bg-[#F9F7F7] dark:bg-slate-950 flex flex-col overflow-hidden">
             {/* Header */}
-            <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 flex items-center justify-between shadow-sm shrink-0 h-12">
+            <div className="bg-[#af615d] dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 flex items-center justify-between shadow-sm shrink-0 h-12">
                 <div className="flex items-center gap-2">
-                    <button onClick={onClose} className="p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full">
-                        <ArrowLeft size={24} className="text-slate-700 dark:text-slate-200" />
+                    <button onClick={onClose} className="p-2 -ml-2 hover:bg-white/10 dark:hover:bg-slate-800 rounded-full">
+                        <ArrowLeft size={24} className="text-white dark:text-slate-200" />
                     </button>
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -348,20 +348,20 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                                 showToast?.("Link copied to clipboard", "success");
                             }
                         }} 
-                        className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200" 
+                        className="p-1.5 hover:bg-white/10 dark:hover:bg-slate-800 rounded-full transition-colors text-white/80 dark:text-slate-500 hover:text-white dark:hover:text-slate-200" 
                         title="Copy link"
                     >
                         <Share size={18} />
                     </button>
-                    <button onClick={() => onToggleFavorite(e.Index)} className="p-1.5 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-full transition-colors" title="Toggle Favorite">
-                        <Star size={18} className={isFav ? "fill-amber-400 text-amber-400" : "text-slate-400 dark:text-slate-500"} />
+                    <button onClick={() => onToggleFavorite(e.Index)} className="p-1.5 hover:bg-white/10 dark:hover:bg-amber-900/20 rounded-full transition-colors" title="Toggle Favorite">
+                        <Star size={18} className={isFav ? "fill-amber-300 text-amber-300" : "text-white/80 hover:text-white dark:text-slate-500"} />
                     </button>
-                    <button onClick={() => setShowListSheet(true)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400 dark:text-slate-500" title="Add to List">
+                    <button onClick={() => setShowListSheet(true)} className="p-1.5 hover:bg-white/10 dark:hover:bg-slate-800 rounded-full transition-colors text-white/80 hover:text-white dark:text-slate-500" title="Add to List">
                         <ListPlus size={18} />
                     </button>
                     <UserAuthButton />
                     {onShowSettings && (
-                        <button onClick={onShowSettings} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" title="Settings">
+                        <button onClick={onShowSettings} className="p-1.5 hover:bg-white/10 dark:hover:bg-slate-800 rounded-full text-white dark:text-slate-300 transition-colors" title="Settings">
                             <Menu size={22} strokeWidth={1.5} />
                         </button>
                     )}

@@ -1927,14 +1927,14 @@ function App() {
     }
 
     return (
-        <div className="h-full w-full bg-[#F9F9F7] dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans flex flex-col overflow-hidden relative">
+        <div className="h-full w-full bg-[#F9F7F7] dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans flex flex-col overflow-hidden relative">
             <RainbowGradient />
             {!selectedEntry && !activeWidgetName && activeTab === 'search' && (
-                <header className="bg-white dark:bg-slate-900 px-4 border-b border-slate-200 dark:border-slate-800 shadow-sm z-10 flex items-center justify-between shrink-0 h-12">
-                    <h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 flex items-baseline gap-2 truncate">ᏣᎳᎩ-English Dictionary<span className="text-xs font-sans font-medium text-slate-400 dark:text-slate-500 tracking-wide shrink-0">(BETA)</span></h1>
+                <header className="bg-[#af615d] dark:bg-slate-900 px-4 border-b border-slate-200 dark:border-slate-800 shadow-sm z-10 flex items-center justify-between shrink-0 h-12">
+                    <h1 className="font-noto-serif text-lg font-bold text-white dark:text-slate-100 flex items-baseline gap-2 truncate">ᏣᎳᎩ-English Dictionary<span className="text-xs font-sans font-medium text-white/80 dark:text-slate-400 tracking-wide shrink-0">(BETA)</span></h1>
                     <div className="flex items-center gap-1.5">
                         <UserAuthButton />
-                        <button onClick={() => setShowSettingsModal(true)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" title="Settings">
+                        <button onClick={() => setShowSettingsModal(true)} className="p-1.5 hover:bg-white/10 dark:hover:bg-slate-800 rounded-full text-white dark:text-slate-300 transition-colors" title="Settings">
                             <Menu size={22} strokeWidth={1.5} />
                         </button>
                     </div>
@@ -1944,7 +1944,7 @@ function App() {
                 <>
                         {activeTab === 'search' && (
                             <div className="flex flex-col h-full">
-                                <div className="p-4 bg-[#F9F9F7] dark:bg-slate-950">
+                                <div className="p-4 bg-[#F9F7F7] dark:bg-slate-950">
                                     <div className="relative">
                                         <div className="absolute left-3 top-3.5 text-slate-400 pointer-events-none"><Search size={20} /></div>
                                         <input
@@ -2285,19 +2285,19 @@ function App() {
                                             <React.Fragment key={item.Index || item.id || (item as any).merged_id}>
                                                 {showRootHeader && rootEntry && (
                                                     <div className="flex items-center gap-2.5 px-4 py-2 mt-4 mb-1">
-                                                        <div className="w-1.5 h-5 bg-amber-500 dark:bg-amber-400 rounded-full shrink-0" />
+                                                        <div className="w-1.5 h-5 bg-[#cf8686] dark:bg-amber-400 rounded-full shrink-0" />
                                                         <div className="flex items-center gap-2">
                                                             <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em]">Root:</span>
                                                             <button 
                                                                 onClick={() => handleViewRoot(rootEntry.slug || rootEntry.root_slug)}
-                                                                className="text-sm font-bold font-noto-cherokee text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1 bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 rounded shadow-sm border border-amber-100/40 dark:border-amber-900/40"
+                                                                className="text-sm font-bold font-noto-cherokee text-[#b35248] dark:text-amber-400 hover:underline flex items-center gap-1 bg-[#ffe7e3] dark:bg-amber-950/50 px-2 py-0.5 rounded shadow-sm border border-[#f8c9c8] dark:border-amber-900/40"
                                                             >
                                                                 {isEmptyRoot(rootEntry) ? '∅' : `-${rootEntry.root_h || rootEntry.root_g}-`}
                                                             </button>
                                                         </div>
                                                     </div>
                                                 )}
-                                                <div className={(rootEntry && showRootHeaders) ? "ml-4 pl-2 border-l-2 border-amber-500/20 dark:border-amber-400/20" : ""}>
+                                                <div className={(rootEntry && showRootHeaders) ? "ml-4 pl-2 border-l-2 border-[#f8c9c8] dark:border-amber-400/20" : ""}>
                                                     <EntryCard entry={item} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} settings={settings} />
                                                 </div>
                                             </React.Fragment>
@@ -2343,19 +2343,19 @@ function App() {
                                             <React.Fragment key={entry.Index || entry.id || (entry as any).merged_id}>
                                                 {showRootHeader && rootEntry && (
                                                     <div className="flex items-center gap-2.5 px-4 py-2 mt-4 mb-1 opacity-60">
-                                                        <div className="w-1.5 h-5 bg-amber-500/60 dark:bg-amber-400/60 rounded-full shrink-0" />
+                                                        <div className="w-1.5 h-5 bg-[#cf8686]/60 dark:bg-amber-400/60 rounded-full shrink-0" />
                                                         <div className="flex items-center gap-2">
                                                             <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em]">Root:</span>
                                                             <button 
                                                                 onClick={() => handleViewRoot(rootEntry.slug || rootEntry.root_slug)}
-                                                                className="text-sm font-bold font-noto-cherokee text-amber-600/80 dark:text-amber-400/80 hover:underline flex items-center gap-1 bg-amber-50/50 dark:bg-amber-950/30 px-2 py-0.5 rounded border border-amber-100/20 dark:border-amber-900/20"
+                                                                className="text-sm font-bold font-noto-cherokee text-[#b35248]/80 dark:text-amber-400/80 hover:underline flex items-center gap-1 bg-[#ffe7e3]/50 dark:bg-amber-950/30 px-2 py-0.5 rounded border border-[#f8c9c8]/50 dark:border-amber-900/20"
                                                             >
                                                                 {isEmptyRoot(rootEntry) ? '∅' : `-${rootEntry.root_h || rootEntry.root_g}-`}
                                                             </button>
                                                         </div>
                                                     </div>
                                                 )}
-                                                <div className={(rootEntry && showRootHeaders) ? "ml-4 pl-2 border-l-2 border-amber-500/10 dark:border-amber-400/10" : ""}>
+                                                <div className={(rootEntry && showRootHeaders) ? "ml-4 pl-2 border-l-2 border-[#f8c9c8]/50 dark:border-amber-400/10" : ""}>
                                                     <EntryCard entry={entry} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} isDimmed={true} settings={settings} />
                                                 </div>
                                             </React.Fragment>
@@ -2538,13 +2538,13 @@ function App() {
                         />}
                         {
                             activeTab === 'personal' && (!activeDictionaryId ? (
-                                <div className="flex flex-col h-full bg-[#F9F9F7] dark:bg-slate-950">
-                                    <div className="px-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between shrink-0 h-12">
-                                        <h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">Collections</h1>
+                                <div className="flex flex-col h-full bg-[#F9F7F7] dark:bg-slate-950">
+                                    <div className="px-4 border-b border-slate-200 dark:border-slate-800 bg-[#af615d] dark:bg-slate-900 flex items-center justify-between shrink-0 h-12">
+                                        <h1 className="font-noto-serif text-lg font-bold text-white dark:text-slate-100 truncate">Collections</h1>
                                         <div className="flex gap-1.5 items-center">
                                             <button
                                                 onClick={() => setShowNewDictionaryModal(true)}
-                                                className="bg-slate-900 dark:bg-slate-700 text-white p-1.5 rounded-full shadow-sm hover:bg-slate-800 transition-colors"
+                                                className="bg-white/20 hover:bg-white/30 text-white dark:bg-slate-700 dark:hover:bg-slate-600 p-1.5 rounded-full shadow-sm transition-colors"
                                                 title="New Collection"
                                             >
                                                 <Plus size={18} />
@@ -2552,7 +2552,7 @@ function App() {
                                             <UserAuthButton />
                                             <button
                                                 onClick={() => setShowSettingsModal(true)}
-                                                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors"
+                                                className="p-1.5 hover:bg-white/10 dark:hover:bg-slate-800 rounded-full text-white dark:text-slate-300 transition-colors"
                                                 title="Settings"
                                             >
                                                 <Menu size={22} strokeWidth={1.5} />
@@ -2600,17 +2600,17 @@ function App() {
                                         )}
                                     </div>
                                 </div>
-                            ) : (<div className="flex flex-col h-full"><div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col gap-2 shrink-0">
+                            ) : (<div className="flex flex-col h-full"><div className="px-4 py-2 border-b border-slate-200 dark:border-slate-800 bg-[#af615d] dark:bg-slate-900 flex flex-col gap-2 shrink-0">
                                 <div className="flex items-center gap-3">
-                                    <button onClick={() => setActiveDictionaryId(null)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full -ml-2"><ArrowLeft size={20} className="text-slate-500 dark:text-slate-400" /></button>
-                                    <div className="flex-1 flex items-center gap-2"><h2 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100">{customDictionaries[activeDictionaryId]?.name || dictionaryList.find(n => n.id === activeDictionaryId)?.name || 'Collection'}</h2>
-                                        {customDictionaries[activeDictionaryId] && <button onClick={() => { setRenameData({ type: 'dictionary', target: activeDictionaryId, value: customDictionaries[activeDictionaryId].name }); setShowNewDictionaryModal(true); }} className="p-1 text-slate-400 hover:text-sky-600 rounded-full"><Pencil size={14} /></button>}
+                                    <button onClick={() => setActiveDictionaryId(null)} className="p-1.5 hover:bg-white/10 dark:hover:bg-slate-800 rounded-full -ml-2 text-white dark:text-slate-400 transition-colors"><ArrowLeft size={20} /></button>
+                                    <div className="flex-1 flex items-center gap-2"><h2 className="font-noto-serif text-lg font-bold text-white dark:text-slate-100">{customDictionaries[activeDictionaryId]?.name || dictionaryList.find(n => n.id === activeDictionaryId)?.name || 'Collection'}</h2>
+                                        {customDictionaries[activeDictionaryId] && <button onClick={() => { setRenameData({ type: 'dictionary', target: activeDictionaryId, value: customDictionaries[activeDictionaryId].name }); setShowNewDictionaryModal(true); }} className="p-1 text-white/80 hover:text-white dark:text-slate-400 dark:hover:text-sky-600 rounded-full transition-colors"><Pencil size={14} /></button>}
                                     </div>
-                                    <div className="flex gap-1.5 ml-auto items-center"><button onClick={() => setDictionaryToDelete(activeDictionaryId)} className="p-1.5 text-slate-400 hover:text-red-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Delete Collection"><Trash2 size={20} /></button><UserAuthButton /><button onClick={() => setShowSettingsModal(true)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" title="Settings"><Menu size={22} strokeWidth={1.5} /></button></div>
+                                    <div className="flex gap-1.5 ml-auto items-center"><button onClick={() => setDictionaryToDelete(activeDictionaryId)} className="p-1.5 text-white/80 hover:text-red-200 dark:text-slate-400 dark:hover:text-red-500 rounded-full hover:bg-white/10 dark:hover:bg-slate-800 transition-colors" title="Delete Collection"><Trash2 size={20} /></button><UserAuthButton /><button onClick={() => setShowSettingsModal(true)} className="p-1.5 hover:bg-white/10 dark:hover:bg-slate-800 rounded-full text-white dark:text-slate-300 transition-colors" title="Settings"><Menu size={22} strokeWidth={1.5} /></button></div>
                                 </div>
-                                <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
-                                    <button onClick={() => setDictionaryMode('words')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${dictionaryMode === 'words' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'} `}>Words</button>
-                                    <button onClick={() => setDictionaryMode('sentences')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${dictionaryMode === 'sentences' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'} `}>Sentences</button>
+                                <div className="flex bg-black/15 dark:bg-slate-800 p-1 rounded-lg">
+                                    <button onClick={() => setDictionaryMode('words')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${dictionaryMode === 'words' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-white/80 hover:text-white dark:text-slate-400'} `}>Words</button>
+                                    <button onClick={() => setDictionaryMode('sentences')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${dictionaryMode === 'sentences' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-white/80 hover:text-white dark:text-slate-400'} `}>Sentences</button>
                                 </div>
                             </div>
                                 <div className="flex-1 overflow-y-auto p-4" key={activeDictionaryId + '-' + dictionaryMode}>

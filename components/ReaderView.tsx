@@ -369,22 +369,22 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
     }, [sentences, book]);
 
     return (
-        <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950">
+        <div className="flex flex-col h-full bg-[#F9F7F7] dark:bg-slate-950">
             {/* Header */}
-            <div className="sticky top-0 z-20 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 h-12 flex items-center shrink-0">
+            <div className="sticky top-0 z-20 bg-[#af615d] dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 h-12 flex items-center shrink-0">
                 <div className="flex items-center justify-between w-full">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                         <button
                             onClick={onBack}
-                            className="p-1.5 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
+                            className="p-1.5 -ml-2 rounded-full hover:bg-white/10 dark:hover:bg-slate-800 text-white dark:text-slate-400 transition-colors shrink-0"
                         >
-                            <ArrowLeft size={20} className="text-slate-600 dark:text-slate-400" />
+                            <ArrowLeft size={20} />
                         </button>
                         <div className="flex-1 min-w-0 flex items-baseline gap-2">
-                            <h1 className="font-noto-serif text-lg font-bold text-slate-800 dark:text-slate-100 truncate">
+                            <h1 className="font-noto-serif text-lg font-bold text-white dark:text-slate-100 truncate">
                                 {titleText}
                             </h1>
-                            <span className="text-xs text-slate-500 dark:text-slate-400 shrink-0">
+                            <span className="text-xs text-white/80 dark:text-slate-400 shrink-0">
                                 ({sentences.length} {sentences.length === 1 ? 'sent' : 'sents'})
                             </span>
                         </div>
@@ -394,8 +394,8 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                         <button
                             onClick={toggleStudyMode}
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-sm transition-colors ${studyMode === 'study'
-                                ? 'bg-amber-500 text-white'
-                                : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                                ? 'bg-white text-[#af615d] dark:bg-amber-500 dark:text-white shadow-xs'
+                                : 'bg-white/20 hover:bg-white/30 text-white dark:bg-slate-800 dark:text-slate-300'
                                 }`}
                         >
                             {studyMode === 'study' ? <Eye size={14} /> : <EyeOff size={14} />}
@@ -404,14 +404,14 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
 
                         <button
                             onClick={toggleScriptMode}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-sm bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-sm bg-white/20 hover:bg-white/30 text-white dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
                         >
                             <ScriptIcon size={14} />
                             <span>{getScriptLabel()}</span>
                         </button>
                         <UserAuthButton />
                         {onShowSettings && (
-                            <button onClick={onShowSettings} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 transition-colors" title="Settings">
+                            <button onClick={onShowSettings} className="p-1.5 hover:bg-white/10 dark:hover:bg-slate-800 rounded-full text-white dark:text-slate-300 transition-colors" title="Settings">
                                 <Menu size={22} strokeWidth={1.5} />
                             </button>
                         )}

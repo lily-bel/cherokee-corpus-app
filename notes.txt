@@ -18,6 +18,8 @@ BIG QUESTIONS:
   The mass editor tool should be updated.                                                                          
 27. API Consideration                                                                                            
   API?
+28. Login says unauthorized domain on hanehla
+29. Check words: uduha
 
 TEST:
 Online Capabilities & Testing                                                                                 
@@ -38,7 +40,8 @@ DATA:
   Eventually we will implement roots for nouns as well, but that is through the data side and through Julie.  
 20. Part of Speech Representation                                                                                
   Part of speech is still not reflected in the app correctly. Not sure what I want to do with it given Julie's     
-  different way of representing part of speech, I don't know.         
+  different way of representing part of speech, I don't know. at least standardize (vt = transitive verb etc)
+28. <em> issue in data      
 
 21. Shorthand Form Ambiguity                                                                                     
   The shorthand form for words should probably be fixed to change all of the ambiguous ones to just a              
