@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Search, Book, Menu, X, Filter, Sliders, Clock, ListIcon, Folder, BookOpen, BookSolid, Download, ArrowLeft, Pencil, ChevronDown, Share, Trash2, Plus, ChevronUp, Minus, Check, ToggleLeft, ToggleRight, Box, Layout, UserIcon } from './components/Icons';
+import { Search, Book, Menu, X, Filter, Sliders, Clock, ListIcon, Folder, BookOpen, BookSolid, Download, ArrowLeft, Pencil, ChevronDown, Share, Trash2, Plus, ChevronUp, Minus, Check, ToggleLeft, ToggleRight, Box, Layout, UserIcon, HelpCircle } from './components/Icons';
 import { Toast, Modal, UserAuthButton } from './components/UI';
 import EntryCard from './components/EntryCard';
 import EntryDetail from './components/EntryDetail';
@@ -25,6 +25,7 @@ import ClassView from './components/ClassView';
 import { useAuth, CloudLibraryData } from './components/AuthContext';
 import { AuthModal } from './components/AuthModal';
 import { PackageLinkImportView } from './components/PackageLinkImportView';
+import { TutorialModal } from './components/TutorialModal';
 
 const DEFAULT_SETTINGS = {
     darkMode: false,
@@ -108,8 +109,16 @@ function App() {
 
     const [settings, setSettings] = useState(DEFAULT_SETTINGS);
     const [showSettingsModal, setShowSettingsModal] = useState(false);
+    const [showTutorialModal, setShowTutorialModal] = useState(false);
     const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
     const [showSearchSettingsPopover, setShowSearchSettingsPopover] = useState(false);
+
+    const handleCloseTutorial = () => {
+        setShowTutorialModal(false);
+        try {
+            localStorage.setItem('cherokee_app_tutorial_completed', 'true');
+        } catch (e) { }
+    };
 
     useEffect(() => {
         if (settings?.hideCustomization && (activeTab === 'personal' || activeTab === 'packages')) {
@@ -417,6 +426,11 @@ function App() {
                 });
 
                 setCustomListOrder(order);
+
+                const tutorialCompleted = localStorage.getItem('cherokee_app_tutorial_completed');
+                if (!tutorialCompleted) {
+                    setShowTutorialModal(true);
+                }
 
             } catch (e) {
                 console.warn("LocalStorage access failed:", e);
@@ -2910,6 +2924,14 @@ function App() {
                                         <UserIcon size={20} />
                                         <span>Cloud Account & Backup</span>
                                     </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => { setShowSettingsModal(false); setShowTutorialModal(true); }}
+                                        className="w-full flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold py-3 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                                    >
+                                        <HelpCircle size={20} />
+                                        <span>View Startup Tutorial</span>
+                                    </button>
                                     <button onClick={handleBackup} className="w-full flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold py-3 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700"><Download size={20} /> Backup Data (JSON)</button>
                                     <label className="w-full flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold py-3 rounded-xl cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700"><Share size={20} /><span>Restore Data</span><input type="file" className="hidden" accept=".json" onChange={(e) => { setShowSettingsModal(false); setShowBackupConfirm(true); restoreInputRef.current = e; }} /></label>
                                 </div>
@@ -3011,6 +3033,14 @@ function App() {
                     onSyncNow={handleManualSync}
                 />
             )}
+
+            <TutorialModal
+                isOpen={showTutorialModal}
+                onClose={handleCloseTutorial}
+                settings={settings}
+                setSettings={setSettings}
+                onOpenAuth={() => setShowAuthModal(true)}
+            />
 
             {navStack.map((item, index) => {
                 const baseZIndex = 10000 + index;

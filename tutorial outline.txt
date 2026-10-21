@@ -26,3 +26,6 @@ have a button that says "What is this?" that give a popup box that explains segm
 the data comes from (A project based on the CED)
 5. Would you like to watch a more detailed explanation of what the app has to offer? (if yes, plays embedded video).
 I don't have the video made yet, but I put a placeholder in public/data/tutorial
+
+Screenshots for customization on/off and the different modes (B = color coding off) are in the folder.
+I would show the Mode screenshot directly above the forms ones on slide 4.
