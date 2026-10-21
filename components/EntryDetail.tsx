@@ -331,6 +331,21 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
     }, [mainPresSeg, baseSlot, mainVerbConfig, rootEntry]);
     const mainPronounSet = e.is_combined_part_b ? 'B' : (mainVerbConfig?.pron?.set_type === 'b' ? 'B' : 'A');
 
+    const hasOfficialAudio = Boolean(e.audio && (pkg?.type === 'official' || e.audio.startsWith('Word_') || e.audio.match(/^\d{4}\./) || e.audio.endsWith('.m4a')));
+    const activeUserAudios = (userAudioMeta && userAudioMeta[e.Index])
+        ? userAudioMeta[e.Index].filter((audio: any) => {
+            if (audio.packageId === 'official-cherokee-data' || audio.id.endsWith('.m4a')) return false;
+            if (isFormAudioId(audio.id)) return false;
+            if (!audio.packageId) {
+                const userPkg = packages.find(p => p.id === 'user');
+                return userPkg ? userPkg.status === 'active' : true;
+            }
+            const pkg = packages.find(p => p.id === audio.packageId);
+            return pkg && pkg.status === 'active';
+        })
+        : [];
+    const hasRecordings = hasOfficialAudio || activeUserAudios.length > 0;
+
     return (
         <div style={style} className="fixed inset-0 z-[10000] bg-[#F9F7F7] dark:bg-slate-950 flex flex-col overflow-hidden">
             {/* Header */}
@@ -370,9 +385,9 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
 
             {/* Scrollable Container */}
             <div ref={containerRef} className="flex-1 overflow-y-auto p-5 pb-24">
-                <div className="mb-6">
+                <div className="mb-2.5">
                     {isLinguist && rootEntry ? (
-                        <div className="pt-2 pb-2">
+                        <div className="py-1">
                             <VerbMorphologyTemplate
                                 rootEntry={rootEntry}
                                 onViewRoot={onViewRoot}
@@ -381,7 +396,7 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                             />
                         </div>
                     ) : (
-                        <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-start justify-between">
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2.5 mb-1">
                                     <h1 className="font-noto-cherokee text-4xl font-bold text-slate-900 dark:text-slate-100 leading-tight truncate">{e.Syllabary}</h1>
@@ -394,7 +409,7 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                                         </button>
                                     )}
                                 </div>
-                                <div className="flex items-baseline gap-3 flex-wrap">
+                                <div className="flex items-baseline gap-2.5 flex-wrap">
                                     <h2 className="font-noto-serif text-2xl text-amber-800 dark:text-amber-400 font-bold">
                                         {resolveRoleTaggedSegments(null, rootEntry, baseSlot, settings)
                                             ? renderSegmentedSurface(resolveRoleTaggedSegments(null, rootEntry, baseSlot, settings), settings?.colorWordSegments !== false)
@@ -416,7 +431,15 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                                                     : e.Entry_Tone)}
                                         </span>
                                     )}
-
+                                    {!hasRecordings && !hideCustomization && (
+                                        <button
+                                            onClick={() => { setRecorderTarget('entry'); setShowRecorder(true); }}
+                                            className="self-center p-1 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-full transition-colors"
+                                            title="Record pronunciation"
+                                        >
+                                            <MicPlus size={18} />
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                             <div className="shrink-0 pt-1">
@@ -426,13 +449,13 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                     )}
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-3">
                     {/* AUDIO ROW */}
-                    {!(isLinguist && rootEntry) && (
-                        <div className="flex items-center gap-2 flex-wrap min-h-[40px]">
-                            {(!userAudioMeta?.[e.Index]?.some(a => !isFormAudioId(a.id)) || (e.audio && (pkg?.type === 'official' || e.audio.startsWith('Word_') || e.audio.match(/^\d{4}\./) || e.audio.endsWith('.m4a')))) && (
+                    {hasRecordings && !(isLinguist && rootEntry) && (
+                        <div className="flex items-center gap-2 flex-wrap">
+                            {hasOfficialAudio && (
                                 <AudioPlayer
-                                    src={e.audio && (pkg?.type === 'official' || e.audio.startsWith('Word_') || e.audio.match(/^\d{4}\./) || e.audio.endsWith('.m4a')) ? `https://cherokeenationdictionary.net/Audio/word/${e.audio}` : undefined}
+                                    src={`https://cherokeenationdictionary.net/Audio/word/${e.audio}`}
                                     label="Official"
                                     icon={Mic}
                                     variant="gray"
@@ -440,50 +463,39 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                                 />
                             )}
                             {/* USER AUDIO LIST */}
-                            {userAudioMeta && userAudioMeta[e.Index] && userAudioMeta[e.Index]
-                                .filter(audio => {
-                                    if (audio.packageId === 'official-cherokee-data' || audio.id.endsWith('.m4a')) return false;
-                                    if (isFormAudioId(audio.id)) return false;
-                                    if (!audio.packageId) {
-                                        const userPkg = packages.find(p => p.id === 'user');
-                                        return userPkg ? userPkg.status === 'active' : true;
-                                    }
-                                    const pkg = packages.find(p => p.id === audio.packageId);
-                                    return pkg && pkg.status === 'active';
-                                })
-                                .map(audio => {
-                                    const audioPkgColor = getPackageColor(audio.packageId || 'user');
-                                    const isCustomAudioColor = audioPkgColor && audioPkgColor.startsWith('#');
-                                    let className = "flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors shadow-sm group ";
-                                    let style = {};
-                                    if (audioPkgColor && isCustomAudioColor) {
-                                        if (playingAudioId === audio.id) {
-                                            style = { backgroundColor: audioPkgColor + '20', color: audioPkgColor, borderColor: audioPkgColor };
-                                        } else {
-                                            style = { backgroundColor: audioPkgColor, color: 'white' };
-                                        }
-                                    } else if (audioPkgColor && audioPkgColor !== 'slate') {
-                                        className += playingAudioId === audio.id ? `bg-${audioPkgColor}-100 dark:bg-${audioPkgColor}-900 text-${audioPkgColor}-800 dark:text-${audioPkgColor}-100` : `bg-${audioPkgColor}-500 text-white hover:bg-${audioPkgColor}-600`;
+                            {activeUserAudios.map(audio => {
+                                const audioPkgColor = getPackageColor(audio.packageId || 'user');
+                                const isCustomAudioColor = audioPkgColor && audioPkgColor.startsWith('#');
+                                let className = "flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors shadow-sm group ";
+                                let style = {};
+                                if (audioPkgColor && isCustomAudioColor) {
+                                    if (playingAudioId === audio.id) {
+                                        style = { backgroundColor: audioPkgColor + '20', color: audioPkgColor, borderColor: audioPkgColor };
                                     } else {
-                                        className += playingAudioId === audio.id ? 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100' : 'bg-amber-500 text-white hover:bg-amber-600';
+                                        style = { backgroundColor: audioPkgColor, color: 'white' };
                                     }
-                                    return (
-                                        <div key={audio.id} className={className} style={style}>
-                                            <button onClick={() => handlePlayUserAudio(audio)} className="flex items-center gap-2">
-                                                {playingAudioId === audio.id ? <Pause size={12} className="fill-current" /> : <Mic size={12} />}
-                                                <span>{playingAudioId === audio.id ? 'Playing...' : (audio.speaker || 'User')}</span>
+                                } else if (audioPkgColor && audioPkgColor !== 'slate') {
+                                    className += playingAudioId === audio.id ? `bg-${audioPkgColor}-100 dark:bg-${audioPkgColor}-900 text-${audioPkgColor}-800 dark:text-${audioPkgColor}-100` : `bg-${audioPkgColor}-500 text-white hover:bg-${audioPkgColor}-600`;
+                                } else {
+                                    className += playingAudioId === audio.id ? 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100' : 'bg-amber-500 text-white hover:bg-amber-600';
+                                }
+                                return (
+                                    <div key={audio.id} className={className} style={style}>
+                                        <button onClick={() => handlePlayUserAudio(audio)} className="flex items-center gap-2">
+                                            {playingAudioId === audio.id ? <Pause size={12} className="fill-current" /> : <Mic size={12} />}
+                                            <span>{playingAudioId === audio.id ? 'Playing...' : (audio.speaker || 'User')}</span>
+                                        </button>
+                                        {!hideCustomization && !audio.packageId?.startsWith('official') && (
+                                            <button onClick={(e) => { e.stopPropagation(); handleLongPressAudio(audio.id); }} className="ml-1 pl-2 border-l border-white/20 hover:text-red-200 transition-colors flex items-center">
+                                                <Trash2 size={14} />
                                             </button>
-                                            {!hideCustomization && !audio.packageId?.startsWith('official') && (
-                                                <button onClick={(e) => { e.stopPropagation(); handleLongPressAudio(audio.id); }} className="ml-1 pl-2 border-l border-white/20 hover:text-red-200 transition-colors flex items-center">
-                                                    <Trash2 size={14} />
-                                                </button>
-                                            )}
-                                        </div>
-                                    )
-                                })}
+                                        )}
+                                    </div>
+                                );
+                            })}
                             {!hideCustomization && (
-                                <button onClick={() => { setRecorderTarget('entry'); setShowRecorder(true); }} className="p-2 text-slate-300 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-full transition-colors">
-                                    <MicPlus size={20} />
+                                <button onClick={() => { setRecorderTarget('entry'); setShowRecorder(true); }} className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-full transition-colors" title="Record pronunciation">
+                                    <MicPlus size={18} />
                                 </button>
                             )}
                         </div>
@@ -491,7 +503,7 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
 
                     {/* MORPHOLOGY BREAKDOWN TEMPLATE */}
                     {rootEntry && !isBasic && !isLinguist && (
-                        <div className="pb-2">
+                        <div>
                             <VerbMorphologyTemplate
                                 rootEntry={rootEntry}
                                 onViewRoot={onViewRoot}
@@ -528,26 +540,26 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                         </div>
                     )}
 
-                    <div className="pt-2">
+                    <div>
                         {e.is_combined_part_b && e.definition_source_type && (
                             <span className="block text-[11px] font-sans font-bold uppercase tracking-wider text-amber-700/80 dark:text-amber-400/80 mb-1">
                                 {e.definition_source_type === 'infinitive' ? 'Infinitive definition:' : 'Parent definition:'}
                             </span>
                         )}
-                        <p className="font-noto-serif text-xl text-slate-800 dark:text-slate-100 leading-snug">
+                        <p className="font-noto-serif text-lg text-slate-800 dark:text-slate-100 leading-snug">
                             {renderStyledText(e.Definition)}
                             {e.PoS && (
-                                <span className="text-slate-400 dark:text-slate-500 italic ml-2 text-lg font-normal">
+                                <span className="text-slate-400 dark:text-slate-500 italic ml-1.5 text-sm font-normal">
                                     ({e.PoS})
                                 </span>
                             )}
                         </p>
-                        {e.Definition_Long && <p className="mt-3 text-slate-600 dark:text-slate-400 text-base leading-relaxed">{renderStyledText(e.Definition_Long)}</p>}
+                        {e.Definition_Long && <p className="mt-2 text-slate-600 dark:text-slate-400 text-sm leading-relaxed">{renderStyledText(e.Definition_Long)}</p>}
                     </div>
 
                     {/* Word Forms List */}
-                    <div className="pt-4 -mx-5 px-5">
-                        <h3 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-3">Conjugations / Forms</h3>
+                    <div className="pt-1 -mx-5 px-5">
+                        <h3 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-2.5">Conjugations / Forms</h3>
                         
                         {hasMiniPreview && (
                             <div className="mb-3">
