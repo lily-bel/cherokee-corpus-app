@@ -1,0 +1,22 @@
+I would like to create a first launch startup onboarding tutorial. This will be a simple explanation of the app, 
+  with some of the settings available to turn on or off as you go through the tutorial so we can demonstrate the   
+  different modes of the app.                                                                               
+I added a folder to the project called public/tutorial containing screenshots. Take these and 
+  turn it into a paginated tutorial (swipe left to proceed, swipe right to go back, along with small next and  
+  back buttons and a progress bar (of dots) at the top).
+Add a button in Settings to view the startup tutorial at any time.
+
+The major things the tutorial needs to do are explain the app, and allow the user to choose a few important
+settings. The most important actions are (optionally) logging in for online backup, choosing whether
+customization features are on or off, and choosing basic/default/linguist mode.
+
+I think the pages should go something like this.
+
+1. Very short welcome to app page.
+2. Explanation + choice of I want to add / create entries or I only want the dictionary
+3. Explanation and choice for basic/default/linguist mode. Can be explained with 3 screenshots of what words
+in the entry view look like in each mode. Color-coding can also be an option on this slide so you can choose
+both at once. so really 6 screenshots. The choices can be Basic / Default / Linguistics mode and something like
+Show parts of verb when available vs not. So the fact that some words have segmentation and some do not is
+explained elegantly within the question if you see what i mean.
+
