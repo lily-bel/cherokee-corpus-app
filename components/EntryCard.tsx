@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { StickyNote, ListIcon, Mic, SquaresPlus, TranslateCherokee } from './Icons';
 import { SourceBadge } from './UI';
 import { useCorpus } from './CorpusContext';
-import { renderColorizedCherokee, renderSegmentedSurface, projectSegmentsOntoTone, segmentVerbForm, deriveSegmentedForm, getFormPronominalSet, VerbMorphologyTemplate, isFormAudio, resolveRoleTaggedSegments, getTransliterationStyleSetting, hasToneMarks } from '../utils';
+import { VerbMorphologyTemplate, isFormAudio, ColorizedCherokeeWord } from '../utils';
 import { usePackageManager } from './PackageManagerContext';
 import { DesktopHorizontalFormsStrip, getReferencePreviewMatchedForms } from './ReferenceFormsPreview';
 
@@ -72,53 +72,6 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
 
   const entryId = entry.id || entry.Index || entry.merged_id;
   const rootEntry = entry.rootEntry || (entryId ? rootMap?.get(entryId) : null);
-  const baseSlot = (entry.is_combined_part_b || rootEntry?.is_combined_part_b) ? 'infinitive' : 'present';
-
-  const mainPresSeg = rootEntry?.segmented_forms?.[baseSlot] || rootEntry?.segmented_forms?.present;
-  const mainPresGroups = useMemo(() => {
-    if (!rootEntry || !mainPresSeg) return null;
-    return segmentVerbForm(mainPresSeg, baseSlot, rootEntry.config, rootEntry.class_name, rootEntry.post_root_morpheme);
-  }, [rootEntry, mainPresSeg, baseSlot]);
-  const mainPronounSet = (entry.is_combined_part_b || rootEntry?.is_combined_part_b) ? 'B' : (rootEntry?.config?.pron?.set_type === 'b' ? 'B' : 'A');
-
-  const matchedHdSegments = useMemo(() => {
-    if (!rootEntry || !entry.matchedForm) return null;
-    const k = (entry.matchedForm.normalized_key || entry.matchedForm.form_name || '').toLowerCase();
-    const map: Record<string, string> = {
-      'present': 'present',
-      '3s|3s|present': 'present',
-      '3s|present': 'present',
-      '1s|3s|present': 'present_1sg',
-      '1s|present': 'present_1sg',
-      'imperfective': 'imperfective',
-      'habitual': 'imperfective',
-      '3s|3s|habitual': 'imperfective',
-      'perfective': 'perfective',
-      'past': 'perfective',
-      '3s|3s|past': 'perfective',
-      '3s|3s|completive past': 'perfective',
-      'imperative': 'imperative',
-      '2s|3s|imperative': 'imperative',
-      '2s|imperative': 'imperative',
-      'infinitive': 'infinitive',
-      '3s|3s|infinitive': 'infinitive',
-    };
-    const fn = map[k];
-    return resolveRoleTaggedSegments(entry.matchedForm, rootEntry, fn, settings);
-    return null;
-  }, [rootEntry, entry.matchedForm]);
-
-  const matchedFormGroups = useMemo(() => {
-    if (!rootEntry || !entry.matchedForm || matchedHdSegments) return null;
-    const derivedSeg = deriveSegmentedForm(entry.matchedForm, [], rootEntry);
-    if (!derivedSeg) return null;
-    const formName = (entry.matchedForm.normalized_key || entry.matchedForm.form_name || '').split('|')[2] || 'present';
-    return segmentVerbForm(derivedSeg, formName, rootEntry.config, rootEntry.class_name, rootEntry.post_root_morpheme);
-  }, [rootEntry, entry.matchedForm, matchedHdSegments]);
-  const matchedPronounSet = useMemo(() => {
-    if (!entry.matchedForm) return 'A';
-    return getFormPronominalSet(entry.matchedForm.normalized_key || entry.matchedForm.form_name, rootEntry?.config);
-  }, [entry.matchedForm, rootEntry]);
 
   // --- Entry Forms for Desktop Preview ---
   const entryForms = useMemo(() => {
@@ -260,11 +213,13 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
                   </span>
                 )}
                 <span className="font-noto-serif text-base text-amber-700 dark:text-amber-400 font-bold [overflow-wrap:anywhere] [word-break:normal]">
-                  {resolveRoleTaggedSegments(null, rootEntry, baseSlot, settings)
-                    ? renderSegmentedSurface(resolveRoleTaggedSegments(null, rootEntry, baseSlot, settings), isColored)
-                    : (rootEntry && mainPresGroups
-                      ? renderColorizedCherokee(entry.Entry, mainPresGroups, mainPronounSet, isColored)
-                      : entry.Entry)}
+                  <ColorizedCherokeeWord
+                    word={entry.Entry}
+                    entry={entry}
+                    rootEntry={rootEntry}
+                    isColored={isColored}
+                    settings={settings}
+                  />
                 </span>
               </div>
             )}
@@ -286,18 +241,15 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
               )}
               {entry.matchedForm.translit && (
                 <span className="font-noto-serif font-bold">
-                  {matchedHdSegments
-                    ? renderSegmentedSurface(
-                        (getTransliterationStyleSetting(settings) === 'classic' && hasToneMarks(entry.matchedForm.translit))
-                          ? projectSegmentsOntoTone(matchedHdSegments, entry.matchedForm.translit)
-                          : matchedHdSegments,
-                        isColored
-                      )
-                    : (entry.matchedForm.translit === entry.Entry && rootEntry?.surface_segments?.[baseSlot]
-                      ? renderSegmentedSurface(resolveRoleTaggedSegments(null, rootEntry, baseSlot, settings), isColored)
-                      : (rootEntry && matchedFormGroups
-                        ? renderColorizedCherokee(entry.matchedForm.translit, matchedFormGroups, matchedPronounSet, isColored)
-                        : entry.matchedForm.translit))}
+                  <ColorizedCherokeeWord
+                    word={entry.matchedForm.translit}
+                    form={entry.matchedForm}
+                    formKey={entry.matchedForm.label}
+                    entry={entry}
+                    rootEntry={rootEntry}
+                    isColored={isColored}
+                    settings={settings}
+                  />
                 </span>
               )}
             </div>

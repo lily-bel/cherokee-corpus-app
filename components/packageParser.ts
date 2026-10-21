@@ -322,6 +322,8 @@ export async function parsePackageZip(
         let definition = '';
         let PoS = '';
         let Entry_Tone = '';
+        let tone1 = '';
+        let tone2 = '';
 
         const sources = d.sources || {};
         const sourceKeys = Object.keys(sources);
@@ -334,6 +336,8 @@ export async function parsePackageZip(
             if (!syllabary) syllabary = s.Syllabary || s.syllabary || s.Headword || '';
             if (!definition) definition = s.Translations || s.Definition || s.definition || s.English || '';
             if (!PoS) PoS = s['Part of speech'] || s['Part of speech ch'] || s.PoS || s.Part_of_Speech || '';
+            if (!tone1 && s['Tone and length 1']) tone1 = s['Tone and length 1'];
+            if (!tone2 && s['Tone and length 2']) tone2 = s['Tone and length 2'];
             if (!Entry_Tone) Entry_Tone = s['Tone and length 1'] || s['Tone and length 2'] || s.Entry_Tone || s.Tone || '';
         }
 
@@ -361,6 +365,8 @@ export async function parsePackageZip(
             surface_spelling: surfaceSpelling || undefined,
             surface_forms: d.surface_forms,
             surface_segments: d.surface_segments,
+            tone1: tone1 || undefined,
+            tone2: tone2 || undefined,
             Index: id,
             Entry: translit,
             Syllabary: syllabary,
@@ -620,6 +626,8 @@ export function parsePackageJsonData(
         let definition = '';
         let PoS = '';
         let Entry_Tone = '';
+        let tone1 = '';
+        let tone2 = '';
 
         const sources = d.sources || {};
         const sourceKeys = Object.keys(sources);
@@ -632,6 +640,8 @@ export function parsePackageJsonData(
             if (!syllabary) syllabary = s.Syllabary || s.syllabary || s.Headword || '';
             if (!definition) definition = s.Translations || s.Definition || s.definition || s.English || '';
             if (!PoS) PoS = s['Part of speech'] || s['Part of speech ch'] || s.PoS || s.Part_of_Speech || '';
+            if (!tone1 && s['Tone and length 1']) tone1 = s['Tone and length 1'];
+            if (!tone2 && s['Tone and length 2']) tone2 = s['Tone and length 2'];
             if (!Entry_Tone) Entry_Tone = s['Tone and length 1'] || s['Tone and length 2'] || s.Entry_Tone || s.Tone || '';
         }
 
@@ -658,6 +668,8 @@ export function parsePackageJsonData(
             definition,
             source: sourceStr,
             audio: audioByBaseForm[id] || d.audio || '',
+            tone1: tone1 || undefined,
+            tone2: tone2 || undefined,
             Index: id,
             Entry: translit,
             Syllabary: syllabary,

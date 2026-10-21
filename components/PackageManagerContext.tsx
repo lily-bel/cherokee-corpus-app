@@ -242,13 +242,17 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                     else if (sources['hierarchical-dict.json']) sourceStr = 'ced';
                     else if (sourceKeys.length > 0) sourceStr = sourceKeys[0];
 
+                    let tone1 = '';
+                    let tone2 = '';
                     if (sources['cn-app-dictionary.csv']) {
                         const s = sources['cn-app-dictionary.csv'];
                         translit = s['Practical'] || s['Entry'] || '';
                         syllabary = s['Syllabary'] || '';
                         definition = s['Translations'] || '';
                         PoS = s['Part of speech'] || s['Part of speech ch'] || '';
-                        Entry_Tone = s['Tone and length 1'] || s['Tone and length 2'] || '';
+                        tone1 = s['Tone and length 1'] || '';
+                        tone2 = s['Tone and length 2'] || '';
+                        Entry_Tone = tone1 || tone2 || '';
                     } else if (sources['lily-dict.csv']) {
                         const s = sources['lily-dict.csv'];
                         translit = s['Entry'] || '';
@@ -298,6 +302,8 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                         segmented_reverse_aspiration: d.segmented_reverse_aspiration,
                         segmented_surface: d.segmented_surface,
                         shim_forms: d.shim_forms,
+                        tone1: tone1 || undefined,
+                        tone2: tone2 || undefined,
                         // Legacy
                         Index: d.merged_id,
                         Entry: translit,
@@ -542,6 +548,8 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                         Definition: finalDef,
                         definition_source_type: defSourceType,
                         Entry_Tone: infTone,
+                        tone1: infForm?.tone1 || undefined,
+                        tone2: infForm?.tone2 || undefined,
                         audio: infAudio,
                         Entry_Audio: infAudio,
                         surface_forms: pickShimKeys(d.surface_forms || hd.surface_forms),

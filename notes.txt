@@ -2,24 +2,11 @@ BIG QUESTIONS:
 3. List Tab Study Tools & Integration                                                                            
   The list tab in general needs some work. It's meant to be a studying tab, but obviously it doesn't have those    
   features yet. Now that we're on the hanehla domain, we can do more with integration with Hanehla,  
-  but right now we don't have any study tools and the list tab is lacking.                                                                                                                                                    
-24. Startup Onboarding Tutorial                                                                                  
-  I would like to create a first launch startup onboarding tutorial. This will be a simple explanation of the app, 
-  with some of the settings available to turn on or off as you go through the tutorial so we can demonstrate the   
-  different modes of the dictionary.                                                                               
-      • Added a folder to the project called public/tutorial containing an .md file and screenshots. Take this and 
-      turn it into a paginated tutorial (swipe left to proceed, swipe right to go back, along with small next and  
-      back buttons).                                                                                               
-      • Follow that .md file, filling in what it asks for whenever brackets [...] are used on that page.           
-      • Add a button in Settings to view the startup tutorial at any time.                                         
-25. App Visual Style Overhaul                                                                                    
-  Consider overhauling the visual style of the app somewhat.                                                       
-26. Mass Editor Tool Update                                                                                      
-  The mass editor tool should be updated.                                                                          
-27. API Consideration                                                                                            
-  API?
+  but right now we don't have any study tools and the list tab is lacking.                                                                                                                                                                                         
+26. Mass Editor - I can use scripts in the package file instead!
 28. Login says unauthorized domain on hanehla
 29. Check words: uduha
+30. hard to copy sentences - they highlight weird.
 
 TEST:
 Online Capabilities & Testing                                                                                 
@@ -28,6 +15,7 @@ Glossing Feature Review
   I should look over glossing to see if any features are missing there. It's a pretty complex feature at this point,
   so I want to look it over again.  
 Linking + embedding for words, sentences, classes, roots
+Onboarding tutorial - read over and edit
 
 
 DATA:

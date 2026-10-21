@@ -3,7 +3,6 @@ import { Volume2, Pause, TranslateCherokee } from './Icons';
 import {
     renderColorizedCherokee,
     renderSegmentedSurface,
-    projectSegmentsOntoTone,
     segmentVerbForm,
     deriveSegmentedForm,
     getAudioFromDB,
@@ -12,6 +11,11 @@ import {
     resolveRoleTaggedSegments,
     getCombinedCedVerbsMode,
     getTransliterationStyleSetting,
+    getToneOrthographySetting,
+    getShowLengthInTranslitSetting,
+    convertToneText,
+    formatTranslitWithLength,
+    projectToneOrLengthOntoSegments,
     hasToneMarks,
     getFormTransliteration
 } from '../utils';
@@ -689,13 +693,18 @@ export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
 
         const hdFormName = SLOT_TO_HD_FORM[cardData.slotKey];
         const hdSegments = resolveRoleTaggedSegments(form, rootEntry, hdFormName, settings);
+        const translitStyle = getTransliterationStyleSetting(settings);
+        const toneOrthography = getToneOrthographySetting(settings);
+        const showLengthInTranslit = getShowLengthInTranslitSetting(settings);
+        const rawToneSource = form.tone1 || form.tone || form.tone2 || form.Entry_Tone || '';
+        const practicalStr = form.translit || form.Practical || form.Entry || '';
 
         // Determine surface text
         let surface = '';
-        if (showTone) {
-            surface = form.tone2 || form.tone || form.Entry_Tone || form.translit || form.Practical || form.Entry || '';
+        if (showTone && rawToneSource && hasToneMarks(rawToneSource)) {
+            surface = convertToneText(rawToneSource, toneOrthography, translitStyle, practicalStr);
         } else {
-            surface = getFormTransliteration(form, rootEntry, hdFormName, settings) || form.translit || form.Practical || form.Entry || form.tone || '';
+            surface = getFormTransliteration(form, rootEntry, hdFormName, settings) || formatTranslitWithLength(practicalStr, rawToneSource, showLengthInTranslit, translitStyle);
         }
 
         // Split on semicolon if multiple forms exist: color the primary form matching King parse, render remainder uncolored
@@ -794,10 +803,16 @@ export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
                     {hdSegments ? (
                         <>
                             {(() => {
-                                const isClassic = getTransliterationStyleSetting(settings) === 'classic';
-                                const useToneProjection = showTone && isClassic && hasToneMarks(primarySurface);
-                                const displaySegments = useToneProjection
-                                    ? projectSegmentsOntoTone(hdSegments, primarySurface)
+                                const hasTone = Boolean(rawToneSource && hasToneMarks(rawToneSource));
+                                const shouldProject = hasTone && (showTone || showLengthInTranslit);
+                                const displaySegments = shouldProject
+                                    ? projectToneOrLengthOntoSegments(hdSegments, rawToneSource, {
+                                          showTone: showTone && hasTone,
+                                          toneOrthography,
+                                          showLengthInTranslit,
+                                          translitStyle,
+                                          practicalStr
+                                      })
                                     : hdSegments;
                                 return renderSegmentedSurface(displaySegments, colorSegments);
                             })()}
@@ -927,12 +942,17 @@ export const DesktopHorizontalFormsStrip: React.FC<DesktopHorizontalFormsStripPr
 
         const hdFormName = SLOT_TO_HD_FORM[cardData.slotKey];
         const hdSegments = resolveRoleTaggedSegments(form, rootEntry, hdFormName, settings);
+        const translitStyle = getTransliterationStyleSetting(settings);
+        const toneOrthography = getToneOrthographySetting(settings);
+        const showLengthInTranslit = getShowLengthInTranslitSetting(settings);
+        const rawToneSource = form.tone1 || form.tone || form.tone2 || form.Entry_Tone || '';
+        const practicalStr = form.translit || form.Practical || form.Entry || '';
 
         let surface = '';
-        if (showTone) {
-            surface = form.tone2 || form.tone || form.Entry_Tone || form.translit || form.Practical || form.Entry || '';
+        if (showTone && rawToneSource && hasToneMarks(rawToneSource)) {
+            surface = convertToneText(rawToneSource, toneOrthography, translitStyle, practicalStr);
         } else {
-            surface = getFormTransliteration(form, rootEntry, hdFormName, settings) || form.translit || form.Practical || form.Entry || form.tone || '';
+            surface = getFormTransliteration(form, rootEntry, hdFormName, settings) || formatTranslitWithLength(practicalStr, rawToneSource, showLengthInTranslit, translitStyle);
         }
 
         let primarySurface = surface;
@@ -963,10 +983,16 @@ export const DesktopHorizontalFormsStrip: React.FC<DesktopHorizontalFormsStripPr
                     {hdSegments ? (
                         <>
                             {(() => {
-                                const isClassic = getTransliterationStyleSetting(settings) === 'classic';
-                                const useToneProjection = showTone && isClassic && hasToneMarks(primarySurface);
-                                const displaySegments = useToneProjection
-                                    ? projectSegmentsOntoTone(hdSegments, primarySurface)
+                                const hasTone = Boolean(rawToneSource && hasToneMarks(rawToneSource));
+                                const shouldProject = hasTone && (showTone || showLengthInTranslit);
+                                const displaySegments = shouldProject
+                                    ? projectToneOrLengthOntoSegments(hdSegments, rawToneSource, {
+                                          showTone: showTone && hasTone,
+                                          toneOrthography,
+                                          showLengthInTranslit,
+                                          translitStyle,
+                                          practicalStr
+                                      })
                                     : hdSegments;
                                 return renderSegmentedSurface(displaySegments, colorSegments);
                             })()}

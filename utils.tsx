@@ -519,7 +519,7 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
     const hidePartBFromParent = !entry.is_combined_part_b && Boolean(entry.combined_part_b_id) && combinedMode === 'full';
     const parentShimFormsSet = new Set<string>(Array.isArray(entry.shim?.forms) ? entry.shim.forms : []);
     let score = 0;
-    let matchedForm: { syllabary?: string; translit?: string; label?: string } | null = null;
+    let matchedForm: { syllabary?: string; translit?: string; label?: string; tone?: string; tone1?: string; tone2?: string } | null = null;
     let mainMatchScore = 0;
     let cherokeeMainScore = 0;
     let otherFormMatchScore = 0;
@@ -679,7 +679,7 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
 
             if (fScore > otherFormMatchScore) {
               otherFormMatchScore = fScore;
-              matchedForm = { translit: f.surface_spelling || f.translit, syllabary: f.syllabary, label: f.form_name || f.label || f.name };
+              matchedForm = { translit: f.surface_spelling || f.translit, syllabary: f.syllabary, label: f.form_name || f.label || f.name, tone: f.tone, tone1: f.tone1, tone2: f.tone2 };
             }
           });
         }
@@ -748,7 +748,7 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
     }
 
     const isLinguist = settings?.dictionaryLevel === 'linguist';
-    let activeMatchedForm: { syllabary?: string; translit?: string; label?: string } | null = null;
+    let activeMatchedForm: { syllabary?: string; translit?: string; label?: string; tone?: string; tone1?: string; tone2?: string } | null = null;
 
     if (rootScore > 0) {
       // If root is matched, do not show a matched form
@@ -773,7 +773,10 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
           activeMatchedForm = {
             syllabary: entry.Syllabary || entry.syllabary,
             translit: entry.Entry || entry.translit || entry.surface_spelling,
-            label: entry.is_combined_part_b ? 'infinitive' : 'present'
+            label: entry.is_combined_part_b ? 'infinitive' : 'present',
+            tone: entry.Entry_Tone || entry.tone,
+            tone1: entry.tone1,
+            tone2: entry.tone2
           };
         }
       }
@@ -2211,17 +2214,818 @@ export function hasToneMarks(text: string | null | undefined): boolean {
   return /[¹²³⁴]|\b[1-4]\b|[a-zA-Z][1-4]|[:\u0300-\u036f\u02c0\u02c1\u0294]|[áàâéèêíìîóòôúùûv́v̀v̂]/.test(text);
 }
 
+export type ToneOrthography =
+  | 'mco'
+  | 'mco_short'
+  | 'uchihara'
+  | 'montgomery_anderson'
+  | 'feeling_1975'
+  | 'feeling_modified';
+
+export type ToneCategory = 'L' | 'H' | 'LF' | 'LH' | 'HL' | 'SH';
+export type VowelLengthCategory = 'short' | 'long' | 'final_unmarked';
+
+export interface ParsedToneVowel {
+  baseVowel: string;
+  tone: ToneCategory;
+  length: VowelLengthCategory;
+  glottalAfter?: string;
+}
+
+export const TONE_ORTHOGRAPHY_OPTIONS: { value: ToneOrthography; label: string; description: string }[] = [
+  {
+    value: 'mco',
+    label: 'Modified Community Orthography',
+    description: 'Diacritic tone marks with colons (:) for long vowels'
+  },
+  {
+    value: 'mco_short',
+    label: 'MCO (Short Markers)',
+    description: 'Diacritic tone marks with underdots (ạ) for short vowels'
+  },
+  {
+    value: 'uchihara',
+    label: 'Uchihara Orthography',
+    description: 'Double vowels for long vowels (àà LF, aa LL, áá HH, aá LH, áa HL, a̋a̋ SH)'
+  },
+  {
+    value: 'montgomery_anderson',
+    label: 'Montgomery-Anderson',
+    description: 'Double vowels for long vowels (aà LF, aa LL, áa HH, aá LH, áà HL, áá SH)'
+  },
+  {
+    value: 'feeling_1975',
+    label: 'Feeling 1975',
+    description: 'Superscript tone numbers (¹–⁴) with underdots (ạ) for short vowels'
+  },
+  {
+    value: 'feeling_modified',
+    label: 'Feeling (Modified Length)',
+    description: 'Superscript tone numbers with single digits for short (a²) and double digits for long (a²², a²¹ LF)'
+  }
+];
+
+const VALID_TONE_ORTHOGRAPHIES = new Set<ToneOrthography>([
+  'mco',
+  'mco_short',
+  'uchihara',
+  'montgomery_anderson',
+  'feeling_1975',
+  'feeling_modified'
+]);
+
+export function getToneOrthographySetting(settings?: any): ToneOrthography {
+  if (settings?.toneOrthography && VALID_TONE_ORTHOGRAPHIES.has(settings.toneOrthography)) {
+    return settings.toneOrthography;
+  }
+  try {
+    const s = localStorage.getItem('cherokee_app_settings');
+    if (s) {
+      const parsed = JSON.parse(s);
+      if (parsed.toneOrthography && VALID_TONE_ORTHOGRAPHIES.has(parsed.toneOrthography)) {
+        return parsed.toneOrthography;
+      }
+    }
+  } catch {}
+  return 'mco';
+}
+
+export function getShowLengthInTranslitSetting(settings?: any): boolean {
+  if (settings?.showLengthInTranslit !== undefined) {
+    return Boolean(settings.showLengthInTranslit);
+  }
+  try {
+    const s = localStorage.getItem('cherokee_app_settings');
+    if (s) {
+      const parsed = JSON.parse(s);
+      if (parsed.showLengthInTranslit !== undefined) {
+        return Boolean(parsed.showLengthInTranslit);
+      }
+    }
+  } catch {}
+  return false;
+}
+
+/**
+ * Restores word-boundary spaces in Tone and length 1 strings when Practical has multiple words
+ * but Tone and length 1 omitted the space between words (e.g. "ạjǐlagéhlọhi" vs "Ajila Gehlohi").
+ */
+export function restoreSpacesFromPractical(toneStr: string, practicalStr?: string): string {
+  if (!toneStr || !practicalStr) return toneStr || '';
+  if (!practicalStr.includes(' ')) return toneStr;
+
+  const toneVariants = toneStr.split(';');
+  const pracVariants = practicalStr.split(';');
+
+  return toneVariants.map((tVar, vIdx) => {
+    const pVar = (pracVariants[vIdx] ?? pracVariants[0] ?? '').trim();
+    const trimmedT = tVar.trim();
+    if (!pVar.includes(' ') || trimmedT.includes(' ')) return trimmedT;
+
+    const pWords = pVar.split(/\s+/).filter(Boolean);
+    if (pWords.length <= 1) return trimmedT;
+
+    const wordVowelCounts = pWords.map(w => (w.normalize('NFD').match(/[aeiouvAEIOUV]/g) || []).length);
+    const totalPracVowels = wordVowelCounts.reduce((a, b) => a + b, 0);
+
+    const nfdT = trimmedT.normalize('NFD');
+    const tVowelMatches = [...nfdT.matchAll(/[aeiouvAEIOUV][\u0300-\u036f]*:?[¹²³⁴]*/g)];
+    if (tVowelMatches.length !== totalPracVowels || totalPracVowels === 0) {
+      return trimmedT;
+    }
+
+    const splitEndIndices = new Set<number>();
+    let cum = 0;
+    for (let i = 0; i < wordVowelCounts.length - 1; i++) {
+      cum += wordVowelCounts[i];
+      if (cum > 0 && cum <= tVowelMatches.length) {
+        const m = tVowelMatches[cum - 1];
+        splitEndIndices.add(m.index! + m[0].length);
+      }
+    }
+
+    let out = '';
+    for (let i = 0; i < nfdT.length; i++) {
+      out += nfdT[i];
+      if (splitEndIndices.has(i + 1)) {
+        out += ' ';
+      }
+    }
+    return out.normalize('NFC');
+  }).join('; ');
+}
+
+function attachMark(baseChar: string, combiningMarks: string): string {
+  if (!combiningMarks) return baseChar;
+  return (baseChar + combiningMarks).normalize('NFC');
+}
+
+/**
+ * Formats a single vowel into one of the 6 supported Cherokee tone orthographies.
+ */
+export function formatVowelInToneOrthography(
+  baseVowel: string,
+  tone: ToneCategory,
+  length: VowelLengthCategory,
+  orthography: ToneOrthography
+): string {
+  const v1 = baseVowel;
+  const v2 = baseVowel.toLowerCase();
+
+  if (length === 'final_unmarked') {
+    return v1;
+  }
+
+  const accentMap: Record<ToneCategory, string> = {
+    L: '',
+    H: '\u0301',
+    LF: '\u0300',
+    LH: '\u030c',
+    HL: '\u0302',
+    SH: '\u030b'
+  };
+
+  switch (orthography) {
+    case 'mco': {
+      const marked = attachMark(v1, accentMap[tone]);
+      return length === 'long' ? `${marked}:` : marked;
+    }
+    case 'mco_short': {
+      const dot = length === 'short' ? '\u0323' : '';
+      return attachMark(v1, dot + accentMap[tone]);
+    }
+    case 'uchihara': {
+      if (length === 'short') {
+        return attachMark(v1, accentMap[tone]);
+      }
+      // Long vowel (geminate)
+      switch (tone) {
+        case 'LF':
+          return attachMark(v1, '\u0300') + attachMark(v2, '\u0300');
+        case 'L':
+          return v1 + v2;
+        case 'H':
+          return attachMark(v1, '\u0301') + attachMark(v2, '\u0301');
+        case 'LH':
+          return v1 + attachMark(v2, '\u0301');
+        case 'HL':
+          return attachMark(v1, '\u0301') + v2;
+        case 'SH':
+          return attachMark(v1, '\u030b') + attachMark(v2, '\u030b');
+      }
+      return v1 + v2;
+    }
+    case 'montgomery_anderson': {
+      if (length === 'short') {
+        if (tone === 'H' || tone === 'SH') return attachMark(v1, '\u0301');
+        if (tone === 'LF') return attachMark(v1, '\u0300');
+        if (tone === 'LH') return attachMark(v1, '\u030c');
+        if (tone === 'HL') return attachMark(v1, '\u0302');
+        return v1;
+      }
+      // Long vowel (geminate)
+      switch (tone) {
+        case 'LF':
+          return v1 + attachMark(v2, '\u0300');
+        case 'L':
+          return v1 + v2;
+        case 'H':
+          return attachMark(v1, '\u0301') + v2;
+        case 'LH':
+          return v1 + attachMark(v2, '\u0301');
+        case 'HL':
+          return attachMark(v1, '\u0301') + attachMark(v2, '\u0300');
+        case 'SH':
+          return attachMark(v1, '\u0301') + attachMark(v2, '\u0301');
+      }
+      return v1 + v2;
+    }
+    case 'feeling_1975': {
+      const base = length === 'short' ? attachMark(v1, '\u0323') : v1;
+      const supMap: Record<ToneCategory, string> = {
+        LF: '¹',
+        L: '²',
+        H: '³',
+        LH: '²³',
+        HL: '³²',
+        SH: '⁴'
+      };
+      return base + supMap[tone];
+    }
+    case 'feeling_modified': {
+      if (length === 'short') {
+        const shortSupMap: Record<ToneCategory, string> = {
+          LF: '¹',
+          L: '²',
+          H: '³',
+          LH: '²³',
+          HL: '³²',
+          SH: '⁴'
+        };
+        return v1 + shortSupMap[tone];
+      }
+      const longSupMap: Record<ToneCategory, string> = {
+        LF: '²¹',
+        L: '²²',
+        H: '³³',
+        LH: '²³',
+        HL: '³²',
+        SH: '⁴⁴'
+      };
+      return v1 + longSupMap[tone];
+    }
+  }
+}
+
+export function formatVowelWithLength(
+  baseVowel: string,
+  length: VowelLengthCategory,
+  showLength: boolean
+): string {
+  return showLength && length === 'long' ? `${baseVowel}:` : baseVowel;
+}
+
+/**
+ * Converts a consonant cluster from classic orthography to the specified transliteration style,
+ * matching the linguistic conversion rules in king-recreation/dictionary_pipeline/orthography.py
+ * while preserving capitalization.
+ */
+export function convertConsonantClusterToStyle(
+  cluster: string,
+  followedByVowel: boolean,
+  style: TransliterationStyle
+): string {
+  if (!cluster || style === 'classic') return cluster;
+
+  let s = cluster;
+  // 1. Convert classic -> aspiration
+  s = s.replace(/t(?![sS])/g, 'th').replace(/T(?![sS])/g, 'Th');
+
+  const aspRules: [string, string][] = [
+    ['ch', 'tsh'], ['Ch', 'Tsh'], ['CH', 'TSH'],
+    ['hn', 'nh'], ['Hn', 'Nh'], ['HN', 'NH'],
+    ['hl', 'lh'], ['Hl', 'Lh'], ['HL', 'LH'],
+    ['hy', 'yh'], ['Hy', 'Yh'], ['HY', 'YH'],
+    ['hw', 'wh'], ['Hw', 'Wh'], ['HW', 'WH'],
+    ['qu', 'kw'], ['Qu', 'Kw'], ['QU', 'KW'],
+    ['d', 't'], ['D', 'T'],
+    ['k', 'kh'], ['K', 'Kh'],
+    ['g', 'k'], ['G', 'K'],
+    ['j', 'ts'], ['J', 'Ts']
+  ];
+
+  for (const [oldSeq, newSeq] of aspRules) {
+    s = s.split(oldSeq).join(newSeq);
+  }
+
+  if (followedByVowel) {
+    s = s.replace(/sl$/g, 'slh').replace(/Sl$/g, 'Slh').replace(/SL$/g, 'SLH');
+  }
+
+  if (style === 'aspiration') {
+    return s;
+  }
+
+  // 2. Convert aspiration -> reverse_aspiration
+  const revRules: [string, string][] = [
+    ['kw', 'gw'], ['Kw', 'Gw'], ['KW', 'GW'],
+    ['ts', 'j'], ['Ts', 'J'], ['TS', 'J'],
+    ['k', 'g'], ['K', 'G'],
+    ['t', 'd'], ['T', 'D']
+  ];
+
+  for (const [oldSeq, newSeq] of revRules) {
+    s = s.split(oldSeq).join(newSeq);
+  }
+
+  return s;
+}
+
+/**
+ * Converts a full Cherokee string's consonant clusters to the specified transliteration style
+ * while keeping vowels and diacritics intact.
+ */
+export function convertConsonantsToStyle(
+  text: string,
+  style: TransliterationStyle
+): string {
+  if (!text || style === 'classic') return text || '';
+  const nfd = text.normalize('NFD');
+  const vowelRegex = /[aeiouvAEIOUV][\u0300-\u036f]*:?[¹²³⁴]*/g;
+  const matches = [...nfd.matchAll(vowelRegex)];
+  if (matches.length === 0) {
+    return convertConsonantClusterToStyle(text, false, style);
+  }
+
+  let out = '';
+  let lastIdx = 0;
+  for (let i = 0; i < matches.length; i++) {
+    const m = matches[i];
+    const start = m.index!;
+    const cluster = nfd.slice(lastIdx, start);
+    out += convertConsonantClusterToStyle(cluster, true, style);
+    out += m[0].normalize('NFC');
+    lastIdx = start + m[0].length;
+  }
+  if (lastIdx < nfd.length) {
+    out += convertConsonantClusterToStyle(nfd.slice(lastIdx), false, style);
+  }
+  return out;
+}
+
+/**
+ * Parses a single Cherokee word with tone marks into alternating consonant chunks and ParsedToneVowels.
+ */
+export function parseToneWord(
+  word: string,
+  sourceHint: 'mco_short' | 'mco' | 'auto' = 'auto'
+): { clusters: string[]; vowels: ParsedToneVowel[] } {
+  const nfd = (word || '')
+    .normalize('NFD')
+    .replace(/::+/g, ':')
+    .replace(/\u0307/g, '')
+    .replace(/:([\u0300-\u036f]+)/g, '$1:');
+
+  const hasSuperscripts = /[¹²³⁴]/.test(nfd);
+  const hasDoubleSup = /[¹²³⁴]{2}/.test(nfd);
+  const hasColon = nfd.includes(':');
+  const hasUnderdot = nfd.includes('\u0323');
+
+  let format: 'feeling' | 'mco' | 'mco_short';
+  if (hasSuperscripts) {
+    format = 'feeling';
+  } else if (hasColon && !hasUnderdot) {
+    format = 'mco';
+  } else if (hasUnderdot && !hasColon) {
+    format = 'mco_short';
+  } else if (sourceHint === 'mco') {
+    format = 'mco';
+  } else if (sourceHint === 'mco_short') {
+    format = 'mco_short';
+  } else {
+    format = hasColon ? 'mco' : 'mco_short';
+  }
+
+  const vowelRegex = /[aeiouvAEIOUV][\u0300-\u036f]*:?[¹²³⁴]*/g;
+  const matches = [...nfd.matchAll(vowelRegex)];
+
+  const clusters: string[] = [];
+  const vowels: ParsedToneVowel[] = [];
+  let lastIdx = 0;
+
+  for (let i = 0; i < matches.length; i++) {
+    const m = matches[i];
+    const start = m.index!;
+    const rawToken = m[0];
+    const end = start + rawToken.length;
+
+    clusters.push(nfd.slice(lastIdx, start));
+    lastIdx = end;
+
+    const baseVowel = rawToken[0];
+    const marks = rawToken.slice(1);
+    const isLast = i === matches.length - 1;
+    const nextMatch = i + 1 < matches.length ? matches[i + 1] : null;
+    const immediatelyFollowedByVowel = nextMatch ? nextMatch.index === end : false;
+
+    const nextClusterPreview = nfd.slice(end, nextMatch ? nextMatch.index! : nfd.length);
+    const glottalAfter = nextClusterPreview.startsWith('ʔ')
+      ? 'ʔ'
+      : (nextClusterPreview.startsWith("'") || nextClusterPreview.startsWith('’'))
+      ? "'"
+      : '';
+
+    let tone: ToneCategory = 'L';
+    const supMatch = marks.match(/[¹²³⁴]+/);
+    if (supMatch) {
+      const sup = supMatch[0];
+      if (sup === '²¹' || sup === '¹') tone = 'LF';
+      else if (sup === '²³') tone = 'LH';
+      else if (sup === '³²') tone = 'HL';
+      else if (sup === '⁴⁴' || sup === '⁴') tone = 'SH';
+      else if (sup === '³³' || sup === '³') tone = 'H';
+      else tone = 'L';
+    } else {
+      if (marks.includes('\u0300')) tone = 'LF';
+      else if (marks.includes('\u0301')) tone = 'H';
+      else if (marks.includes('\u0302')) tone = 'HL';
+      else if (marks.includes('\u030c')) tone = 'LH';
+      else if (marks.includes('\u030b')) tone = 'SH';
+      else tone = 'L';
+    }
+
+    const tokenHasAccent = /[\u0300\u0301\u0302\u030c\u030b]/.test(marks);
+    const tokenHasColon = marks.includes(':');
+    const tokenHasDot = marks.includes('\u0323');
+
+    let length: VowelLengthCategory = 'final_unmarked';
+    if (format === 'feeling') {
+      if (supMatch) {
+        const sup = supMatch[0];
+        if (tokenHasDot) {
+          length = 'short';
+        } else if (hasUnderdot) {
+          length = 'long';
+        } else if (sup.length >= 2) {
+          length = 'long';
+        } else if (hasDoubleSup) {
+          length = 'short';
+        } else {
+          length = 'long';
+        }
+      } else {
+        length = 'final_unmarked';
+      }
+    } else if (format === 'mco') {
+      if (tokenHasColon) {
+        length = 'long';
+      } else if (tokenHasDot) {
+        length = 'short';
+      } else if (tokenHasAccent || (!isLast && !immediatelyFollowedByVowel)) {
+        length = 'short';
+      } else {
+        length = 'final_unmarked';
+      }
+    } else {
+      // mco_short (Tone and length 1)
+      if (tokenHasDot) {
+        length = 'short';
+      } else if (tokenHasColon) {
+        length = 'long';
+      } else if (tokenHasAccent || (!isLast && !immediatelyFollowedByVowel)) {
+        length = 'long';
+      } else {
+        length = 'final_unmarked';
+      }
+    }
+
+    vowels.push({
+      baseVowel,
+      tone,
+      length,
+      glottalAfter
+    });
+  }
+
+  clusters.push(nfd.slice(lastIdx));
+  return { clusters, vowels };
+}
+
+export function parseToneTextVowels(
+  toneStr: string,
+  practicalStr?: string,
+  sourceHint: 'mco_short' | 'mco' | 'auto' = 'auto'
+): ParsedToneVowel[] {
+  if (!toneStr) return [];
+  const spaced = restoreSpacesFromPractical(toneStr, practicalStr);
+  const words = spaced.trim().split(/\s+/).filter(Boolean);
+  const allVowels: ParsedToneVowel[] = [];
+  for (const w of words) {
+    const { vowels } = parseToneWord(w, sourceHint);
+    allVowels.push(...vowels);
+  }
+  return allVowels;
+}
+
+/**
+ * Converts a Cherokee tone string (word, semicolon-separated variants, or sentence)
+ * into the target ToneOrthography and TransliterationStyle.
+ */
+export function convertToneText(
+  toneStr: string | null | undefined,
+  orthography: ToneOrthography = 'mco',
+  translitStyle: TransliterationStyle = 'classic',
+  practicalStr?: string,
+  sourceHint: 'mco_short' | 'mco' | 'auto' = 'auto'
+): string {
+  if (!toneStr) return '';
+  if (!hasToneMarks(toneStr)) {
+    return convertConsonantsToStyle(toneStr, translitStyle);
+  }
+
+  const spaced = restoreSpacesFromPractical(toneStr, practicalStr);
+
+  // Split by whitespace while preserving exact whitespace/delimiters
+  return spaced.split(/(\s+|;\s*)/).map(chunk => {
+    if (!chunk || /^\s+$|^;\s*$/.test(chunk)) return chunk;
+    if (!hasToneMarks(chunk)) {
+      return convertConsonantsToStyle(chunk, translitStyle);
+    }
+    const { clusters, vowels } = parseToneWord(chunk, sourceHint);
+    if (vowels.length === 0) {
+      return convertConsonantsToStyle(chunk, translitStyle);
+    }
+    let out = '';
+    for (let i = 0; i < vowels.length; i++) {
+      const c = convertConsonantClusterToStyle(clusters[i], true, translitStyle);
+      const v = formatVowelInToneOrthography(vowels[i].baseVowel, vowels[i].tone, vowels[i].length, orthography);
+      out += c + v;
+    }
+    out += convertConsonantClusterToStyle(clusters[vowels.length], false, translitStyle);
+    return out;
+  }).join('');
+}
+
+/**
+ * Aligns parsed tone vowels with the vowels of a non-tone transliteration word/variant,
+ * inserting ':' after long vowels when showLength is true, and applying translitStyle.
+ */
+export function formatTranslitWithLength(
+  translitStr: string | null | undefined,
+  toneStr?: string | null | undefined,
+  showLength: boolean = false,
+  translitStyle: TransliterationStyle = 'classic',
+  sourceHint: 'mco_short' | 'mco' | 'auto' = 'auto'
+): string {
+  if (!translitStr) return '';
+  const styledTranslit = convertConsonantsToStyle(translitStr, translitStyle);
+  if (!showLength || !toneStr || !hasToneMarks(toneStr)) {
+    return styledTranslit;
+  }
+
+  const tVariants = styledTranslit.split(';');
+  const toneVariants = toneStr.split(';');
+
+  return tVariants.map((tVar, vIdx) => {
+    const rawToneVar = (toneVariants[vIdx] ?? toneVariants[0] ?? '').trim();
+    if (!rawToneVar || !hasToneMarks(rawToneVar)) return tVar;
+
+    const leadingSpace = tVar.match(/^\s*/)?.[0] || '';
+    const trailingSpace = tVar.match(/\s*$/)?.[0] || '';
+    const coreTranslit = tVar.trim();
+    if (!coreTranslit) return tVar;
+
+    const parsedVowels = parseToneTextVowels(rawToneVar, coreTranslit, sourceHint);
+    if (parsedVowels.length === 0) return tVar;
+
+    const vowelRegex = /[aeiouvAEIOUV]/g;
+    const matches = [...coreTranslit.matchAll(vowelRegex)];
+    if (matches.length === 0) return tVar;
+
+    // Map each vowel index in coreTranslit to a ParsedToneVowel
+    const mappedLengths: VowelLengthCategory[] = new Array(matches.length).fill('short');
+
+    if (matches.length === parsedVowels.length) {
+      for (let i = 0; i < matches.length; i++) {
+        mappedLengths[i] = parsedVowels[i].length;
+      }
+    } else {
+      // Subsequence / DP alignment on base vowel character
+      const M = matches.length;
+      const N = parsedVowels.length;
+      const dp = Array.from({ length: M + 1 }, () => new Int32Array(N + 1));
+      const tb = Array.from({ length: M + 1 }, () => new Int8Array(N + 1));
+      for (let i = 1; i <= M; i++) { dp[i][0] = dp[i - 1][0] - 2; tb[i][0] = 2; }
+      for (let j = 1; j <= N; j++) { dp[0][j] = dp[0][j - 1] - 2; tb[0][j] = 3; }
+      for (let i = 1; i <= M; i++) {
+        const c1 = matches[i - 1][0].toLowerCase();
+        for (let j = 1; j <= N; j++) {
+          const c2 = parsedVowels[j - 1].baseVowel.toLowerCase();
+          const scoreMatch = dp[i - 1][j - 1] + (c1 === c2 ? 3 : -1);
+          const scoreDel = dp[i - 1][j] - 2;
+          const scoreIns = dp[i][j - 1] - 2;
+          let best = scoreMatch;
+          let dir = 1;
+          if (scoreDel > best) { best = scoreDel; dir = 2; }
+          if (scoreIns > best) { best = scoreIns; dir = 3; }
+          dp[i][j] = best;
+          tb[i][j] = dir;
+        }
+      }
+      let i = M, j = N;
+      while (i > 0 && j > 0) {
+        if (tb[i][j] === 1) {
+          mappedLengths[i - 1] = parsedVowels[j - 1].length;
+          i--; j--;
+        } else if (tb[i][j] === 2) {
+          i--;
+        } else {
+          j--;
+        }
+      }
+    }
+
+    let out = '';
+    let lastIdx = 0;
+    for (let i = 0; i < matches.length; i++) {
+      const m = matches[i];
+      const start = m.index!;
+      out += coreTranslit.slice(lastIdx, start);
+      const nextChar = coreTranslit[start + 1];
+      if (nextChar === ':') {
+        out += m[0];
+      } else {
+        out += formatVowelWithLength(m[0], mappedLengths[i], true);
+      }
+      lastIdx = start + 1;
+    }
+    out += coreTranslit.slice(lastIdx);
+    return leadingSpace + out + trailingSpace;
+  }).join(';');
+}
+
+/**
+ * Formats a sentence or sentence token according to the user's ToneOrthography and TransliterationStyle settings.
+ */
+export function formatSentenceText(
+  text: string | null | undefined,
+  source: string | null | undefined,
+  settings?: any
+): string {
+  if (!text) return '';
+  const orthography = getToneOrthographySetting(settings);
+  const translitStyle = getTransliterationStyleSetting(settings);
+  const isCed = (source || '').toLowerCase() === 'ced';
+  if (isCed || hasToneMarks(text)) {
+    return convertToneText(text, orthography, translitStyle, undefined, 'mco');
+  }
+  return convertConsonantsToStyle(text, translitStyle);
+}
+
+/**
+ * Projects either ToneOrthography (when showTone is true) or Non-Tone Vowel Length ':'
+ * (when showTone is false and showLengthInTranslit is true) directly onto role-tagged SurfaceSegments,
+ * preserving 100% of morphological segment boundaries, roles, colors, and consonant styles.
+ */
+export function projectToneOrLengthOntoSegments(
+  segments: SurfaceSegment[] | null | undefined,
+  toneSource: string | null | undefined,
+  options: {
+    showTone: boolean;
+    toneOrthography: ToneOrthography;
+    showLengthInTranslit: boolean;
+    translitStyle?: TransliterationStyle;
+    practicalStr?: string;
+    sourceHint?: 'mco_short' | 'mco' | 'auto';
+  }
+): SurfaceSegment[] {
+  if (!segments || segments.length === 0) return [];
+  if (!toneSource || !hasToneMarks(toneSource)) {
+    return segments;
+  }
+  if (!options.showTone && !options.showLengthInTranslit) {
+    return segments;
+  }
+
+  const primaryTone = toneSource.split(';')[0].trim();
+  const segPlainText = segments.map(s => s.text).join('');
+  const practical = options.practicalStr ? options.practicalStr.split(';')[0].trim() : segPlainText;
+  const parsedVowels = parseToneTextVowels(primaryTone, practical, options.sourceHint || 'auto');
+
+  if (parsedVowels.length === 0) {
+    return segments;
+  }
+
+  // Count vowels across segments
+  let segVowelCount = 0;
+  for (const seg of segments) {
+    const m = (seg.text || '').normalize('NFD').match(/[aeiouvAEIOUV]/g);
+    if (m) segVowelCount += m.length;
+  }
+
+  if (segVowelCount === parsedVowels.length) {
+    let vIdx = 0;
+    const toneHasGlottalStopSymbol = primaryTone.includes('ʔ');
+    return segments.map((seg, sIdx) => {
+      const rawText = seg.text || '';
+      const nfd = rawText.normalize('NFD');
+      const matches = [...nfd.matchAll(/[aeiouvAEIOUV][\u0300-\u036f]*:?[¹²³⁴]*/g)];
+      let newText = '';
+      let lastIdx = 0;
+
+      for (let i = 0; i < matches.length; i++) {
+        const m = matches[i];
+        const start = m.index!;
+        const end = start + m[0].length;
+        let pre = nfd.slice(lastIdx, start);
+        if (options.showTone && toneHasGlottalStopSymbol) {
+          pre = pre.replace(/['’]/g, 'ʔ');
+        }
+        newText += pre;
+
+        const pv = parsedVowels[vIdx++];
+        const baseV = m[0][0];
+        if (options.showTone) {
+          newText += formatVowelInToneOrthography(baseV, pv.tone, pv.length, options.toneOrthography);
+        } else {
+          newText += formatVowelWithLength(baseV, pv.length, options.showLengthInTranslit);
+        }
+
+        // Preserve glottal stop if present in tone source right after vowel but omitted in segment
+        if (options.showTone && pv.glottalAfter) {
+          const afterInThisSeg = nfd.slice(end);
+          const nextSegText = sIdx + 1 < segments.length ? (segments[sIdx + 1].text || '') : '';
+          const nextChar = afterInThisSeg[0] || nextSegText[0] || '';
+          if (nextChar !== "'" && nextChar !== '’' && nextChar !== 'ʔ') {
+            newText += pv.glottalAfter;
+          }
+        }
+
+        lastIdx = end;
+      }
+
+      let tail = nfd.slice(lastIdx);
+      if (options.showTone && toneHasGlottalStopSymbol) {
+        tail = tail.replace(/['’]/g, 'ʔ');
+      }
+      newText += tail;
+
+      return {
+        ...seg,
+        text: newText
+      };
+    });
+  }
+
+  // Fallback for the rare case where vowel counts differ (e.g. epenthetic vowel in tone string)
+  const style = options.translitStyle || 'classic';
+  if (options.showTone) {
+    const convertedTone = convertToneText(primaryTone, options.toneOrthography, style, practical, options.sourceHint || 'auto');
+    return projectSegmentsOntoTone(segments, convertedTone);
+  } else {
+    const formattedTranslit = formatTranslitWithLength(segPlainText, primaryTone, options.showLengthInTranslit, 'classic', options.sourceHint || 'auto');
+    return projectSegmentsOntoTone(segments, formattedTranslit);
+  }
+}
+
 export function getFormTransliteration(
   form: any,
   rootEntry?: any,
   hdSlot?: string | null | undefined,
   settings?: any
 ): string {
+  const showLength = getShowLengthInTranslitSetting(settings);
+  const translitStyle = getTransliterationStyleSetting(settings);
+  const toneSource = form?.tone1 || form?.tone || form?.tone2 || form?.Entry_Tone || rootEntry?.tone1 || rootEntry?.Entry_Tone || '';
   const segs = resolveRoleTaggedSegments(form, rootEntry, hdSlot, settings);
   if (segs && segs.length > 0) {
+    if (showLength && toneSource) {
+      const projected = projectToneOrLengthOntoSegments(segs, toneSource, {
+        showTone: false,
+        toneOrthography: getToneOrthographySetting(settings),
+        showLengthInTranslit: true,
+        translitStyle,
+        practicalStr: form?.translit || form?.Practical || form?.Entry
+      });
+      return projected.map(s => s.text).join('');
+    }
     return segs.map(s => s.text).join('');
   }
-  return form?.translit || form?.Practical || form?.Entry || form?.surface_spelling || rootEntry?.surface_spelling || '';
+  const raw = form?.translit || form?.Practical || form?.Entry || form?.surface_spelling || rootEntry?.surface_spelling || '';
+  return formatTranslitWithLength(raw, toneSource, showLength, translitStyle);
+}
+
+export function getFormToneDisplay(
+  form: any,
+  entry?: any,
+  settings?: any
+): string {
+  const toneOrthography = getToneOrthographySetting(settings);
+  const translitStyle = getTransliterationStyleSetting(settings);
+  const rawTone = form?.tone1 || form?.tone || form?.tone2 || form?.Entry_Tone || entry?.tone1 || entry?.Entry_Tone || entry?.tone2 || '';
+  const practical = form?.translit || form?.Practical || form?.Entry || entry?.Entry || entry?.translit || '';
+  if (!rawTone) return '';
+  return convertToneText(rawTone, toneOrthography, translitStyle, practical);
 }
 
 export function getTransliterationStyleSetting(settings?: any): 'classic' | 'aspiration' | 'reverse_aspiration' {
@@ -2349,6 +3153,19 @@ export const ColorizedCherokeeWord: React.FC<ColorizedCherokeeWordProps> = ({
     ? isColored
     : getColorWordSegmentsSetting(settings);
 
+  const translitStyle = getTransliterationStyleSetting(settings);
+  const toneOrthography = getToneOrthographySetting(settings);
+  const showLengthInTranslit = getShowLengthInTranslitSetting(settings);
+  const isTone = hasToneMarks(text);
+  const rawToneSource = isTone
+    ? (form?.tone1 || form?.tone || form?.tone2 || text || entry?.tone1 || entry?.Entry_Tone || entry?.tone2 || '')
+    : (form?.tone1 || form?.tone || form?.tone2 || entry?.tone1 || entry?.Entry_Tone || entry?.tone2 || '');
+  const practicalStr = form?.translit || form?.Practical || form?.Entry || entry?.Entry || entry?.translit || '';
+
+  const formattedPlainText = isTone
+    ? convertToneText(rawToneSource || text, toneOrthography, translitStyle, practicalStr)
+    : formatTranslitWithLength(text, rawToneSource, showLengthInTranslit, translitStyle);
+
   let rEntry = rootEntry;
   if (!rEntry && entry) {
     rEntry = entry.rootEntry;
@@ -2368,7 +3185,7 @@ export const ColorizedCherokeeWord: React.FC<ColorizedCherokeeWordProps> = ({
   }
 
   if (!rEntry) {
-    return <span className={`font-bold ${className}`.trim()}>{text}</span>;
+    return <span className={`font-bold ${className}`.trim()}>{formattedPlainText}</span>;
   }
 
   const defaultEntrySlot = (entry?.is_combined_part_b || rEntry?.is_combined_part_b) ? 'infinitive' : 'present';
@@ -2384,19 +3201,34 @@ export const ColorizedCherokeeWord: React.FC<ColorizedCherokeeWordProps> = ({
   // 1. Exact match in surface_segments (either directly on form, or on rEntry)
   const exactSegs = resolveRoleTaggedSegments(form, rEntry, hdSlot, settings);
   if (exactSegs) {
-    const isClassic = getTransliterationStyleSetting(settings) === 'classic';
-    const displaySegs = (isClassic && hasToneMarks(text))
-      ? projectSegmentsOntoTone(exactSegs, text)
+    const displaySegs = (isTone || showLengthInTranslit) && rawToneSource
+      ? projectToneOrLengthOntoSegments(exactSegs, rawToneSource, {
+          showTone: isTone,
+          toneOrthography,
+          showLengthInTranslit,
+          translitStyle,
+          practicalStr
+        })
       : exactSegs;
+
+    let remainderText = '';
+    if (formattedPlainText.includes(';')) {
+      const parts = formattedPlainText.split(';');
+      if (parts.length > 1) {
+        remainderText = '; ' + parts.slice(1).map(p => p.trim()).join('; ');
+      }
+    }
+
     return (
       <span className={className}>
         {renderSegmentedSurface(displaySegs, colored)}
+        {remainderText && <span className="font-normal opacity-75">{remainderText}</span>}
       </span>
     );
   }
 
   if (!colored) {
-    return <span className={`font-bold ${className}`.trim()}>{text}</span>;
+    return <span className={`font-bold ${className}`.trim()}>{formattedPlainText}</span>;
   }
 
   // 2. Derive segmented form if available
@@ -2413,7 +3245,7 @@ export const ColorizedCherokeeWord: React.FC<ColorizedCherokeeWordProps> = ({
       const pSet = getFormPronominalSet(candidateKey || '', rEntry.config);
       return (
         <span className={className}>
-          {renderColorizedCherokee(text, groups, pSet, colored)}
+          {renderColorizedCherokee(formattedPlainText, groups, pSet, colored)}
         </span>
       );
     }
@@ -2424,13 +3256,13 @@ export const ColorizedCherokeeWord: React.FC<ColorizedCherokeeWordProps> = ({
       const pSet = defaultEntrySlot === 'infinitive' ? 'B' : (rEntry.config?.pron?.set_type === 'b' ? 'B' : 'A');
       return (
         <span className={className}>
-          {renderColorizedCherokee(text, groups, pSet, colored)}
+          {renderColorizedCherokee(formattedPlainText, groups, pSet, colored)}
         </span>
       );
     }
   }
 
-  return <span className={`font-bold ${className}`.trim()}>{text}</span>;
+  return <span className={`font-bold ${className}`.trim()}>{formattedPlainText}</span>;
 };
 
 export function formatCommunityRoot(rootRaw: string): string {

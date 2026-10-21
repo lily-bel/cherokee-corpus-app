@@ -7,7 +7,7 @@ import { LinkerModal } from './LinkerModal';
 import { SentenceCard } from './SentenceCard';
 import { ArrowLeft, BookOpen, Eye, EyeOff, Type, Menu, ChevronDown } from './Icons';
 import { UserAuthButton } from './UI';
-import { renderStyledText } from '../utils';
+import { renderStyledText, formatSentenceText } from '../utils';
 
 type StudyMode = 'study' | 'read';
 type ScriptMode = 'both' | 'syllabary' | 'translit';
@@ -271,7 +271,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
         for (let i = 0; i < max; i++) {
             tokens.push({
                 syl: syl[i] || '',
-                tr: tr[i] || '',
+                tr: formatSentenceText(tr[i] || '', sentence.source, settings),
                 index: i
             });
         }
@@ -590,6 +590,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
 
                 return (
                     <GlossPopover
+                        settings={settings}
                         glosses={wordGlosses}
                         targetWord={{ syllabary: targetToken.syl, translit: targetToken.tr }}
                         dictionaryMap={dictionaryMap}

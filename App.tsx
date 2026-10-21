@@ -7,7 +7,7 @@ import EntryDetail from './components/EntryDetail';
 
 import PackageManagerTab from './components/PackageManagerTab';
 import { useCorpus } from './components/CorpusContext';
-import { downloadFile, performSearch, buildWordFormsLookupMap, isEmptyRoot, getFriendlyLabel, processFormsContextually, getCombinedCedVerbsMode, CombinedCedVerbsMode } from './utils';
+import { downloadFile, performSearch, buildWordFormsLookupMap, isEmptyRoot, getFriendlyLabel, processFormsContextually, getCombinedCedVerbsMode, CombinedCedVerbsMode, ToneOrthography, TONE_ORTHOGRAPHY_OPTIONS, getToneOrthographySetting, getShowLengthInTranslitSetting, getTransliterationStyleSetting, parseRoleTaggedSegmentation, projectToneOrLengthOntoSegments, renderSegmentedSurface } from './utils';
 import { SentenceCard } from './components/SentenceCard';
 import WidgetsTab from './components/WidgetsTab';
 
@@ -36,6 +36,8 @@ const DEFAULT_SETTINGS = {
     searchScopes: { main: true, otherForms: true, sentences: false, notes: false, roots: true },
     showRootHeaders: true,
     transliterationStyle: 'classic' as 'classic' | 'aspiration' | 'reverse_aspiration',
+    toneOrthography: 'mco' as ToneOrthography,
+    showLengthInTranslit: false,
     showToneInForms: true,
     colorWordSegments: true,
     showClassMascots: false,
@@ -2785,20 +2787,6 @@ function App() {
                             </div>
                             <hr className="border-slate-100 dark:border-slate-800" />
                             <div>
-                                <label className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-1 block">Preferred Transliteration Style</label>
-                                <p className="text-xs text-slate-400 mb-3">Controls automatic syllabary and transliteration conversion across the app.</p>
-                                <select
-                                    value={settings.transliterationStyle || 'classic'}
-                                    onChange={(e) => setSettings(s => ({ ...s, transliterationStyle: e.target.value as any }))}
-                                    className="w-full p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-sm outline-none focus:ring-2 focus:ring-amber-500 font-medium"
-                                >
-                                    <option value="classic">Classic (CED)</option>
-                                    <option value="aspiration">Aspiration (Uchihara t/th)</option>
-                                    <option value="reverse_aspiration">Reverse Aspiration (d/dh)</option>
-                                </select>
-                            </div>
-                            <hr className="border-slate-100 dark:border-slate-800" />
-                            <div>
                                 <button
                                     type="button"
                                     onClick={() => setShowAdvancedSettings(prev => !prev)}
@@ -2813,6 +2801,125 @@ function App() {
 
                                 {showAdvancedSettings && (
                                     <div className="mt-3 p-4 bg-slate-50/60 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-5 animate-fade-in">
+                                        {/* Tone & Length Orthography */}
+                                        <div className="space-y-4">
+                                            {/* Preferred Transliteration Style */}
+                                            <div>
+                                                <label className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-1 block">Preferred Transliteration Style</label>
+                                                <p className="text-xs text-slate-400 mb-2.5">Controls consonant transliteration style (e.g. Uchihara t/th vs CED d/t) across the app.</p>
+                                                <select
+                                                    value={settings.transliterationStyle || 'classic'}
+                                                    onChange={(e) => setSettings(s => ({ ...s, transliterationStyle: e.target.value as any }))}
+                                                    className="w-full p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-sm outline-none focus:ring-2 focus:ring-amber-500 font-medium"
+                                                >
+                                                    <option value="classic">Classic (CED)</option>
+                                                    <option value="aspiration">Aspiration (Uchihara t/th)</option>
+                                                    <option value="reverse_aspiration">Reverse Aspiration (d/dh)</option>
+                                                </select>
+                                            </div>
+
+                                            {/* Tone Orthography */}
+                                            <div>
+                                                <label className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-1 block">Tone Orthography</label>
+                                                <p className="text-xs text-slate-400 mb-2.5">
+                                                    Select how tone and vowel length are represented in CED dictionary entries, conjugations, and sentences.
+                                                </p>
+                                                <select
+                                                    value={getToneOrthographySetting(settings)}
+                                                    onChange={(e) => setSettings(s => ({ ...s, toneOrthography: e.target.value as ToneOrthography }))}
+                                                    className="w-full p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-sm outline-none focus:ring-2 focus:ring-amber-500 font-medium"
+                                                >
+                                                    {TONE_ORTHOGRAPHY_OPTIONS.map(opt => (
+                                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                                    ))}
+                                                </select>
+                                                <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5">
+                                                    {TONE_ORTHOGRAPHY_OPTIONS.find(o => o.value === getToneOrthographySetting(settings))?.description}
+                                                </p>
+                                            </div>
+
+                                            {/* Show Vowel Length (:) in Non-Tone Orthography */}
+                                            <div className="flex items-center justify-between pt-1">
+                                                <div className="flex flex-col pr-4">
+                                                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Show Vowel Length (:) in Non-Tone Spelling</span>
+                                                    <span className="text-xs text-slate-400">Display colons (:) after long vowels in non-tone transliterations when length data is available</span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setSettings(s => ({ ...s, showLengthInTranslit: !s.showLengthInTranslit }))}
+                                                    className={`transition-colors shrink-0 ${settings.showLengthInTranslit ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}
+                                                >
+                                                    {settings.showLengthInTranslit ? <ToggleRight size={32} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={32} />}
+                                                </button>
+                                            </div>
+
+                                            {/* Live Example Word Preview */}
+                                            {(() => {
+                                                const exToneRaw = 'dùlv̌hwị́sdànẹha';
+                                                const exPractical = 'dulvhwisdaneha';
+                                                const style = getTransliterationStyleSetting(settings);
+                                                const toneOrth = getToneOrthographySetting(settings);
+                                                const showLen = getShowLengthInTranslitSetting(settings);
+                                                const isCol = settings.colorWordSegments !== false;
+                                                const taggedByStyle =
+                                                    style === 'aspiration'
+                                                        ? 'pre|t-pron_a|u-root|lvwhist-prm|an-asp|eh-fin|a'
+                                                        : style === 'reverse_aspiration'
+                                                        ? 'pre|d-pron_a|u-root|lvwhisd-prm|an-asp|eh-fin|a'
+                                                        : 'pre|d-pron_a|u-root|lvhwisd-prm|an-asp|eh-fin|a';
+                                                const baseSegs = parseRoleTaggedSegmentation(taggedByStyle);
+                                                const toneSegs = projectToneOrLengthOntoSegments(baseSegs, exToneRaw, {
+                                                    showTone: true,
+                                                    toneOrthography: toneOrth,
+                                                    showLengthInTranslit: showLen,
+                                                    translitStyle: style,
+                                                    practicalStr: exPractical,
+                                                    sourceHint: 'mco_short'
+                                                });
+                                                const translitSegs = projectToneOrLengthOntoSegments(baseSegs, exToneRaw, {
+                                                    showTone: false,
+                                                    toneOrthography: toneOrth,
+                                                    showLengthInTranslit: showLen,
+                                                    translitStyle: style,
+                                                    practicalStr: exPractical,
+                                                    sourceHint: 'mco_short'
+                                                });
+
+                                                return (
+                                                    <div className="p-3 rounded-xl bg-white dark:bg-slate-800/90 border border-amber-200/70 dark:border-slate-700 shadow-xs">
+                                                        <div className="flex items-center justify-between mb-1.5">
+                                                            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                                                                Example Preview
+                                                            </span>
+                                                            <span className="font-noto-cherokee text-xs font-bold text-slate-500 dark:text-slate-400">
+                                                                ᏚᎸᏫᏍᏓᏁᎭ • "he/she is working"
+                                                            </span>
+                                                        </div>
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1 border-t border-slate-100 dark:border-slate-700/60">
+                                                            <div>
+                                                                <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-semibold mb-0.5">
+                                                                    Tone Orthography
+                                                                </div>
+                                                                <div className="font-serif text-base italic text-slate-700 dark:text-slate-200">
+                                                                    {renderSegmentedSurface(toneSegs, isCol)}
+                                                                </div>
+                                                            </div>
+                                                            <div>
+                                                                <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-semibold mb-0.5">
+                                                                    Non-Tone Spelling
+                                                                </div>
+                                                                <div className="font-noto-serif text-base text-amber-800 dark:text-amber-400">
+                                                                    {renderSegmentedSurface(translitSegs, isCol)}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })()}
+                                        </div>
+
+                                        <hr className="border-slate-200/70 dark:border-slate-800" />
+
                                         {/* Combined CED Verbs (3-option selector) */}
                                         <div>
                                             <label className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-1 block">Combined CED Verbs</label>

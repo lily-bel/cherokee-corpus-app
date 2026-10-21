@@ -5,7 +5,7 @@ import { GlossPopover } from './GlossPopover';
 import { LinkerModal } from './LinkerModal';
 import { AudioPlayer, SourceBadge, Modal } from './UI';
 import { Check, Plus, Mic, Pencil, MicPlus, Trash2, Pause, ListIcon, Star, X, ListPlus, BookOpen, ChevronUp, Share } from './Icons';
-import { getAudioFromDB, renderStyledText } from '../utils';
+import { getAudioFromDB, renderStyledText, formatSentenceText } from '../utils';
 
 import AudioRecorder from './AudioRecorder';
 
@@ -73,16 +73,18 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
         const syl = cleanSyl ? cleanSyl.split(/\s+/) : [];
         const tr = cleanTr ? cleanTr.split(/\s+/) : [];
         const max = Math.max(syl.length, tr.length);
-        const res: { syl: string, tr: string, index: number }[] = [];
+        const res: { syl: string, tr: string, rawTr: string, index: number }[] = [];
         for (let i = 0; i < max; i++) {
+            const rawWord = tr[i] || '';
             res.push({
                 syl: syl[i] || '',
-                tr: tr[i] || '',
+                tr: formatSentenceText(rawWord, sentence.source, settings),
+                rawTr: rawWord,
                 index: i
             });
         }
         return res;
-    }, [sentence]);
+    }, [sentence, settings]);
 
     const handleDelete = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -586,6 +588,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
             {/* Modals/Popovers */}
             {activePopover && (
                 <GlossPopover
+                    settings={settings}
                     glosses={glosses.filter(g => (g.word_index != null && g.word_index !== '') ? String(g.word_index).split(',').map(Number).includes(activePopover.index) : false)}
                     targetWord={{ syllabary: tokens[activePopover.index].syl, translit: tokens[activePopover.index].tr }}
                     dictionaryMap={dictionaryMap}

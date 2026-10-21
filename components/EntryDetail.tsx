@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Pencil, ListPlus, Star, ListIcon, X, Plus, Folder, Pause, MicPlus, Trash2, Mic, Menu, Share, TranslateCherokee } from './Icons';
 import { AudioPlayer, SourceBadge, UserAuthButton } from './UI';
-import { renderStyledText, getAudioFromDB, processFormsContextually, parseListName, renderColorizedCherokee, renderSegmentedSurface, projectSegmentsOntoTone, segmentVerbForm, VerbMorphologyTemplate, getFriendlyLabel, resolveRoleTaggedSegments, getTransliterationStyleSetting, hasToneMarks, getCombinedCedVerbsMode } from '../utils';
+import { renderStyledText, getAudioFromDB, processFormsContextually, parseListName, VerbMorphologyTemplate, getFriendlyLabel, getCombinedCedVerbsMode, ColorizedCherokeeWord, formatSentenceText } from '../utils';
 import { usePackageManager } from './PackageManagerContext';
 import AudioRecorder from './AudioRecorder';
 import { useCorpus } from './CorpusContext';
@@ -322,15 +322,6 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
         return list.find(f => f.index === targetIndex) || null;
     }, [recorderTarget, e, importedForms, userWordForms]);
 
-    const baseSlot = e.is_combined_part_b ? 'infinitive' : 'present';
-    const mainPresSeg = rootEntry?.segmented_forms?.[baseSlot] || rootEntry?.segmented_forms?.present;
-    const mainVerbConfig = rootEntry?.config;
-    const mainPresGroups = React.useMemo(() => {
-        if (!rootEntry || !mainPresSeg) return null;
-        return segmentVerbForm(mainPresSeg, baseSlot, mainVerbConfig, rootEntry?.class_name, rootEntry?.post_root_morpheme);
-    }, [mainPresSeg, baseSlot, mainVerbConfig, rootEntry]);
-    const mainPronounSet = e.is_combined_part_b ? 'B' : (mainVerbConfig?.pron?.set_type === 'b' ? 'B' : 'A');
-
     const hasOfficialAudio = Boolean(e.audio && (pkg?.type === 'official' || e.audio.startsWith('Word_') || e.audio.match(/^\d{4}\./) || e.audio.endsWith('.m4a')));
     const activeUserAudios = (userAudioMeta && userAudioMeta[e.Index])
         ? userAudioMeta[e.Index].filter((audio: any) => {
@@ -411,24 +402,23 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                                 </div>
                                 <div className="flex items-baseline gap-2.5 flex-wrap">
                                     <h2 className="font-noto-serif text-2xl text-amber-800 dark:text-amber-400 font-bold">
-                                        {resolveRoleTaggedSegments(null, rootEntry, baseSlot, settings)
-                                            ? renderSegmentedSurface(resolveRoleTaggedSegments(null, rootEntry, baseSlot, settings), settings?.colorWordSegments !== false)
-                                            : (rootEntry && mainPresGroups
-                                                ? renderColorizedCherokee(e.Entry, mainPresGroups, mainPronounSet, settings?.colorWordSegments !== false)
-                                                : e.Entry)}
+                                        <ColorizedCherokeeWord
+                                            word={e.Entry}
+                                            entry={e}
+                                            rootEntry={rootEntry}
+                                            isColored={settings?.colorWordSegments !== false}
+                                            settings={settings}
+                                        />
                                     </h2>
                                     {e.Entry_Tone && (
                                         <span className="font-serif text-base text-slate-500 dark:text-slate-400 font-bold italic">
-                                            {resolveRoleTaggedSegments(null, rootEntry, baseSlot, settings)
-                                                ? renderSegmentedSurface(
-                                                    (getTransliterationStyleSetting(settings) === 'classic' && hasToneMarks(e.Entry_Tone))
-                                                        ? projectSegmentsOntoTone(resolveRoleTaggedSegments(null, rootEntry, baseSlot, settings) || [], e.Entry_Tone)
-                                                        : resolveRoleTaggedSegments(null, rootEntry, baseSlot, settings),
-                                                    settings?.colorWordSegments !== false
-                                                  )
-                                                : (rootEntry && mainPresGroups
-                                                    ? renderColorizedCherokee(e.Entry_Tone, mainPresGroups, mainPronounSet, settings?.colorWordSegments !== false)
-                                                    : e.Entry_Tone)}
+                                            <ColorizedCherokeeWord
+                                                word={e.Entry_Tone}
+                                                entry={e}
+                                                rootEntry={rootEntry}
+                                                isColored={settings?.colorWordSegments !== false}
+                                                settings={settings}
+                                            />
                                         </span>
                                     )}
                                     {!hasRecordings && !hideCustomization && (
@@ -605,7 +595,7 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                         <div className="bg-amber-50/50 dark:bg-amber-900/10 p-4 rounded-2xl border border-amber-100/50 dark:border-amber-900/20">
                             <h3 className="text-[10px] font-bold text-amber-800/50 dark:text-amber-200/40 uppercase tracking-[0.2em] mb-3 flex items-center gap-2">Example Sentence</h3>
                             {e.Sentence_Syllabary && <p className="font-noto-cherokee text-lg text-slate-800 dark:text-slate-200 mb-2">{renderStyledText(e.Sentence_Syllabary)}</p>}
-                            {e.Sentence_Transliteration && <p className="font-noto-serif text-md text-slate-600 dark:text-slate-400 italic mb-2">{renderStyledText(e.Sentence_Transliteration)}</p>}
+                            {e.Sentence_Transliteration && <p className="font-noto-serif text-md text-slate-600 dark:text-slate-400 italic mb-2">{renderStyledText(formatSentenceText(e.Sentence_Transliteration, e.Source || e.source, settings))}</p>}
                             {e.Sentence_English && <p className="font-noto-serif text-md text-slate-800 dark:text-slate-200 font-medium">{renderStyledText(e.Sentence_English)}</p>}
                             <div className="mt-4 flex items-center gap-3 flex-wrap">
                                 <AudioPlayer src={e.Sentence_Audio} label="Play Sentence" icon={Mic} customColor={pkg?.type !== 'official' ? pkg?.color : undefined} />
