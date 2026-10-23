@@ -422,7 +422,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
             {/* Content */}
             <div
                 ref={containerRef}
-                className="flex-1 overflow-y-auto p-6"
+                className="flex-1 overflow-y-auto p-3 sm:p-6"
             >
                 <div className="max-w-2xl mx-auto relative">
                     {/* Top Spacer */}

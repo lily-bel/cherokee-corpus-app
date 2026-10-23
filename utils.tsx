@@ -1786,7 +1786,7 @@ export function colorizeSurface(surface: string, groups: SegmentGroup[] | null):
 export function getFormPronominalSet(key: string, verbConfig?: any): 'A' | 'B' | 'P2P' {
   if (!key) return (verbConfig?.pron?.set_type === 'b' || verbConfig?.pron?.set_type === 'B') ? 'B' : 'A';
   const k = key.toLowerCase();
-  if (k.includes('3a') || k.includes('1s|2') || k.includes('2s|1') || k.includes('animate')) {
+  if (k.includes('3a') || k.includes('1s|2') || k.includes('2s|1') || k.includes('animate') || k.includes('p2p')) {
     return 'P2P';
   }
   if (k.includes('infinitive') || k.includes('past') || k.includes('perfective')) {
@@ -2032,7 +2032,7 @@ export function renderSegmentedSurface(
           if (rawSet === 'B') {
             color = 'rgb(124, 165, 255)';
             setLabel = 'B';
-          } else if (rawSet === 'P2P' || rawSet === 'PERSON TO PERSON' || rawSet === 'PURPLE') {
+          } else if (rawSet === 'P2P' || rawSet === 'PERSON TO PERSON' || rawSet === 'PURPLE' || seg.color === 'Purple' || seg.color === 'purple') {
             color = 'rgb(196, 131, 255)';
             setLabel = 'P2P';
           }
@@ -2110,10 +2110,14 @@ export function resolveHdFormName(keyOrLabel: string | undefined): string | null
   if (
     k === 'present_1sg' ||
     k === '1s|3s|present' ||
+    k === '1s|3a|present' ||
     k === '1s|present' ||
     k === '1st present' ||
     k.includes('1st person singular present') ||
-    k.includes('1st person singular with inanimate')
+    k.includes('1st person singular with inanimate') ||
+    k.includes('1st person singular with animate') ||
+    k.includes('1st present (animate') ||
+    k.includes('1st to 3rd present')
   ) {
     return 'present_1sg';
   }
@@ -2153,16 +2157,18 @@ export function resolveHdFormName(keyOrLabel: string | undefined): string | null
   if (
     k === 'imperative' ||
     k === '2s|3s|imperative' ||
+    k === '2s|3a|imperative' ||
     k === '2s|imperative' ||
     k === '2nd imperative' ||
     k.includes('immediate imperative') ||
     k.includes('2nd person singular imperative') ||
     k.includes('2nd person imperative') ||
+    k.includes('2nd imperative (animate') ||
+    k.includes('imperative with animate') ||
+    k.includes('2nd to 3rd imperative') ||
     k.includes('imperative')
   ) {
-    if (!k.includes('3a') && !k.includes('animate')) {
-      return 'imperative';
-    }
+    return 'imperative';
   }
 
   // 6. Infinitive
@@ -3201,6 +3207,7 @@ export const ColorizedCherokeeWord: React.FC<ColorizedCherokeeWordProps> = ({
   // 1. Exact match in surface_segments (either directly on form, or on rEntry)
   const exactSegs = resolveRoleTaggedSegments(form, rEntry, hdSlot, settings);
   if (exactSegs) {
+    const isP2P = getFormPronominalSet(candidateKey || '', rEntry?.config) === 'P2P';
     const displaySegs = (isTone || showLengthInTranslit) && rawToneSource
       ? projectToneOrLengthOntoSegments(exactSegs, rawToneSource, {
           showTone: isTone,
@@ -3210,6 +3217,10 @@ export const ColorizedCherokeeWord: React.FC<ColorizedCherokeeWordProps> = ({
           practicalStr
         })
       : exactSegs;
+
+    const finalSegs = isP2P
+      ? displaySegs.map(s => s.role === 'pronoun' ? { ...s, color: 'Purple', set: 'P2P' as const } : s)
+      : displaySegs;
 
     let remainderText = '';
     if (formattedPlainText.includes(';')) {
@@ -3221,7 +3232,7 @@ export const ColorizedCherokeeWord: React.FC<ColorizedCherokeeWordProps> = ({
 
     return (
       <span className={className}>
-        {renderSegmentedSurface(displaySegs, colored)}
+        {renderSegmentedSurface(finalSegs, colored)}
         {remainderText && <span className="font-normal opacity-75">{remainderText}</span>}
       </span>
     );

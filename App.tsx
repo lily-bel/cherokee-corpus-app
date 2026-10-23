@@ -29,7 +29,7 @@ import { TutorialModal } from './components/TutorialModal';
 
 const DEFAULT_SETTINGS = {
     darkMode: false,
-    zoomLevel: 1,
+    zoomLevel: 0.8,
     enableRegex: false,
     showPosInLists: false,
     searchLangs: { syllabary: true, translit: true, english: true, tone: false },
@@ -44,6 +44,7 @@ const DEFAULT_SETTINGS = {
     separateStativeShims: false,
     combinedCedVerbs: 'none' as CombinedCedVerbsMode,
     dictionaryLevel: 'default' as 'basic' | 'default' | 'linguist',
+    miniConjugationsColumns: 2 as 1 | 2,
     hideCustomization: false,
 };
 
@@ -130,40 +131,32 @@ function App() {
 
     // Auth & Cloud Sync State
     const { user, syncLibraryToCloud, loadAndMergeCloudData, showAuthModal, setShowAuthModal } = useAuth();
-    const [urlPackageId, setUrlPackageId] = useState<string | null>(() => {
+    const extractPackageIdFromLocation = (): string | null => {
         const params = new URLSearchParams(window.location.search);
         if (params.get('package')) return params.get('package');
         if (params.get('pkg')) return params.get('pkg');
         if (window.location.hash) {
             const h = window.location.hash.replace(/^#\/?/, '').trim();
+            const hashPkgMatch = h.match(/^packages?\/([^/?#]+)/i);
+            if (hashPkgMatch) return hashPkgMatch[1];
             if (h && !h.includes('/')) return h;
         }
         const base = import.meta.env.BASE_URL || '/';
         let p = window.location.pathname;
         if (p.startsWith(base)) p = p.slice(base.length);
         p = p.replace(/^\/+|\/+$/g, '').trim();
-        const known = ['', 'index.html', 'search', 'reader', 'lists', 'widgets', 'packages', 'cherokee-corpus-app'];
+        const pkgMatch = p.match(/^packages?\/([^/?#]+)/i);
+        if (pkgMatch) return pkgMatch[1];
+        const known = ['', 'index.html', 'search', 'reader', 'lists', 'widgets', 'packages', 'package', 'cherokee-corpus-app'];
         if (p && !known.includes(p.toLowerCase()) && !p.includes('/')) return p;
         return null;
-    });
+    };
+
+    const [urlPackageId, setUrlPackageId] = useState<string | null>(extractPackageIdFromLocation);
 
     useEffect(() => {
         const handlePopState = () => {
-            const params = new URLSearchParams(window.location.search);
-            let id = params.get('package') || params.get('pkg') || null;
-            if (!id && window.location.hash) {
-                const h = window.location.hash.replace(/^#\/?/, '').trim();
-                if (h && !h.includes('/')) id = h;
-            }
-            if (!id) {
-                const base = import.meta.env.BASE_URL || '/';
-                let p = window.location.pathname;
-                if (p.startsWith(base)) p = p.slice(base.length);
-                p = p.replace(/^\/+|\/+$/g, '').trim();
-                const known = ['', 'index.html', 'search', 'reader', 'lists', 'widgets', 'packages', 'cherokee-corpus-app'];
-                if (p && !known.includes(p.toLowerCase()) && !p.includes('/')) id = p;
-            }
-            setUrlPackageId(id);
+            setUrlPackageId(extractPackageIdFromLocation());
         };
         window.addEventListener('popstate', handlePopState);
         return () => window.removeEventListener('popstate', handlePopState);
@@ -332,7 +325,7 @@ function App() {
     }, [settings.darkMode]);
 
     useEffect(() => {
-        const zoom = settings.zoomLevel ?? 1;
+        const zoom = settings.zoomLevel ?? 0.8;
         const docEl = document.documentElement;
         docEl.style.fontSize = `${zoom * 100}%`;
         docEl.style.zoom = '';
@@ -1943,7 +1936,7 @@ function App() {
     }
 
     return (
-        <div className="h-full w-full bg-[#F9F7F7] dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans flex flex-col overflow-hidden relative">
+        <div className="h-full h-[100dvh] w-full bg-[#F9F7F7] dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans flex flex-col overflow-hidden relative">
             <RainbowGradient />
             {!selectedEntry && !activeWidgetName && activeTab === 'search' && (
                 <header className="bg-[#af615d] dark:bg-slate-900 px-4 border-b border-slate-200 dark:border-slate-800 shadow-sm z-10 flex items-center justify-between shrink-0 h-12">
@@ -2629,7 +2622,7 @@ function App() {
                                     <button onClick={() => setDictionaryMode('sentences')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${dictionaryMode === 'sentences' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-white/80 hover:text-white dark:text-slate-400'} `}>Sentences</button>
                                 </div>
                             </div>
-                                <div className="flex-1 overflow-y-auto p-4" key={activeDictionaryId + '-' + dictionaryMode}>
+                                <div className="flex-1 overflow-y-auto p-2 sm:p-4" key={activeDictionaryId + '-' + dictionaryMode}>
                                     {dictionaryMode === 'words' ? (
                                         sortedDictionaryWords.length === 0 ? <div className="text-center py-12 text-slate-400">Empty collection.<br />Tap + to add a word.</div> : sortedDictionaryWords.map(entry => <EntryCard key={entry.Index} entry={entry} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} settings={settings} />)
                                     ) : (
@@ -2686,7 +2679,7 @@ function App() {
             {
                 showSettingsModal && (
                     <Modal title="Settings" onClose={() => setShowSettingsModal(false)}>
-                        <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
+                        <div className="space-y-6">
                             {/* Dictionary Experience Mode */}
                             <div>
                                 <label className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-1 block">Dictionary Mode</label>
@@ -2757,9 +2750,9 @@ function App() {
                                         type="button"
                                         onClick={() => setSettings(s => ({
                                             ...s,
-                                            zoomLevel: Math.max(0.8, Math.round(((s.zoomLevel ?? 1) - 0.1) * 10) / 10)
+                                            zoomLevel: Math.max(0.5, Math.round(((s.zoomLevel ?? 0.8) - 0.1) * 10) / 10)
                                         }))}
-                                        disabled={(settings.zoomLevel ?? 1) <= 0.8}
+                                        disabled={(settings.zoomLevel ?? 0.8) <= 0.5}
                                         className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                                         title="Zoom out"
                                         aria-label="Zoom out"
@@ -2768,15 +2761,15 @@ function App() {
                                     </button>
                                     <div className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold text-slate-700 dark:text-slate-200 select-none">
                                         <Search size={14} className="text-slate-400 dark:text-slate-500" />
-                                        <span>{Math.round((settings.zoomLevel ?? 1) * 100)}%</span>
+                                        <span>{Math.round((settings.zoomLevel ?? 0.8) * 100)}%</span>
                                     </div>
                                     <button
                                         type="button"
                                         onClick={() => setSettings(s => ({
                                             ...s,
-                                            zoomLevel: Math.min(1.5, Math.round(((s.zoomLevel ?? 1) + 0.1) * 10) / 10)
+                                            zoomLevel: Math.min(1.5, Math.round(((s.zoomLevel ?? 0.8) + 0.1) * 10) / 10)
                                         }))}
-                                        disabled={(settings.zoomLevel ?? 1) >= 1.5}
+                                        disabled={(settings.zoomLevel ?? 0.8) >= 1.5}
                                         className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                                         title="Zoom in"
                                         aria-label="Zoom in"
@@ -3189,6 +3182,7 @@ function App() {
                             key={`entry-${item.entry.Index || item.entry.id}-${index}`}
                             entry={item.entry}
                             settings={settings}
+                            setSettings={setSettings}
                             onClose={() => popNavStack('entry')}
                             onViewRoot={(slug) => handleViewRoot(slug)}
                             onViewClass={(cls) => handleViewClass(cls)}

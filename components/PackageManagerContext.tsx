@@ -591,7 +591,7 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                     name: metadata.name,
                     type: 'official',
                     status: 'active',
-                    color: metadata.color || 'slate',
+                    color: (metadata.color && metadata.color.startsWith('#')) ? metadata.color : '#64748b',
                     metadata: metadata
                 };
 
@@ -768,7 +768,7 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
             }
         }
 
-        if (norm === 'official-cherokee-data' || norm === 'ced' || norm === 'other_official') return 'slate';
+        if (norm === 'official-cherokee-data' || norm === 'ced' || norm === 'other_official') return '#64748b';
         if (norm === 'user') return '#f59e0b';
 
         return undefined;

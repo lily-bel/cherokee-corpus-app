@@ -230,11 +230,11 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                             <ArrowLeft size={20} />
                         </button>
                         <div className="flex-1 min-w-0">
-                            <h1 className="font-noto-serif text-lg font-bold text-white dark:text-slate-100 truncate leading-tight">
+                            <h1 className="font-noto-serif text-lg font-bold text-white dark:text-slate-100 leading-tight break-words">
                                 {selectedBook.title}
                             </h1>
                             {selectedBook.author && (
-                                <p className="text-xs text-white/80 dark:text-slate-400 truncate leading-tight">
+                                <p className="text-xs text-white/80 dark:text-slate-400 leading-tight break-words">
                                     by {selectedBook.author}
                                 </p>
                             )}
@@ -251,16 +251,16 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                 </div>
 
                 {/* Story List */}
-                <div className="flex-1 overflow-y-auto p-4">
+                <div className="flex-1 overflow-y-auto p-2 sm:p-4">
                     <div className="space-y-2">
                         {stories.map(story => (
                             <button
                                 key={story.id}
                                 onClick={() => handleStoryClick(story)}
-                                className="w-full bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 text-left hover:border-amber-300 dark:hover:border-amber-700 transition-colors flex items-center justify-between group"
+                                className="w-full bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-3 sm:p-4 text-left hover:border-amber-300 dark:hover:border-amber-700 transition-colors flex items-center justify-between group"
                             >
                                 <div className="flex-1 min-w-0 pr-2">
-                                    <h3 className="font-bold text-slate-900 dark:text-slate-100 group-hover:text-amber-600 transition-colors truncate">
+                                    <h3 className="font-bold text-slate-900 dark:text-slate-100 group-hover:text-amber-600 transition-colors break-words">
                                         {story.title}
                                     </h3>
                                     <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -311,16 +311,16 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                             <ArrowLeft size={20} />
                         </button>
                         <div className="flex-1 min-w-0">
-                            <h1 className="font-noto-serif text-lg font-bold text-white dark:text-slate-100 truncate leading-tight">
+                            <h1 className="font-noto-serif text-lg font-bold text-white dark:text-slate-100 leading-tight break-words">
                                 {selectedStory.title === selectedBook?.title ? selectedStory.title : `${selectedBook?.title ? selectedBook.title + ' • ' : ''}${selectedStory.title}`}
                             </h1>
                             {selectedBook && selectedStory.title !== selectedBook.title ? (
-                                <p className="text-xs text-white/80 dark:text-slate-400 truncate leading-tight">
+                                <p className="text-xs text-white/80 dark:text-slate-400 leading-tight break-words">
                                     {selectedBook.title}{selectedBook.author ? ` • by ${selectedBook.author}` : ''}
                                 </p>
                             ) : (
                                 selectedBook?.author && (
-                                    <p className="text-xs text-white/80 dark:text-slate-400 truncate leading-tight">
+                                    <p className="text-xs text-white/80 dark:text-slate-400 leading-tight break-words">
                                         by {selectedBook.author}
                                     </p>
                                 )
@@ -347,16 +347,16 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
                 </div>
 
                 {/* Chapter List */}
-                <div className="flex-1 overflow-y-auto p-4">
+                <div className="flex-1 overflow-y-auto p-2 sm:p-4">
                     <div className="space-y-2">
                         {chapters.map((chapter, idx) => (
                             <div
                                 key={chapter.id}
                                 onClick={() => handleChapterClick(chapter)}
-                                className="w-full bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 text-left hover:border-amber-300 dark:hover:border-amber-700 transition-colors flex items-center justify-between group cursor-pointer"
+                                className="w-full bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-3 sm:p-4 text-left hover:border-amber-300 dark:hover:border-amber-700 transition-colors flex items-center justify-between group cursor-pointer"
                             >
                                 <div className="flex-1 min-w-0 pr-2">
-                                    <h3 className="font-bold text-slate-900 dark:text-slate-100 group-hover:text-amber-600 transition-colors truncate">
+                                    <h3 className="font-bold text-slate-900 dark:text-slate-100 group-hover:text-amber-600 transition-colors break-words">
                                         {chapter.name}
                                     </h3>
                                     <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -474,7 +474,7 @@ export const ReaderTab: React.FC<ReaderTabProps> = ({
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-auto p-2 sm:p-4">
                 {/* Investigation Queue Entry Point */}
                 <button
                     onClick={() => setView('queue')}
@@ -627,7 +627,7 @@ const BookCard: React.FC<{
     return (
         <div
             onClick={onClick}
-            className={`w-full rounded-xl border p-4 text-left transition-colors flex items-center gap-4 group cursor-pointer ${book.isCollection
+            className={`w-full rounded-xl border p-3 sm:p-4 text-left transition-colors flex items-center gap-3 sm:gap-4 group cursor-pointer ${book.isCollection
                     ? "bg-slate-50/50 dark:bg-slate-900/30 border-dashed border-slate-200 dark:border-slate-800 hover:bg-white dark:hover:bg-slate-900"
                     : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-700"
                 }`}
@@ -646,11 +646,11 @@ const BookCard: React.FC<{
 
             {/* Book Info */}
             <div className="flex-1 min-w-0">
-                <h3 className={`font-bold transition-colors truncate ${book.isCollection ? "text-slate-600 dark:text-slate-400" : "text-slate-900 dark:text-slate-100 group-hover:text-amber-600"}`}>
+                <h3 className={`font-bold transition-colors break-words ${book.isCollection ? "text-slate-600 dark:text-slate-400" : "text-slate-900 dark:text-slate-100 group-hover:text-amber-600"}`}>
                     {title}
                 </h3>
                 {book.author && (
-                    <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
+                    <p className="text-sm text-slate-500 dark:text-slate-400 break-words">
                         by {book.author}
                     </p>
                 )}

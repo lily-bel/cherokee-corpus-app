@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertCircle, Volume2, ChevronUp, ChevronDown, Pencil, ArrowUp, ArrowDown, Trash2 } from './Icons';
+import { AlertCircle, Volume2, ChevronUp, ChevronDown, Pencil, ArrowUp, ArrowDown, Trash2, X } from './Icons';
 
 export const Toast = ({ show, message, type = 'error' }) => {
   if (!show) return null;
@@ -134,11 +134,26 @@ export const CollapsibleCard = ({ title, icon: Icon, count, children, defaultOpe
 };
 
 export const Modal = ({ title, children, onClose }: any) => createPortal(
-  <div className="fixed inset-0 z-[20000] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={onClose}>
-    <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-sm shadow-2xl p-6 animate-scale-in max-h-[85vh] overflow-y-auto border dark:border-slate-800" onClick={e => e.stopPropagation()}>
-      <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4">{title}</h3>
-      {children}
-      <div className="mt-6 flex justify-end gap-2"><button onClick={onClose} className="px-4 py-2 rounded-lg text-slate-500 dark:text-slate-400 font-medium hover:bg-slate-100 dark:hover:bg-slate-800">Cancel</button></div>
+  <div className="fixed inset-0 z-[20000] flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+    <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-sm shadow-2xl p-5 sm:p-6 animate-scale-in max-h-[85dvh] flex flex-col border dark:border-slate-800" onClick={e => e.stopPropagation()}>
+      <div className="flex items-center justify-between pb-3 shrink-0">
+        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{title}</h3>
+        <button
+          onClick={onClose}
+          className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          title="Close"
+        >
+          <X size={18} />
+        </button>
+      </div>
+      <div className="flex-1 overflow-y-auto min-h-0 pr-1 -mr-1">
+        {children}
+      </div>
+      <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2 shrink-0">
+        <button onClick={onClose} className="px-4 py-2 rounded-lg text-slate-500 dark:text-slate-400 font-medium hover:bg-slate-100 dark:hover:bg-slate-800">
+          Cancel
+        </button>
+      </div>
     </div>
   </div>,
   document.body

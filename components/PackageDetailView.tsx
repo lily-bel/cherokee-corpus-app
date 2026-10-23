@@ -36,7 +36,7 @@ const getIconStyles = (pkg: any) => {
         iconBg = "bg-slate-200 dark:bg-slate-700";
         iconColor = "text-slate-500 dark:text-slate-400";
     } else if (pkg.color) {
-        iconStyle = { backgroundColor: pkg.color, color: '#fff' };
+        iconStyle = { backgroundColor: (pkg.color === 'slate' ? '#64748b' : pkg.color), color: '#fff' };
         iconBg = ""; // override
         iconColor = ""; // override
     }
@@ -403,7 +403,7 @@ export const PackageDetailView: React.FC<PackageDetailViewProps> = ({
                                 const origin = window.location.origin;
                                 const base = import.meta.env.BASE_URL || '/';
                                 const cleanBase = base.endsWith('/') ? base : `${base}/`;
-                                navigator.clipboard.writeText(`${origin}${cleanBase}${pkg.id}`);
+                                navigator.clipboard.writeText(`${origin}${cleanBase}package/${pkg.id}`);
                                 setCopiedLink(true);
                                 setTimeout(() => setCopiedLink(false), 2000);
                             }}

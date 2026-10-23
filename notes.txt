@@ -6,7 +6,7 @@ BIG QUESTIONS:
 26. Mass Editor - I can use scripts in the package file instead!
 28. Login says unauthorized domain on hanehla
 29. Check words: uduha
-30. hard to copy sentences - they highlight weird.
+
 
 TEST:
 Online Capabilities & Testing                                                                                 
@@ -16,6 +16,10 @@ Glossing Feature Review
   so I want to look it over again.  
 Linking + embedding for words, sentences, classes, roots
 Onboarding tutorial - read over and edit
+Thoroughly check tone orthography + tone regex
+Package url needs to be ____/package/id
+bottom bar on mobile
+too many sentence buttons?
 
 
 DATA:
@@ -34,11 +38,8 @@ DATA:
 21. Shorthand Form Ambiguity                                                                                     
   The shorthand form for words should probably be fixed to change all of the ambiguous ones to just a              
   straightforward "no form" form, rather than defaulting to noun singular or third person present. 
+            
 
-15. Tone styling settings                   
-16. Tone Regex & Superscript Typing                                                                              
-  On that note, I don't know if I ever fixed regex for tone or typing tone and getting superscript when you create 
-  a word.   
   
 
 SMALL

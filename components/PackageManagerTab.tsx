@@ -9,6 +9,18 @@ import { PackageDetailView } from './PackageDetailView';
 import { PackageImportModal } from './PackageImportModal';
 import { OfficialSourcesModal } from './OfficialSourcesModal';
 
+export const resolvePackageColor = (col?: string): string => {
+    if (!col) return '#64748b';
+    if (col.startsWith('#')) return col;
+    const map: Record<string, string> = {
+        slate: '#64748b', gray: '#64748b', zinc: '#71717a',
+        amber: '#f59e0b', red: '#ef4444', blue: '#3b82f6',
+        green: '#10b981', purple: '#8b5cf6', pink: '#ec4899',
+        orange: '#f97316', indigo: '#6366f1', teal: '#14b8a6'
+    };
+    return map[col] || col;
+};
+
 interface PackageManagerTabProps {
     customLists: Record<string, ListData | string[]>;
     onNavigate: (type: 'dictionary' | 'list' | 'word' | 'sentence' | 'widget', payload: any) => void;
@@ -77,7 +89,7 @@ const PackageManagerTab: React.FC<PackageManagerTabProps> = ({ customLists, onNa
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-6">
+            <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-4 sm:space-y-6">
                 {/* Official Packages */}
                 <div className="space-y-3">
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Official Sources</h3>
@@ -219,10 +231,10 @@ const ColorPickerModal = ({ pkgId, onClose }: { pkgId: string, onClose: () => vo
                 </div>
 
                 <div className="flex items-center gap-3 mb-6 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
-                    <div className="w-12 h-12 shrink-0 aspect-square rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-sm transition-colors duration-300" style={{ backgroundColor: pkg.color }}>
+                    <div className="w-12 h-12 shrink-0 aspect-square rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-sm transition-colors duration-300" style={{ backgroundColor: resolvePackageColor(pkg.color) }}>
                         {(pkg.name.split(' ').length > 1 ? (pkg.name.split(' ')[0][0] + pkg.name.split(' ')[1][0]).toUpperCase() : pkg.name.substring(0, 2).toUpperCase())}
                     </div>
-                    <div>
+                    <div className="min-w-0 flex-1">
                         <div className="font-bold text-slate-800 dark:text-slate-100">{pkg.name}</div>
                         <div className="text-xs text-slate-500 dark:text-slate-400">Preview of package icon</div>
                     </div>
@@ -317,18 +329,18 @@ const PackageItem = ({
     return (
         <div
             onClick={onClick}
-            className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer group"
+            className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-3 sm:p-4 flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer group"
         >
             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 shrink-0 aspect-square rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-sm transition-colors duration-300" style={{ backgroundColor: pkg.color }}>
+                <div className="flex items-center gap-3 min-w-0 flex-1 mr-2">
+                    <div className="w-10 h-10 shrink-0 aspect-square rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-sm transition-colors duration-300" style={{ backgroundColor: resolvePackageColor(pkg.color) }}>
                         {(pkg.name.split(' ').length > 1 ? (pkg.name.split(' ')[0][0] + pkg.name.split(' ')[1][0]).toUpperCase() : pkg.name.substring(0, 2).toUpperCase())}
                     </div>
-                    <div>
-                        <div className="flex items-center gap-2 flex-wrap">
+                    <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
                             <h3 className="font-bold text-slate-800 dark:text-slate-100 group-hover:text-amber-600 dark:group-hover:text-amber-500 transition-colors">{pkg.name}</h3>
                             {pkg.metadata?.short_name && (
-                                <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full text-white shadow-xs" style={{ backgroundColor: pkg.color }}>
+                                <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full text-white shadow-xs ml-auto shrink-0" style={{ backgroundColor: resolvePackageColor(pkg.color) }}>
                                     {pkg.metadata.short_name}
                                 </span>
                             )}

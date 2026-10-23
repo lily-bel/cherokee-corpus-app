@@ -4,7 +4,7 @@ import { usePackageManager } from './PackageManagerContext';
 import { GlossPopover } from './GlossPopover';
 import { LinkerModal } from './LinkerModal';
 import { AudioPlayer, SourceBadge, Modal } from './UI';
-import { Check, Plus, Mic, Pencil, MicPlus, Trash2, Pause, ListIcon, Star, X, ListPlus, BookOpen, ChevronUp, Share } from './Icons';
+import { Check, Plus, Mic, Pencil, MicPlus, Trash2, Pause, ListIcon, Star, X, ListPlus, BookOpen, ChevronUp, Share, Copy } from './Icons';
 import { getAudioFromDB, renderStyledText, formatSentenceText } from '../utils';
 
 import AudioRecorder from './AudioRecorder';
@@ -309,7 +309,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
     })();
 
     return (
-        <div className={`bg-white dark:bg-slate-900/40 rounded-xl border border-slate-200 dark:border-slate-800 p-4 pl-6 shadow-sm mb-4 relative overflow-hidden group/card hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all ${isDimmed ? 'opacity-50 grayscale' : ''} ${onClick ? 'cursor-pointer' : ''}`} onClick={onClick}>
+        <div className={`bg-white dark:bg-slate-900/40 rounded-xl border border-slate-200 dark:border-slate-800 p-3 pl-4 sm:p-4 sm:pl-6 shadow-sm mb-3 sm:mb-4 relative overflow-hidden group/card hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all ${isDimmed ? 'opacity-50 grayscale' : ''} ${onClick ? 'cursor-pointer' : ''}`} onClick={onClick}>
             {/* Color Bar Rim */}
             <div className="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-xl" style={{ backgroundColor: rimHex }} />
             {/* Header / Controls */}
@@ -317,7 +317,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                 <div className="flex gap-1 items-center">
                    {/* Left side empty or add items here if needed */}
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3">
                     {/* Read in Context Button */}
                     {onReadInContext && (
                         <button
@@ -329,6 +329,25 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                             See in Context
                         </button>
                     )}
+
+                    {/* Copy Sentence Button */}
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            const cleanSyl = (sentence.syllabary || '').replace(/\*/g, '').trim();
+                            const cleanTr = (sentence.translit || (sentence as any).phonetic || '').replace(/\*/g, '').trim();
+                            const english = (sentence.english || '').trim();
+                            const textToCopy = [cleanSyl, cleanTr, english].filter(Boolean).join('\n');
+                            if (navigator.clipboard) {
+                                navigator.clipboard.writeText(textToCopy);
+                                showToast?.("Sentence copied to clipboard", "success");
+                            }
+                        }}
+                        className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        title="Copy clean sentence text"
+                    >
+                        <Copy size={13} />
+                    </button>
 
                     {/* Share Sentence Button */}
                     <button

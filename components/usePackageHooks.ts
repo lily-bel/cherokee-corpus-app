@@ -513,7 +513,7 @@ export const usePackageExport = () => {
                 const origin = window.location.origin;
                 const base = import.meta.env.BASE_URL || '/';
                 const cleanBase = base.endsWith('/') ? base : `${base}/`;
-                publicUrl = `${origin}${cleanBase}${meta.id}`;
+                publicUrl = `${origin}${cleanBase}package/${meta.id}`;
 
                 const cloudPackagePayload = {
                     public: true,

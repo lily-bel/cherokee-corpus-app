@@ -4,7 +4,8 @@ import { openDB } from 'idb';
 const DB_NAME = 'cherokee_widgets_db';
 const STORE_NAME = 'widgets';
 
-const BASE_URL = import.meta.env.BASE_URL || '/';
+const rawBase = import.meta.env.BASE_URL || '/';
+const BASE_URL = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
 
 export interface Widget {
     name: string;

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Pencil, ListPlus, Star, ListIcon, X, Plus, Folder, Pause, MicPlus, Trash2, Mic, Menu, Share, TranslateCherokee } from './Icons';
+import { ArrowLeft, Pencil, ListPlus, Star, ListIcon, X, Plus, Folder, Pause, MicPlus, Trash2, Mic, Menu, Share, TranslateCherokee, Layout } from './Icons';
 import { AudioPlayer, SourceBadge, UserAuthButton } from './UI';
 import { renderStyledText, getAudioFromDB, processFormsContextually, parseListName, VerbMorphologyTemplate, getFriendlyLabel, getCombinedCedVerbsMode, ColorizedCherokeeWord, formatSentenceText } from '../utils';
 import { usePackageManager } from './PackageManagerContext';
@@ -30,7 +30,7 @@ const getHexColor = (col: string) => {
 
 const isFormAudioId = (id: string) => /(?:_F|\.)\d+(?:_|$)/.test(id);
 
-const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudioMeta, userWordForms, onSaveAudio, onDeleteAudio, favorites, customLists, customListOrder, onClose, onEdit, onToggleFavorite, onToggleList, onDelete, onSearchTerm, onOpenNewListModal, onMove, personalWords, onEditSentence, onDeleteSentence, onCreateWord, onManageForms, onReadInContext, onShowSettings, onViewRoot, onViewClass, onViewEntry, showToast, style }: any) => {
+const EntryDetail = ({ entry, settings, setSettings, customDictionaries, userNotes, userAudioMeta, userWordForms, onSaveAudio, onDeleteAudio, favorites, customLists, customListOrder, onClose, onEdit, onToggleFavorite, onToggleList, onDelete, onSearchTerm, onOpenNewListModal, onMove, personalWords, onEditSentence, onDeleteSentence, onCreateWord, onManageForms, onReadInContext, onShowSettings, onViewRoot, onViewClass, onViewEntry, showToast, style }: any) => {
     const [showListSheet, setShowListSheet] = useState(false);
     const [showRecorder, setShowRecorder] = useState(false);
     const [recorderTarget, setRecorderTarget] = useState<'entry' | 'sentence' | string>('entry');
@@ -144,7 +144,7 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                 <div className="bg-[#af615d] dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex items-center justify-between shadow-sm shrink-0 h-[60px]">
                     <button onClick={onClose} className="p-2 -ml-2 hover:bg-white/10 dark:hover:bg-slate-800 rounded-full"><ArrowLeft size={24} className="text-white dark:text-slate-200" /></button>
                 </div>
-                <div className="flex-1 overflow-y-auto p-5 pb-24">
+                <div className="flex-1 overflow-y-auto p-3 sm:p-5 pb-24">
                     <SentenceCard sentence={e} onSaveAudio={onSaveAudio} userAudioMeta={userAudioMeta} personalWords={personalWords} onDeleteAudio={onDeleteAudio}
                         favorites={favorites} customLists={customLists} onToggleFavorite={onToggleFavorite} onToggleList={onToggleList} onOpenNewListModal={onOpenNewListModal}
                         onReadInContext={onReadInContext}
@@ -390,7 +390,7 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                         <div className="flex items-start justify-between">
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2.5 mb-1">
-                                    <h1 className="font-noto-cherokee text-4xl font-bold text-slate-900 dark:text-slate-100 leading-tight truncate">{e.Syllabary}</h1>
+                                    <h1 className="font-noto-cherokee text-4xl font-bold text-slate-900 dark:text-slate-100 leading-tight break-words">{e.Syllabary}</h1>
                                     {e.is_auto_syllabary && (
                                         <TranslateCherokee size={22} className="text-amber-600 dark:text-amber-400 shrink-0 opacity-85" title="Auto-transliterated syllabary" />
                                     )}
@@ -549,7 +549,23 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
 
                     {/* Word Forms List */}
                     <div className="pt-1 -mx-5 px-5">
-                        <h3 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-2.5">Conjugations / Forms</h3>
+                        <div className="flex items-center justify-between mb-2.5">
+                            <h3 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Conjugations / Forms</h3>
+                            {hasMiniPreview && (
+                                <button
+                                    type="button"
+                                    onClick={() => setSettings?.((prev: any) => ({
+                                        ...prev,
+                                        miniConjugationsColumns: ((prev?.miniConjugationsColumns === 1 ? 2 : 1) as 1 | 2)
+                                    }))}
+                                    className="text-[11px] font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/60 shadow-2xs transition-colors flex items-center gap-1 cursor-pointer"
+                                    title="Toggle between 1 and 2 column layout"
+                                >
+                                    <Layout size={12} className="opacity-70" />
+                                    <span>{(settings?.miniConjugationsColumns === 1) ? '1 Col' : '2 Col'}</span>
+                                </button>
+                            )}
+                        </div>
                         
                         {hasMiniPreview && (
                             <div className="mb-3">
@@ -558,6 +574,7 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                                     entry={e}
                                     rootEntry={rootEntry}
                                     settings={settings}
+                                    columns={settings?.miniConjugationsColumns === 1 ? 1 : 2}
                                     onViewEntry={onViewEntry}
                                     onPlayAudio={handlePlayUserAudio}
                                     playingAudioId={playingAudioId}
@@ -609,7 +626,7 @@ const EntryDetail = ({ entry, settings, customDictionaries, userNotes, userAudio
                             <h3 className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-4">Linked Sentences ({linkedSentences.length})</h3>
                             <div ref={sentenceListRef} className="flex overflow-x-auto gap-4 pb-4 snap-x -mx-5 px-5">
                                 {linkedSentences.map((s: any) => (
-                                    <div key={s.id} className="min-w-[85vw] md:min-w-[400px] snap-center">
+                                    <div key={s.id} className="min-w-[92vw] sm:min-w-[85vw] md:min-w-[400px] snap-center">
                                         <SentenceCard sentence={s} userNotes={userNotes} onEditNote={(_, note) => onEdit(s, note, true)} onSaveAudio={onSaveAudio} userAudioMeta={userAudioMeta} onEditSentence={onEditSentence} onDeleteSentence={onDeleteSentence} onDeleteAudio={onDeleteAudio} onCreateWord={onCreateWord} personalWords={personalWords} customDictionaries={customDictionaries}
                                             favorites={favorites}
                                             customLists={customLists}

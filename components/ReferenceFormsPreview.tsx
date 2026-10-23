@@ -96,8 +96,10 @@ interface ReferenceFormsPreviewProps {
     settings?: {
         showToneInForms?: boolean;
         colorWordSegments?: boolean;
+        miniConjugationsColumns?: 1 | 2;
         [key: string]: any;
     };
+    columns?: 1 | 2;
     onViewEntry?: (entry: any) => void;
     onPlayAudio?: (audio: any) => void;
     playingAudioId?: string | null;
@@ -446,6 +448,7 @@ export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
     forms = [],
     rootEntry,
     settings,
+    columns,
     onViewEntry: _onViewEntry,
     onPlayAudio,
     playingAudioId,
@@ -453,6 +456,7 @@ export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
     className = '',
     userAudioMeta
 }) => {
+    const cols = columns ?? (settings?.miniConjugationsColumns === 1 ? 1 : 2);
     const showTone = settings?.showToneInForms !== false;
     const colorSegments = settings?.colorWordSegments !== false;
     const verbConfig = rootEntry?.config || entry?.config;
@@ -667,7 +671,7 @@ export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
                     }}
                     className="p-3 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 flex flex-col justify-between items-start text-left transition-all min-h-[84px] cursor-pointer group"
                 >
-                    <span className={`text-[10px] sm:text-[11px] uppercase tracking-wider truncate leading-tight ${style.label}`}>
+                    <span className={`text-[10px] sm:text-[11px] uppercase tracking-wider break-words leading-tight ${style.label}`}>
                         {cardData.label}
                     </span>
                     <span className="text-xs font-bold text-slate-600 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200 group-hover:underline my-auto">
@@ -739,7 +743,7 @@ export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
             >
                 {/* Card Top: Small Label & optional Audio buttons */}
                 <div className="flex items-center justify-between gap-1 mb-1">
-                    <span className={`text-[10px] sm:text-[11px] uppercase tracking-wider truncate leading-tight ${style.label}`}>
+                    <span className={`text-[10px] sm:text-[11px] uppercase tracking-wider break-words leading-tight ${style.label}`}>
                         {label}
                     </span>
                     {formAudios.length > 0 && (
@@ -799,7 +803,7 @@ export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
                 </div>
 
                 {/* Swapped: Translit / Tone on top */}
-                <div className={`font-serif text-base sm:text-lg font-bold leading-tight truncate my-0.5 ${style.translit}`}>
+                <div className={`font-serif text-base sm:text-lg font-bold leading-tight break-words my-0.5 ${style.translit}`}>
                     {hdSegments ? (
                         <>
                             {(() => {
@@ -814,7 +818,10 @@ export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
                                           practicalStr
                                       })
                                     : hdSegments;
-                                return renderSegmentedSurface(displaySegments, colorSegments);
+                                const finalSegs = (pronominalSet === 'P2P' || cardData.category === 'p2p')
+                                    ? displaySegments.map(s => s.role === 'pronoun' ? { ...s, color: 'Purple', set: 'P2P' as const } : s)
+                                    : displaySegments;
+                                return renderSegmentedSurface(finalSegs, colorSegments);
                             })()}
                             {remainderSurface && (
                                 <span className="font-normal opacity-75">{remainderSurface}</span>
@@ -831,8 +838,8 @@ export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
                 </div>
 
                 {/* Swapped: Syllabary on bottom */}
-                <div className={`font-noto-cherokee text-lg sm:text-xl font-medium leading-tight truncate mt-0.5 flex items-center gap-1.5 ${style.syllabary}`}>
-                    <span className="truncate">{syllabary}</span>
+                <div className={`font-noto-cherokee text-lg sm:text-xl font-medium leading-tight break-words mt-0.5 flex items-center gap-1.5 flex-wrap ${style.syllabary}`}>
+                    <span className="break-words">{syllabary}</span>
                     {form.is_auto_syllabary && (
                         <TranslateCherokee size={14} className="inline-block text-amber-600 dark:text-amber-400 opacity-80 shrink-0" title="Auto-transliterated syllabary" />
                     )}
@@ -866,8 +873,8 @@ export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
 
     return (
         <div className={`space-y-2.5 ${className}`}>
-            {/* Main 2-Column Grid */}
-            <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+            {/* Main Grid */}
+            <div className={`grid ${cols === 1 ? 'grid-cols-1' : 'grid-cols-2'} gap-2.5 sm:gap-3`}>
                 {mainRows.map((row, idx) => (
                     <React.Fragment key={idx}>
                         {renderCard(row.left, `row-${idx}-left`)}
@@ -880,7 +887,7 @@ export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
                     <div className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 mb-2 px-0.5">
                         Combined CED Verb — Part B{shimClass ? ` (${shimClass})` : ''}
                     </div>
-                    <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+                    <div className={`grid ${cols === 1 ? 'grid-cols-1' : 'grid-cols-2'} gap-2.5 sm:gap-3`}>
                         {shimCards.map((card, idx) => renderCard(card, `shim-${idx}`))}
                     </div>
                 </div>
@@ -994,7 +1001,10 @@ export const DesktopHorizontalFormsStrip: React.FC<DesktopHorizontalFormsStripPr
                                           practicalStr
                                       })
                                     : hdSegments;
-                                return renderSegmentedSurface(displaySegments, colorSegments);
+                                const finalSegs = (pronominalSet === 'P2P' || cardData.category === 'p2p')
+                                    ? displaySegments.map(s => s.role === 'pronoun' ? { ...s, color: 'Purple', set: 'P2P' as const } : s)
+                                    : displaySegments;
+                                return renderSegmentedSurface(finalSegs, colorSegments);
                             })()}
                         </>
                     ) : (
