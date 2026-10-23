@@ -7,7 +7,7 @@
   "created_at": "2026-09-12T00:00:00.000Z",
   "date_created": 1773446400000,
   "app_version": "1.0",
-  "color": "slate",
+  "color": "#64748b",
   "stats": {
     "words": 0,
     "sentences": 0,
