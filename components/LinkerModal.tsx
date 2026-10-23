@@ -4,7 +4,7 @@ import { usePackageManager } from './PackageManagerContext';
 import { Search, Check, Trash2 } from './Icons';
 import { Modal, SourceBadge } from './UI';
 
-import { performSearch, buildWordFormsLookupMap, getAllFormsForEntry, renderColorizedCherokee, renderSegmentedSurface, projectSegmentsOntoTone, segmentVerbForm, deriveSegmentedForm, getFormPronominalSet, SegmentGroup, isEmptyRoot, resolveRoleTaggedSegments } from '../utils';
+import { performSearch, buildWordFormsLookupMap, getAllFormsForEntry, renderColorizedCherokee, renderSegmentedSurface, segmentVerbForm, isEmptyRoot, resolveRoleTaggedSegments, ColorizedCherokeeWord, getFriendlyLabel } from '../utils';
 
 
 
@@ -57,14 +57,16 @@ export const LinkerModal: React.FC<LinkerModalProps> = ({ initialQuery, targetWo
     const { sentences, entryToSentencesMap, rootMap, userWordForms } = useCorpus();
     const { packages, importedData, getPackageColor } = usePackageManager();
 
-    const isColored = (() => {
+    const appSettings = useMemo(() => {
         try {
             const s = localStorage.getItem('cherokee_app_settings');
-            return s ? JSON.parse(s).colorWordSegments !== false : true;
+            return s ? JSON.parse(s) : undefined;
         } catch {
-            return true;
+            return undefined;
         }
-    })();
+    }, []);
+
+    const isColored = appSettings ? appSettings.colorWordSegments !== false : true;
 
     const wordFormsLookupMap = useMemo(() => {
         return buildWordFormsLookupMap(importedData, userWordForms);
@@ -243,17 +245,6 @@ export const LinkerModal: React.FC<LinkerModalProps> = ({ initialQuery, targetWo
                                                 : null;
                                             const mainPronounSet = rootEntry?.config?.pron?.set_type === 'b' ? 'B' : 'A';
 
-                                            let matchedFormGroups: SegmentGroup[] | null = null;
-                                            let matchedPronounSet: 'A' | 'B' | 'P2P' = 'A';
-                                            if (rootEntry && entry.matchedForm) {
-                                                const derivedSeg = deriveSegmentedForm(entry.matchedForm, [], rootEntry);
-                                                if (derivedSeg) {
-                                                    const formName = (entry.matchedForm.normalized_key || entry.matchedForm.form_name || '').split('|')[2] || 'present';
-                                                    matchedFormGroups = segmentVerbForm(derivedSeg, formName, rootEntry.config, rootEntry.class_name, rootEntry.post_root_morpheme);
-                                                    matchedPronounSet = getFormPronominalSet(entry.matchedForm.normalized_key || entry.matchedForm.form_name, rootEntry.config);
-                                                }
-                                            }
-
                                             return (
                                                 <button
                                                     className="w-full text-left p-3 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors flex flex-col gap-1 group"
@@ -276,32 +267,22 @@ export const LinkerModal: React.FC<LinkerModalProps> = ({ initialQuery, targetWo
                                                             {entry.matchedForm.syllabary && (
                                                                 <span className="font-noto-cherokee font-semibold">{entry.matchedForm.syllabary}</span>
                                                             )}
-                                                            {entry.matchedForm.translit && (
+                                                            {(entry.matchedForm.translit || entry.matchedForm.tone || entry.matchedForm.tone1) && (
                                                                 <span className="font-serif font-bold">
-                                                                    {(() => {
-                                                                        const k = (entry.matchedForm.normalized_key || entry.matchedForm.form_name || '').toLowerCase();
-                                                                        const map: Record<string, string> = {
-                                                                            'present': 'present', '3s|3s|present': 'present', '3s|present': 'present',
-                                                                            '1s|3s|present': 'present_1sg', '1s|present': 'present_1sg',
-                                                                            'imperfective': 'imperfective', 'habitual': 'imperfective', '3s|3s|habitual': 'imperfective',
-                                                                            'perfective': 'perfective', 'past': 'perfective', '3s|3s|past': 'perfective', '3s|3s|completive past': 'perfective',
-                                                                            'imperative': 'imperative', '2s|3s|imperative': 'imperative', '2s|imperative': 'imperative',
-                                                                            'infinitive': 'infinitive', '3s|3s|infinitive': 'infinitive'
-                                                                        };
-                                                                        const fn = map[k];
-                                                                        const matchedHd = resolveRoleTaggedSegments(entry.matchedForm, rootEntry, fn);
-                                                                        if (matchedHd) return renderSegmentedSurface(
-                                                                            entry.matchedForm.translit ? projectSegmentsOntoTone(matchedHd, entry.matchedForm.translit) : matchedHd,
-                                                                            isColored
-                                                                        );
-                                                                        return rootEntry && matchedFormGroups
-                                                                            ? renderColorizedCherokee(entry.matchedForm.translit, matchedFormGroups, matchedPronounSet, isColored)
-                                                                            : entry.matchedForm.translit;
-                                                                    })()}
+                                                                    <ColorizedCherokeeWord
+                                                                        word={entry.matchedForm.translit}
+                                                                        form={entry.matchedForm}
+                                                                        formKey={entry.matchedForm.label}
+                                                                        entry={entry}
+                                                                        rootEntry={rootEntry}
+                                                                        isColored={isColored}
+                                                                        settings={appSettings}
+                                                                        showTone={true}
+                                                                    />
                                                                 </span>
                                                             )}
                                                             {entry.matchedForm.label && (
-                                                                <span className="text-slate-400 not-italic">({entry.matchedForm.label})</span>
+                                                                <span className="text-slate-400 not-italic">({getFriendlyLabel(entry.matchedForm.label)})</span>
                                                             )}
                                                         </div>
                                                     )}

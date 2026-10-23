@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { StickyNote, ListIcon, Mic, SquaresPlus, TranslateCherokee } from './Icons';
 import { SourceBadge } from './UI';
 import { useCorpus } from './CorpusContext';
-import { VerbMorphologyTemplate, isFormAudio, ColorizedCherokeeWord } from '../utils';
+import { VerbMorphologyTemplate, isFormAudio, ColorizedCherokeeWord, getFriendlyLabel } from '../utils';
 import { usePackageManager } from './PackageManagerContext';
 import { DesktopHorizontalFormsStrip, getReferencePreviewMatchedForms } from './ReferenceFormsPreview';
 
@@ -239,7 +239,7 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
               {entry.matchedForm.syllabary && (
                 <span className="font-noto-cherokee font-semibold">{entry.matchedForm.syllabary}</span>
               )}
-              {entry.matchedForm.translit && (
+              {(entry.matchedForm.translit || entry.matchedForm.tone || entry.matchedForm.tone1) && (
                 <span className="font-noto-serif font-bold">
                   <ColorizedCherokeeWord
                     word={entry.matchedForm.translit}
@@ -249,8 +249,12 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
                     rootEntry={rootEntry}
                     isColored={isColored}
                     settings={settings}
+                    showTone={true}
                   />
                 </span>
+              )}
+              {entry.matchedForm.label && (
+                <span className="text-slate-400 dark:text-slate-500 not-italic">({getFriendlyLabel(entry.matchedForm.label)})</span>
               )}
             </div>
           )}

@@ -32,7 +32,7 @@ const DEFAULT_SETTINGS = {
     zoomLevel: 0.8,
     enableRegex: false,
     showPosInLists: false,
-    searchLangs: { syllabary: true, translit: true, english: true, tone: false },
+    searchLangs: { syllabary: true, translit: true, english: true },
     searchScopes: { main: true, otherForms: true, sentences: false, notes: false, roots: true },
     showRootHeaders: true,
     transliterationStyle: 'classic' as 'classic' | 'aspiration' | 'reverse_aspiration',
@@ -1119,10 +1119,9 @@ function App() {
 
         let hasTargetData = false;
         if (searchScopes.main) {
-            if (searchLangs.translit && entry.Entry) hasTargetData = true;
+            if (searchLangs.translit && (entry.Entry || entry.Entry_Tone)) hasTargetData = true;
             if (searchLangs.syllabary && entry.Syllabary) hasTargetData = true;
             if (searchLangs.english && entry.Definition) hasTargetData = true;
-            if (searchLangs.tone && entry.Entry_Tone) hasTargetData = true;
         }
         if (!hasTargetData && searchScopes.sentences) {
             if (searchLangs.translit && entry.Sentence_Transliteration) hasTargetData = true;
@@ -2166,12 +2165,11 @@ function App() {
                                             {/* Search Languages */}
                                             <div>
                                                 <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Search Languages</h4>
-                                                <div className="grid grid-cols-2 gap-1.5">
+                                                <div className="grid grid-cols-3 gap-1.5">
                                                     {[
                                                         { k: 'syllabary', l: 'ᏣᎳᎩ (Syllabary)' },
                                                         { k: 'translit', l: 'Jalagi (Translit)' },
-                                                        { k: 'english', l: 'English' },
-                                                        { k: 'tone', l: 'Tone' }
+                                                        { k: 'english', l: 'English' }
                                                     ].map(opt => (
                                                         <label key={opt.k} className="flex items-center justify-between cursor-pointer p-1.5 rounded hover:bg-slate-50 dark:hover:bg-slate-800 text-sm">
                                                             <span className="text-slate-700 dark:text-slate-300 text-xs font-medium">{opt.l}</span>
@@ -2240,6 +2238,17 @@ function App() {
                                                         className={`transition-colors ${settings.showPosInLists ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}
                                                     >
                                                         {settings.showPosInLists ? <ToggleRight size={24} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={24} />}
+                                                    </button>
+                                                </div>
+
+                                                <div className="flex items-center justify-between pt-1">
+                                                    <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Regex Search</span>
+                                                    <button
+                                                        onClick={() => setSettings(s => ({ ...s, enableRegex: !s.enableRegex }))}
+                                                        className={`transition-colors ${settings.enableRegex ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}
+                                                        title="Toggle regex searching"
+                                                    >
+                                                        {settings.enableRegex ? <ToggleRight size={24} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={24} />}
                                                     </button>
                                                 </div>
 
@@ -2426,7 +2435,7 @@ function App() {
                                     const isModal = scope === 'modal';
                                     const isModalSentences = scope === 'modal_sentences';
                                     const activeSettings = (isModal || isModalSentences) ? {
-                                        searchLangs: { syllabary: true, translit: true, english: true, tone: false },
+                                        searchLangs: { syllabary: true, translit: true, english: true },
                                         searchScopes: { main: isModal, otherForms: isModal, sentences: isModalSentences, notes: false },
                                         enableRegex: false
                                     } : settings;
