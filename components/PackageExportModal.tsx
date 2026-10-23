@@ -418,7 +418,7 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({
                                 <LinkIcon size={14} /> Share Package via Public Link
                             </span>
                             <span className="text-xs text-amber-800/80 dark:text-amber-300/80 block mt-0.5">
-                                Creates a public link (/packageId) on this site so others can preview and install it.
+                                Creates a public link (/package/[id]) on this site so others can preview and install it.
                             </span>
                         </div>
                     </label>

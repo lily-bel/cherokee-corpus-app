@@ -2693,9 +2693,9 @@ function App() {
                             <div>
                                 <label className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-1 block">Dictionary Mode</label>
                                 <p className="text-xs text-slate-400 mb-3">
-                                    {settings?.dictionaryLevel === 'basic' && "Simplified mode: Hides verb morphology breakdowns, blueprints, and root grouping."}
-                                    {(settings?.dictionaryLevel === 'default' || !settings?.dictionaryLevel) && "Standard mode: Full dictionary view with root groupings and morphology breakdown."}
-                                    {settings?.dictionaryLevel === 'linguist' && "Linguistics mode: Root-first polysynthetic word representation with morphology blueprints."}
+                                    {settings?.dictionaryLevel === 'basic' && "Simplified view: Shows the headword, definition, and forms without segmentation or roots."}
+                                    {(settings?.dictionaryLevel === 'default' || !settings?.dictionaryLevel) && "Standard view: Displays the headword alongside its segmentation (if available) and groups related verbs by root in search results."}
+                                    {settings?.dictionaryLevel === 'linguist' && "Linguistics view: Entries are headed with the underlying morphological structure of the verb. Headword (3rd person present) is displayed alongside other conjugations."}
                                 </p>
                                 <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 font-medium text-xs">
                                     {(['basic', 'default', 'linguist'] as const).map(level => {
@@ -2855,65 +2855,108 @@ function App() {
                                                 </button>
                                             </div>
 
-                                            {/* Live Example Word Preview */}
+                                            {/* Live Example Words Preview */}
                                             {(() => {
-                                                const exToneRaw = 'dùlv̌hwị́sdànẹha';
-                                                const exPractical = 'dulvhwisdaneha';
                                                 const style = getTransliterationStyleSetting(settings);
                                                 const toneOrth = getToneOrthographySetting(settings);
                                                 const showLen = getShowLengthInTranslitSetting(settings);
                                                 const isCol = settings.colorWordSegments !== false;
-                                                const taggedByStyle =
-                                                    style === 'aspiration'
-                                                        ? 'pre|t-pron_a|u-root|lvwhist-prm|an-asp|eh-fin|a'
-                                                        : style === 'reverse_aspiration'
-                                                        ? 'pre|d-pron_a|u-root|lvwhisd-prm|an-asp|eh-fin|a'
-                                                        : 'pre|d-pron_a|u-root|lvhwisd-prm|an-asp|eh-fin|a';
-                                                const baseSegs = parseRoleTaggedSegmentation(taggedByStyle);
-                                                const toneSegs = projectToneOrLengthOntoSegments(baseSegs, exToneRaw, {
-                                                    showTone: true,
-                                                    toneOrthography: toneOrth,
-                                                    showLengthInTranslit: showLen,
-                                                    translitStyle: style,
-                                                    practicalStr: exPractical,
-                                                    sourceHint: 'mco_short'
-                                                });
-                                                const translitSegs = projectToneOrLengthOntoSegments(baseSegs, exToneRaw, {
-                                                    showTone: false,
-                                                    toneOrthography: toneOrth,
-                                                    showLengthInTranslit: showLen,
-                                                    translitStyle: style,
-                                                    practicalStr: exPractical,
-                                                    sourceHint: 'mco_short'
-                                                });
+
+                                                const exampleWords = [
+                                                    {
+                                                        syllabary: 'ᎠᏧᏣ',
+                                                        gloss: 'boy',
+                                                        toneRaw: 'ạchűja',
+                                                        practical: 'achuja',
+                                                        taggedByStyle: {
+                                                            classic: 'root|achuja',
+                                                            aspiration: 'root|atshutsa',
+                                                            reverse_aspiration: 'root|ajhuja',
+                                                        },
+                                                    },
+                                                    {
+                                                        syllabary: 'ᎯᎪᎵᏯ',
+                                                        gloss: 'read (2nd person imperative)',
+                                                        toneRaw: 'hịgolǐya',
+                                                        practical: 'higoliya',
+                                                        taggedByStyle: {
+                                                            classic: 'pron_a|hi-root|goliy-asp|a',
+                                                            aspiration: 'pron_a|hi-root|koliy-asp|a',
+                                                            reverse_aspiration: 'pron_a|hi-root|goliy-asp|a',
+                                                        },
+                                                    },
+                                                    {
+                                                        syllabary: 'ᎦᏁᏟᏗᎭ',
+                                                        gloss: 'I am trying it',
+                                                        toneRaw: 'gánẹhldị́ha',
+                                                        practical: 'ganehldiha',
+                                                        taggedByStyle: {
+                                                            classic: 'pron_a|g-root|anehld-asp|ih-fin|a',
+                                                            aspiration: 'pron_a|k-root|anelht-asp|ih-fin|a',
+                                                            reverse_aspiration: 'pron_a|g-root|anelhd-asp|ih-fin|a',
+                                                        },
+                                                    },
+                                                ];
 
                                                 return (
-                                                    <div className="p-3 rounded-xl bg-white dark:bg-slate-800/90 border border-amber-200/70 dark:border-slate-700 shadow-xs">
-                                                        <div className="flex items-center justify-between mb-1.5">
+                                                    <div className="p-3 rounded-xl bg-white dark:bg-slate-800/90 border border-amber-200/70 dark:border-slate-700 shadow-xs space-y-3">
+                                                        <div className="flex items-center justify-between">
                                                             <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
-                                                                Example Preview
-                                                            </span>
-                                                            <span className="font-noto-cherokee text-xs font-bold text-slate-500 dark:text-slate-400">
-                                                                ᏚᎸᏫᏍᏓᏁᎭ • "he/she is working"
+                                                                Example Previews
                                                             </span>
                                                         </div>
-                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1 border-t border-slate-100 dark:border-slate-700/60">
-                                                            <div>
-                                                                <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-semibold mb-0.5">
-                                                                    Tone Orthography
-                                                                </div>
-                                                                <div className="font-serif text-base italic text-slate-700 dark:text-slate-200">
-                                                                    {renderSegmentedSurface(toneSegs, isCol)}
-                                                                </div>
-                                                            </div>
-                                                            <div>
-                                                                <div className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-semibold mb-0.5">
-                                                                    Non-Tone Spelling
-                                                                </div>
-                                                                <div className="font-noto-serif text-base text-amber-800 dark:text-amber-400">
-                                                                    {renderSegmentedSurface(translitSegs, isCol)}
-                                                                </div>
-                                                            </div>
+                                                        <div className="space-y-3 divide-y divide-slate-100 dark:divide-slate-700/60">
+                                                            {exampleWords.map((ex, idx) => {
+                                                                const tagged = (ex.taggedByStyle as Record<string, string>)[style] || ex.taggedByStyle.classic;
+                                                                const baseSegs = parseRoleTaggedSegmentation(tagged);
+                                                                const toneSegs = projectToneOrLengthOntoSegments(baseSegs, ex.toneRaw, {
+                                                                    showTone: true,
+                                                                    toneOrthography: toneOrth,
+                                                                    showLengthInTranslit: showLen,
+                                                                    translitStyle: style,
+                                                                    practicalStr: ex.practical,
+                                                                    sourceHint: 'mco_short'
+                                                                });
+                                                                const translitSegs = projectToneOrLengthOntoSegments(baseSegs, ex.toneRaw, {
+                                                                    showTone: false,
+                                                                    toneOrthography: toneOrth,
+                                                                    showLengthInTranslit: showLen,
+                                                                    translitStyle: style,
+                                                                    practicalStr: ex.practical,
+                                                                    sourceHint: 'mco_short'
+                                                                });
+
+                                                                return (
+                                                                    <div key={ex.practical} className={idx > 0 ? "pt-2.5" : ""}>
+                                                                        <div className="flex items-center justify-between mb-1.5">
+                                                                            <span className="font-noto-cherokee text-xs font-bold text-slate-700 dark:text-slate-300">
+                                                                                {ex.syllabary}
+                                                                            </span>
+                                                                            <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                                                                "{ex.gloss}"
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                                            <div className="bg-slate-50 dark:bg-slate-900/40 px-2.5 py-1.5 rounded-lg border border-slate-100 dark:border-slate-700/50">
+                                                                                <div className="text-[9px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-semibold mb-0.5">
+                                                                                    Tone Orthography
+                                                                                </div>
+                                                                                <div className="font-serif text-sm italic text-slate-700 dark:text-slate-200">
+                                                                                    {renderSegmentedSurface(toneSegs, isCol)}
+                                                                                </div>
+                                                                            </div>
+                                                                            <div className="bg-slate-50 dark:bg-slate-900/40 px-2.5 py-1.5 rounded-lg border border-slate-100 dark:border-slate-700/50">
+                                                                                <div className="text-[9px] uppercase tracking-wider text-slate-400 dark:text-slate-500 font-semibold mb-0.5">
+                                                                                    Non-Tone Spelling
+                                                                                </div>
+                                                                                <div className="font-noto-serif text-sm text-amber-800 dark:text-amber-400">
+                                                                                    {renderSegmentedSurface(translitSegs, isCol)}
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })}
                                                         </div>
                                                     </div>
                                                 );

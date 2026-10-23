@@ -74,9 +74,9 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
             'customization-choice'
         ];
         if (customizationEnabled) {
-            list.push('customization-tabs', 'login-backup');
+            list.push('customization-tabs');
         }
-        list.push('dictionary-mode', 'video-tour');
+        list.push('login-backup', 'dictionary-mode', 'video-tour');
         return list;
     }, [customizationEnabled]);
 
@@ -299,11 +299,11 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
                                     Welcome
                                 </span>
                                 <h2 className="font-noto-serif text-3xl sm:text-4xl font-bold text-slate-900 dark:text-slate-100">
-                                    Welcome to ganehldiha
+                                    Welcome to higoliya
                                 </h2>
                             </div>
                             <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-md leading-relaxed">
-                                <strong>ganehldiha</strong> is an interactive Cherokee-English dictionary, text reader, and language study companion.
+                                <strong>higoliya</strong> is an interactive Cherokee-English dictionary, text reader, and language study companion.
                             </p>
                             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md leading-relaxed">
                                 Let's take a quick walkthrough to explore the app and set up a few preferences to match how you want to use it. You can change any of these settings later.
@@ -322,7 +322,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
                                     Exploring the Dictionary &amp; Corpus
                                 </h2>
                                 <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                                    Every mode of ganehldiha includes four main study tabs:
+                                    higoliya includes four main study tabs:
                                 </p>
                             </div>
 
@@ -358,7 +358,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
                                     <div>
                                         <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Reader</h3>
                                         <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed mt-0.5">
-                                            Read stories and texts in Cherokee and tap any highlighted word to see its dictionary entry and breakdown in context.
+                                            Read stories and texts in Cherokee and tap any word to link it to a dictionary entry.
                                         </p>
                                     </div>
                                 </div>
@@ -370,7 +370,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
                                     <div>
                                         <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Widgets</h3>
                                         <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed mt-0.5">
-                                            Use interactive mini-apps and study widgets for practice and reference.
+                                            Access a useful set of mini-apps for practice and reference.
                                         </p>
                                     </div>
                                 </div>
@@ -388,10 +388,10 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
                                         Customization
                                     </span>
                                     <h2 className="font-noto-serif text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">
-                                        How would you like to use ganehldiha?
+                                        How would you like to use higoliya?
                                     </h2>
                                     <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                                        In addition to the built-in dictionary, ganehldiha lets you add your own words, sentences, audio recordings, and community packages—or you can hide those tools for a cleaner dictionary view.
+                                        In addition to the built-in dictionary, higoliya lets you add your own words, sentences, audio recordings, and community packages—or you can hide those tools for a cleaner dictionary view.
                                     </p>
                                 </div>
 
@@ -505,7 +505,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
                                     <div>
                                         <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">Collections</h3>
                                         <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed mt-1">
-                                            Create your own personal notebooks and collections of words and sentences. Add custom definitions, conjugated forms, notes, and voice recordings, or import full stories into the Reader.
+                                            Create your own personal notebooks and collections of words and sentences. Add custom definitions, conjugated forms, notes, and voice recordings, or import full stories in the Reader tab.
                                         </p>
                                     </div>
                                 </div>
@@ -517,7 +517,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
                                     <div>
                                         <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">Packages</h3>
                                         <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed mt-1">
-                                            Browse and install optional expansion packages (such as additional texts), import packages shared by teachers or friends, or export your own collections to share with others.
+                                            Browse and install optional expansion packages (such as additional texts), import packages shared by teachers or friends, or export your own data to share with others.
                                         </p>
                                     </div>
                                 </div>
@@ -537,12 +537,16 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
                                     Cloud Backup (Optional)
                                 </span>
                                 <h2 className="font-noto-serif text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 max-w-md">
-                                    Would you like to log in to save your custom data?
+                                    {customizationEnabled
+                                        ? 'Would you like to log in to save your custom data?'
+                                        : 'Would you like to log in to save your data?'}
                                 </h2>
                             </div>
 
                             <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 max-w-md leading-relaxed">
-                                By default, your custom entries, notes, lists, and collections are saved on this device. Signing in with an account automatically backs them up online and syncs them across your devices.
+                                {customizationEnabled
+                                    ? 'By default, your custom entries, lists, and collections are saved on this device. Signing in with an account automatically backs them up online and syncs them across your devices (online backup does not include audio).'
+                                    : 'By default, your favorites and lists are saved on this device. Signing in with an account automatically backs them up online and syncs them across your devices.'}
                             </p>
 
                             {user ? (
@@ -597,7 +601,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
                                         Entry Display
                                     </span>
                                     <h2 className="font-noto-serif text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">
-                                        Choose Your Dictionary Mode
+                                        Choose Your Dictionary View
                                     </h2>
                                     <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
                                         Select how much grammatical detail you want to see on word entries:
@@ -649,8 +653,8 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
                                     <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
                                         {([
                                             { value: 'basic', label: 'Basic' },
-                                            { value: 'default', label: 'Default' },
-                                            { value: 'linguist', label: 'Linguistics' }
+                                            { value: 'default', label: 'Standard' },
+                                            { value: 'linguist', label: 'Linguist' }
                                         ] as const).map(opt => {
                                             const isSelected = dictionaryLevel === opt.value;
                                             return (
@@ -672,11 +676,11 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
                                     <div className="min-h-[2.5rem] mt-1.5 flex items-start">
                                         <p className="text-[11px] text-slate-500 dark:text-slate-400">
                                             {dictionaryLevel === 'basic' &&
-                                                'Simplified view: Shows the headword, definition, and forms without root blueprints or root grouping.'}
+                                                'Simplified view: Shows the headword, definition, and forms without segmentation or roots.'}
                                             {dictionaryLevel === 'default' &&
-                                                'Standard view: Displays the word alongside its verb root blueprint and groups related verbs by root.'}
+                                                'Standard view: Displays the headword alongside its segmentation (if available) and groups related verbs by root in search results.'}
                                             {dictionaryLevel === 'linguist' &&
-                                                'Linguistics view: Leads directly with the verb root blueprint and morphological structure above conjugated forms.'}
+                                                'Linguistics view: Entries are headed with the underlying morphological structure of the verb. Headword (3rd person present) is displayed alongside other conjugations.'}
                                         </p>
                                     </div>
                                 </div>
@@ -730,7 +734,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
                                     Would you like to watch a more detailed explanation of what the app has to offer?
                                 </h2>
                                 <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
-                                    Watch an overview of ganehldiha's features, or complete the onboarding and start exploring.
+                                    Watch an overview of higoliya's features, or complete the onboarding and start exploring.
                                 </p>
                             </div>
 
@@ -755,7 +759,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
                                             onClick={onClose}
                                             className="px-6 py-3 bg-[#af615d] hover:bg-[#9b534f] dark:bg-amber-600 dark:hover:bg-amber-500 text-white font-bold rounded-xl shadow-md transition-all text-sm active:scale-98"
                                         >
-                                            Get Started with ganehldiha
+                                            Get Started with higoliya
                                         </button>
                                     </div>
                                 </div>
@@ -774,7 +778,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
                                         onClick={onClose}
                                         className="w-full py-3.5 px-6 bg-slate-200/80 hover:bg-slate-300/80 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold rounded-2xl transition-colors text-sm"
                                     >
-                                        Skip &amp; Start Using ganehldiha
+                                        Skip &amp; Start Using higoliya
                                     </button>
                                 </div>
                             )}
@@ -855,7 +859,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
                             <div className="flex items-center gap-2">
                                 <HelpCircle size={18} className="text-[#af615d] dark:text-amber-400" />
                                 <h3 className="font-noto-serif text-base font-bold text-slate-900 dark:text-slate-100">
-                                    About Verb Segmentation &amp; Blueprints
+                                    About Verb Segmentation &amp; Morphology
                                 </h3>
                             </div>
                             <button
@@ -875,25 +879,25 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
 
                             <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/70 space-y-2">
                                 <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                    Parts of a Verb
+                                    Common Parts of a Verb (and how they are represented in higoliya):
                                 </div>
                                 <ul className="space-y-1.5 text-xs">
                                     <li>
                                         <span className="font-bold text-emerald-600 dark:text-emerald-400">Prepronominal Prefixes (Green):</span>{' '}
-                                        Indicate direction, location, repetition, or negation at the start of a verb.
+                                        Prefixes like de- (plural object) or y- (subjunctive/negative) add meaning to the verb.
                                     </li>
                                     <li>
                                         <span className="font-bold text-red-600 dark:text-red-400">Pronominal Prefixes (Red = Set A, </span>
                                         <span className="font-bold text-blue-500 dark:text-blue-400">Blue = Set B):</span>{' '}
-                                        Indicate who is performing or experiencing the action.
+                                        Pronomial prefixes explain who or what is the subject and object of the verb.
                                     </li>
                                     <li>
                                         <span className="font-bold text-slate-500 dark:text-slate-400">Middle Voice &amp; Post-Root Morphemes (Gray):</span>{' '}
-                                        Add reflexive/middle meaning or modify the verb stem.
+                                        Some verbs can take additional morphemes, some after the pronomial prefix and others post-root, to add additional meaning (ie -adad- for reflexive).
                                     </li>
                                     <li>
                                         <span className="font-bold underline text-slate-900 dark:text-white">Verb Root (Underlined):</span>{' '}
-                                        The core meaning of the verb. Tap any root in the blueprint to view all verbs that share it.
+                                        The core meaning of the verb. Tap any root in the segmentation to view all verbs that share it. The root + aspect suffix is frequently called the "stem".
                                     </li>
                                     <li>
                                         <span className="font-bold text-emerald-600 dark:text-emerald-400">Aspect Suffixes &amp; Class (Green):</span>{' '}
@@ -909,10 +913,13 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
                                 <p>
                                     The verb segmentation and morphological blueprints come from the{' '}
                                     <strong>King Recreation Verb Morphology</strong> project—an analysis of verbs from Durbin Feeling's 1975{' '}
-                                    <em>Cherokee-English Dictionary</em> (CED) that identifies their underlying roots, pronominal sets, and aspect classes.
+                                    <em>Cherokee-English Dictionary</em> (CED) that identifies their underlying morphemes, focusing on categorizing aspect classes.
                                 </p>
                                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                                    Because this analysis specifically covers verbs from the CED, segmentation and color-coding are shown automatically whenever a verb has morphological data available, while nouns, particles, and words from other sources display as regular text.
+                                    Because this analysis specifically covers verbs from the CED, segmentation and color-coding are only available for CED verbs. Nouns, particles, and words from other sources display as regular text, but will be updated if more data becomes available.
+                                </p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                    Sources (Wado!):
                                 </p>
                                 <div className="pt-1 flex flex-wrap gap-3">
                                     <a
