@@ -1,11 +1,12 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { Sentence, useCorpus } from './CorpusContext';
+import { useReader } from './ReaderContext';
 import { usePackageManager } from './PackageManagerContext';
 import { GlossPopover } from './GlossPopover';
 import { LinkerModal } from './LinkerModal';
 import { AudioPlayer, SourceBadge, Modal } from './UI';
-import { Check, Plus, Mic, Pencil, MicPlus, Trash2, Pause, ListIcon, Star, X, ListPlus, BookOpen, ChevronUp, Share, Copy } from './Icons';
-import { getAudioFromDB, renderStyledText, formatSentenceText } from '../utils';
+import { Check, Plus, Mic, Pencil, MicPlus, Trash2, Pause, ListIcon, Star, X, ListPlus, BookOpen, Folder, ChevronUp, Share, Copy } from './Icons';
+import { getAudioFromDB, renderStyledText, formatSentenceText, stripTone } from '../utils';
 
 import AudioRecorder from './AudioRecorder';
 
@@ -41,6 +42,8 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
     const hideCustomization = !!settings?.hideCustomization;
     const { dictionary, glossMap, dictionaryMap, addUserGloss, removeUserGloss, removeUserSentence } = useCorpus();
     const { packages, getPackageColor, importedData } = usePackageManager(); // Add this line
+    const { isSentenceFromCollection } = useReader();
+    const isCollection = isSentenceFromCollection ? isSentenceFromCollection(sentence) : false;
     const [activePopover, setActivePopover] = useState<{ index: number, rect: { x: number, y: number, anchorTop?: number, anchorBottom?: number } } | null>(null);
     const [showRecorder, setShowRecorder] = useState(false);
     const [showListSheet, setShowListSheet] = useState(false);
@@ -190,7 +193,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
             if (hideCustomization) return;
             // Open Linker
             const token = tokens[index];
-            const tr = (token.tr || '').replace(/[.,!?;:"()]/g, '').trim();
+            const tr = stripTone(token.tr || token.rawTr || '');
             const syl = (token.syl || '').replace(/[.,!?;:"()]/g, '').trim();
             setShowLinker({
                 indices: [index],
@@ -205,7 +208,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
         const sorted = [...selectedIndices].sort((a, b) => a - b);
         // Construct query from first selected word
         const firstToken = tokens[sorted[0]];
-        const tr = (firstToken?.tr || '').replace(/[.,!?;:"()]/g, '').trim();
+        const tr = stripTone(firstToken?.tr || firstToken?.rawTr || '');
         const syl = (firstToken?.syl || '').replace(/[.,!?;:"()]/g, '').trim();
         const query = tr || syl;
 
@@ -323,10 +326,10 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                         <button
                             onClick={(e) => { e.stopPropagation(); onReadInContext(sentence.id); }}
                             className="text-[10px] font-bold text-sky-600 dark:text-sky-400 uppercase tracking-widest hover:underline flex items-center gap-1"
-                            title="See in context"
+                            title={isCollection ? "See in collection" : "See in context"}
                         >
-                            <BookOpen size={12} />
-                            See in Context
+                            {isCollection ? <Folder size={12} /> : <BookOpen size={12} />}
+                            {isCollection ? "See in Collection" : "See in Context"}
                         </button>
                     )}
 
@@ -634,7 +637,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                     onAdd={() => {
                         const index = activePopover.index;
                         const token = tokens[index];
-                        const tr = (token.tr || '').replace(/[.,!?;:"()]/g, '').trim();
+                        const tr = stripTone(token.tr || token.rawTr || '');
                         const syl = (token.syl || '').replace(/[.,!?;:"()]/g, '').trim();
                         setShowLinker({
                             indices: [index],

@@ -3,6 +3,7 @@ import { Star, ListIcon, Trash2, Pencil, ChevronRight, ChevronDown, GripVertical
 import { Modal, SourceBadge, UserAuthButton } from './UI';
 import { usePackageManager } from './PackageManagerContext';
 import { useCorpus } from './CorpusContext';
+import { useReader } from './ReaderContext';
 import { getAudioFromDB, renderStyledText, parseListName, formatListName, sanitizeListName, ColorizedCherokeeWord, VerbMorphologyTemplate, isFormAudio } from '../utils';
 
 export interface ListData {
@@ -306,6 +307,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
 }) => {
     const { getPackageColor, packages, importedData } = usePackageManager();
     const { userAudioMeta, personalWords, glosses, rootMap } = useCorpus();
+    const { isSentenceFromCollection } = useReader();
     const isLinguist = settings?.dictionaryLevel === 'linguist';
 
     const effectiveUserAudioMeta = propUserAudioMeta || userAudioMeta;
@@ -1647,9 +1649,10 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                                                 <button
                                                                     onClick={(e) => { e.stopPropagation(); onReadInContext(sentence.id); }}
                                                                     className="text-[10px] font-bold text-sky-600 dark:text-sky-400 hover:underline flex items-center gap-1 mt-1"
+                                                                    title={isSentenceFromCollection(sentence) ? "See in collection" : "See in context"}
                                                                 >
-                                                                    <BookOpen size={10} />
-                                                                    <span className="hidden sm:inline">See in Context</span>
+                                                                    {isSentenceFromCollection(sentence) ? <Folder size={10} /> : <BookOpen size={10} />}
+                                                                    <span className="hidden sm:inline">{isSentenceFromCollection(sentence) ? "See in Collection" : "See in Context"}</span>
                                                                 </button>
                                                             )}
                                                         </div>

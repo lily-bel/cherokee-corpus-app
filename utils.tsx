@@ -417,6 +417,21 @@ export const cleanStr = (s?: string) => {
 };
 
 /**
+ * Strips Cherokee tone marks (combining diacritics, superscript numbers, ASCII tone digits, colons)
+ * from a transliteration or syllabary string, returning clean plain text suitable for dictionary lookups.
+ */
+export function stripTone(str: string | null | undefined): string {
+  if (!str) return '';
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f\u02c0-\u02df]/g, '')
+    .normalize('NFC')
+    .replace(/[1-4¹²³⁴]/g, '')
+    .replace(/[:.,!?;:"()]/g, '')
+    .trim();
+}
+
+/**
  * Smart transformation of regex patterns containing Cherokee tone digits or classes:
  * - Expands tone digit classes e.g. [1-4] or [¹-⁴] -> [1-4¹²³⁴]
  * - Expands tone numbers [23] -> [2²3³]

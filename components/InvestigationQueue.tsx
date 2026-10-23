@@ -4,7 +4,7 @@ import { useReader, InvestigationItem } from './ReaderContext';
 import { LinkerModal } from './LinkerModal';
 import { ArrowLeft, Trash2, Search as SearchIcon, Clock, ChevronRight, Menu } from './Icons';
 import { UserAuthButton } from './UI';
-import { renderStyledText } from '../utils';
+import { renderStyledText, stripTone } from '../utils';
 
 interface InvestigationQueueProps {
     onBack: () => void;
@@ -61,7 +61,7 @@ export const InvestigationQueue: React.FC<InvestigationQueueProps> = ({
         const token = tokens[item.word_index];
         if (!token) return;
 
-        const tr = (token.tr || '').replace(/[.,!?;:"()]/g, '').trim();
+        const tr = stripTone(token.tr || '');
         const syl = (token.syl || '').replace(/[.,!?;:"()]/g, '').trim();
 
         setShowLinker({

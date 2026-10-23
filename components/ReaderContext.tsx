@@ -49,13 +49,14 @@ interface ReaderContextType {
     getSentencesForChapter: (chapterId: string) => Sentence[];
     getSentencesForBook: (bookId: string) => Sentence[];
     findBookAndChapterForSentence: (sentenceId: string) => { bookId: string, storyId: string, chapterId: string } | null;
+    isSentenceFromCollection: (sentenceOrId: string | Sentence) => boolean;
     investigationQueue: InvestigationItem[];
     addToInvestigationQueue: (sentenceId: string, wordIndex: number, notes?: string) => void;
     removeFromInvestigationQueue: (itemId: string) => void;
     updateInvestigationNote: (itemId: string, notes: string) => void;
 }
 
-const ReaderContext = createContext<ReaderContextType | undefined>(undefined);
+export const ReaderContext = createContext<ReaderContextType | undefined>(undefined);
 
 export const useReader = () => {
     const context = useContext(ReaderContext);
@@ -427,6 +428,43 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         return sentenceToLocation.get(sentenceId) || null;
     };
 
+    const isSentenceFromCollection = (sentenceOrId: string | Sentence): boolean => {
+        const id = typeof sentenceOrId === 'string' ? sentenceOrId : sentenceOrId.id;
+        const location = sentenceToLocation.get(id);
+        if (location) {
+            const book = books.find(b => b.id === location.bookId);
+            if (book) {
+                if (book.isCollection || book.userType === 'notebook') {
+                    return true;
+                }
+                const stories = storiesByBook.get(location.bookId) || [];
+                const story = stories.find(s => s.id === location.storyId);
+                if (story && !story.isSequential) {
+                    return true;
+                }
+                return false;
+            }
+        }
+        // Fallback if not mapped in reader books (e.g. dynamic sentence or user dictionary item)
+        const sentenceObj = typeof sentenceOrId === 'object' ? sentenceOrId : allSentences.find(s => s.id === id);
+        if (sentenceObj) {
+            const src = (sentenceObj.source || '').toLowerCase().trim();
+            if (['ced', 'feeling & pulte ced', 'cherokee dictionary 1975 durbin feeling', 'cn-app-dictionary.csv', 'other_official'].includes(src)) {
+                return true;
+            }
+            if (userDictionaries && userDictionaries[sentenceObj.source]) {
+                return userDictionaries[sentenceObj.source].type !== 'book';
+            }
+            if (src === 'user' || src.startsWith('nb_')) {
+                return true;
+            }
+            if (!sentenceObj.story || sentenceObj.story.trim() === '' || sentenceObj.story.trim() === 'Individual Sentences') {
+                return true;
+            }
+        }
+        return false;
+    };
+
     const addToInvestigationQueue = (sentenceId: string, wordIndex: number, notes?: string) => {
         const newItem: InvestigationItem = {
             id: `inv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -456,6 +494,7 @@ export const ReaderProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             getSentencesForChapter,
             getSentencesForBook,
             findBookAndChapterForSentence,
+            isSentenceFromCollection,
             investigationQueue,
             addToInvestigationQueue,
             removeFromInvestigationQueue,

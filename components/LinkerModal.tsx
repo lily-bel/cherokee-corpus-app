@@ -1,10 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { DictionaryEntry, useCorpus } from './CorpusContext';
 import { usePackageManager } from './PackageManagerContext';
 import { Search, Check, Trash2 } from './Icons';
 import { Modal, SourceBadge } from './UI';
 
-import { performSearch, buildWordFormsLookupMap, getAllFormsForEntry, renderColorizedCherokee, renderSegmentedSurface, segmentVerbForm, isEmptyRoot, resolveRoleTaggedSegments, ColorizedCherokeeWord, getFriendlyLabel } from '../utils';
+import { performSearch, buildWordFormsLookupMap, renderColorizedCherokee, renderSegmentedSurface, segmentVerbForm, isEmptyRoot, resolveRoleTaggedSegments, ColorizedCherokeeWord, getFriendlyLabel, stripTone } from '../utils';
 
 
 
@@ -37,17 +37,24 @@ interface LinkerModalProps {
 
 export const LinkerModal: React.FC<LinkerModalProps> = ({ initialQuery, targetWord, initialData, dictionary, personalWords, onSelect, onDelete, onClose, onCreateNew, customDictionaries }) => {
     const [step, setStep] = useState<'search' | 'form'>(initialData ? 'form' : 'search');
-    const [query, setQuery] = useState(initialQuery);
+    const initialClean = stripTone(initialQuery);
+    const [inputValue, setInputValue] = useState(initialClean);
+    const [query, setQuery] = useState(initialClean);
+
+    useEffect(() => {
+        const clean = stripTone(initialQuery);
+        setInputValue(clean);
+        setQuery(clean);
+    }, [initialQuery]);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setQuery(inputValue);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [inputValue]);
+
     const [selectedEntry, setSelectedEntry] = useState<DictionaryEntry | null>(initialData?.entry || null);
-    const [selectedForm, setSelectedForm] = useState<{ form_name?: string; form_syllabary?: string; form_translit?: string } | null>(
-        initialData?.formSyllabary || initialData?.formTranslit || initialData?.formName
-            ? {
-                form_name: initialData.formName,
-                form_syllabary: initialData.formSyllabary,
-                form_translit: initialData.formTranslit
-            }
-            : null
-    );
 
     // Form State
     const [notes, setNotes] = useState(initialData?.notes || '');
@@ -55,7 +62,7 @@ export const LinkerModal: React.FC<LinkerModalProps> = ({ initialQuery, targetWo
     const [breakdownEnglish, setBreakdownEnglish] = useState(initialData?.breakdownEnglish || '');
 
     const { sentences, entryToSentencesMap, rootMap, userWordForms } = useCorpus();
-    const { packages, importedData, getPackageColor } = usePackageManager();
+    const { importedData, getPackageColor } = usePackageManager();
 
     const appSettings = useMemo(() => {
         try {
@@ -85,65 +92,25 @@ export const LinkerModal: React.FC<LinkerModalProps> = ({ initialQuery, targetWo
         return performSearch(query, searchDict, sentences, entryToSentencesMap, settings, customDictionaries || {}, {}, "All", 'dictionary', [], rootMap, wordFormsLookupMap).slice(0, 30);
     }, [query, dictionary, personalWords, sentences, entryToSentencesMap, customDictionaries, rootMap, wordFormsLookupMap]);
 
-    const availableForms = useMemo(() => {
-        if (!selectedEntry) return [];
-        return getAllFormsForEntry(selectedEntry, wordFormsLookupMap, userWordForms, packages, importedData);
-    }, [selectedEntry, wordFormsLookupMap, userWordForms, packages, importedData]);
-
     const handleEntrySelect = (entry: any) => {
         setSelectedEntry(entry);
-        const forms = getAllFormsForEntry(entry, wordFormsLookupMap, userWordForms, packages, importedData);
-        if (entry.matchedForm) {
-            const matched = forms.find(f => 
-                (entry.matchedForm.syllabary && f.syllabary === entry.matchedForm.syllabary) ||
-                (entry.matchedForm.translit && f.translit === entry.matchedForm.translit)
-            );
-            if (matched) {
-                setSelectedForm({
-                    form_name: matched.label || '',
-                    form_syllabary: matched.syllabary || '',
-                    form_translit: matched.translit || ''
-                });
-            } else {
-                setSelectedForm({
-                    form_name: entry.matchedForm.label || '',
-                    form_syllabary: entry.matchedForm.syllabary || '',
-                    form_translit: entry.matchedForm.translit || ''
-                });
-            }
-        } else {
-            const primaryForm = forms[0];
-            if (primaryForm) {
-                setSelectedForm({
-                    form_name: primaryForm.label || 'Base Form',
-                    form_syllabary: primaryForm.syllabary || '',
-                    form_translit: primaryForm.translit || ''
-                });
-            } else {
-                setSelectedForm({
-                    form_name: 'Base Form',
-                    form_syllabary: entry.syllabary || entry.Syllabary || '',
-                    form_translit: entry.translit || entry.Entry || ''
-                });
-            }
-        }
         setStep('form');
     };
 
     const handleSave = () => {
         if (selectedEntry) {
-            const formToSave = selectedForm || (availableForms[0] ? {
-                form_name: availableForms[0].label,
-                form_syllabary: availableForms[0].syllabary,
-                form_translit: availableForms[0].translit
-            } : undefined);
+            const formToSave = (selectedEntry === initialData?.entry && (initialData?.formName || initialData?.formSyllabary || initialData?.formTranslit)) ? {
+                form_name: initialData.formName,
+                form_syllabary: initialData.formSyllabary,
+                form_translit: initialData.formTranslit
+            } : undefined;
 
             onSelect(
                 selectedEntry,
                 notes,
                 breakdownCherokee,
                 breakdownEnglish,
-                formToSave || undefined
+                formToSave
             );
         }
     };
@@ -199,8 +166,13 @@ export const LinkerModal: React.FC<LinkerModalProps> = ({ initialQuery, targetWo
                             type="text"
                             className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-lg py-2.5 pl-10 pr-4 text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-amber-500"
                             placeholder="Search dictionary or word forms..."
-                            value={query}
-                            onChange={e => setQuery(e.target.value)}
+                            value={inputValue}
+                            onChange={e => setInputValue(e.target.value)}
+                            onKeyDown={e => {
+                                if (e.key === 'Enter') {
+                                    setQuery(inputValue);
+                                }
+                            }}
                             autoFocus
                         />
                     </div>
@@ -324,34 +296,6 @@ export const LinkerModal: React.FC<LinkerModalProps> = ({ initialQuery, targetWo
                         </div>
                         <button onClick={() => setStep('search')} className="text-xs font-bold text-sky-600 dark:text-sky-400 uppercase hover:underline">Change</button>
                     </div>
-
-                    {/* Form Selection */}
-                    {availableForms.length > 0 && (
-                        <div className="bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800 flex flex-col gap-1.5">
-                            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-                                Word Form
-                            </label>
-                            <select
-                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-amber-500"
-                                value={selectedForm ? `${selectedForm.form_name || ''}|${selectedForm.form_syllabary || ''}|${selectedForm.form_translit || ''}` : `${availableForms[0]?.label || ''}|${availableForms[0]?.syllabary || ''}|${availableForms[0]?.translit || ''}`}
-                                onChange={(e) => {
-                                    const val = e.target.value;
-                                    const [fName, fSyl, fTr] = val.split('|');
-                                    setSelectedForm({
-                                        form_name: fName,
-                                        form_syllabary: fSyl,
-                                        form_translit: fTr
-                                    });
-                                }}
-                            >
-                                {availableForms.map((f, i) => (
-                                    <option key={i} value={`${f.label}|${f.syllabary}|${f.translit}`}>
-                                        {f.label ? `${f.label}: ` : ''}{f.syllabary} ({f.translit})
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    )}
 
                     {/* Breakdown Inputs */}
                     <div className="grid grid-cols-2 gap-3">

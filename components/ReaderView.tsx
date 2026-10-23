@@ -7,7 +7,7 @@ import { LinkerModal } from './LinkerModal';
 import { SentenceCard } from './SentenceCard';
 import { ArrowLeft, BookOpen, Eye, EyeOff, Type, Menu, ChevronDown } from './Icons';
 import { UserAuthButton } from './UI';
-import { renderStyledText, formatSentenceText } from '../utils';
+import { renderStyledText, formatSentenceText, stripTone } from '../utils';
 
 type StudyMode = 'study' | 'read';
 type ScriptMode = 'both' | 'syllabary' | 'translit';
@@ -609,7 +609,7 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                             setActivePopover(null);
                         }}
                         onAdd={() => {
-                            const tr = (targetToken.tr || '').replace(/[.,!?;:"()]/g, '').trim();
+                            const tr = stripTone(targetToken.tr || '');
                             const syl = (targetToken.syl || '').replace(/[.,!?;:"()]/g, '').trim();
                             setShowLinker({
                                 sentenceId: activePopover.sentenceId,

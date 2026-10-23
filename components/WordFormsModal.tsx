@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { X, Mic, Trash2, Pause, Volume2, Plus, TranslateCherokee } from './Icons';
 import { getFriendlyLabel, processFormsContextually, renderStyledText, ColorizedCherokeeWord, getColorWordSegmentsSetting, getFormTransliteration, resolveHdFormName, getCombinedCedVerbsMode } from '../utils';
 import { useCorpus } from './CorpusContext';
+import { useReader } from './ReaderContext';
 
 interface WordFormsModalProps {
     isOpen: boolean;
@@ -99,6 +100,7 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
     if (!isOpen || !entry) return null;
 
     const { glosses, sentenceMap, rootMap } = useCorpus();
+    const { isSentenceFromCollection } = useReader();
     const hideCustomization = !!settings?.hideCustomization;
     const isColored = getColorWordSegmentsSetting(settings);
     const effectiveRootEntry = rootEntry || (entry ? rootMap?.get(entry.Index || entry.id || entry.merged_id) : undefined);
@@ -429,7 +431,7 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
                                                                 Source: {g.source || 'N/A'}
                                                             </div>
                                                             <div className="text-sky-600 dark:text-sky-400 font-extrabold text-xs uppercase tracking-wider group-hover:underline">
-                                                                See in context
+                                                                {isSentenceFromCollection(g.sentence_id) ? "See in collection" : "See in context"}
                                                             </div>
                                                         </div>
 
