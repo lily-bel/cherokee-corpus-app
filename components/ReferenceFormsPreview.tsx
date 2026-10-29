@@ -737,7 +737,7 @@ export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
         return (
             <div
                 key={cardData.slotKey}
-                onClick={() => onOpenAllForms?.()}
+                onClick={onOpenAllForms ? () => onOpenAllForms() : undefined}
                 className={`relative flex flex-col justify-between p-3 rounded-xl shadow-sm transition-all duration-150 min-w-0 ${onOpenAllForms ? 'cursor-pointer hover:shadow-md active:scale-[0.99]' : ''} ${style.bg} ${style.border}`}
                 title={onOpenAllForms ? 'Click to view all forms' : undefined}
             >

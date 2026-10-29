@@ -578,7 +578,6 @@ const EntryDetail = ({ entry, settings, setSettings, customDictionaries, userNot
                                     onViewEntry={onViewEntry}
                                     onPlayAudio={handlePlayUserAudio}
                                     playingAudioId={playingAudioId}
-                                    onOpenAllForms={() => setShowWordFormsModal(true)}
                                     userAudioMeta={userAudioMeta}
                                 />
                             </div>

@@ -19,6 +19,7 @@ import {
     LinkIcon
 } from './Icons';
 import { useAuth } from './AuthContext';
+import logoImg from '../logo1.png';
 
 export interface TutorialModalProps {
     isOpen: boolean;
@@ -291,9 +292,11 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
                     {/* SLIDE 1: WELCOME */}
                     {currentSlide === 'welcome' && (
                         <div className="my-auto flex flex-col items-center text-center py-6 space-y-5 animate-fade-in">
-                            <div className="w-20 h-20 rounded-2xl bg-[#af615d] dark:bg-amber-600 text-white flex items-center justify-center shadow-lg">
-                                <BookOpen size={42} />
-                            </div>
+                            <img
+                                src={logoImg}
+                                alt="higoliya logo"
+                                className="w-20 h-20 rounded-2xl shadow-lg object-cover"
+                            />
                             <div className="space-y-2">
                                 <span className="inline-block text-[11px] font-bold uppercase tracking-widest text-[#af615d] dark:text-amber-400 bg-[#ffe7e3]/70 dark:bg-amber-950/50 px-3.5 py-1 rounded-full">
                                     Welcome

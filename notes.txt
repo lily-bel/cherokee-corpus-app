@@ -6,7 +6,8 @@ BIG QUESTIONS:
 26. Mass Editor - I can use scripts in the package file instead!
 28. Login says unauthorized domain on hanehla
 29. Check words: uduha
-
+searching "higoliya" does not show Matched form: higoliya
+dont let clicking other form go to the other forms page
 
 TEST:
 Online Capabilities & Testing                                                                                 
