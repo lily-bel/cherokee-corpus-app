@@ -7,7 +7,6 @@ BIG QUESTIONS:
 28. Login says unauthorized domain on hanehla
 29. Check words: uduha
 searching "higoliya" does not show Matched form: higoliya
-dont let clicking other form go to the other forms page
 
 TEST:
 Online Capabilities & Testing                                                                                 
@@ -22,6 +21,8 @@ Package url needs to be ____/package/id
 bottom bar on mobile
 too many sentence buttons?
 
+data consolidation:
+remove all prefix/suffix etc
 
 DATA:
 8. Cherokee Narratives Data Fix                                                                                  

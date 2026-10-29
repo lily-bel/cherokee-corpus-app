@@ -17,7 +17,9 @@ import {
     formatTranslitWithLength,
     projectToneOrLengthOntoSegments,
     hasToneMarks,
-    getFormTransliteration
+    getFormTransliteration,
+    isCedForm,
+    convertConsonantsToStyle
 } from '../utils';
 import { usePackageManager } from './PackageManagerContext';
 import { useCorpus } from './CorpusContext';
@@ -704,11 +706,12 @@ export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
         const practicalStr = form.translit || form.Practical || form.Entry || '';
 
         // Determine surface text
+        const isCed = isCedForm(form, entry);
         let surface = '';
-        if (showTone && rawToneSource && hasToneMarks(rawToneSource)) {
+        if (isCed && showTone && rawToneSource && hasToneMarks(rawToneSource)) {
             surface = convertToneText(rawToneSource, toneOrthography, translitStyle, practicalStr);
         } else {
-            surface = getFormTransliteration(form, rootEntry, hdFormName, settings) || formatTranslitWithLength(practicalStr, rawToneSource, showLengthInTranslit, translitStyle);
+            surface = getFormTransliteration(form, rootEntry, hdFormName, settings) || (isCed ? formatTranslitWithLength(practicalStr, rawToneSource, showLengthInTranslit, translitStyle) : convertConsonantsToStyle(practicalStr, translitStyle));
         }
 
         // Split on semicolon if multiple forms exist: color the primary form matching King parse, render remainder uncolored
@@ -808,7 +811,7 @@ export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
                         <>
                             {(() => {
                                 const hasTone = Boolean(rawToneSource && hasToneMarks(rawToneSource));
-                                const shouldProject = hasTone && (showTone || showLengthInTranslit);
+                                const shouldProject = isCed && hasTone && (showTone || showLengthInTranslit);
                                 const displaySegments = shouldProject
                                     ? projectToneOrLengthOntoSegments(hdSegments, rawToneSource, {
                                           showTone: showTone && hasTone,
@@ -955,11 +958,12 @@ export const DesktopHorizontalFormsStrip: React.FC<DesktopHorizontalFormsStripPr
         const rawToneSource = form.tone1 || form.tone || form.tone2 || form.Entry_Tone || '';
         const practicalStr = form.translit || form.Practical || form.Entry || '';
 
+        const isCed = isCedForm(form, entry);
         let surface = '';
-        if (showTone && rawToneSource && hasToneMarks(rawToneSource)) {
+        if (isCed && showTone && rawToneSource && hasToneMarks(rawToneSource)) {
             surface = convertToneText(rawToneSource, toneOrthography, translitStyle, practicalStr);
         } else {
-            surface = getFormTransliteration(form, rootEntry, hdFormName, settings) || formatTranslitWithLength(practicalStr, rawToneSource, showLengthInTranslit, translitStyle);
+            surface = getFormTransliteration(form, rootEntry, hdFormName, settings) || (isCed ? formatTranslitWithLength(practicalStr, rawToneSource, showLengthInTranslit, translitStyle) : convertConsonantsToStyle(practicalStr, translitStyle));
         }
 
         let primarySurface = surface;
@@ -991,7 +995,7 @@ export const DesktopHorizontalFormsStrip: React.FC<DesktopHorizontalFormsStripPr
                         <>
                             {(() => {
                                 const hasTone = Boolean(rawToneSource && hasToneMarks(rawToneSource));
-                                const shouldProject = hasTone && (showTone || showLengthInTranslit);
+                                const shouldProject = isCed && hasTone && (showTone || showLengthInTranslit);
                                 const displaySegments = shouldProject
                                     ? projectToneOrLengthOntoSegments(hdSegments, rawToneSource, {
                                           showTone: showTone && hasTone,

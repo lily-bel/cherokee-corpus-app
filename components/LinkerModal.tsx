@@ -4,7 +4,7 @@ import { usePackageManager } from './PackageManagerContext';
 import { Search, Check, Trash2 } from './Icons';
 import { Modal, SourceBadge } from './UI';
 
-import { performSearch, buildWordFormsLookupMap, renderColorizedCherokee, renderSegmentedSurface, segmentVerbForm, isEmptyRoot, resolveRoleTaggedSegments, ColorizedCherokeeWord, getFriendlyLabel, stripTone } from '../utils';
+import { performSearch, buildWordFormsLookupMap, renderColorizedCherokee, renderSegmentedSurface, segmentVerbForm, isEmptyRoot, resolveRoleTaggedSegments, ColorizedCherokeeWord, stripTone } from '../utils';
 
 
 
@@ -252,9 +252,6 @@ export const LinkerModal: React.FC<LinkerModalProps> = ({ initialQuery, targetWo
                                                                         showTone={true}
                                                                     />
                                                                 </span>
-                                                            )}
-                                                            {entry.matchedForm.label && (
-                                                                <span className="text-slate-400 not-italic">({getFriendlyLabel(entry.matchedForm.label)})</span>
                                                             )}
                                                         </div>
                                                     )}

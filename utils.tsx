@@ -554,12 +554,41 @@ export function transformToneRegex(pattern: string): string {
   return result;
 }
 
+export function isCedEntry(entry?: any): boolean {
+  if (!entry) return false;
+  const s = (entry.Source || entry.source || '').toLowerCase().trim();
+  if (s === 'ced' || s.includes('durbin feeling') || s.includes('feeling 1975') || s.includes('cherokee nation')) return true;
+  const sl = (entry.Source_Long || '').toLowerCase().trim();
+  if (sl.includes('durbin feeling') || sl.includes('feeling 1975') || sl.includes('cherokee nation') || sl === 'ced') return true;
+  if (entry.sources) {
+    if (entry.sources['cn-app-dictionary.csv']) return true;
+    if (entry.sources['hierarchical-dict.json']) return true;
+    const lilySource = (entry.sources['lily-dict.csv']?.Source || '').toLowerCase().trim();
+    if (lilySource === 'ced' || lilySource.includes('feeling')) return true;
+  }
+  return false;
+}
+
+export function isCedForm(form?: any, entry?: any): boolean {
+  if (form) {
+    const s = (form.source || '').toLowerCase().trim();
+    if (s === 'ced' || s.includes('durbin feeling') || s.includes('feeling 1975')) return true;
+    if (s && s !== 'ced') return false;
+  }
+  return isCedEntry(entry);
+}
+
+export function isCedSentence(sentence?: any, source?: string | null): boolean {
+  const s = (source || sentence?.source || sentence?.['source file'] || '').toLowerCase().trim();
+  return s === 'ced' || s.includes('durbin feeling') || s.includes('feeling 1975') || s === 'cn-app-dictionary.csv';
+}
+
 export const getRenderedTonesForEntry = (
   entry: any,
   orthography: ToneOrthography,
   translitStyle: TransliterationStyle
 ): string[] => {
-  if (!entry) return [];
+  if (!entry || !isCedEntry(entry)) return [];
   if (!entry._renderedTonesCache) {
     entry._renderedTonesCache = new Map<string, string[]>();
   }
@@ -602,9 +631,10 @@ export const getRenderedTonesForEntry = (
 export const getRenderedTonesForForm = (
   f: any,
   orthography: ToneOrthography,
-  translitStyle: TransliterationStyle
+  translitStyle: TransliterationStyle,
+  parentEntry?: any
 ): string[] => {
-  if (!f) return [];
+  if (!f || !isCedForm(f, parentEntry)) return [];
   if (!f._renderedTonesCache) {
     f._renderedTonesCache = new Map<string, string[]>();
   }
@@ -633,6 +663,67 @@ export const getRenderedTonesForForm = (
   return results;
 };
 
+export const MINI_FORM_KEYS = new Set([
+  '1s|3a|present',
+  '2s|3a|imperative',
+  '1s|3s|present',
+  '1s|present',
+  '2s|3s|imperative',
+  '2s|imperative',
+  '3s|3s|present',
+  '3s|present',
+  '3s|3s|habitual',
+  '3s|habitual',
+  '3s|3s|infinitive',
+  '3s|infinitive',
+  '3s|3s|completive past',
+  '3s|3s|past',
+  '3s|past',
+  'completive past',
+  'present',
+  'present_1sg',
+  'imperfective',
+  'perfective',
+  'imperative',
+  'infinitive',
+  'noun|singular|',
+  'noun|singular',
+  'noun:singular',
+  'singular',
+  'noun|plural|',
+  'noun|plural',
+  'noun:plural',
+  'plural'
+]);
+
+export const isMiniForm = (f?: any, labelOrKey?: string): boolean => {
+  if (!f && !labelOrKey) return false;
+  const k = (labelOrKey || f?.form_name || f?.label || f?.normalized_key || f?.slotKey || '').toLowerCase().trim();
+  if (k && MINI_FORM_KEYS.has(k)) return true;
+  if (k.startsWith('1s|3a|present') || k.startsWith('2s|3a|imperative') || k.startsWith('1s|3s|present') || k.startsWith('2s|3s|imperative')) return true;
+  if (k.startsWith('3s|3s|present') || k.startsWith('3s|3s|habitual') || k.startsWith('3s|3s|infinitive') || k.startsWith('3s|3s|completive past')) return true;
+  if (k.startsWith('noun|singular') || k.startsWith('noun|plural')) return true;
+
+  const l = (f?.displayLabel || f?.label || '').toLowerCase();
+  if (
+    l.includes('1st present') ||
+    l.includes('2nd imperative') ||
+    l.includes('3rd present') ||
+    l.includes('3rd habitual') ||
+    l.includes('infinitive') ||
+    l.includes('completive past') ||
+    l.includes('singular') ||
+    l.includes('plural')
+  ) {
+    if (!l.includes('1st imperative') && !l.includes('first person imperative') && !l.includes('2nd present')) {
+      return true;
+    }
+  }
+
+  if (f?.source === 'ced') return true;
+  return false;
+};
+
 // --- SEARCH ALGORITHM ---
 export const performSearch = (query: string, allData: any[], sentences: any[], entryToSentencesMap: Map<string, string[]>, settings: any, customDictionaries: any, userNotes: any, posFilter: string, searchScope: string, prioritizedSources: string[] = [], rootMap: Map<string, any> = new Map(), wordFormsLookupMap: Map<string, any[]> = new Map()) => {
   if (!query) return [];
@@ -649,28 +740,18 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
 
   // Selected orthography and transliteration style
   const selectedOrthography = getToneOrthographySetting(settings);
-  const isSelectedNumbered = selectedOrthography === 'feeling_1975' || selectedOrthography === 'feeling_modified';
   const translitStyle = getTransliterationStyleSetting(settings);
 
   // Target orthographies according to user specification:
   // - If diacritics: match MCO and selected tone orthography (if selected is not diacritic)
   // - If numbers: match Durbin (feeling_1975) and selected orthography (if selected is not numbered)
   const targetOrthoSet = new Set<ToneOrthography>();
-  if (hasDiacritics) {
-    if (isSelectedNumbered) {
-      targetOrthoSet.add('mco');
-      targetOrthoSet.add(selectedOrthography);
-    } else {
-      targetOrthoSet.add(selectedOrthography);
-    }
-  }
+  targetOrthoSet.add(selectedOrthography);
   if (hasToneNumbers || hasRegexDigits) {
-    if (!isSelectedNumbered) {
-      targetOrthoSet.add('feeling_1975');
-      targetOrthoSet.add(selectedOrthography);
-    } else {
-      targetOrthoSet.add(selectedOrthography);
-    }
+    targetOrthoSet.add('feeling_1975');
+  }
+  if (hasDiacritics) {
+    targetOrthoSet.add('mco');
   }
   const activeToneOrthographies = Array.from(targetOrthoSet);
 
@@ -781,7 +862,7 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
     const textMatches: any[] = sentences.map(s => {
       let score = 0;
       if (queryHasTone) {
-        if (s.tone) {
+        if (s.tone && isCedSentence(s, s.source)) {
           for (const ortho of activeToneOrthographies) {
             const converted = convertToneText(s.tone, ortho, translitStyle, s.translit);
             score = Math.max(score, testToneMatchScore(converted), testToneMatchScore(s.tone));
@@ -805,6 +886,7 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
     // Find dictionary entries that match, then get their sentences
     const dictMatches = allData.filter(entry => {
       if (queryHasTone) {
+        if (!isCedEntry(entry)) return false;
         for (const ortho of activeToneOrthographies) {
           const tones = getRenderedTonesForEntry(entry, ortho, translitStyle);
           for (const t of tones) {
@@ -844,6 +926,34 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
   const normQuery = cleanStr(query);
   const combinedMode = getCombinedCedVerbsMode(settings);
 
+  const getMatchTier = (s: number) => {
+    if (s >= 120) return 3; // Exact match tier
+    if (s >= 70) return 2;  // Starts with tier
+    if (s >= 15) return 1;  // Contains tier
+    return 0;
+  };
+
+  const isBetterMatch = (newScore: number, newIsMini: boolean, currentScore: number, currentIsMini: boolean): boolean => {
+    if (currentScore <= 0) return newScore > 0;
+    if (newScore <= 0) return false;
+
+    const newTier = getMatchTier(newScore);
+    const currentTier = getMatchTier(currentScore);
+
+    // 1. Higher match tier always wins (e.g. Exact match tier 3 beats StartsWith tier 2)
+    if (newTier !== currentTier) {
+      return newTier > currentTier;
+    }
+
+    // 2. Within the same match tier, prioritize mini forms!
+    if (newIsMini !== currentIsMini) {
+      return newIsMini; // true beats false
+    }
+
+    // 3. If both are mini (or both are non-mini), higher score wins
+    return newScore > currentScore;
+  };
+
   // --- DICTIONARY MODE LOOP: O(N) where N is number of base entries. ---
   const mappedResults = allData.map(entry => {
     if (entry.is_combined_part_b && combinedMode !== 'full') {
@@ -856,6 +966,7 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
     let mainMatchScore = 0;
     let cherokeeMainScore = 0;
     let otherFormMatchScore = 0;
+    let otherFormIsMini = false;
     const isPersonal = customDictionaries && customDictionaries[entry.Source];
 
     if (posFilter !== "All") {
@@ -864,6 +975,9 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
 
     // --- TONE SEARCH MODE (Strictly filters words without matching tone) ---
     if (queryHasTone) {
+      if (!isCedEntry(entry)) {
+        return { ...entry, score: 0 };
+      }
       // 1. Check Main Entry Tone
       if (activeScopes.main) {
         for (const ortho of activeToneOrthographies) {
@@ -893,8 +1007,10 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
                 for (const ortho of activeToneOrthographies) {
                   const rendered = convertToneText(tone, ortho, translitStyle, translit);
                   const fScore = Math.max(testToneMatchScore(rendered), testToneMatchScore(tone));
-                  if (fScore > otherFormMatchScore) {
+                  const fIsMini = isMiniForm(null, label);
+                  if (isBetterMatch(fScore, fIsMini, otherFormMatchScore, otherFormIsMini)) {
                     otherFormMatchScore = fScore;
+                    otherFormIsMini = fIsMini;
                     matchedForm = { translit, syllabary, label, tone, matchedByTone: true };
                   }
                 }
@@ -917,11 +1033,13 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
             entryForms.forEach((f: any) => {
               if (hidePartBFromParent && f.is_shim) return;
               for (const ortho of activeToneOrthographies) {
-                const tones = getRenderedTonesForForm(f, ortho, translitStyle);
+                const tones = getRenderedTonesForForm(f, ortho, translitStyle, entry);
                 for (const t of tones) {
                   const fScore = testToneMatchScore(t);
-                  if (fScore > otherFormMatchScore) {
+                  const fIsMini = isMiniForm(f);
+                  if (isBetterMatch(fScore, fIsMini, otherFormMatchScore, otherFormIsMini)) {
                     otherFormMatchScore = fScore;
+                    otherFormIsMini = fIsMini;
                     matchedForm = {
                       translit: f.surface_spelling || f.translit,
                       syllabary: f.syllabary,
@@ -991,8 +1109,9 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
         if (entry.surface_spelling) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.surface_spelling));
         if (entry.practical) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.practical));
         if (entry.surface_forms) {
-          for (const [k, val] of Object.entries(entry.surface_forms)) {
-            if (hidePartBFromParent && parentShimFormsSet.has(k)) continue;
+          const baseSlot = entry.base_form_slot || (entry.is_combined_part_b ? 'infinitive' : 'present');
+          if (!hidePartBFromParent || !parentShimFormsSet.has(baseSlot)) {
+            const val = entry.surface_forms[baseSlot];
             if (typeof val === 'string') mainMatchScore = Math.max(mainMatchScore, testMatchScore(val));
           }
         }
@@ -1052,9 +1171,12 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
             let fScore = 0;
             if (activeLangs.translit && translit) fScore = Math.max(fScore, testMatchScore(translit));
             if (activeLangs.syllabary && syllabary) fScore = Math.max(fScore, testMatchScore(syllabary));
+            if (activeLangs.translit && tone) fScore = Math.max(fScore, testMatchScore(tone));
 
-            if (fScore > otherFormMatchScore) {
+            const fIsMini = isMiniForm(null, label);
+            if (isBetterMatch(fScore, fIsMini, otherFormMatchScore, otherFormIsMini)) {
               otherFormMatchScore = fScore;
+              otherFormIsMini = fIsMini;
               matchedForm = { translit, syllabary, label, tone };
             }
           }
@@ -1079,11 +1201,16 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
               if (f.translit) fScore = Math.max(fScore, testMatchScore(f.translit));
               if (f.surface_spelling) fScore = Math.max(fScore, testMatchScore(f.surface_spelling));
               if (f.segmented_form) fScore = Math.max(fScore, testMatchScore(f.segmented_form.replace(/[-–—>]/g, '')));
+              if (f.tone) fScore = Math.max(fScore, testMatchScore(f.tone));
+              if (f.tone1) fScore = Math.max(fScore, testMatchScore(f.tone1));
+              if (f.tone2) fScore = Math.max(fScore, testMatchScore(f.tone2));
             }
             if (activeLangs.syllabary && f.syllabary) fScore = Math.max(fScore, testMatchScore(f.syllabary));
 
-            if (fScore > otherFormMatchScore) {
+            const fIsMini = isMiniForm(f);
+            if (isBetterMatch(fScore, fIsMini, otherFormMatchScore, otherFormIsMini)) {
               otherFormMatchScore = fScore;
+              otherFormIsMini = fIsMini;
               matchedForm = { translit: f.surface_spelling || f.translit, syllabary: f.syllabary, label: f.form_name || f.label || f.name, tone: f.tone, tone1: f.tone1, tone2: f.tone2 };
             }
           });
@@ -1091,6 +1218,23 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
       };
 
       idSet.forEach(idStr => extractMatchedForms(idStr));
+
+      // Surface forms (non-base inflected forms from hierarchical-dict/base_forms)
+      if (entry.surface_forms) {
+        const baseSlot = entry.base_form_slot || (entry.is_combined_part_b ? 'infinitive' : 'present');
+        for (const [k, val] of Object.entries(entry.surface_forms)) {
+          if (k === baseSlot) continue;
+          if (hidePartBFromParent && parentShimFormsSet.has(k)) continue;
+          if (typeof val === 'string' && activeLangs.translit) {
+            const fScore = testMatchScore(val);
+            if (isBetterMatch(fScore, true, otherFormMatchScore, otherFormIsMini)) {
+              otherFormMatchScore = fScore;
+              otherFormIsMini = true;
+              matchedForm = { translit: val, label: k };
+            }
+          }
+        }
+      }
     }
 
     // 3. Notes & Roots
@@ -1127,13 +1271,6 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
         matchedRootKey = rootEntry.slug || rootEntry.root_slug || String(rootEntry.entry_id || rootEntry.id || id || '');
       }
     }
-
-    const getMatchTier = (s: number) => {
-      if (s >= 120) return 3; // Exact match tier
-      if (s >= 70) return 2;  // Starts with tier
-      if (s >= 15) return 1;  // Contains tier
-      return 0;
-    };
 
     const mainTier = getMatchTier(mainMatchScore);
     const otherFormTier = getMatchTier(otherFormMatchScore);
@@ -2679,7 +2816,7 @@ export const TONE_ORTHOGRAPHY_OPTIONS: { value: ToneOrthography; label: string; 
   }
 ];
 
-const VALID_TONE_ORTHOGRAPHIES = new Set<ToneOrthography>([
+export const VALID_TONE_ORTHOGRAPHIES = new Set<ToneOrthography>([
   'mco',
   'mco_short',
   'uchihara',
@@ -3283,14 +3420,17 @@ export function formatTranslitWithLength(
  */
 export function formatSentenceText(
   text: string | null | undefined,
-  source: string | null | undefined,
+  sourceOrOrthography: string | null | undefined,
   settings?: any
 ): string {
   if (!text) return '';
-  const orthography = getToneOrthographySetting(settings);
+  const isDirectOrtho = VALID_TONE_ORTHOGRAPHIES.has(sourceOrOrthography as ToneOrthography);
+  const orthography = isDirectOrtho
+    ? (sourceOrOrthography as ToneOrthography)
+    : getToneOrthographySetting(settings);
   const translitStyle = getTransliterationStyleSetting(settings);
-  const isCed = (source || '').toLowerCase() === 'ced';
-  if (isCed || hasToneMarks(text)) {
+  const isCed = isDirectOrtho || isCedSentence(null, sourceOrOrthography);
+  if (isCed) {
     return convertToneText(text, orthography, translitStyle, undefined, 'mco');
   }
   return convertConsonantsToStyle(text, translitStyle);
@@ -3434,6 +3574,7 @@ export function getFormToneDisplay(
   entry?: any,
   settings?: any
 ): string {
+  if (!isCedForm(form, entry)) return '';
   const toneOrthography = getToneOrthographySetting(settings);
   const translitStyle = getTransliterationStyleSetting(settings);
   const rawTone = form?.tone1 || form?.tone || form?.tone2 || form?.Entry_Tone || entry?.tone1 || entry?.Entry_Tone || entry?.tone2 || '';
@@ -3572,19 +3713,29 @@ export const ColorizedCherokeeWord: React.FC<ColorizedCherokeeWordProps> = ({
   const translitStyle = getTransliterationStyleSetting(settings);
   const toneOrthography = getToneOrthographySetting(settings);
   const showLengthInTranslit = getShowLengthInTranslitSetting(settings);
-  const rawToneSource = form?.tone1 || form?.tone || form?.tone2 || form?.Entry_Tone || entry?.tone1 || entry?.Entry_Tone || entry?.tone2 || '';
-  const practicalStr = form?.translit || form?.Practical || form?.Entry || entry?.Entry || entry?.translit || '';
+  const isCed = isCedForm(form, entry);
+
+  const rawToneSource = isCed
+    ? (form
+        ? (form.tone1 || form.tone || form.tone2 || form.Entry_Tone || '')
+        : (entry?.tone1 || entry?.Entry_Tone || entry?.tone2 || ''))
+    : '';
+  const practicalStr = form
+    ? (form.surface_spelling || form.translit || form.Practical || form.Entry || text)
+    : (entry?.Entry || entry?.translit || entry?.practical || entry?.surface_spelling || text);
   const hasRawTone = Boolean(rawToneSource && hasToneMarks(rawToneSource));
 
-  const isTone = showTone !== undefined
+  const isTone = isCed && (showTone !== undefined
     ? (showTone && (hasRawTone || hasToneMarks(text)))
-    : (hasToneMarks(text) || Boolean((form?.matchedByTone || entry?.matchedByTone) && hasRawTone));
+    : (hasToneMarks(text) || Boolean((form?.matchedByTone || entry?.matchedByTone) && hasRawTone)));
 
   const toneInput = (isTone && rawToneSource) ? rawToneSource : text;
 
-  const formattedPlainText = isTone
-    ? convertToneText(toneInput, toneOrthography, translitStyle, practicalStr)
-    : formatTranslitWithLength(text, rawToneSource, showLengthInTranslit, translitStyle);
+  const formattedPlainText = isCed
+    ? (isTone
+        ? convertToneText(toneInput, toneOrthography, translitStyle, practicalStr)
+        : formatTranslitWithLength(text, rawToneSource, showLengthInTranslit, translitStyle))
+    : convertConsonantsToStyle(text, translitStyle);
 
   let rEntry = rootEntry;
   if (!rEntry && entry) {

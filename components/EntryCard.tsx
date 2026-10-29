@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { StickyNote, ListIcon, Mic, SquaresPlus, TranslateCherokee } from './Icons';
 import { SourceBadge } from './UI';
 import { useCorpus } from './CorpusContext';
-import { VerbMorphologyTemplate, isFormAudio, ColorizedCherokeeWord, getFriendlyLabel } from '../utils';
+import { VerbMorphologyTemplate, isFormAudio, ColorizedCherokeeWord } from '../utils';
 import { usePackageManager } from './PackageManagerContext';
 import { DesktopHorizontalFormsStrip, getReferencePreviewMatchedForms } from './ReferenceFormsPreview';
 
@@ -252,9 +252,6 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
                     showTone={true}
                   />
                 </span>
-              )}
-              {entry.matchedForm.label && (
-                <span className="text-slate-400 dark:text-slate-500 not-italic">({getFriendlyLabel(entry.matchedForm.label)})</span>
               )}
             </div>
           )}
