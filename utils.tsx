@@ -724,6 +724,29 @@ export const isMiniForm = (f?: any, labelOrKey?: string): boolean => {
   return false;
 };
 
+export function matchesPosFilter(entryPoS: string | undefined, filter: string): boolean {
+  if (!filter || filter === "All") return true;
+  if (!entryPoS || filter.trim().toLowerCase() === 'other') return false;
+
+  const parts = entryPoS.split(',').map(p => p.trim().toLowerCase()).filter(Boolean);
+  const filterLower = filter.trim().toLowerCase();
+
+  // Superclass: "verb" includes "verb", "verb (transitive)", "verb (intransitive)", etc.
+  if (filterLower === 'verb') {
+    return parts.some(p => p === 'verb' || p === 'verb (transitive)' || p === 'verb (intransitive)' || p.startsWith('verb'));
+  }
+
+  if (filterLower === 'verb (transitive)') {
+    return parts.some(p => p === 'verb (transitive)' || p === 'transitive verb' || p === 'v.t.');
+  }
+
+  if (filterLower === 'verb (intransitive)') {
+    return parts.some(p => p === 'verb (intransitive)' || p === 'intransitive verb' || p === 'v.i.');
+  }
+
+  return parts.includes(filterLower);
+}
+
 // --- SEARCH ALGORITHM ---
 export const performSearch = (query: string, allData: any[], sentences: any[], entryToSentencesMap: Map<string, string[]>, settings: any, customDictionaries: any, userNotes: any, posFilter: string, searchScope: string, prioritizedSources: string[] = [], rootMap: Map<string, any> = new Map(), wordFormsLookupMap: Map<string, any[]> = new Map()) => {
   if (!query) return [];
@@ -970,7 +993,7 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
     const isPersonal = customDictionaries && customDictionaries[entry.Source];
 
     if (posFilter !== "All") {
-      if (entry.PoS !== posFilter) return { ...entry, score: 0 };
+      if (!matchesPosFilter(entry.PoS, posFilter)) return { ...entry, score: 0 };
     }
 
     // --- TONE SEARCH MODE (Strictly filters words without matching tone) ---

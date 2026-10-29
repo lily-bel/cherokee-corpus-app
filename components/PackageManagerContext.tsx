@@ -221,6 +221,13 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                 metadata.stats.notes = metadata.stats.notes || 0;
 
                 // Normalize Dictionary Data
+                const isAffixOnly = (posStr?: string): boolean => {
+                    if (!posStr) return false;
+                    const parts = posStr.split(',').map(p => p.trim().toLowerCase()).filter(Boolean);
+                    if (parts.length === 0) return false;
+                    return parts.every(p => p.includes('suffix') || p.includes('prefix'));
+                };
+
                 const normalizedDictionary = dictionary.map((d: any) => {
                     let translit = '';
                     let syllabary = '';
@@ -234,8 +241,8 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                     let sourceStr = '';
                     if (sources['cn-app-dictionary.csv']) sourceStr = 'ced';
                     else if (sources['lily-dict.csv']) {
-                        const s = sources['lily-dict.csv'];
-                        sourceStr = s['Source'] || 'lily';
+                        const s = Array.isArray(sources['lily-dict.csv']) ? sources['lily-dict.csv'][0] : sources['lily-dict.csv'];
+                        sourceStr = s?.['Source'] || 'lily';
                     }
                     else if (sources['kirk-book-data.csv']) sourceStr = 'kirk';
                     else if (sources['learning-to-use-the-cherokee-verb.csv']) sourceStr = 'ltu';
@@ -245,35 +252,63 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                     let tone1 = '';
                     let tone2 = '';
                     if (sources['cn-app-dictionary.csv']) {
-                        const s = sources['cn-app-dictionary.csv'];
+                        const s = Array.isArray(sources['cn-app-dictionary.csv']) ? sources['cn-app-dictionary.csv'][0] : sources['cn-app-dictionary.csv'];
                         translit = s['Practical'] || s['Entry'] || '';
                         syllabary = s['Syllabary'] || '';
                         definition = s['Translations'] || '';
-                        PoS = s['Part of speech'] || s['Part of speech ch'] || '';
                         tone1 = s['Tone and length 1'] || '';
                         tone2 = s['Tone and length 2'] || '';
                         Entry_Tone = tone1 || tone2 || '';
                     } else if (sources['lily-dict.csv']) {
-                        const s = sources['lily-dict.csv'];
+                        const s = Array.isArray(sources['lily-dict.csv']) ? sources['lily-dict.csv'][0] : sources['lily-dict.csv'];
                         translit = s['Entry'] || '';
                         syllabary = s['Syllabary'] || '';
                         definition = s['Definition'] || '';
-                        PoS = s['PoS'] || '';
                         Entry_Tone = s['Entry_Tone'] || '';
                     } else if (sources['kirk-book-data.csv']) {
-                        const s = sources['kirk-book-data.csv'];
+                        const s = Array.isArray(sources['kirk-book-data.csv']) ? sources['kirk-book-data.csv'][0] : sources['kirk-book-data.csv'];
                         translit = s['Cherokee'] || '';
                         definition = s['English'] || '';
                         Entry_Tone = s['Tone'] || '';
                     } else if (sources['learning-to-use-the-cherokee-verb.csv']) {
-                        const s = sources['learning-to-use-the-cherokee-verb.csv'];
+                        const s = Array.isArray(sources['learning-to-use-the-cherokee-verb.csv']) ? sources['learning-to-use-the-cherokee-verb.csv'][0] : sources['learning-to-use-the-cherokee-verb.csv'];
                         translit = s['Cherokee'] || '';
                         syllabary = s['Syllabary'] || '';
                         definition = s['English'] || '';
                     } else if (sources['hierarchical-dict.json']) {
-                        const s = sources['hierarchical-dict.json'];
+                        const s = Array.isArray(sources['hierarchical-dict.json']) ? sources['hierarchical-dict.json'][0] : sources['hierarchical-dict.json'];
                         translit = s['practical'] || '';
                         definition = s['definition'] || '';
+                    }
+
+                    // Prioritize PoS from lily-dict.csv (curated and consolidated)
+                    const lilyEntry = Array.isArray(sources['lily-dict.csv']) ? sources['lily-dict.csv'][0] : sources['lily-dict.csv'];
+                    const cnEntry = Array.isArray(sources['cn-app-dictionary.csv']) ? sources['cn-app-dictionary.csv'][0] : sources['cn-app-dictionary.csv'];
+
+                    if (lilyEntry && lilyEntry.PoS) {
+                        PoS = String(lilyEntry.PoS).trim().toLowerCase();
+                    } else if (cnEntry && (cnEntry['Part of speech'] || cnEntry['Part of speech ch'])) {
+                        const rawPos = String(cnEntry['Part of speech'] || cnEntry['Part of speech ch']).trim().toLowerCase();
+                        if (rawPos === 'verb (v.t.)' || rawPos === 'v.t.' || rawPos === 'transitive verb') {
+                            PoS = 'verb (transitive)';
+                        } else if (rawPos === 'verb (v.i.)' || rawPos === 'v.i.' || rawPos === 'intransitive verb') {
+                            PoS = 'verb (intransitive)';
+                        } else if (rawPos === 'verb (v.t.&v.i.)') {
+                            PoS = 'verb (transitive), verb (intransitive)';
+                        } else {
+                            PoS = rawPos;
+                        }
+                    } else if (d.PoS) {
+                        PoS = String(d.PoS).trim().toLowerCase();
+                    }
+
+                    if (PoS) {
+                        const parts = PoS.split(',').map((p: string) => p.trim().toLowerCase()).filter((p: string) => p && p !== 'other');
+                        PoS = parts.join(', ');
+                    }
+
+                    if (isAffixOnly(PoS)) {
+                        return null;
                     }
 
                     const surfaceSpelling = d.surface_spelling || sources['hierarchical-dict.json']?.surface_spelling || sources['hierarchical-dict.json']?.practical || '';
@@ -311,10 +346,10 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                         Definition: definition,
                         Source: sourceStr,
                         Entry_Tone,
-                        PoS: PoS || 'Noun',
+                        PoS: PoS || '',
                         Source_Long: Source_Long || sourceStr
                     };
-                });
+                }).filter(Boolean);
 
                 const normalizedSentences = sentences.map((d: any) => {
                     let source = d.source;

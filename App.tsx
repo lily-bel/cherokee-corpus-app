@@ -7,7 +7,7 @@ import EntryDetail from './components/EntryDetail';
 
 import PackageManagerTab from './components/PackageManagerTab';
 import { useCorpus } from './components/CorpusContext';
-import { downloadFile, performSearch, buildWordFormsLookupMap, isEmptyRoot, getFriendlyLabel, processFormsContextually, getCombinedCedVerbsMode, CombinedCedVerbsMode, ToneOrthography, TONE_ORTHOGRAPHY_OPTIONS, getToneOrthographySetting, getShowLengthInTranslitSetting, getTransliterationStyleSetting, parseRoleTaggedSegmentation, projectToneOrLengthOntoSegments, renderSegmentedSurface } from './utils';
+import { downloadFile, performSearch, matchesPosFilter, buildWordFormsLookupMap, isEmptyRoot, getFriendlyLabel, processFormsContextually, getCombinedCedVerbsMode, CombinedCedVerbsMode, ToneOrthography, TONE_ORTHOGRAPHY_OPTIONS, getToneOrthographySetting, getShowLengthInTranslitSetting, getTransliterationStyleSetting, parseRoleTaggedSegmentation, projectToneOrLengthOntoSegments, renderSegmentedSurface } from './utils';
 import { SentenceCard } from './components/SentenceCard';
 import WidgetsTab from './components/WidgetsTab';
 
@@ -1108,9 +1108,20 @@ function App() {
         const s = new Set<string>();
         s.add("All");
         allData.forEach(d => {
-            if (d.PoS) s.add(d.PoS.trim());
+            if (d.PoS) {
+                const parts = d.PoS.split(',').map((p: string) => p.trim().toLowerCase()).filter(Boolean);
+                parts.forEach((p: string) => {
+                    if (!p.includes('suffix') && !p.includes('prefix') && p !== 'other') {
+                        s.add(p);
+                    }
+                });
+            }
         });
-        return Array.from(s).sort();
+        return Array.from(s).sort((a, b) => {
+            if (a === "All") return -1;
+            if (b === "All") return 1;
+            return a.localeCompare(b);
+        });
     }, [allData]);
 
     const isEntrySearchable = (entry, config) => {
@@ -1158,7 +1169,7 @@ function App() {
         const includePartB = getCombinedCedVerbsMode(settings) === 'full';
         return allData.reduce((acc, entry) => {
             if (!includePartB && (entry as any).is_combined_part_b) return acc;
-            if (posFilter !== "All" && entry.PoS !== posFilter) return acc;
+            if (posFilter !== "All" && !matchesPosFilter(entry.PoS, posFilter)) return acc;
             return acc + (isEntrySearchable(entry, settings) ? 1 : 0);
         }, 0);
     }, [allData, settings, userNotes, posFilter, searchScope, sentences, userSentences, entriesWithOtherFormsSet, rootMap]);
@@ -1892,6 +1903,85 @@ function App() {
         return { active: activeSlice, inactive: inactiveSlice, hasMore };
     }, [filteredResults, resultLimit]);
 
+    const isDefaultSearchSettings = useMemo(() => {
+        if (posFilter !== "All") return false;
+        if (settings?.enableRegex) return false;
+        const langs = settings?.searchLangs || {};
+        if (langs.syllabary === false || langs.translit === false || langs.english === false) return false;
+        const scopes = settings?.searchScopes || {};
+        if (scopes.main === false || scopes.otherForms === false || scopes.roots === false || scopes.sentences || scopes.notes) return false;
+        const activeFilters = searchScope === 'sentences' ? sentenceFilters : filters;
+        if (Object.values(activeFilters).some(v => v === false)) return false;
+        return true;
+    }, [posFilter, settings?.enableRegex, settings?.searchLangs, settings?.searchScopes, searchScope, sentenceFilters, filters]);
+
+    const defaultResults = useMemo(() => {
+        if (isDefaultSearchSettings || !query) return [];
+        const isUserLibraryActive = packages.find(p => p.id === 'user')?.status === 'active';
+        const combinedSentences = [...sentences, ...(isUserLibraryActive ? userSentences : [])];
+        const defaultSettings = {
+            ...settings,
+            enableRegex: false,
+            searchLangs: { syllabary: true, translit: true, english: true },
+            searchScopes: { main: true, otherForms: true, sentences: false, notes: false, roots: true }
+        };
+        return performSearch(
+            query,
+            allData,
+            combinedSentences,
+            entryToSentencesMap,
+            defaultSettings,
+            customDictionaries,
+            userNotes,
+            "All",
+            searchScope,
+            prioritizedSources,
+            rootMap,
+            wordFormsLookupMap
+        );
+    }, [isDefaultSearchSettings, query, packages, sentences, userSentences, settings, allData, entryToSentencesMap, customDictionaries, userNotes, searchScope, prioritizedSources, rootMap, wordFormsLookupMap]);
+
+    const filteredOutCount = useMemo(() => {
+        if (isDefaultSearchSettings || !query || defaultResults.length === 0) return 0;
+        const activeIdSet = new Set<string>();
+        filteredResults.active.forEach(item => {
+            const d = item.item || item;
+            const id = String(d.id || d.Index || d.merged_id || '');
+            if (id) activeIdSet.add(id);
+        });
+
+        let count = 0;
+        defaultResults.forEach(item => {
+            const d = item.item || item;
+            const id = String(d.id || d.Index || d.merged_id || '');
+            if (id && !activeIdSet.has(id)) {
+                count++;
+            }
+        });
+        return count;
+    }, [isDefaultSearchSettings, query, defaultResults, filteredResults.active]);
+
+    const resetSearchFilters = () => {
+        setPosFilter("All");
+        setSettings(s => ({
+            ...s,
+            enableRegex: false,
+            searchLangs: { syllabary: true, translit: true, english: true },
+            searchScopes: { main: true, otherForms: true, sentences: false, notes: false, roots: true },
+        }));
+        setFilters(prev => {
+            const next = { ...prev };
+            Object.keys(next).forEach(k => { next[k] = true; });
+            return next;
+        });
+        setSentenceFilters(prev => {
+            const next = { ...prev };
+            Object.keys(next).forEach(k => { next[k] = true; });
+            return next;
+        });
+        showToast("Filters reset to default", "success");
+    };
+
 
     const handleSearchTerm = (term) => {
         setNavStack([]);
@@ -2383,6 +2473,21 @@ function App() {
                                         <div className="p-4">
                                             <button onClick={() => setResultLimit(prev => prev + 50)} className="w-full py-3 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors">
                                                 Show More Results
+                                            </button>
+                                        </div>
+                                    )}
+                                    {/* Filtered Results Notice */}
+                                    {filteredOutCount > 0 && (
+                                        <div className="p-4 pt-2 pb-3 text-center">
+                                            <div className="text-xs text-slate-500 dark:text-slate-400">
+                                                {filteredOutCount} {filteredOutCount === 1 ? 'result' : 'results'} filtered by search settings
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={resetSearchFilters}
+                                                className="text-xs font-semibold text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 hover:underline mt-0.5 cursor-pointer"
+                                            >
+                                                Reset filters to default?
                                             </button>
                                         </div>
                                     )}
