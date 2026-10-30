@@ -1604,57 +1604,59 @@ const ListsTab: React.FC<ListsTabProps> = ({
         return (
             <div className="flex flex-col h-full bg-[#F9F7F7] dark:bg-slate-950">
                 {/* Header */}
-                <div className="px-4 border-b border-slate-200 dark:border-slate-800 bg-[#af615d] dark:bg-slate-900 flex items-center gap-3 shrink-0 h-12">
-                    <button onClick={() => setView('all')} className="p-2 -ml-2 hover:bg-white/10 dark:hover:bg-slate-800 rounded-full text-white dark:text-slate-400 transition-colors">
-                        <ArrowLeft size={24} />
-                    </button>
-                    <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                            {activeListFolder && (
-                                <span className="text-xs font-bold text-white bg-white/20 dark:text-amber-500 dark:bg-amber-900/30 px-2 py-0.5 rounded shrink-0">
-                                    {activeListFolder}
-                                </span>
-                            )}
-                            <h2 className="font-noto-serif text-lg font-bold text-white dark:text-slate-100 flex items-center gap-2 truncate">
-                                {activeListDisplayName}
-                                {activeList.type === 'user' && (
-                                    <button onClick={() => { setRenameTargetId(activeList.id); setNewListName(activeListDisplayName); setNewListFolder(activeListFolder || ''); setShowNewListModal(true); }} className="text-white/80 hover:text-white dark:text-slate-400 dark:hover:text-amber-600 transition-colors">
-                                        <Pencil size={16} />
-                                    </button>
+                <div className="px-4 py-2 border-b border-slate-200 dark:border-slate-800 bg-[#af615d] dark:bg-slate-900 flex flex-col gap-2 shrink-0">
+                    <div className="flex items-center gap-3">
+                        <button onClick={() => setView('all')} className="p-1.5 hover:bg-white/10 dark:hover:bg-slate-800 rounded-full -ml-2 text-white dark:text-slate-400 transition-colors">
+                            <ArrowLeft size={20} />
+                        </button>
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                                {activeListFolder && (
+                                    <span className="text-xs font-bold text-white bg-white/20 dark:text-amber-500 dark:bg-amber-900/30 px-2 py-0.5 rounded shrink-0">
+                                        {activeListFolder}
+                                    </span>
                                 )}
-                            </h2>
+                                <h2 className="font-noto-serif text-lg font-bold text-white dark:text-slate-100 flex items-center gap-2 truncate">
+                                    {activeListDisplayName}
+                                    {activeList.type === 'user' && (
+                                        <button onClick={() => { setRenameTargetId(activeList.id); setNewListName(activeListDisplayName); setNewListFolder(activeListFolder || ''); setShowNewListModal(true); }} className="text-white/80 hover:text-white dark:text-slate-400 dark:hover:text-amber-600 transition-colors">
+                                            <Pencil size={16} />
+                                        </button>
+                                    )}
+                                </h2>
+                            </div>
+                            <p className="text-xs text-white/80 dark:text-slate-400">{listItems.length} items</p>
                         </div>
-                        <p className="text-xs text-white/80 dark:text-slate-400">{listItems.length} items</p>
+                        <div className="flex gap-1.5 ml-auto items-center">
+                            <button
+                                onClick={() => setShowExportModal(true)}
+                                className="p-1.5 text-white/90 hover:text-white dark:text-slate-300 dark:hover:text-amber-400 rounded-full hover:bg-white/10 dark:hover:bg-slate-800 transition-colors"
+                                title="Export & Print List"
+                            >
+                                <Download size={19} />
+                            </button>
+                            {activeList.type === 'user' && (
+                                <button onClick={() => setDeleteTargetId(activeList.id)} className="p-1.5 text-white/80 hover:text-red-200 dark:text-slate-400 dark:hover:text-red-500 rounded-full hover:bg-white/10 dark:hover:bg-slate-800 transition-colors" title="Delete List">
+                                    <Trash2 size={20} />
+                                </button>
+                            )}
+                            <UserAuthButton />
+                            {onShowSettings && (
+                                <button onClick={onShowSettings} className="p-1.5 hover:bg-white/10 dark:hover:bg-slate-800 rounded-full text-white dark:text-slate-300 transition-colors" title="Settings">
+                                    <Menu size={22} strokeWidth={1.5} />
+                                </button>
+                            )}
+                        </div>
                     </div>
-                    <button
-                        onClick={() => setShowExportModal(true)}
-                        className="p-1.5 text-white/90 hover:text-white dark:text-slate-300 dark:hover:text-amber-400 rounded-full hover:bg-white/10 dark:hover:bg-slate-800 transition-colors"
-                        title="Export & Print List"
-                    >
-                        <Download size={19} />
-                    </button>
-                    {activeList.type === 'user' && (
-                        <button onClick={() => setDeleteTargetId(activeList.id)} className="p-1.5 text-white/80 hover:text-red-200 dark:text-slate-400 dark:hover:text-red-500 rounded-full hover:bg-white/10 dark:hover:bg-slate-800 transition-colors" title="Delete List">
-                            <Trash2 size={20} />
-                        </button>
-                    )}
-                    <UserAuthButton />
-                    {onShowSettings && (
-                        <button onClick={onShowSettings} className="p-1.5 hover:bg-white/10 dark:hover:bg-slate-800 rounded-full text-white dark:text-slate-300 transition-colors" title="Settings">
-                            <Menu size={22} strokeWidth={1.5} />
-                        </button>
-                    )}
+                    <div className="flex bg-black/15 dark:bg-slate-800 p-1 rounded-lg">
+                        <button onClick={() => setListMode('words')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${listMode === 'words' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-white/80 hover:text-white dark:text-slate-400'} `}>Words ({listItems.filter(i => i?.type === 'word').length})</button>
+                        <button onClick={() => setListMode('sentences')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${listMode === 'sentences' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-white/80 hover:text-white dark:text-slate-400'} `}>Sentences ({listItems.filter(i => i?.type === 'sentence').length})</button>
+                    </div>
                 </div>
 
-                {/* Mode Toggle & Study Controls */}
-                <div className="px-4 py-2 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 space-y-2">
-                    <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
-                        <button onClick={() => setListMode('words')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${listMode === 'words' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'} `}>Words ({listItems.filter(i => i?.type === 'word').length})</button>
-                        <button onClick={() => setListMode('sentences')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${listMode === 'sentences' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'} `}>Sentences ({listItems.filter(i => i?.type === 'sentence').length})</button>
-                    </div>
-
-                    {displayedItems.length > 0 && (
-                        <div className="flex flex-wrap items-center justify-between gap-1.5 pt-0.5">
+                {/* Study Controls */}
+                {displayedItems.length > 0 && (
+                    <div className="px-4 py-2 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-1.5">
                             <div className="flex flex-wrap items-center gap-1.5">
                                 <button
                                     type="button"
@@ -1754,7 +1756,6 @@ const ListsTab: React.FC<ListsTabProps> = ({
                             </button>
                         </div>
                     )}
-                </div>
 
                 {/* Table Content */}
                 <div className="flex-1 overflow-y-auto p-4">

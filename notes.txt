@@ -9,9 +9,6 @@ BIG QUESTIONS:
 searching "higoliya" does not show Matched form: higoliya
 
 
-creating a chapter has a "create new book" tab option - this doenst need to exist
-word | sentence visual is different on collection vs list
-
 TEST:
 Online Capabilities & Testing                                                                                 
   Online capabilities, specifically cloud backup and public packages, have not been tested yet.                                                                                                                     
