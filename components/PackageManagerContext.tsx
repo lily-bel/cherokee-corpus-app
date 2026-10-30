@@ -254,14 +254,15 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                 };
 
                 // Fetch Data Files in parallel safely
-                const [metadata, dictRes, sentRes, joinRes, conjRes, audioMapRes, officialListRes] = await Promise.all([
+                const [metadata, dictRes, sentRes, joinRes, conjRes, audioMapRes, officialListRes, officialNonVerbsRes] = await Promise.all([
                     fetchJsonSafe<PackageMetadata>(`${base}data/metadata.json`, defaultMetadata),
                     fetchJsonSafe<any[]>(`${base}data/base_forms.json`, []),
                     fetchJsonSafe<any[]>(`${base}data/sentences.json`, []),
                     fetchJsonSafe<any[]>(`${base}data/sentence_joins.json`, []),
                     fetchJsonSafe<any[]>(`${base}data/conjugations.json`, []),
                     fetchJsonSafe<Record<string, any>>(`${base}data/audio_mapping.json`, {}),
-                    fetchJsonSafe<any>(`${base}data/lists/official_lists_ced_verbs.json`, null)
+                    fetchJsonSafe<any>(`${base}data/lists/official_lists_ced_verbs.json`, null),
+                    fetchJsonSafe<any>(`${base}data/lists/official_lists_ced_non_verbs.json`, null)
                 ]);
 
                 const dictionary = dictRes;
@@ -279,6 +280,20 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                     officialLists.push({
                         id: 'official_list_ced_verbs',
                         name: officialListRes.name,
+                        items: items,
+                        type: 'imported',
+                        packageId: 'official-cherokee-data',
+                        color: 'slate'
+                    });
+                }
+                if (officialNonVerbsRes && officialNonVerbsRes.name) {
+                    const items = [
+                        ...(officialNonVerbsRes.words || []),
+                        ...(officialNonVerbsRes.sentences || []).map((id: string) => `s_${id}`)
+                    ];
+                    officialLists.push({
+                        id: 'official_list_ced_non_verbs',
+                        name: officialNonVerbsRes.name,
                         items: items,
                         type: 'imported',
                         packageId: 'official-cherokee-data',

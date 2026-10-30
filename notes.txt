@@ -10,8 +10,7 @@ searching "higoliya" does not show Matched form: higoliya
 
 
 creating a chapter has a "create new book" tab option - this doenst need to exist
-gloss search - it double scrolls, hiding the new word button, new word modal too
-on desktop - gloss popup could show exact matches as buttons
+word | sentence visual is different on collection vs list
 
 TEST:
 Online Capabilities & Testing                                                                                 

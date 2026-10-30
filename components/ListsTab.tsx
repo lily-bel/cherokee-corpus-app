@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Star, ListIcon, Trash2, Pencil, ChevronRight, ChevronDown, GripVertical, Folder, FolderPlus, ArrowLeft, Plus, X, Search, Check, Volume2, Pause, Eye, EyeOff, Mic, StickyNote, ListPlus, BookOpen, Menu } from './Icons';
+import { Star, ListIcon, Trash2, Pencil, ChevronRight, ChevronDown, GripVertical, Folder, FolderPlus, ArrowLeft, Plus, X, Search, Check, Volume2, Pause, Eye, EyeOff, Mic, StickyNote, ListPlus, BookOpen, Menu, Shuffle, Download } from './Icons';
 import { Modal, SourceBadge, UserAuthButton } from './UI';
 import { usePackageManager } from './PackageManagerContext';
 import { useCorpus } from './CorpusContext';
 import { useReader } from './ReaderContext';
 import { getAudioFromDB, renderStyledText, parseListName, formatListName, sanitizeListName, ColorizedCherokeeWord, VerbMorphologyTemplate, isFormAudio } from '../utils';
+import { ListExportModal, buildStudyRowsForItems } from './ListExportModal';
 
 export interface ListData {
     id: string;
@@ -132,6 +133,95 @@ const MiniAudioButton = ({ audio, isOfficial = false, isWord = false, color }: {
         >
             {isPlaying ? <Pause size={14} className="fill-current" /> : <Icon size={14} />}
         </button>
+    );
+};
+
+const StandardBlurField = ({
+    isBlurred,
+    isHidingActive,
+    onToggleReveal,
+    type,
+    containerClassName = "",
+    className = "",
+    children
+}: {
+    isBlurred: boolean;
+    isHidingActive: boolean;
+    onToggleReveal: () => void;
+    type: 'syllabary' | 'translit' | 'english';
+    containerClassName?: string;
+    className?: string;
+    children: React.ReactNode;
+}) => {
+    // Extract any breakpoint or display hidden classes (e.g. "md:hidden", "hidden", "sm:hidden")
+    // so the entire field container respects visibility when hiding is active.
+    const hiddenClasses = className
+        .split(/\s+/)
+        .filter(c => /^(?:[a-z0-9_-]+:)?hidden$/.test(c));
+
+    const combinedContainerClasses = Array.from(new Set([
+        ...containerClassName.split(/\s+/).filter(Boolean),
+        ...hiddenClasses
+    ])).join(' ');
+
+    const cleanContentClass = className
+        .split(/\s+/)
+        .filter(c => !hiddenClasses.includes(c))
+        .join(' ');
+
+    if (!isHidingActive) {
+        const fullClass = [combinedContainerClasses, cleanContentClass].filter(Boolean).join(' ');
+        return <div className={fullClass}>{children}</div>;
+    }
+
+    const placeholderText =
+        type === 'syllabary' ? 'ᎤᏕᎵᏓᏛᏛ' :
+        type === 'translit' ? 'udelidadvdv' :
+        'word definition text';
+
+    const textStyle =
+        type === 'syllabary' ? 'font-noto-cherokee text-lg leading-tight' :
+        type === 'translit' ? 'font-noto-serif text-sm font-bold' :
+        'font-noto-serif text-sm';
+
+    return (
+        <div
+            onClick={(e) => {
+                e.stopPropagation();
+                onToggleReveal();
+            }}
+            className={`group/blur relative cursor-pointer select-none ${combinedContainerClasses}`.trim()}
+            title={isBlurred ? "Click to reveal, hover to peek" : "Click to hide"}
+        >
+            <div className="grid grid-cols-1 grid-rows-1 items-center">
+                {/* Real content layer - always rendered to lock cell geometry and prevent layout hopping */}
+                <div
+                    className={`col-start-1 row-start-1 transition-opacity duration-150 ${cleanContentClass} ${
+                        isBlurred
+                            ? 'opacity-0 pointer-events-none group-hover/blur:opacity-100 group-hover/blur:pointer-events-auto'
+                            : 'opacity-100'
+                    }`}
+                >
+                    {children}
+                </div>
+
+                {/* Standard blur placeholder layer */}
+                <div
+                    aria-hidden="true"
+                    className={`col-start-1 row-start-1 transition-opacity duration-150 pointer-events-none ${
+                        isBlurred
+                            ? 'opacity-100 group-hover/blur:opacity-0'
+                            : 'opacity-0'
+                    }`}
+                >
+                    <span
+                        className={`inline-block blur-[5px] select-none text-slate-400 dark:text-slate-500 bg-slate-200/60 dark:bg-slate-800/80 rounded px-1.5 py-0.5 ${textStyle}`}
+                    >
+                        {placeholderText}
+                    </span>
+                </div>
+            </div>
+        </div>
     );
 };
 
@@ -563,6 +653,49 @@ const ListsTab: React.FC<ListsTabProps> = ({
     }).filter(Boolean) as { type: 'word' | 'sentence', data: any }[] : [];
 
     const displayedItems = listItems.filter(item => item?.type === (listMode === 'words' ? 'word' : 'sentence'));
+
+    // --- STUDY / SELF-TEST & EXPORT STATE ---
+    const [hideSyllabary, setHideSyllabary] = useState(false);
+    const [hideTranslit, setHideTranslit] = useState(false);
+    const [hideEnglish, setHideEnglish] = useState(false);
+    const [isShuffled, setIsShuffled] = useState(false);
+    const [shuffleSeed, setShuffleSeed] = useState(0);
+    const [expandVerbFormsInTable, setExpandVerbFormsInTable] = useState(false);
+    const [revealedCells, setRevealedCells] = useState<Record<string, boolean>>({});
+    const [showExportModal, setShowExportModal] = useState(false);
+
+    useEffect(() => {
+        setRevealedCells({});
+    }, [activeListId, listMode, expandVerbFormsInTable]);
+
+    const toggleRevealCell = (cellKey: string) => {
+        setRevealedCells(prev => ({ ...prev, [cellKey]: !prev[cellKey] }));
+    };
+
+    const tableStudyRows = useMemo(() => {
+        const baseRows = buildStudyRowsForItems(displayedItems, {
+            expandVerbForms: expandVerbFormsInTable && listMode === 'words',
+            packages,
+            importedData,
+            rootMap,
+            settings,
+            userNotes,
+            customDictionaries: propCustomDictionaries
+        });
+
+        if (!isShuffled) return baseRows;
+
+        const copy = [...baseRows];
+        let s = shuffleSeed || 1;
+        for (let i = copy.length - 1; i > 0; i--) {
+            s = (s * 1664525 + 1013904223) % 4294967296;
+            const j = Math.floor((s / 4294967296) * (i + 1));
+            const tmp = copy[i];
+            copy[i] = copy[j];
+            copy[j] = tmp;
+        }
+        return copy;
+    }, [displayedItems, expandVerbFormsInTable, listMode, packages, importedData, rootMap, settings, userNotes, propCustomDictionaries, isShuffled, shuffleSeed]);
 
     const handleRemoveFromList = (item: any) => {
         if (!activeListId) return;
@@ -1343,6 +1476,23 @@ const ListsTab: React.FC<ListsTabProps> = ({
                     settings={settings}
                 />
 
+                {showExportModal && activeList && (
+                    <ListExportModal
+                        isOpen={showExportModal}
+                        onClose={() => setShowExportModal(false)}
+                        listName={activeList.name}
+                        listItems={listItems}
+                        initialListMode={listMode}
+                        initialExpandVerbForms={expandVerbFormsInTable}
+                        packages={packages}
+                        importedData={importedData}
+                        rootMap={rootMap}
+                        settings={settings}
+                        userNotes={userNotes}
+                        customDictionaries={propCustomDictionaries}
+                    />
+                )}
+
                 {addExistingModalFolder && (() => {
                     const userLists = Array.from(allAvailableLists.values()).filter(l => l.type === 'user');
                     const filteredLists = userLists.filter(l => {
@@ -1476,6 +1626,13 @@ const ListsTab: React.FC<ListsTabProps> = ({
                         </div>
                         <p className="text-xs text-white/80 dark:text-slate-400">{listItems.length} items</p>
                     </div>
+                    <button
+                        onClick={() => setShowExportModal(true)}
+                        className="p-1.5 text-white/90 hover:text-white dark:text-slate-300 dark:hover:text-amber-400 rounded-full hover:bg-white/10 dark:hover:bg-slate-800 transition-colors"
+                        title="Export & Print List"
+                    >
+                        <Download size={19} />
+                    </button>
                     {activeList.type === 'user' && (
                         <button onClick={() => setDeleteTargetId(activeList.id)} className="p-1.5 text-white/80 hover:text-red-200 dark:text-slate-400 dark:hover:text-red-500 rounded-full hover:bg-white/10 dark:hover:bg-slate-800 transition-colors" title="Delete List">
                             <Trash2 size={20} />
@@ -1489,12 +1646,114 @@ const ListsTab: React.FC<ListsTabProps> = ({
                     )}
                 </div>
 
-                {/* Mode Toggle */}
-                <div className="px-4 pb-2 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+                {/* Mode Toggle & Study Controls */}
+                <div className="px-4 py-2 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 space-y-2">
                     <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
                         <button onClick={() => setListMode('words')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${listMode === 'words' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'} `}>Words ({listItems.filter(i => i?.type === 'word').length})</button>
                         <button onClick={() => setListMode('sentences')} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wide rounded-md transition-all ${listMode === 'sentences' ? 'bg-white dark:bg-slate-700 shadow text-slate-800 dark:text-slate-100' : 'text-slate-500 dark:text-slate-400'} `}>Sentences ({listItems.filter(i => i?.type === 'sentence').length})</button>
                     </div>
+
+                    {displayedItems.length > 0 && (
+                        <div className="flex flex-wrap items-center justify-between gap-1.5 pt-0.5">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setHideSyllabary(prev => !prev);
+                                        setRevealedCells({});
+                                    }}
+                                    className={`px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1 border transition-all ${
+                                        hideSyllabary
+                                            ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700'
+                                            : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
+                                    }`}
+                                    title={hideSyllabary ? "Show Syllabary" : "Hide Syllabary (Self-Test)"}
+                                >
+                                    {hideSyllabary ? <EyeOff size={14} /> : <Eye size={14} />}
+                                    <span>Syllabary</span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setHideTranslit(prev => !prev);
+                                        setRevealedCells({});
+                                    }}
+                                    className={`px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1 border transition-all ${
+                                        hideTranslit
+                                            ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700'
+                                            : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
+                                    }`}
+                                    title={hideTranslit ? "Show Transliteration" : "Hide Transliteration (Self-Test)"}
+                                >
+                                    {hideTranslit ? <EyeOff size={14} /> : <Eye size={14} />}
+                                    <span>Translit</span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setHideEnglish(prev => !prev);
+                                        setRevealedCells({});
+                                    }}
+                                    className={`px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1 border transition-all ${
+                                        hideEnglish
+                                            ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700'
+                                            : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
+                                    }`}
+                                    title={hideEnglish ? "Show English" : "Hide English (Self-Test)"}
+                                >
+                                    {hideEnglish ? <EyeOff size={14} /> : <Eye size={14} />}
+                                    <span>English</span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        if (isShuffled) {
+                                            setIsShuffled(false);
+                                        } else {
+                                            setShuffleSeed(Date.now());
+                                            setIsShuffled(true);
+                                        }
+                                    }}
+                                    className={`p-1.5 rounded-lg border transition-all flex items-center justify-center ${
+                                        isShuffled
+                                            ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
+                                            : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
+                                    }`}
+                                    title={isShuffled ? "Restore Original Order" : "Shuffle Order"}
+                                >
+                                    <Shuffle size={14} />
+                                </button>
+
+                                {listMode === 'words' && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setExpandVerbFormsInTable(prev => !prev)}
+                                        className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all ${
+                                            expandVerbFormsInTable
+                                                ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
+                                                : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
+                                        }`}
+                                        title="Separate verbs into their 6-8 surface forms"
+                                    >
+                                        Separate Verb Stems
+                                    </button>
+                                )}
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => setShowExportModal(true)}
+                                className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800 dark:bg-slate-700 hover:bg-slate-700 dark:hover:bg-slate-600 text-white flex items-center gap-1 transition-all shadow-xs"
+                                title="Export for Quizlet, Anki, or Print"
+                            >
+                                <Download size={13} />
+                                <span>Export</span>
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Table Content */}
@@ -1507,24 +1766,36 @@ const ListsTab: React.FC<ListsTabProps> = ({
                         </div>
                     ) : (
                         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                            <table className="w-full text-left border-collapse">
+                            <table className="w-full table-fixed text-left border-collapse">
                                 <thead className="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-bold">
                                     <tr>
-                                        <th className="p-3 border-b border-slate-100 dark:border-slate-700">
+                                        <th className="p-3 border-b border-slate-100 dark:border-slate-700 w-full md:w-5/12">
                                             <span className="hidden md:inline">{listMode === 'words' ? 'Word' : 'Cherokee'}</span>
                                         </th>
-                                        <th className="p-3 border-b border-slate-100 dark:border-slate-700 hidden md:table-cell">English</th>
-                                        <th className="p-3 border-b border-slate-100 dark:border-slate-700"></th>
+                                        <th className="p-3 border-b border-slate-100 dark:border-slate-700 hidden md:table-cell md:w-5/12">English</th>
+                                        <th className="p-3 border-b border-slate-100 dark:border-slate-700 w-24 md:w-28"></th>
                                         <th className="p-3 border-b border-slate-100 dark:border-slate-700 w-10"></th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                    {displayedItems.map(({ type, data }) => {
-                                        if (type === 'word') {
-                                            const word = data;
+                                    {tableStudyRows.map((row) => {
+                                        const sylKey = `${row.id}_syl`;
+                                        const trKey = `${row.id}_tr`;
+                                        const enKey = `${row.id}_en`;
+                                        const isSylBlurred = hideSyllabary && !revealedCells[sylKey];
+                                        const isTrBlurred = hideTranslit && !revealedCells[trKey];
+                                        const isEnBlurred = hideEnglish && !revealedCells[enKey];
+
+                                        if (row.itemType === 'word') {
+                                            const word = row.word;
                                             const wordKey = word?.Index || word?.id || word?.merged_id;
-                                            const rootEntry = word ? (rootMap?.get(word.Index) || rootMap?.get(word.id) || rootMap?.get(word.merged_id)) : null;
-                                            const officialAudio = word?.audio || word?.Entry_Audio || word?.entry_audio || word?.Audio;
+                                            const rootEntry = row.rootEntry;
+                                            const form = row.form;
+
+                                            const officialAudio = form
+                                                ? (form.audio || form.Word_Audio || '')
+                                                : (word?.audio || word?.Entry_Audio || word?.entry_audio || word?.Audio);
+
                                             const entryAudioList = (
                                                 (word?.Index && effectiveUserAudioMeta?.[word.Index]) ||
                                                 (word?.id && effectiveUserAudioMeta?.[word.id]) ||
@@ -1537,10 +1808,21 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                                 seenAudioIds.add(officialAudio);
                                             }
 
-                                            const baseUserAudio = entryAudioList.filter((audio: any) => {
-                                                if (isFormAudio(audio)) return false;
+                                            const formRegex = form?.index !== undefined ? new RegExp(`(?:_F|\\.)${form.index}(?:_|$)`) : null;
 
+                                            const baseUserAudio = entryAudioList.filter((audio: any) => {
                                                 const audioId = typeof audio === 'string' ? audio : audio.id;
+                                                if (form) {
+                                                    if (!isFormAudio(audio)) return false;
+                                                    const matchesForm =
+                                                        (formRegex && audioId && formRegex.test(audioId)) ||
+                                                        audio.formIndex === form.index ||
+                                                        (audioId && (audioId.includes(`.${form.index}_`) || audioId.includes(`_F${form.index}_`)));
+                                                    if (!matchesForm) return false;
+                                                } else {
+                                                    if (isFormAudio(audio)) return false;
+                                                }
+
                                                 if (audioId && seenAudioIds.has(audioId)) return false;
                                                 if (audioId) seenAudioIds.add(audioId);
 
@@ -1552,10 +1834,12 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                                 return pkg && pkg.status === 'active';
                                             });
 
+                                            const showMorphologyHeader = isLinguist && rootEntry && !row.isExpandedForm && !hideSyllabary && !hideTranslit;
+
                                             return (
-                                                <tr key={wordKey || word?.Index} onClick={() => onEntryClick(word)} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors active:bg-amber-50 dark:active:bg-amber-900/20">
+                                                <tr key={row.id} onClick={() => onEntryClick(word)} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors active:bg-amber-50 dark:active:bg-amber-900/20">
                                                     <td className="p-3 align-middle">
-                                                        {isLinguist && rootEntry ? (
+                                                        {showMorphologyHeader ? (
                                                             <div className="py-1">
                                                                 <VerbMorphologyTemplate
                                                                     rootEntry={rootEntry}
@@ -1564,24 +1848,64 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                                             </div>
                                                         ) : (
                                                             <>
-                                                                <div className="font-noto-cherokee text-lg text-slate-800 dark:text-slate-100 leading-tight">{word?.Syllabary || ''}</div>
-                                                                <div className="font-noto-serif text-sm text-slate-700 dark:text-slate-300 font-bold">
+                                                                <StandardBlurField
+                                                                    isBlurred={isSylBlurred}
+                                                                    isHidingActive={hideSyllabary}
+                                                                    onToggleReveal={() => toggleRevealCell(sylKey)}
+                                                                    type="syllabary"
+                                                                    className="font-noto-cherokee text-lg text-slate-800 dark:text-slate-100 leading-tight block"
+                                                                >
+                                                                    {row.syllabary}
+                                                                </StandardBlurField>
+                                                                <StandardBlurField
+                                                                    isBlurred={isTrBlurred}
+                                                                    isHidingActive={hideTranslit}
+                                                                    onToggleReveal={() => toggleRevealCell(trKey)}
+                                                                    type="translit"
+                                                                    className="font-noto-serif text-sm text-slate-700 dark:text-slate-300 font-bold block"
+                                                                >
                                                                     <ColorizedCherokeeWord
-                                                                        word={word?.Entry || word?.translit}
+                                                                        word={form ? row.translit : (word?.Entry || word?.translit)}
+                                                                        form={form || undefined}
+                                                                        formKey={row.slotKey}
                                                                         entry={word}
+                                                                        rootEntry={rootEntry}
                                                                         settings={settings}
                                                                     />
-                                                                </div>
+                                                                </StandardBlurField>
                                                             </>
                                                         )}
-                                                        <div className="md:hidden mt-2 font-noto-serif text-slate-600 dark:text-slate-300 text-sm line-clamp-2">
-                                                            {word?.Definition || ''}
-                                                        </div>
+                                                        <StandardBlurField
+                                                            isBlurred={isEnBlurred}
+                                                            isHidingActive={hideEnglish}
+                                                            onToggleReveal={() => toggleRevealCell(enKey)}
+                                                            type="english"
+                                                            containerClassName="md:hidden mt-2"
+                                                            className="font-noto-serif text-slate-600 dark:text-slate-300 text-sm line-clamp-2"
+                                                        >
+                                                            <span>{row.baseEnglish}</span>
+                                                            {row.formLabel && (
+                                                                <span className="ml-1.5 inline-block text-[10px] font-sans font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-100/80 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300">
+                                                                    {row.formLabel}
+                                                                </span>
+                                                            )}
+                                                        </StandardBlurField>
                                                     </td>
                                                     <td className="p-3 align-middle hidden md:table-cell">
-                                                        <div className="font-noto-serif text-slate-600 dark:text-slate-300 text-sm line-clamp-2">
-                                                            {word?.Definition || ''}
-                                                        </div>
+                                                        <StandardBlurField
+                                                            isBlurred={isEnBlurred}
+                                                            isHidingActive={hideEnglish}
+                                                            onToggleReveal={() => toggleRevealCell(enKey)}
+                                                            type="english"
+                                                            className="font-noto-serif text-slate-600 dark:text-slate-300 text-sm line-clamp-2"
+                                                        >
+                                                            <span>{row.baseEnglish}</span>
+                                                            {row.formLabel && (
+                                                                <span className="ml-2 inline-block text-[10px] font-sans font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-100/80 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300">
+                                                                    {row.formLabel}
+                                                                </span>
+                                                            )}
+                                                        </StandardBlurField>
                                                     </td>
                                                     <td className="p-3 align-middle">
                                                         <div className="flex flex-wrap gap-1.5" onClick={e => e.stopPropagation()}>
@@ -1615,7 +1939,7 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                                 </tr>
                                             );
                                         } else {
-                                            const sentence = data;
+                                            const sentence = row.sentence;
                                             const sentenceAudio = sentence?.audio;
                                             const rawSentenceAudioList = (effectiveUserAudioMeta?.[sentence.id + '_sentence'] || []);
 
@@ -1638,12 +1962,28 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                             });
 
                                             return (
-                                                <tr key={sentence.id} onClick={() => onEntryClick(sentence)} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors active:bg-amber-50 dark:active:bg-amber-900/20">
+                                                <tr key={row.id} onClick={() => onEntryClick(sentence)} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors active:bg-amber-50 dark:active:bg-amber-900/20">
                                                     <td className="p-3 align-middle">
                                                         <div className="flex justify-between items-start">
                                                             <div>
-                                                                <div className="font-noto-cherokee text-lg text-slate-800 dark:text-slate-100 leading-tight">{(sentence.syllabary || '').replace(/\*/g, '')}</div>
-                                                                <div className="font-noto-serif text-sm text-slate-500 dark:text-slate-400 font-medium">{(sentence.translit || '').replace(/\*/g, '')}</div>
+                                                                <StandardBlurField
+                                                                    isBlurred={isSylBlurred}
+                                                                    isHidingActive={hideSyllabary}
+                                                                    onToggleReveal={() => toggleRevealCell(sylKey)}
+                                                                    type="syllabary"
+                                                                    className="font-noto-cherokee text-lg text-slate-800 dark:text-slate-100 leading-tight block"
+                                                                >
+                                                                    {row.syllabary}
+                                                                </StandardBlurField>
+                                                                <StandardBlurField
+                                                                    isBlurred={isTrBlurred}
+                                                                    isHidingActive={hideTranslit}
+                                                                    onToggleReveal={() => toggleRevealCell(trKey)}
+                                                                    type="translit"
+                                                                    className="font-noto-serif text-sm text-slate-500 dark:text-slate-400 font-medium block"
+                                                                >
+                                                                    {row.translit}
+                                                                </StandardBlurField>
                                                             </div>
                                                             {onReadInContext && (
                                                                 <button
@@ -1656,14 +1996,27 @@ const ListsTab: React.FC<ListsTabProps> = ({
                                                                 </button>
                                                             )}
                                                         </div>
-                                                        <div className="md:hidden mt-2 font-noto-serif text-slate-600 dark:text-slate-300 text-sm line-clamp-2">
+                                                        <StandardBlurField
+                                                            isBlurred={isEnBlurred}
+                                                            isHidingActive={hideEnglish}
+                                                            onToggleReveal={() => toggleRevealCell(enKey)}
+                                                            type="english"
+                                                            containerClassName="md:hidden mt-2"
+                                                            className="font-noto-serif text-slate-600 dark:text-slate-300 text-sm line-clamp-2"
+                                                        >
                                                             {renderStyledText(sentence.english || '')}
-                                                        </div>
+                                                        </StandardBlurField>
                                                     </td>
                                                     <td className="p-3 align-middle hidden md:table-cell">
-                                                        <div className="font-noto-serif text-slate-600 dark:text-slate-300 text-sm line-clamp-2">
+                                                        <StandardBlurField
+                                                            isBlurred={isEnBlurred}
+                                                            isHidingActive={hideEnglish}
+                                                            onToggleReveal={() => toggleRevealCell(enKey)}
+                                                            type="english"
+                                                            className="font-noto-serif text-slate-600 dark:text-slate-300 text-sm line-clamp-2"
+                                                        >
                                                             {renderStyledText(sentence.english || '')}
-                                                        </div>
+                                                        </StandardBlurField>
                                                     </td>
                                                     <td className="p-3 align-middle">
                                                         <div className="flex flex-wrap gap-1.5" onClick={e => e.stopPropagation()}>
