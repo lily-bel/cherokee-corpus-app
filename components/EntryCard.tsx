@@ -4,7 +4,7 @@ import { SourceBadge } from './UI';
 import { useCorpus } from './CorpusContext';
 import { VerbMorphologyTemplate, isFormAudio, ColorizedCherokeeWord } from '../utils';
 import { usePackageManager } from './PackageManagerContext';
-import { DesktopHorizontalFormsStrip, getReferencePreviewMatchedForms } from './ReferenceFormsPreview';
+import { DesktopHorizontalFormsStrip, getReferencePreviewMatchedForms, getPreviewStripMatchedSlotKeys } from './ReferenceFormsPreview';
 
 
 const getHexColor = (col: string) => {
@@ -53,7 +53,7 @@ const MultiSourceIcon = ({ Icon, colors, size = 14 }: { Icon: any, colors: strin
   );
 };
 
-const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWordForms, favorites, customLists, onClick, isDimmed = false, showPos = false, settings, onViewRoot, onViewClass }: any) => {
+const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWordForms, favorites, customLists, onClick, isDimmed = false, showPos = false, settings, onViewRoot, onViewClass, searchQuery }: any) => {
   const { getPackageColor, packages, importedData, wordFormsByWordIndex } = usePackageManager();
   const { rootMap } = useCorpus();
 
@@ -72,6 +72,7 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
 
   const entryId = entry.id || entry.Index || entry.merged_id;
   const rootEntry = entry.rootEntry || (entryId ? rootMap?.get(entryId) : null);
+  const currentSearchQuery = searchQuery ?? entry?.searchQuery ?? '';
 
   // --- Entry Forms for Desktop Preview ---
   const entryForms = useMemo(() => {
@@ -99,9 +100,25 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
     return list;
   }, [entryId, entry.Index, wordFormsByWordIndex, userWordForms]);
 
-  const { hasMiniPreview } = useMemo(() => {
+  const { hasMiniPreview, displayedCards } = useMemo(() => {
     return getReferencePreviewMatchedForms(entryForms, entry, rootEntry, settings);
   }, [entryForms, entry, rootEntry, settings]);
+
+  const matchedCardSlotKeys = useMemo(() => {
+    if (!hasMiniPreview || (!currentSearchQuery && !entry.matchedForm)) {
+      return new Set<string>();
+    }
+    return getPreviewStripMatchedSlotKeys(
+      displayedCards,
+      currentSearchQuery,
+      settings,
+      entry,
+      rootEntry,
+      entry.matchedForm
+    );
+  }, [hasMiniPreview, displayedCards, currentSearchQuery, settings, entry, rootEntry]);
+
+  const anyPreviewMatches = hasMiniPreview && matchedCardSlotKeys.size > 0;
 
   // --- Audio Colors ---
 
@@ -234,7 +251,7 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
             </div>
           </div>
           {entry.matchedForm && (
-            <div className="text-xs text-amber-600 dark:text-amber-400 italic mb-1.5 font-medium flex items-center flex-wrap gap-x-1.5 gap-y-0.5">
+            <div className={`text-xs text-amber-600 dark:text-amber-400 italic mb-1.5 font-medium flex items-center flex-wrap gap-x-1.5 gap-y-0.5 ${anyPreviewMatches ? 'lg:hidden' : ''}`}>
               <span className="text-slate-400 dark:text-slate-500 not-italic">matched form:</span>
               {entry.matchedForm.syllabary && (
                 <span className="font-noto-cherokee font-semibold">{entry.matchedForm.syllabary}</span>
@@ -275,6 +292,8 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
               forms={entryForms}
               rootEntry={rootEntry}
               settings={settings}
+              searchQuery={currentSearchQuery}
+              matchedCardSlotKeys={matchedCardSlotKeys}
             />
           </div>
         )}

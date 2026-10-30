@@ -1120,7 +1120,7 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
       const primaryLength = entry.Entry?.length || entry.Syllabary?.length || 0;
       score -= primaryLength * 0.001;
 
-      return { ...entry, score, matchedForm: activeMatchedForm, matchedRootKey: null };
+      return { ...entry, score, matchedForm: activeMatchedForm, matchedRootKey: null, searchQuery: query };
     }
 
     // --- STANDARD SEARCH MODE (Non-tone queries) ---
@@ -1396,7 +1396,7 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
       const primaryLength = entry.Entry?.length || entry.Syllabary?.length || 0;
       score -= primaryLength * 0.001;
     }
-    return { ...entry, score, matchedForm: activeMatchedForm, matchedRootKey };
+    return { ...entry, score, matchedForm: activeMatchedForm, matchedRootKey, searchQuery: query };
   });
 
   // Calculate highest score in each matched root group for grouping

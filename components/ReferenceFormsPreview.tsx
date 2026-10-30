@@ -19,7 +19,10 @@ import {
     hasToneMarks,
     getFormTransliteration,
     isCedForm,
-    convertConsonantsToStyle
+    convertConsonantsToStyle,
+    ToneOrthography,
+    transformToneRegex,
+    getRenderedTonesForForm
 } from '../utils';
 import { usePackageManager } from './PackageManagerContext';
 import { useCorpus } from './CorpusContext';
@@ -154,7 +157,15 @@ export function getReferencePreviewMatchedForms(
         excludeSet?: Set<any>,
         forbidSubstrings?: string[]
     ) => {
-        // Pass 1: exact or prefix/suffix normalized key match among non-excluded forms
+        // Pass 0: exact normalized key match
+        const exactByKey = forms.find(f => {
+            if (excludeSet && excludeSet.has(f)) return false;
+            const k = (f.normalized_key || f.form_name || '').toLowerCase();
+            return keys.some(key => k === key);
+        });
+        if (exactByKey) return exactByKey;
+
+        // Pass 1: prefix/suffix normalized key match among non-excluded forms
         const byKey = forms.find(f => {
             if (excludeSet && excludeSet.has(f)) return false;
             const k = (f.normalized_key || f.form_name || '').toLowerCase();
@@ -443,6 +454,224 @@ export function getReferencePreviewMatchedForms(
         matchedForms,
         hasMiniPreview
     };
+}
+
+export function getPreviewStripMatchedSlotKeys(
+    cards: ReferenceFormCardData[] = [],
+    query: string = '',
+    settings?: any,
+    entry?: any,
+    rootEntry?: any,
+    matchedForm?: any
+): Set<string> {
+    const matchedSlotKeys = new Set<string>();
+    const trimmedQuery = (query || '').trim();
+    if (!trimmedQuery && !matchedForm) {
+        return matchedSlotKeys;
+    }
+
+    const lowerQuery = trimmedQuery.toLowerCase();
+    const nfcQuery = lowerQuery.normalize('NFC');
+    const normQuery = cleanStr(trimmedQuery);
+
+    const hasDiacritics = /[\u0300-\u036fáàâǎéèêěíìîǐóòôǒúùûǔv́v̀v̂]|(?<=[aeiouvAEIOUV]):/.test(nfcQuery);
+    const hasToneNumbers = /[1-4¹²³⁴]/.test(nfcQuery);
+    const hasRegexDigits = Boolean(settings?.enableRegex && (/\\[dD]|\[[0-9]/.test(trimmedQuery)));
+    const queryHasTone = hasDiacritics || hasToneNumbers || hasRegexDigits;
+
+    let regex: RegExp | null = null;
+    if (settings?.enableRegex && trimmedQuery) {
+        try {
+            const regexQuery = transformToneRegex(trimmedQuery);
+            regex = new RegExp(regexQuery, 'i');
+        } catch (_) {}
+    }
+
+    const queryWithTones = lowerQuery.replace(/[1234?]/g, m => ({ '1': '¹', '2': '²', '3': '³', '4': '⁴', '?': 'ʔ' }[m] || m));
+    const qSuperscript = nfcQuery.replace(/1/g, '¹').replace(/2/g, '²').replace(/3/g, '³').replace(/4/g, '⁴');
+    const qDigits = nfcQuery.replace(/¹/g, '1').replace(/²/g, '2').replace(/³/g, '3').replace(/⁴/g, '4');
+
+    const searchLangs = settings?.searchLangs || {};
+    const translitActive = searchLangs.translit !== false;
+    const syllabaryActive = searchLangs.syllabary !== false;
+
+    const selectedOrthography = getToneOrthographySetting(settings);
+    const translitStyle = getTransliterationStyleSetting(settings);
+    const targetOrthoSet = new Set<ToneOrthography>();
+    targetOrthoSet.add(selectedOrthography);
+    if (hasToneNumbers || hasRegexDigits) targetOrthoSet.add('feeling_1975');
+    if (hasDiacritics) targetOrthoSet.add('mco');
+    const activeToneOrthographies = Array.from(targetOrthoSet);
+
+    const testToneMatch = (toneStr?: string): boolean => {
+        if (!toneStr) return false;
+        const nfcTone = toneStr.normalize('NFC').toLowerCase();
+        if (regex) {
+            if (regex.test(nfcTone)) return true;
+            const nfcToneDigits = nfcTone.replace(/¹/g, '1').replace(/²/g, '2').replace(/³/g, '3').replace(/⁴/g, '4');
+            return regex.test(nfcToneDigits);
+        }
+        const nfcToneDigits = nfcTone.replace(/¹/g, '1').replace(/²/g, '2').replace(/³/g, '3').replace(/⁴/g, '4');
+        return (
+            nfcTone === nfcQuery ||
+            nfcTone === qSuperscript ||
+            nfcToneDigits === qDigits ||
+            nfcTone.startsWith(nfcQuery) ||
+            nfcTone.startsWith(qSuperscript) ||
+            nfcToneDigits.startsWith(qDigits) ||
+            nfcTone.includes(nfcQuery) ||
+            nfcTone.includes(qSuperscript) ||
+            nfcToneDigits.includes(qDigits)
+        );
+    };
+
+    const testTextMatch = (str?: string): boolean => {
+        if (!str) return false;
+        if (regex && regex.test(str)) return true;
+
+        const fLower = str.toLowerCase();
+        const normF = cleanStr(str);
+
+        if (
+            fLower === lowerQuery ||
+            fLower === queryWithTones ||
+            (normF.length > 0 && normF === normQuery) ||
+            fLower.startsWith(lowerQuery) ||
+            fLower.startsWith(queryWithTones) ||
+            (normF.length > 0 && normF.startsWith(normQuery)) ||
+            fLower.includes(lowerQuery) ||
+            fLower.includes(queryWithTones) ||
+            (normF.length > 0 && normF.includes(normQuery))
+        ) {
+            return true;
+        }
+        return false;
+    };
+
+    for (const card of cards) {
+        if (!card || !card.form) continue;
+        const form = card.form;
+        let isMatch = false;
+
+        // 1. Direct matchedForm matching
+        if (matchedForm) {
+            const cardSlot = (card.slotKey || '').toLowerCase();
+            const cardFormName = (form.form_name || '').toLowerCase();
+            const cardNormalizedKey = (form.normalized_key || '').toLowerCase();
+            const hdFormName = (SLOT_TO_HD_FORM[card.slotKey] || '').toLowerCase();
+            const mfLabel = (matchedForm.label || '').toLowerCase();
+
+            if (mfLabel) {
+                if (
+                    cardSlot === mfLabel ||
+                    cardFormName === mfLabel ||
+                    cardNormalizedKey === mfLabel ||
+                    hdFormName === mfLabel
+                ) {
+                    isMatch = true;
+                } else if (
+                    (mfLabel.includes('infinitive') && (cardSlot.includes('infinitive') || hdFormName.includes('infinitive'))) ||
+                    (mfLabel.includes('habitual') && (cardSlot.includes('habitual') || hdFormName.includes('imperfective'))) ||
+                    ((mfLabel.includes('completive past') || mfLabel === 'past') && (cardSlot.includes('completive past') || hdFormName.includes('perfective'))) ||
+                    (mfLabel.includes('imperative') && !mfLabel.includes('3a') && !mfLabel.includes('animate') && cardSlot.includes('2s|3s|imperative')) ||
+                    (mfLabel.includes('1st present') && !mfLabel.includes('3a') && !mfLabel.includes('animate') && cardSlot.includes('1s|3s|present')) ||
+                    (mfLabel.includes('3rd present') && cardSlot.includes('3s|3s|present')) ||
+                    (mfLabel.includes('singular') && cardSlot.includes('singular')) ||
+                    (mfLabel.includes('plural') && cardSlot.includes('plural'))
+                ) {
+                    isMatch = true;
+                }
+            }
+
+            if (!isMatch) {
+                const mfT = cleanStr(matchedForm.translit);
+                const mfS = cleanStr(matchedForm.syllabary);
+                const cardT = cleanStr(form.translit || form.surface_spelling || form.Entry || form.Practical);
+                const cardS = cleanStr(form.syllabary || form.Syllabary);
+
+                if (mfT && cardT && mfT === cardT) {
+                    isMatch = true;
+                } else if (mfS && cardS && mfS === cardS) {
+                    isMatch = true;
+                }
+            }
+        }
+
+        // 2. Query matching (transliteration, syllabary, tone)
+        if (!isMatch && trimmedQuery) {
+            const hdFormName = SLOT_TO_HD_FORM[card.slotKey];
+            const toneOrthography = getToneOrthographySetting(settings);
+            const showLengthInTranslit = getShowLengthInTranslitSetting(settings);
+            const showTone = settings?.showToneInForms !== false;
+            const rawToneSource = form.tone1 || form.tone || form.tone2 || form.Entry_Tone || '';
+            const practicalStr = form.translit || form.Practical || form.Entry || '';
+            const isCed = isCedForm(form, entry);
+
+            let renderedSurface = '';
+            if (isCed && showTone && rawToneSource && hasToneMarks(rawToneSource)) {
+                renderedSurface = convertToneText(rawToneSource, toneOrthography, translitStyle, practicalStr);
+            } else {
+                renderedSurface = getFormTransliteration(form, rootEntry, hdFormName, settings) || (isCed ? formatTranslitWithLength(practicalStr, rawToneSource, showLengthInTranslit, translitStyle) : convertConsonantsToStyle(practicalStr, translitStyle));
+            }
+            if (renderedSurface.includes(';')) {
+                renderedSurface = renderedSurface.split(';')[0].trim();
+            }
+
+            // Syllabary check
+            if (syllabaryActive) {
+                const syllabaries = [form.syllabary, form.Syllabary].filter(Boolean);
+                for (const s of syllabaries) {
+                    if (testTextMatch(s)) {
+                        isMatch = true;
+                        break;
+                    }
+                }
+            }
+
+            // Transliteration / Surface check
+            if (!isMatch && translitActive) {
+                const translits = [
+                    renderedSurface,
+                    form.translit,
+                    form.surface_spelling,
+                    form.Entry,
+                    form.Practical,
+                    form.segmented_form ? form.segmented_form.replace(/[-–—>]/g, '') : null
+                ].filter(Boolean);
+
+                for (const t of translits) {
+                    if (testTextMatch(t)) {
+                        isMatch = true;
+                        break;
+                    }
+                }
+
+                // Tone check if query has tone
+                if (!isMatch && queryHasTone) {
+                    if (rawToneSource && (testToneMatch(rawToneSource) || testToneMatch(form.tone) || testToneMatch(form.tone1) || testToneMatch(form.tone2))) {
+                        isMatch = true;
+                    } else {
+                        for (const ortho of activeToneOrthographies) {
+                            const tones = getRenderedTonesForForm(form, ortho, translitStyle, entry);
+                            for (const t of tones) {
+                                if (testToneMatch(t)) {
+                                    isMatch = true;
+                                    break;
+                                }
+                            }
+                            if (isMatch) break;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (isMatch) {
+            matchedSlotKeys.add(card.slotKey);
+        }
+    }
+
+    return matchedSlotKeys;
 }
 
 export const ReferenceFormsPreview: React.FC<ReferenceFormsPreviewProps> = ({
@@ -906,6 +1135,8 @@ export interface DesktopHorizontalFormsStripProps {
     settings?: any;
     onOpenAllForms?: () => void;
     className?: string;
+    searchQuery?: string;
+    matchedCardSlotKeys?: Set<string>;
 }
 
 const VERB_CANONICAL_SLOTS = [
@@ -925,7 +1156,9 @@ export const DesktopHorizontalFormsStrip: React.FC<DesktopHorizontalFormsStripPr
     rootEntry,
     settings,
     onOpenAllForms,
-    className = ""
+    className = "",
+    searchQuery,
+    matchedCardSlotKeys
 }) => {
     const showTone = settings?.showToneInForms !== false;
     const colorSegments = settings?.colorWordSegments !== false;
@@ -934,6 +1167,13 @@ export const DesktopHorizontalFormsStrip: React.FC<DesktopHorizontalFormsStripPr
     const { displayedCards, hasMiniPreview } = useMemo(() => {
         return getReferencePreviewMatchedForms(forms, entry, rootEntry, settings);
     }, [forms, entry, rootEntry, settings]);
+
+    const activeMatchedSlotKeys = useMemo(() => {
+        if (matchedCardSlotKeys) return matchedCardSlotKeys;
+        const q = searchQuery ?? entry?.searchQuery ?? '';
+        if (!q && !entry?.matchedForm) return new Set<string>();
+        return getPreviewStripMatchedSlotKeys(displayedCards, q, settings, entry, rootEntry, entry?.matchedForm);
+    }, [matchedCardSlotKeys, searchQuery, entry, displayedCards, settings, rootEntry]);
 
     if (!hasMiniPreview || displayedCards.length === 0) {
         return null;
@@ -982,10 +1222,16 @@ export const DesktopHorizontalFormsStrip: React.FC<DesktopHorizontalFormsStripPr
             }
         }
 
+        const isMatched = activeMatchedSlotKeys.has(cardData.slotKey);
+        const cardBgClass = isMatched
+            ? 'bg-amber-100/80 dark:bg-amber-950/60 ring-1 ring-amber-400/70 dark:ring-amber-500/50 shadow-xs'
+            : `${style.bg} ${style.border}`;
+
         return (
             <div
                 key={cardData.slotKey}
-                className={`min-w-0 p-[2px] rounded-lg text-center flex flex-col justify-between transition-all duration-150 ${style.bg} ${style.border}`}
+                className={`min-w-0 px-1 py-0.5 rounded-lg text-center flex flex-col justify-between transition-all duration-150 ${cardBgClass}`}
+                title={isMatched ? 'Matched form in search' : undefined}
             >
                 <span className={`text-[9px] uppercase tracking-wider leading-tight font-bold mb-0.5 whitespace-nowrap overflow-hidden text-ellipsis ${style.label}`}>
                     {compactLabel}
@@ -1039,7 +1285,7 @@ export const DesktopHorizontalFormsStrip: React.FC<DesktopHorizontalFormsStripPr
                     return (
                         <div
                             key={`empty-${slotKey}`}
-                            className="min-w-0 p-[2px] rounded-lg border border-transparent"
+                            className="min-w-0 px-1 py-0.5 rounded-lg border border-transparent"
                             aria-hidden="true"
                         />
                     );

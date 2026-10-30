@@ -2406,7 +2406,7 @@ function App() {
                                                     </div>
                                                 )}
                                                 <div className={(rootEntry && showRootHeaders) ? "ml-4 pl-2 border-l-2 border-[#f8c9c8] dark:border-amber-400/20" : ""}>
-                                                    <EntryCard entry={item} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} settings={settings} />
+                                                    <EntryCard entry={item} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} settings={settings} searchQuery={query} />
                                                 </div>
                                             </React.Fragment>
                                         );
@@ -2464,7 +2464,7 @@ function App() {
                                                     </div>
                                                 )}
                                                 <div className={(rootEntry && showRootHeaders) ? "ml-4 pl-2 border-l-2 border-[#f8c9c8]/50 dark:border-amber-400/10" : ""}>
-                                                    <EntryCard entry={entry} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} isDimmed={true} settings={settings} />
+                                                    <EntryCard entry={entry} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} isDimmed={true} settings={settings} searchQuery={query} />
                                                 </div>
                                             </React.Fragment>
                                         );
@@ -2738,7 +2738,7 @@ function App() {
                             </div>
                                 <div className="flex-1 overflow-y-auto p-2 sm:p-4" key={activeDictionaryId + '-' + dictionaryMode}>
                                     {dictionaryMode === 'words' ? (
-                                        sortedDictionaryWords.length === 0 ? <div className="text-center py-12 text-slate-400">Empty collection.<br />Tap + to add a word.</div> : sortedDictionaryWords.map(entry => <EntryCard key={entry.Index} entry={entry} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} settings={settings} />)
+                                        sortedDictionaryWords.length === 0 ? <div className="text-center py-12 text-slate-400">Empty collection.<br />Tap + to add a word.</div> : sortedDictionaryWords.map(entry => <EntryCard key={entry.Index} entry={entry} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} settings={settings} searchQuery={query} />)
                                     ) : (
                                         (customDictionaries[activeDictionaryId] ? userSentences : sentences).filter(s => s.source === activeDictionaryId).length === 0 ? <div className="text-center py-12 text-slate-400">No sentences yet.<br />Tap + to add one.</div> : (customDictionaries[activeDictionaryId] ? userSentences : sentences).filter(s => s.source === activeDictionaryId).map(s => <SentenceCard key={s.id} sentence={s} customDictionaries={customDictionaries} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} personalWords={personalWords} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} onDeleteAudio={deleteAudio}
                                             favorites={favorites}

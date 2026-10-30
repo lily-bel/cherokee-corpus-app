@@ -8,6 +8,10 @@ BIG QUESTIONS:
 29. Check words: uduha
 searching "higoliya" does not show Matched form: higoliya
 
+
+creating a chapter has a "create new book" tab option - this doenst need to exist
+dlv, ilvhdlv <- second word not there?
+
 TEST:
 Online Capabilities & Testing                                                                                 
   Online capabilities, specifically cloud backup and public packages, have not been tested yet.                                                                                                                     

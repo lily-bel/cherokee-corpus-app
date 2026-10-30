@@ -638,7 +638,7 @@ const SectionItem = ({
                     <div className="max-h-[600px] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
                         {filteredItems.slice(0, limit).map((item, idx) => (
                             <div key={item.id || item.Index || item.name || idx} className="bg-white dark:bg-slate-900">
-                                {type === 'word' && <EntryCard entry={item} onClick={onItemClick} {...extraProps} />}
+                                {type === 'word' && <EntryCard entry={item} onClick={onItemClick} searchQuery={query} {...extraProps} />}
                                 {type === 'sentence' && <CompactSentenceCard sentence={item} onClick={onItemClick} />}
                                 {type === 'audio' && <AudioCard audio={item} pkg={pkg} onNavigate={onNavigate} />}
                                 {type === 'note' && <NoteCard note={item} onNavigate={onNavigate} />}
