@@ -848,7 +848,7 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
 
   const queryWithTones = lowerQuery.replace(/[1234?]/g, m => ({ '1': '¹', '2': '²', '3': '³', '4': '⁴', '?': 'ʔ' }[m] || m));
 
-  const testMatchScore = (str?: string) => {
+  const testMatchScore = (str?: string, isCherokeeWord = false) => {
     if (!str) return 0;
     if (regex && regex.test(str)) return 100;
     
@@ -859,14 +859,35 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
     // 1. Exact Match (Exact case or normalized tone/punctuation match)
     if (fLower === lowerQuery || fLower === queryWithTones || (normF.length > 0 && normF === normQuery)) {
       s = 120;
+    } else {
+      // Check comma/semicolon/slash-separated glosses or alternates for exact match
+      const subParts = str.split(/[,;/]\s*/);
+      if (subParts.length > 1) {
+        for (const p of subParts) {
+          const pLower = p.trim().toLowerCase();
+          const normP = cleanStr(p);
+          if (pLower === lowerQuery || pLower === queryWithTones || (normP.length > 0 && normP === normQuery)) {
+            s = 120;
+            break;
+          }
+        }
+      }
     }
-    // 2. Starts With Match
-    else if (fLower.startsWith(lowerQuery) || fLower.startsWith(queryWithTones) || (normF.length > 0 && normF.startsWith(normQuery))) {
-      s = 70;
-    }
-    // 3. Contains Substring Match
-    else if (fLower.includes(lowerQuery) || fLower.includes(queryWithTones) || (normF.length > 0 && normF.includes(normQuery))) {
-      s = 15;
+
+    if (s === 0) {
+      // 2. Starts With Match (at string start or right after standard Cherokee verb pronoun prefix like a-, u-, ga-, ji-, tsi-, hi-)
+      const stemTrimmed = isCherokeeWord ? normF.replace(/^([auv]|ga|ji|tsi|hi|de|da)/, '') : '';
+      if (
+        fLower.startsWith(lowerQuery) || fLower.startsWith(queryWithTones) ||
+        (normF.length > 0 && normF.startsWith(normQuery)) ||
+        (stemTrimmed.length > 0 && stemTrimmed.startsWith(normQuery))
+      ) {
+        s = 70;
+      }
+      // 3. Contains Substring Match
+      else if (fLower.includes(lowerQuery) || fLower.includes(queryWithTones) || (normF.length > 0 && normF.includes(normQuery))) {
+        s = 15;
+      }
     }
 
     if (s > 0) {
@@ -1132,9 +1153,17 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
 
       const entryId = parseInt(entry.Index || entry.id || "0");
       const srcLower = (entry.Source || entry.source || "").toLowerCase();
+      const isCed = isCedEntry(entry);
+      const id = entry.id || entry.Index || (entry as any).merged_id;
+      const rootEntry = (entry.id != null ? rootMap.get(entry.id) : null) ||
+                        (entry.Index != null ? rootMap.get(entry.Index) : null) ||
+                        ((entry as any).merged_id != null ? rootMap.get((entry as any).merged_id) : null) ||
+                        ((entry as any).sources?.['lily-dict.csv']?.Index != null ? rootMap.get((entry as any).sources['lily-dict.csv'].Index) : null) ||
+                        (id != null ? rootMap.get(id) : null);
+      const hasVerbRoot = Boolean(rootEntry && (entry.PoS?.toLowerCase().startsWith('v') || entry.sources?.['hierarchical-dict.json'] || !isEmptyRoot(rootEntry)));
 
       // Priority CED Source boost
-      if (srcLower === 'ced' || srcLower.includes('durbin feeling') || srcLower.includes('cherokee nation')) {
+      if (isCed || srcLower === 'ced' || srcLower.includes('durbin feeling') || srcLower.includes('cherokee nation')) {
         score += 80;
       }
 
@@ -1142,19 +1171,36 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
       else if (entryId >= 100000) score += 60;
       if (entry.Source && prioritizedSources.includes(entry.Source.toLowerCase())) score += 60;
 
-      // Gold standard sources boost
+      // Gold standard sources boost (once for CED/official sources)
       if (entry.sources) {
-        if (entry.sources['cn-app-dictionary.csv']) score += 60;
-        if (entry.sources['hierarchical-dict.json']) score += 60;
+        if (entry.sources['cn-app-dictionary.csv'] || entry.sources['hierarchical-dict.json']) score += 60;
       }
 
-      if (entry.PoS && entry.PoS.toLowerCase().startsWith('v')) score += 30;
+      // Slight bump for verbs with root info so they appear above same-tier entries without root
+      if (hasVerbRoot) {
+        score += 15;
+      }
 
       // Primary length tie-breaker: shorter entry strings rank higher within same score tier
       const primaryLength = entry.Entry?.length || entry.Syllabary?.length || 0;
       score -= primaryLength * 0.001;
 
-      return { ...entry, score, matchedForm: activeMatchedForm, matchedSpelling: activeMatchedSpelling, matchedRootKey: null, searchQuery: query };
+      let matchTier = 0;
+      if (isCed && mainMatchScore >= 120) matchTier = 4;
+      else if (mainMatchScore >= 120) matchTier = 3;
+      else if (score >= 15) matchTier = 1;
+
+      return {
+        ...entry,
+        score,
+        matchTier,
+        hasVerbRoot,
+        cherokeeMainScore,
+        matchedForm: activeMatchedForm,
+        matchedSpelling: activeMatchedSpelling,
+        matchedRootKey: null,
+        searchQuery: query
+      };
     }
 
     // --- STANDARD SEARCH MODE (Non-tone queries) ---
@@ -1165,35 +1211,35 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
     // 1. Check Main Entry Fields
     if (activeScopes.main) {
       if (activeLangs.translit) {
-        if (entry.Entry) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.Entry));
-        if (entry.translit) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.translit));
-        if (entry.surface_spelling) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.surface_spelling));
-        if (entry.practical) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.practical));
+        if (entry.Entry) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.Entry, true));
+        if (entry.translit) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.translit, true));
+        if (entry.surface_spelling) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.surface_spelling, true));
+        if (entry.practical) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.practical, true));
         if (entry.surface_forms) {
           const baseSlot = entry.base_form_slot || (entry.is_combined_part_b ? 'infinitive' : 'present');
           if (!hidePartBFromParent || !parentShimFormsSet.has(baseSlot)) {
             const val = entry.surface_forms[baseSlot];
-            if (typeof val === 'string') mainMatchScore = Math.max(mainMatchScore, testMatchScore(val));
+            if (typeof val === 'string') mainMatchScore = Math.max(mainMatchScore, testMatchScore(val, true));
           }
         }
         if (entry.sources) {
           for (const s of Object.values(entry.sources as Record<string, any>)) {
-            if (s.Practical) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.Practical));
-            if (s.Entry) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.Entry));
-            if (s.Cherokee) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.Cherokee));
-            if (s.practical) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.practical));
-            if (s.surface_spelling) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.surface_spelling));
-            if (s.Simple_phonetics) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.Simple_phonetics));
+            if (s.Practical) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.Practical, true));
+            if (s.Entry) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.Entry, true));
+            if (s.Cherokee) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.Cherokee, true));
+            if (s.practical) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.practical, true));
+            if (s.surface_spelling) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.surface_spelling, true));
+            if (s.Simple_phonetics) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.Simple_phonetics, true));
           }
         }
       }
       if (activeLangs.syllabary) {
-        if (entry.Syllabary) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.Syllabary));
-        if (entry.syllabary) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.syllabary));
+        if (entry.Syllabary) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.Syllabary, true));
+        if (entry.syllabary) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.syllabary, true));
         if (entry.sources) {
           for (const s of Object.values(entry.sources as Record<string, any>)) {
-            if (s.Syllabary) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.Syllabary));
-            if (s.Headword) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.Headword));
+            if (s.Syllabary) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.Syllabary, true));
+            if (s.Headword) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.Headword, true));
           }
         }
       }
@@ -1204,13 +1250,13 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
         for (const alt of entry.alternate_spellings) {
           let aScore = 0;
           if (activeLangs.translit) {
-            if (alt.translit) aScore = Math.max(aScore, testMatchScore(alt.translit));
-            if (alt.tone) aScore = Math.max(aScore, testMatchScore(alt.tone));
-            if (alt.tone1) aScore = Math.max(aScore, testMatchScore(alt.tone1));
-            if (alt.tone2) aScore = Math.max(aScore, testMatchScore(alt.tone2));
+            if (alt.translit) aScore = Math.max(aScore, testMatchScore(alt.translit, true));
+            if (alt.tone) aScore = Math.max(aScore, testMatchScore(alt.tone, true));
+            if (alt.tone1) aScore = Math.max(aScore, testMatchScore(alt.tone1, true));
+            if (alt.tone2) aScore = Math.max(aScore, testMatchScore(alt.tone2, true));
           }
           if (activeLangs.syllabary && alt.syllabary) {
-            aScore = Math.max(aScore, testMatchScore(alt.syllabary));
+            aScore = Math.max(aScore, testMatchScore(alt.syllabary, true));
           }
           if (aScore > altSpellingMatchScore) {
             altSpellingMatchScore = aScore;
@@ -1259,9 +1305,9 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
             const tone = values[2];
 
             let fScore = 0;
-            if (activeLangs.translit && translit) fScore = Math.max(fScore, testMatchScore(translit));
-            if (activeLangs.syllabary && syllabary) fScore = Math.max(fScore, testMatchScore(syllabary));
-            if (activeLangs.translit && tone) fScore = Math.max(fScore, testMatchScore(tone));
+            if (activeLangs.translit && translit) fScore = Math.max(fScore, testMatchScore(translit, true));
+            if (activeLangs.syllabary && syllabary) fScore = Math.max(fScore, testMatchScore(syllabary, true));
+            if (activeLangs.translit && tone) fScore = Math.max(fScore, testMatchScore(tone, true));
 
             const fIsMini = isMiniForm(null, label);
             if (isBetterMatch(fScore, fIsMini, otherFormMatchScore, otherFormIsMini)) {
@@ -1288,14 +1334,14 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
             if (hidePartBFromParent && f.is_shim) return;
             let fScore = 0;
             if (activeLangs.translit) {
-              if (f.translit) fScore = Math.max(fScore, testMatchScore(f.translit));
-              if (f.surface_spelling) fScore = Math.max(fScore, testMatchScore(f.surface_spelling));
-              if (f.segmented_form) fScore = Math.max(fScore, testMatchScore(f.segmented_form.replace(/[-–—>]/g, '')));
-              if (f.tone) fScore = Math.max(fScore, testMatchScore(f.tone));
-              if (f.tone1) fScore = Math.max(fScore, testMatchScore(f.tone1));
-              if (f.tone2) fScore = Math.max(fScore, testMatchScore(f.tone2));
+              if (f.translit) fScore = Math.max(fScore, testMatchScore(f.translit, true));
+              if (f.surface_spelling) fScore = Math.max(fScore, testMatchScore(f.surface_spelling, true));
+              if (f.segmented_form) fScore = Math.max(fScore, testMatchScore(f.segmented_form.replace(/[-–—>]/g, ''), true));
+              if (f.tone) fScore = Math.max(fScore, testMatchScore(f.tone, true));
+              if (f.tone1) fScore = Math.max(fScore, testMatchScore(f.tone1, true));
+              if (f.tone2) fScore = Math.max(fScore, testMatchScore(f.tone2, true));
             }
-            if (activeLangs.syllabary && f.syllabary) fScore = Math.max(fScore, testMatchScore(f.syllabary));
+            if (activeLangs.syllabary && f.syllabary) fScore = Math.max(fScore, testMatchScore(f.syllabary, true));
 
             const fIsMini = isMiniForm(f);
             if (isBetterMatch(fScore, fIsMini, otherFormMatchScore, otherFormIsMini)) {
@@ -1316,7 +1362,7 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
           if (k === baseSlot) continue;
           if (hidePartBFromParent && parentShimFormsSet.has(k)) continue;
           if (typeof val === 'string' && activeLangs.translit) {
-            const fScore = testMatchScore(val);
+            const fScore = testMatchScore(val, true);
             if (isBetterMatch(fScore, true, otherFormMatchScore, otherFormIsMini)) {
               otherFormMatchScore = fScore;
               otherFormIsMini = true;
@@ -1346,12 +1392,14 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
     if (activeScopes.roots && rootEntry) {
       if (activeLangs.translit) {
         if (isEmptyRoot(rootEntry)) {
-          rootScore = Math.max(rootScore, testMatchScore('∅'));
+          rootScore = Math.max(rootScore, testMatchScore('∅', true));
         }
-        if (rootEntry.root_h) rootScore = Math.max(rootScore, testMatchScore(rootEntry.root_h));
-        if (rootEntry.root_g) rootScore = Math.max(rootScore, testMatchScore(rootEntry.root_g));
-        if (rootEntry.root_slug) rootScore = Math.max(rootScore, testMatchScore(rootEntry.root_slug));
-        if (rootEntry.slug && rootEntry.slug !== rootEntry.root_slug) rootScore = Math.max(rootScore, testMatchScore(rootEntry.slug));
+        if (rootEntry.root_h) {
+          rootScore = Math.max(rootScore, testMatchScore(rootEntry.root_h, true), testMatchScore(formatCommunityRoot(rootEntry.root_h), true));
+        }
+        if (rootEntry.root_g) {
+          rootScore = Math.max(rootScore, testMatchScore(rootEntry.root_g, true), testMatchScore(formatCommunityRoot(rootEntry.root_g), true));
+        }
       }
       if (activeLangs.english && rootEntry.definition) {
         rootScore = Math.max(rootScore, testMatchScore(rootEntry.definition));
@@ -1374,11 +1422,6 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
       score = Math.max(mainMatchScore, otherFormMatchScore, notesScore, rootScore);
     }
 
-    if (rootScore > 0) {
-      // Prioritize matching roots so they come first
-      score = Math.max(score, rootScore + 300);
-    }
-
     const isLinguist = settings?.dictionaryLevel === 'linguist';
     let activeMatchedForm: { syllabary?: string; translit?: string; label?: string; tone?: string; tone1?: string; tone2?: string } | null = null;
 
@@ -1394,10 +1437,8 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
       // 2. Else if the main Cherokee form matched (e.g. user searched base form):
       else if (cherokeeMainScore > 0) {
         const isRootByItself = rootScore >= cherokeeMainScore && rootScore > 0 && rootEntry && (
-          (rootEntry.root_h && cleanStr(rootEntry.root_h) === normQuery) ||
-          (rootEntry.root_g && cleanStr(rootEntry.root_g) === normQuery) ||
-          (rootEntry.root_slug && cleanStr(rootEntry.root_slug) === normQuery) ||
-          (rootEntry.slug && cleanStr(rootEntry.slug) === normQuery) ||
+          (rootEntry.root_h && (cleanStr(rootEntry.root_h) === normQuery || cleanStr(formatCommunityRoot(rootEntry.root_h)) === normQuery)) ||
+          (rootEntry.root_g && (cleanStr(rootEntry.root_g) === normQuery || cleanStr(formatCommunityRoot(rootEntry.root_g)) === normQuery)) ||
           (rootScore >= 120 && normQuery.length <= 6)
         );
 
@@ -1444,12 +1485,27 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
       activeMatchedForm = null;
     }
 
+    const isCed = isCedEntry(entry);
+    const hasVerbRoot = Boolean(rootEntry && (entry.PoS?.toLowerCase().startsWith('v') || entry.sources?.['hierarchical-dict.json'] || !isEmptyRoot(rootEntry)));
+    const isPerfectMainCherokee = cherokeeMainScore >= 120;
+    const isPerfectMainEnglish = mainMatchScore >= 120 && cherokeeMainScore < 120;
+
+    let matchTier = 0;
+    // Tier 4: Perfect CED Cherokee Match
+    // Tier 3: Perfect CED English Match OR Perfect Non-CED Cherokee Match
+    // Tier 2: Perfect Non-CED English Match
+    // Tier 1: All partial matches (starts-with, stem matches, contains substring, other forms, roots)
+    if (isCed && isPerfectMainCherokee) matchTier = 4;
+    else if ((isCed && isPerfectMainEnglish) || (!isCed && isPerfectMainCherokee)) matchTier = 3;
+    else if (!isCed && isPerfectMainEnglish) matchTier = 2;
+    else if (score >= 15) matchTier = 1;
+
     if (score > 0) {
       const entryId = parseInt(entry.Index || entry.id || "0");
       const srcLower = (entry.Source || entry.source || "").toLowerCase();
 
       // Priority CED Source boost
-      if (srcLower === 'ced' || srcLower.includes('durbin feeling') || srcLower.includes('cherokee nation')) {
+      if (isCed || srcLower === 'ced' || srcLower.includes('durbin feeling') || srcLower.includes('cherokee nation')) {
         score += 80;
       }
 
@@ -1457,28 +1513,45 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
       else if (entryId >= 100000) score += 60;
       if (entry.Source && prioritizedSources.includes(entry.Source.toLowerCase())) score += 60;
 
-      // Gold standard sources boost
+      // Gold standard sources boost (counted once for CED/official sources)
       if (entry.sources) {
-        if (entry.sources['cn-app-dictionary.csv']) score += 60;
-        if (entry.sources['hierarchical-dict.json']) score += 60;
+        if (entry.sources['cn-app-dictionary.csv'] || entry.sources['hierarchical-dict.json']) score += 60;
       }
 
-      if (entry.PoS && entry.PoS.toLowerCase().startsWith('v')) score += 30;
+      // Bump verbs with root info so they appear above same-tier entries without root
+      if (hasVerbRoot) {
+        score += 15;
+      }
 
       // Primary length tie-breaker: shorter entry strings rank higher within same score tier
       const primaryLength = entry.Entry?.length || entry.Syllabary?.length || 0;
       score -= primaryLength * 0.001;
     }
-    return { ...entry, score, matchedForm: activeMatchedForm, matchedSpelling: activeMatchedSpelling, matchedRootKey, searchQuery: query };
+    return {
+      ...entry,
+      score,
+      matchTier,
+      hasVerbRoot,
+      cherokeeMainScore,
+      matchedForm: activeMatchedForm,
+      matchedSpelling: activeMatchedSpelling,
+      matchedRootKey,
+      searchQuery: query
+    };
   });
 
-  // Calculate highest score in each matched root group for grouping
+  // Calculate highest score and tier in each matched root group for grouping
   const rootGroupBestScores = new Map<string, number>();
+  const rootGroupBestTiers = new Map<string, number>();
   for (const item of mappedResults) {
     if (item.matchedRootKey && item.score > 0) {
-      const prevBest = rootGroupBestScores.get(item.matchedRootKey) || 0;
-      if (item.score > prevBest) {
+      const prevBestScore = rootGroupBestScores.get(item.matchedRootKey) || 0;
+      if (item.score > prevBestScore) {
         rootGroupBestScores.set(item.matchedRootKey, item.score);
+      }
+      const prevBestTier = rootGroupBestTiers.get(item.matchedRootKey) || 0;
+      if ((item.matchTier || 0) > prevBestTier) {
+        rootGroupBestTiers.set(item.matchedRootKey, item.matchTier || 0);
       }
     }
   }
@@ -1497,7 +1570,15 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
         return lenA - lenB;
       }
 
-      // 2. Rank root groups by group best score vs other items
+      // 2. Compare Match Tiers (Higher tier ALWAYS wins! Perfect CED matches appear first!)
+      const tierA = a.matchedRootKey ? Math.max(a.matchTier || 0, rootGroupBestTiers.get(a.matchedRootKey) || 0) : (a.matchTier || 0);
+      const tierB = b.matchedRootKey ? Math.max(b.matchTier || 0, rootGroupBestTiers.get(b.matchedRootKey) || 0) : (b.matchTier || 0);
+
+      if (tierA !== tierB) {
+        return tierB - tierA; // Higher tier first!
+      }
+
+      // 3. Rank root groups by group best score vs other items
       const scoreA = a.matchedRootKey ? (rootGroupBestScores.get(a.matchedRootKey) ?? a.score) : a.score;
       const scoreB = b.matchedRootKey ? (rootGroupBestScores.get(b.matchedRootKey) ?? b.score) : b.score;
 
@@ -1506,12 +1587,17 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
         return groupScoreDiff;
       }
 
-      // If group scores are identical, separate by distinct root keys or prioritize root matches
+      // If scores are tied within the same tier, prioritize verbs with roots
+      if (a.hasVerbRoot && !b.hasVerbRoot) return -1;
+      if (!a.hasVerbRoot && b.hasVerbRoot) return 1;
+
+      // If group scores are identical, main entry matches beat root matches
+      if ((a.cherokeeMainScore || 0) > 0 && (b.cherokeeMainScore || 0) === 0) return -1;
+      if ((b.cherokeeMainScore || 0) > 0 && (a.cherokeeMainScore || 0) === 0) return 1;
+
       if (a.matchedRootKey && b.matchedRootKey) {
         return a.matchedRootKey.localeCompare(b.matchedRootKey);
       }
-      if (a.matchedRootKey && !b.matchedRootKey) return -1;
-      if (!a.matchedRootKey && b.matchedRootKey) return 1;
 
       const scoreDiff = b.score - a.score;
       if (Math.abs(scoreDiff) > 0.05) {
