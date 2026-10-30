@@ -385,6 +385,37 @@ const EntryDetail = ({ entry, settings, setSettings, customDictionaries, userNot
                                 onViewClass={onViewClass}
                                 showMascot={showMascots}
                             />
+                            {e.alternate_spellings && e.alternate_spellings.length > 0 && (
+                                <div className="flex items-center gap-1.5 flex-wrap mt-2">
+                                    <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">Other spellings:</span>
+                                    {e.alternate_spellings.map((alt: any, idx: number) => (
+                                        <span
+                                            key={idx}
+                                            className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-medium"
+                                        >
+                                            {alt.syllabary && (
+                                                <span className="font-noto-cherokee font-semibold text-sm">{alt.syllabary}</span>
+                                            )}
+                                            {alt.syllabary && alt.translit && (
+                                                <span className="text-slate-300 dark:text-slate-600">·</span>
+                                            )}
+                                            {alt.translit && (
+                                                <span className="font-noto-serif">
+                                                    <ColorizedCherokeeWord
+                                                        word={alt.translit}
+                                                        form={alt}
+                                                        entry={e}
+                                                        rootEntry={rootEntry}
+                                                        isColored={settings?.colorWordSegments !== false}
+                                                        settings={settings}
+                                                        showTone={true}
+                                                    />
+                                                </span>
+                                            )}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <div className="flex items-start justify-between">
@@ -431,6 +462,37 @@ const EntryDetail = ({ entry, settings, setSettings, customDictionaries, userNot
                                         </button>
                                     )}
                                 </div>
+                                {e.alternate_spellings && e.alternate_spellings.length > 0 && (
+                                    <div className="flex items-center gap-1.5 flex-wrap mt-2">
+                                        <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">Other spellings:</span>
+                                        {e.alternate_spellings.map((alt: any, idx: number) => (
+                                            <span
+                                                key={idx}
+                                                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-medium"
+                                            >
+                                                {alt.syllabary && (
+                                                    <span className="font-noto-cherokee font-semibold text-sm">{alt.syllabary}</span>
+                                                )}
+                                                {alt.syllabary && alt.translit && (
+                                                    <span className="text-slate-300 dark:text-slate-600">·</span>
+                                                )}
+                                                {alt.translit && (
+                                                    <span className="font-noto-serif">
+                                                        <ColorizedCherokeeWord
+                                                            word={alt.translit}
+                                                            form={alt}
+                                                            entry={e}
+                                                            rootEntry={rootEntry}
+                                                            isColored={settings?.colorWordSegments !== false}
+                                                            settings={settings}
+                                                            showTone={true}
+                                                        />
+                                                    </span>
+                                                )}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                             <div className="shrink-0 pt-1">
                                 <SourceBadge source={e.Source} name={customDictionaries[e.Source]?.name} />

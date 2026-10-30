@@ -755,7 +755,7 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
 
   // Detect Tone in Query:
   // Diacritics: accents (\u0300-\u036f, áàâǎ etc.) or vowel length colon
-  const hasDiacritics = /[\u0300-\u036fáàâǎéèêěíìîǐóòôǒúùûǔv́v̀v̂]|(?<=[aeiouvAEIOUV]):/.test(nfcQuery);
+  const hasDiacritics = /[\u0300-\u036fáàâǎéèêěíìîǐóòôǒúùûǔ]|(?<=[aeiouvAEIOUV]):/.test(nfcQuery);
   // Numbers: ASCII 1-4 or superscripts ¹²³⁴
   const hasToneNumbers = /[1-4¹²³⁴]/.test(nfcQuery);
   const hasRegexDigits = Boolean(settings?.enableRegex && (/\\[dD]|\[[0-9]/.test(query)));
@@ -1001,6 +1001,10 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
       if (!isCedEntry(entry)) {
         return { ...entry, score: 0 };
       }
+      let primaryToneScore = 0;
+      let altSpellingMatchScore = 0;
+      let matchedSpellingObj: any = null;
+
       // 1. Check Main Entry Tone
       if (activeScopes.main) {
         for (const ortho of activeToneOrthographies) {
@@ -1008,6 +1012,32 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
           for (const t of tones) {
             mainMatchScore = Math.max(mainMatchScore, testToneMatchScore(t));
           }
+        }
+        primaryToneScore = mainMatchScore;
+
+        // Check alternate spellings tone
+        if (entry.alternate_spellings && Array.isArray(entry.alternate_spellings)) {
+          for (const alt of entry.alternate_spellings) {
+            const toneCandidates = [alt.tone, alt.tone1, alt.tone2].filter(Boolean) as string[];
+            for (const rawTone of toneCandidates) {
+              for (const ortho of activeToneOrthographies) {
+                const rendered = convertToneText(rawTone, ortho, translitStyle, alt.translit);
+                const tScore = Math.max(testToneMatchScore(rendered), testToneMatchScore(rawTone));
+                if (tScore > altSpellingMatchScore) {
+                  altSpellingMatchScore = tScore;
+                  matchedSpellingObj = {
+                    translit: alt.translit,
+                    syllabary: alt.syllabary,
+                    tone: rawTone,
+                    matchedByTone: true
+                  };
+                }
+              }
+            }
+          }
+        }
+        if (altSpellingMatchScore > mainMatchScore) {
+          mainMatchScore = altSpellingMatchScore;
         }
         cherokeeMainScore = mainMatchScore;
       }
@@ -1088,6 +1118,10 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
       }
 
       let activeMatchedForm = null;
+      let activeMatchedSpelling = null;
+      if (altSpellingMatchScore > 0 && altSpellingMatchScore >= primaryToneScore) {
+        activeMatchedSpelling = matchedSpellingObj;
+      }
       if (otherFormMatchScore > 0 && otherFormMatchScore >= mainMatchScore) {
         score = otherFormMatchScore;
         activeMatchedForm = matchedForm;
@@ -1120,10 +1154,14 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
       const primaryLength = entry.Entry?.length || entry.Syllabary?.length || 0;
       score -= primaryLength * 0.001;
 
-      return { ...entry, score, matchedForm: activeMatchedForm, matchedRootKey: null, searchQuery: query };
+      return { ...entry, score, matchedForm: activeMatchedForm, matchedSpelling: activeMatchedSpelling, matchedRootKey: null, searchQuery: query };
     }
 
     // --- STANDARD SEARCH MODE (Non-tone queries) ---
+    let primaryCherokeeScore = 0;
+    let altSpellingMatchScore = 0;
+    let matchedSpellingObj: any = null;
+
     // 1. Check Main Entry Fields
     if (activeScopes.main) {
       if (activeLangs.translit) {
@@ -1158,6 +1196,35 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
             if (s.Headword) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.Headword));
           }
         }
+      }
+      primaryCherokeeScore = mainMatchScore;
+
+      // Check Alternate Spellings (equal priority for search)
+      if (entry.alternate_spellings && Array.isArray(entry.alternate_spellings)) {
+        for (const alt of entry.alternate_spellings) {
+          let aScore = 0;
+          if (activeLangs.translit) {
+            if (alt.translit) aScore = Math.max(aScore, testMatchScore(alt.translit));
+            if (alt.tone) aScore = Math.max(aScore, testMatchScore(alt.tone));
+            if (alt.tone1) aScore = Math.max(aScore, testMatchScore(alt.tone1));
+            if (alt.tone2) aScore = Math.max(aScore, testMatchScore(alt.tone2));
+          }
+          if (activeLangs.syllabary && alt.syllabary) {
+            aScore = Math.max(aScore, testMatchScore(alt.syllabary));
+          }
+          if (aScore > altSpellingMatchScore) {
+            altSpellingMatchScore = aScore;
+            matchedSpellingObj = {
+              translit: alt.translit,
+              syllabary: alt.syllabary,
+              tone: alt.tone || alt.tone1 || alt.tone2
+            };
+          }
+        }
+      }
+
+      if (altSpellingMatchScore > mainMatchScore) {
+        mainMatchScore = altSpellingMatchScore;
       }
       cherokeeMainScore = mainMatchScore;
 
@@ -1371,6 +1438,12 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
       }
     }
 
+    let activeMatchedSpelling: { syllabary?: string; translit?: string; tone?: string } | null = null;
+    if (altSpellingMatchScore > 0 && altSpellingMatchScore >= primaryCherokeeScore) {
+      activeMatchedSpelling = matchedSpellingObj;
+      activeMatchedForm = null;
+    }
+
     if (score > 0) {
       const entryId = parseInt(entry.Index || entry.id || "0");
       const srcLower = (entry.Source || entry.source || "").toLowerCase();
@@ -1396,7 +1469,7 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
       const primaryLength = entry.Entry?.length || entry.Syllabary?.length || 0;
       score -= primaryLength * 0.001;
     }
-    return { ...entry, score, matchedForm: activeMatchedForm, matchedRootKey, searchQuery: query };
+    return { ...entry, score, matchedForm: activeMatchedForm, matchedSpelling: activeMatchedSpelling, matchedRootKey, searchQuery: query };
   });
 
   // Calculate highest score in each matched root group for grouping

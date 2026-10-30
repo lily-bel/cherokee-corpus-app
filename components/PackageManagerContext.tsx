@@ -6,6 +6,94 @@ import { deleteWidgetsByPackageId } from '../widgetUtils';
 
 // --- Types ---
 
+export interface AlternateSpelling {
+    syllabary?: string;
+    translit: string;
+    tone?: string;
+    tone1?: string;
+    tone2?: string;
+    source?: string;
+}
+
+function extractAlternateSpellings(sources: Record<string, any>, primaryTranslit: string, primarySyllabary: string): AlternateSpelling[] {
+    const list: AlternateSpelling[] = [];
+    const seen = new Set<string>();
+
+    const normalizeKey = (s: string) => (s || '').toLowerCase().replace(/[\^_\-–—,\.\?!:;\/\\'\(\)\[\]* ]/g, '').trim();
+    const primaryKey = normalizeKey(primaryTranslit);
+    const primarySylKey = (primarySyllabary || '').trim();
+
+    if (primaryKey) seen.add(primaryKey);
+    if (primarySylKey) seen.add(primarySylKey);
+
+    const addAlt = (translit: string, syllabary?: string, tone?: string, tone1?: string, tone2?: string, source?: string) => {
+        const cleanT = (translit || '').trim();
+        let cleanS = (syllabary || '').trim();
+        if (!cleanT && !cleanS) return;
+
+        if (!cleanS && cleanT) {
+            cleanS = transliterateToSyllabary(cleanT, 'classic');
+        }
+
+        const tKey = normalizeKey(cleanT);
+        const sKey = cleanS;
+
+        if (tKey && seen.has(tKey) && (!sKey || seen.has(sKey))) return;
+        if (sKey && seen.has(sKey) && (!tKey || seen.has(tKey))) return;
+
+        if (tKey) seen.add(tKey);
+        if (sKey) seen.add(sKey);
+
+        list.push({
+            translit: cleanT,
+            syllabary: cleanS || undefined,
+            tone: tone || tone1 || tone2 || undefined,
+            tone1: tone1 || undefined,
+            tone2: tone2 || undefined,
+            source: source || undefined
+        });
+    };
+
+    // 1. CN App Dictionary (Prioritized!)
+    const cn = sources['cn-app-dictionary.csv'];
+    if (cn) {
+        const s = Array.isArray(cn) ? cn[0] : cn;
+        // From sub-entry merge (_Variants_Practical / _Variants_Syllabary / _Variants_Tone)
+        if (s['_Variants_Practical']) {
+            const vPracs = s['_Variants_Practical'].split(';').map((x: string) => x.trim()).filter(Boolean);
+            const vSylls = (s['_Variants_Syllabary'] || '').split(';').map((x: string) => x.trim()).filter(Boolean);
+            const vTone1 = (s['_Variants_Tone1'] || '').split(';').map((x: string) => x.trim()).filter(Boolean);
+            const vTone2 = (s['_Variants_Tone2'] || '').split(';').map((x: string) => x.trim()).filter(Boolean);
+            vPracs.forEach((p: string, i: number) => {
+                addAlt(p, vSylls[i], vTone1[i] || vTone2[i], vTone1[i], vTone2[i], 'ced');
+            });
+        }
+        // From Variants column
+        if (s['Variants']) {
+            s['Variants'].split(',').map((x: string) => x.trim()).filter(Boolean).forEach((v: string) => {
+                addAlt(v, undefined, undefined, undefined, undefined, 'ced');
+            });
+        }
+    }
+
+    // 2. Lily CED (comma-separated spellings)
+    const lily = sources['lily-dict.csv'];
+    if (lily) {
+        const s = Array.isArray(lily) ? lily[0] : lily;
+        const entryStr = s['Entry'] || '';
+        if (entryStr.includes(',')) {
+            const eParts = entryStr.split(',').map((x: string) => x.trim()).filter(Boolean);
+            const sParts = (s['Syllabary'] || '').split(',').map((x: string) => x.trim()).filter(Boolean);
+            const tParts = (s['Entry_Tone'] || '').split(',').map((x: string) => x.trim()).filter(Boolean);
+            for (let i = 1; i < eParts.length; i++) {
+                addAlt(eParts[i], sParts[i], tParts[i], undefined, undefined, s['Source'] || 'lily');
+            }
+        }
+    }
+
+    return list;
+}
+
 export interface PackageMetadata {
     id: string;
     name: string;
@@ -261,10 +349,13 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                         Entry_Tone = tone1 || tone2 || '';
                     } else if (sources['lily-dict.csv']) {
                         const s = Array.isArray(sources['lily-dict.csv']) ? sources['lily-dict.csv'][0] : sources['lily-dict.csv'];
-                        translit = s['Entry'] || '';
-                        syllabary = s['Syllabary'] || '';
+                        const rawEntry = s['Entry'] || '';
+                        const rawSyll = s['Syllabary'] || '';
+                        const rawTone = s['Entry_Tone'] || '';
+                        translit = rawEntry.includes(',') ? rawEntry.split(',')[0].trim() : rawEntry;
+                        syllabary = rawSyll.includes(',') ? rawSyll.split(',')[0].trim() : rawSyll;
+                        Entry_Tone = rawTone.includes(',') ? rawTone.split(',')[0].trim() : rawTone;
                         definition = s['Definition'] || '';
-                        Entry_Tone = s['Entry_Tone'] || '';
                     } else if (sources['kirk-book-data.csv']) {
                         const s = Array.isArray(sources['kirk-book-data.csv']) ? sources['kirk-book-data.csv'][0] : sources['kirk-book-data.csv'];
                         translit = s['Cherokee'] || '';
@@ -319,6 +410,8 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                     const slug = d.slug || d.root_slug || sources['hierarchical-dict.json']?.slug || sources['hierarchical-dict.json']?.root_slug;
                     const root_slug = d.root_slug || d.slug || sources['hierarchical-dict.json']?.root_slug || sources['hierarchical-dict.json']?.slug;
 
+                    const alternateSpellings = extractAlternateSpellings(sources, translit, syllabary);
+
                     return {
                         ...d,
                         id: d.merged_id,
@@ -339,6 +432,7 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                         shim_forms: d.shim_forms,
                         tone1: tone1 || undefined,
                         tone2: tone2 || undefined,
+                        alternate_spellings: alternateSpellings.length > 0 ? alternateSpellings : undefined,
                         // Legacy
                         Index: d.merged_id,
                         Entry: translit,

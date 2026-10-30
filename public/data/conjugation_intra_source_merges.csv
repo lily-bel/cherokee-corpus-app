@@ -1,7 +1,5 @@
 merged_id,normalized_key,source,count,forms
-523bd6abe14c7184,2s|3a|imperative,cn-app-dictionary.csv,2,"ᎯᏌᎳᏛᎦ / hisaladvga [lift him/her!, raise him/her!] {sub: imperative with animate/ inanimate direct objects} ; ᎯᏌᎳᏛᎦ / hisaladvga [lift it!, raise it!] {sub: imperative with animate/ inanimate direct objects}"
-54dc947eeb4a6c6f,1s|3a|present,cn-app-dictionary.csv,2,"ᏥᏯᏙᎵᏍᎦ / jiyatolsga [I'm borrowing him/her, I'm borrowing it] {sub: 1st person singular with animate/ inanimate object} ; ᎦᏙᎵᏍᎦ / gatolsga [I'm borrowing it] {sub: 1st person singular with animate/ inanimate object}"
-54dc947eeb4a6c6f,2s|3a|imperative,cn-app-dictionary.csv,2,ᎯᏯᏙᎳ / hiyatola [borrow him/her!] {sub: imperative with animate/ inanimate direct objects} ; ᎭᏙᎳ / hatola [borrow it!] {sub: imperative with animate/ inanimate direct objects}
-354f39c0be6c590b,2s|3a|imperative,cn-app-dictionary.csv,2,ᏘᏍᏓᏲᎭ / tisdayoha [shoot at him/her!] {sub: imperative with animate/ inanimate direct objects} ; ᏘᏍᏓᏲᎭ / tisdayoha [shoot at it!; shoot!] {sub: imperative with animate/ inanimate direct objects}
-918f11880c5cc16b,2s|3a|imperative,cn-app-dictionary.csv,2,ᏘᏍᎩᎾᏓ / tisginada [curse him/her!; curse!] {sub: imperative with animate/ inanimate direct objects} ; ᏘᏍᎩᎾᏓ / tisginada [curse it!; curse!] {sub: imperative with animate/ inanimate direct objects}
-83f7d01aa24b0ea1,3s|3s|present,cn-app-dictionary.csv,2,ᎮᏍᏗ / hesdi [don't] ; ᏞᏍᏗ / hlesdi [don't]
+a29b23e852f2c159,variant||,cn-app-dictionary.csv,2,ᎠᏲᏁᎦ / ayonega [white person] {sub: pronunciation variant} {note: variant of 542.1} ; ᎠᏂᏲᏁᎦ / aniyonega [white people] {sub: pronunciation variant} {note: variant of 542.3}
+e47ada6d39b8fe4e,variant||,cn-app-dictionary.csv,2,ᎤᎷᏨᎢ / uluhjv'i [he/she returned] {sub: pronunciation variant} {note: variant of 1163.3} ; ᎤᎷᎯᏍᏗ / u'luhisdi [to return] {sub: pronunciation variant} {note: variant of 1163.7}
+10b7757e36f1e829,variant||,cn-app-dictionary.csv,2,ᏍᏆᏞᏍᏗ / sgwatlesdi [ball] {sub: pronunciation variant} {note: variant of 1444.1} ; ᏗᏆᏞᏍᏗ / disgwatlesdi [balls] {sub: pronunciation variant} {note: variant of 1444.3}
+1b465fc7b3842205,variant||,cn-app-dictionary.csv,2,ᏴᏭᏁᎦ / yvwunega [white person; English language] {sub: pronunciation variant} {note: variant of 1861.1} ; ᎠᏂᏴᏭᏁᎦ / aniyvwunega [white people] {sub: pronunciation variant} {note: variant of 1861.3}

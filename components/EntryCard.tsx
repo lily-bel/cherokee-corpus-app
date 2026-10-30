@@ -250,6 +250,27 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
               {totalLists > 0 && <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-0.5"><ListIcon size={10} /> {totalLists}</span>}
             </div>
           </div>
+          {entry.matchedSpelling && (
+            <div className="text-xs text-amber-600 dark:text-amber-400 italic mb-1.5 font-medium flex items-center flex-wrap gap-x-1.5 gap-y-0.5">
+              <span className="text-slate-400 dark:text-slate-500 not-italic">matched spelling:</span>
+              {entry.matchedSpelling.syllabary && (
+                <span className="font-noto-cherokee font-semibold">{entry.matchedSpelling.syllabary}</span>
+              )}
+              {(entry.matchedSpelling.translit || entry.matchedSpelling.tone) && (
+                <span className="font-noto-serif font-bold">
+                  <ColorizedCherokeeWord
+                    word={entry.matchedSpelling.translit}
+                    form={entry.matchedSpelling}
+                    entry={entry}
+                    rootEntry={rootEntry}
+                    isColored={isColored}
+                    settings={settings}
+                    showTone={true}
+                  />
+                </span>
+              )}
+            </div>
+          )}
           {entry.matchedForm && (
             <div className={`text-xs text-amber-600 dark:text-amber-400 italic mb-1.5 font-medium flex items-center flex-wrap gap-x-1.5 gap-y-0.5 ${anyPreviewMatches ? 'lg:hidden' : ''}`}>
               <span className="text-slate-400 dark:text-slate-500 not-italic">matched form:</span>

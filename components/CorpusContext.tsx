@@ -46,6 +46,8 @@ export interface DictionaryEntry {
     definition_source_type?: 'infinitive' | 'parent';
     is_auto_syllabary?: boolean;
     base_form_slot?: string;
+    alternate_spellings?: { syllabary?: string; translit: string; tone?: string; tone1?: string; tone2?: string; source?: string }[];
+    matchedSpelling?: { syllabary?: string; translit?: string; tone?: string; tone1?: string; tone2?: string } | null;
 }
 
 export interface SurfaceSegment {
