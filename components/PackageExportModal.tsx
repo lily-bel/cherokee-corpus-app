@@ -332,7 +332,7 @@ const PackageExportModal: React.FC<PackageExportModalProps> = ({
 
     return (
         <Modal title="Export Package" onClose={onClose}>
-            <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
+            <div className="space-y-6 pr-1">
                 <div className="space-y-3">
                     <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Package Metadata</h3>
                     <input

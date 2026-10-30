@@ -42,7 +42,7 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
     const hideCustomization = !!settings?.hideCustomization;
     const { dictionary, glossMap, dictionaryMap, addUserGloss, removeUserGloss, removeUserSentence } = useCorpus();
     const { packages, getPackageColor, importedData } = usePackageManager(); // Add this line
-    const { isSentenceFromCollection } = useReader();
+    const { isSentenceFromCollection, addToInvestigationQueue } = useReader();
     const isCollection = isSentenceFromCollection ? isSentenceFromCollection(sentence) : false;
     const [activePopover, setActivePopover] = useState<{ index: number, rect: { x: number, y: number, anchorTop?: number, anchorBottom?: number } } | null>(null);
     const [showRecorder, setShowRecorder] = useState(false);
@@ -645,6 +645,34 @@ export const SentenceCard: React.FC<SentenceCardProps> = ({ sentence, onClick, i
                             targetWord: { syllabary: token.syl, translit: token.tr }
                         });
                         setActivePopover(null);
+                    }}
+                    onAddToQueue={addToInvestigationQueue ? () => {
+                        addToInvestigationQueue(sentence.id, activePopover.index);
+                        setActivePopover(null);
+                        showToast?.("Added to Investigation Queue", "success");
+                    } : undefined}
+                    onQuickGloss={(entry) => {
+                        const token = tokens[activePopover.index];
+                        if (!token) return;
+                        const glossSyl = (token.syl || '').replace(/[.,!?;:"()]/g, '').trim();
+                        const glossPhon = stripTone(token.tr || token.rawTr || '').trim();
+                        const glossDef = entry.definition || entry.Definition;
+
+                        addUserGloss({
+                            sentence_id: sentence.id,
+                            word_index: activePopover.index.toString(),
+                            entry_id: entry.id || (entry as any).Index,
+                            notes: '',
+                            breakdown_cherokee: '',
+                            breakdown_english: '',
+                            source: 'user',
+                            id: Date.now().toString(),
+                            gloss_syllabary: glossSyl,
+                            gloss_phonetic: glossPhon,
+                            gloss_english: glossDef
+                        });
+                        setActivePopover(null);
+                        showToast?.(`Glossed as "${glossDef}"`, 'success');
                     }}
                     onEdit={(gloss) => {
                         let entry = dictionaryMap.get(gloss.entry_id);

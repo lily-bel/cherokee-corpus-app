@@ -764,8 +764,31 @@ export const WordModal: React.FC<WordModalProps> = ({
 
     return (
         <>
-            <Modal title={editingId ? "Edit Word" : (isSentenceMode ? "New Sentence" : "New Word")} onClose={onClose}>
-                <div className="space-y-4 max-h-[75vh] overflow-y-auto pr-1 pb-4">
+            <Modal
+                title={editingId ? "Edit Word" : (isSentenceMode ? "New Sentence" : "New Word")}
+                onClose={onClose}
+                scrollable={false}
+                maxWidth="max-w-md"
+                footer={
+                    <div className="flex items-center justify-end gap-2 w-full">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="px-4 py-2.5 rounded-lg text-slate-500 dark:text-slate-400 font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleSaveClick}
+                            className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 px-4 rounded-lg transition-colors shadow-sm text-center"
+                        >
+                            Save {isSentenceMode ? "Sentence" : "Word"}
+                        </button>
+                    </div>
+                }
+            >
+                <div className="space-y-4 flex-1 min-h-0 overflow-y-auto pr-1 pb-2">
                     <div>
                         <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">Transliteration (Cherokee)</label>
                         <input
@@ -1441,9 +1464,6 @@ export const WordModal: React.FC<WordModalProps> = ({
                         )}
                     </div>
                 </div>
-                <button onClick={handleSaveClick} className="w-full mt-6 bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 rounded-lg transition-colors shadow-sm">
-                    Save {isSentenceMode ? "Sentence" : "Word"}
-                </button>
             </Modal>
 
             {/* NEW MORPHEME DEFINITION MODAL PROMPT */}

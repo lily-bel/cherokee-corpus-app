@@ -620,6 +620,26 @@ export const ReaderView: React.FC<ReaderViewProps> = ({
                             setActivePopover(null);
                         }}
                         onAddToQueue={handleAddToQueue}
+                        onQuickGloss={(entry) => {
+                            const glossSyl = (targetToken?.syl || '').replace(/[.,!?;:"()]/g, '').trim();
+                            const glossPhon = stripTone(targetToken?.tr || '').trim();
+                            const glossDef = entry.definition || entry.Definition;
+
+                            addUserGloss({
+                                sentence_id: activePopover.sentenceId,
+                                word_index: activePopover.wordIndex.toString(),
+                                entry_id: entry.id || (entry as any).Index,
+                                notes: '',
+                                breakdown_cherokee: '',
+                                breakdown_english: '',
+                                source: 'user',
+                                id: Date.now().toString(),
+                                gloss_syllabary: glossSyl,
+                                gloss_phonetic: glossPhon,
+                                gloss_english: glossDef
+                            });
+                            setActivePopover(null);
+                        }}
                         onEdit={(gloss) => {
                             let entry = dictionaryMap.get(gloss.entry_id);
                             if (!entry && personalWords) {

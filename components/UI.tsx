@@ -133,9 +133,28 @@ export const CollapsibleCard = ({ title, icon: Icon, count, children, defaultOpe
   );
 };
 
-export const Modal = ({ title, children, onClose }: any) => createPortal(
+export const Modal = ({
+  title,
+  children,
+  onClose,
+  footer,
+  scrollable = true,
+  maxWidth = 'max-w-sm',
+  className = ''
+}: {
+  title: React.ReactNode;
+  children: React.ReactNode;
+  onClose: () => void;
+  footer?: React.ReactNode;
+  scrollable?: boolean;
+  maxWidth?: string;
+  className?: string;
+}) => createPortal(
   <div className="fixed inset-0 z-[20000] flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={onClose}>
-    <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-sm shadow-2xl p-5 sm:p-6 animate-scale-in max-h-[85dvh] flex flex-col border dark:border-slate-800" onClick={e => e.stopPropagation()}>
+    <div
+      className={`bg-white dark:bg-slate-900 rounded-2xl w-full ${maxWidth} shadow-2xl p-5 sm:p-6 animate-scale-in max-h-[85dvh] flex flex-col border dark:border-slate-800 ${className}`}
+      onClick={e => e.stopPropagation()}
+    >
       <div className="flex items-center justify-between pb-3 shrink-0">
         <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">{title}</h3>
         <button
@@ -146,14 +165,24 @@ export const Modal = ({ title, children, onClose }: any) => createPortal(
           <X size={18} />
         </button>
       </div>
-      <div className="flex-1 overflow-y-auto min-h-0 pr-1 -mr-1">
-        {children}
-      </div>
-      <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2 shrink-0">
-        <button onClick={onClose} className="px-4 py-2 rounded-lg text-slate-500 dark:text-slate-400 font-medium hover:bg-slate-100 dark:hover:bg-slate-800">
-          Cancel
-        </button>
-      </div>
+      {scrollable ? (
+        <div className="flex-1 overflow-y-auto min-h-0 pr-1 -mr-1">
+          {children}
+        </div>
+      ) : (
+        <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+          {children}
+        </div>
+      )}
+      {footer !== null && (
+        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2 shrink-0">
+          {footer ? footer : (
+            <button onClick={onClose} className="px-4 py-2 rounded-lg text-slate-500 dark:text-slate-400 font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+              Cancel
+            </button>
+          )}
+        </div>
+      )}
     </div>
   </div>,
   document.body

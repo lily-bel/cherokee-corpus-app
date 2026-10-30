@@ -132,9 +132,9 @@ export const LinkerModal: React.FC<LinkerModalProps> = ({ initialQuery, targetWo
     }, [breakdownCherokee, breakdownEnglish]);
 
     return (
-        <Modal title={step === 'search' ? "Link to Dictionary" : "Add Gloss Details"} onClose={onClose}>
+        <Modal title={step === 'search' ? "Link to Dictionary" : "Add Gloss Details"} onClose={onClose} scrollable={false} maxWidth="max-w-md">
             {targetWord && (
-                <div className="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-100 dark:border-amber-900/30 mb-4 flex items-center justify-between">
+                <div className="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-100 dark:border-amber-900/30 mb-3 flex items-center justify-between shrink-0">
                     <div>
                         <div className="text-xs font-bold text-amber-800/60 dark:text-amber-200/60 uppercase tracking-widest mb-1">
                             {Array.isArray(targetWord) ? "Glossing Words" : "Glossing Word"}
@@ -159,7 +159,7 @@ export const LinkerModal: React.FC<LinkerModalProps> = ({ initialQuery, targetWo
                 </div>
             )}
             {step === 'search' ? (
-                <div className="flex flex-col gap-4 h-[60vh]">
+                <div className="flex flex-col gap-3 flex-1 min-h-0">
                     <div className="relative shrink-0">
                         <Search size={18} className="absolute left-3 top-3 text-slate-400" />
                         <input
@@ -177,7 +177,7 @@ export const LinkerModal: React.FC<LinkerModalProps> = ({ initialQuery, targetWo
                         />
                     </div>
 
-                    <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 -mr-2 pr-2">
+                    <div className="flex-1 min-h-0 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 -mr-2 pr-2">
                         {results.map((entry: any, index: number, array: any[]) => {
                             const entryId = entry.id || entry.Index || entry.merged_id;
                             const rootEntry = entryId ? rootMap?.get(entryId) : null;
@@ -272,10 +272,10 @@ export const LinkerModal: React.FC<LinkerModalProps> = ({ initialQuery, targetWo
                     </div>
                     {/* Create New Button */}
                     {onCreateNew && (
-                        <div className="pt-2 mt-2 border-t border-slate-100 dark:border-slate-800">
+                        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 shrink-0">
                             <button
                                 onClick={onCreateNew}
-                                className="w-full py-3 border-2 border-dashed border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-bold rounded-xl hover:border-amber-400 hover:text-amber-600 dark:hover:border-amber-700 dark:hover:text-amber-500 transition-colors flex items-center justify-center gap-2"
+                                className="w-full py-2.5 border-2 border-dashed border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-bold rounded-xl hover:border-amber-400 hover:text-amber-600 dark:hover:border-amber-700 dark:hover:text-amber-500 transition-colors flex items-center justify-center gap-2 text-sm"
                             >
                                 <span className="text-xl">+</span> Create New Word
                             </button>
@@ -283,9 +283,9 @@ export const LinkerModal: React.FC<LinkerModalProps> = ({ initialQuery, targetWo
                     )}
                 </div>
             ) : (
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-4 flex-1 min-h-0 overflow-y-auto pr-1">
                     {/* Selected Entry Preview */}
-                    <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800 flex justify-between items-start">
+                    <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800 flex justify-between items-start shrink-0">
                         <div>
                             <div className="font-serif font-bold text-slate-900 dark:text-slate-100">{selectedEntry?.syllabary || selectedEntry?.Syllabary}</div>
                             <div className="text-sm font-medium text-amber-700 dark:text-amber-500">{selectedEntry?.translit || selectedEntry?.Entry}</div>
@@ -295,7 +295,7 @@ export const LinkerModal: React.FC<LinkerModalProps> = ({ initialQuery, targetWo
                     </div>
 
                     {/* Breakdown Inputs */}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-3 shrink-0">
                         <div>
                             <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">ᏣᎳᎩ Breakdown</label>
                             <input
@@ -320,7 +320,7 @@ export const LinkerModal: React.FC<LinkerModalProps> = ({ initialQuery, targetWo
 
                     {/* IGT Preview */}
                     {(breakdownCherokee || breakdownEnglish) && (
-                        <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 overflow-x-auto">
+                        <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 overflow-x-auto shrink-0">
                             <div className="flex gap-4 min-w-max">
                                 {igtSegments.map((seg, i) => (
                                     <div key={i} className="flex flex-col items-center">
@@ -333,7 +333,7 @@ export const LinkerModal: React.FC<LinkerModalProps> = ({ initialQuery, targetWo
                     )}
 
                     {/* Notes */}
-                    <div>
+                    <div className="shrink-0">
                         <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">Notes</label>
                         <textarea
                             value={notes}
@@ -344,7 +344,7 @@ export const LinkerModal: React.FC<LinkerModalProps> = ({ initialQuery, targetWo
                         />
                     </div>
 
-                    <div className="flex gap-2 mt-2">
+                    <div className="flex gap-2 mt-2 shrink-0">
                         {onDelete && (
                             <button onClick={onDelete} className="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-bold p-3 rounded-xl hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors">
                                 <Trash2 size={20} />

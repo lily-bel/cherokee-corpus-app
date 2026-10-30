@@ -3,7 +3,7 @@ import { Gloss, DictionaryEntry, useCorpus } from './CorpusContext';
 import { SourceBadge } from './UI';
 import { ChevronRight, Trash2, Pencil, Plus, Search } from './Icons';
 import { usePackageManager } from './PackageManagerContext';
-import { buildWordFormsLookupMap, getAllFormsForEntry, ColorizedCherokeeWord } from '../utils';
+import { buildWordFormsLookupMap, getAllFormsForEntry, ColorizedCherokeeWord, stripTone } from '../utils';
 
 
 
@@ -19,6 +19,7 @@ interface GlossPopoverProps {
     onDelete?: (gloss: Gloss) => void;
     onAdd?: () => void;
     onAddToQueue?: () => void;  // Add to Investigation Queue
+    onQuickGloss?: (entry: DictionaryEntry) => void;
     personalWords?: any[];
     customDictionaries?: any;
     sourceMap?: Record<string, string>;
@@ -26,9 +27,9 @@ interface GlossPopoverProps {
     settings?: any;
 }
 
-export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord, dictionaryMap, position, onClose, onEntryClick, onEdit, onDelete, onAdd, onAddToQueue, personalWords, customDictionaries, sourceMap, hideCustomization, settings }) => {
+export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord, dictionaryMap, position, onClose, onEntryClick, onEdit, onDelete, onAdd, onAddToQueue, onQuickGloss, personalWords, customDictionaries, sourceMap, hideCustomization, settings }) => {
     const { getPackageColor, packages, importedData } = usePackageManager();
-    const { userWordForms, rootMap } = useCorpus();
+    const { userWordForms, rootMap, dictionary, personalWords: corpusPersonalWords } = useCorpus();
 
     const popoverRef = useRef<HTMLDivElement>(null);
     const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
@@ -78,9 +79,69 @@ export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord,
         }
     })();
 
+    const allPersonalWords = personalWords || corpusPersonalWords || [];
+
     const wordFormsLookupMap = useMemo(() => {
         return buildWordFormsLookupMap(importedData, userWordForms);
     }, [importedData, userWordForms]);
+
+    // Exact matches from CED and custom dictionaries for fast glossing on desktop
+    const exactMatches = useMemo(() => {
+        if (!targetWord) return [];
+        const cleanSyl = (targetWord.syllabary || '').replace(/[.,!?;:"()—\-–]/g, '').trim();
+        const cleanTr = stripTone(targetWord.translit || '').toLowerCase().replace(/[.,!?;:"()—\-–]/g, '').trim();
+        if (!cleanSyl && !cleanTr) return [];
+
+        const results: DictionaryEntry[] = [];
+        const seenDefs = new Set<string>();
+        const seenIds = new Set<string>();
+
+        // Don't suggest entries that are already glossed on this word
+        const alreadyGlossedIds = new Set(glosses.map(g => g.entry_id));
+
+        const checkAndAdd = (entry: DictionaryEntry) => {
+            const id = entry.id || (entry as any).Index;
+            if (!id || seenIds.has(id)) return;
+            if (alreadyGlossedIds.has(id)) return;
+
+            const def = (entry.definition || entry.Definition || '').trim();
+            if (!def) return;
+            const normDef = def.toLowerCase();
+            if (seenDefs.has(normDef)) return;
+
+            const eSyl = (entry.syllabary || entry.Syllabary || '').replace(/[.,!?;:"()—\-–]/g, '').trim();
+            const eTr = stripTone(entry.translit || entry.Entry || '').toLowerCase().replace(/[.,!?;:"()—\-–]/g, '').trim();
+
+            const sylList = eSyl.split(',').map(s => s.trim());
+            const trList = eTr.split(',').map(t => stripTone(t).toLowerCase().trim());
+
+            const sylMatch = Boolean(cleanSyl && (eSyl === cleanSyl || sylList.includes(cleanSyl)));
+            const trMatch = Boolean(cleanTr && (eTr === cleanTr || trList.includes(cleanTr)));
+
+            if (sylMatch || trMatch) {
+                seenIds.add(id);
+                seenDefs.add(normDef);
+                results.push({ ...entry, id });
+            }
+        };
+
+        // 1. Check custom dicts / personal words first
+        for (const pw of allPersonalWords) {
+            checkAndAdd({ ...pw, id: pw.Index || pw.id });
+        }
+
+        // 2. Check CED or custom entries in dictionary
+        for (const d of (dictionary || [])) {
+            const src = (d.source || d.Source || '').toLowerCase();
+            const isCed = src === 'ced' || src === 'official-cherokee-data';
+            const isCustom = src === 'user' || src.startsWith('nb_') || Boolean((d as any).customDictionaryId) || (customDictionaries && Boolean(customDictionaries[src]));
+            if (isCed || isCustom) {
+                checkAndAdd(d);
+            }
+        }
+
+        return results.slice(0, 4);
+    }, [targetWord, dictionary, allPersonalWords, customDictionaries, glosses]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -341,8 +402,8 @@ export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord,
                     );
                 })}
             </div>
-            {/* Add New Button */}
-            {!hideCustomization && (onAdd || onAddToQueue) && (
+            {/* Add New Button & Quick Gloss Options */}
+            {!hideCustomization && (onAdd || onAddToQueue || (onQuickGloss && exactMatches.length > 0)) && (
                 <div className="p-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/30 flex flex-col gap-2">
                     {onAdd && (
                         <button
@@ -359,6 +420,38 @@ export const GlossPopover: React.FC<GlossPopoverProps> = ({ glosses, targetWord,
                         >
                             <Search size={16} /> Add to Queue
                         </button>
+                    )}
+
+                    {/* Exact match search fast-glossing buttons (Desktop) */}
+                    {onQuickGloss && exactMatches.length > 0 && (
+                        <div className="hidden sm:flex flex-col gap-1.5 pt-1.5 border-t border-slate-200/60 dark:border-slate-800">
+                            {exactMatches.map((entry) => {
+                                const def = (entry.definition || entry.Definition || '').trim();
+                                const displayDef = def.length > 32 ? `${def.slice(0, 32)}…` : def;
+                                const src = entry.source || entry.Source || 'ced';
+                                const srcName = customDictionaries?.[src]?.name || sourceMap?.[src] || src;
+                                const srcColor = getPackageColor(src);
+
+                                return (
+                                    <button
+                                        key={entry.id || (entry as any).Index}
+                                        type="button"
+                                        onClick={() => onQuickGloss(entry)}
+                                        className="group relative w-full py-2 px-3 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-gradient-to-r from-amber-500/15 via-white to-amber-500/15 dark:via-slate-800/80 hover:from-amber-500/25 hover:via-amber-50/50 hover:to-amber-500/25 dark:hover:from-amber-500/30 dark:hover:via-slate-800 dark:hover:to-amber-500/30 border-y border-amber-200/70 dark:border-amber-900/40 border-l-[3px] border-r-[3px] border-l-amber-500 border-r-amber-500 shadow-xs hover:shadow-sm transition-all flex items-center justify-between gap-2 text-left cursor-pointer"
+                                        title={`Fast gloss: ${def}`}
+                                    >
+                                        <span className="truncate flex-1">
+                                            Gloss for <strong className="text-amber-800 dark:text-amber-300 font-bold font-serif">"{displayDef}"</strong>
+                                        </span>
+                                        <SourceBadge
+                                            source={src}
+                                            name={srcName}
+                                            customColor={srcColor}
+                                        />
+                                    </button>
+                                );
+                            })}
+                        </div>
                     )}
                 </div>
             )}

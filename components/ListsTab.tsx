@@ -182,8 +182,8 @@ const AddWordsModal = ({
     const displayedResults = results.slice(0, limit);
 
     return (
-        <Modal title={`Add ${listMode === 'words' ? 'Words' : 'Sentences'}`} onClose={onClose}>
-            <div className="h-[70vh] flex flex-col gap-4">
+        <Modal title={`Add ${listMode === 'words' ? 'Words' : 'Sentences'}`} onClose={onClose} scrollable={false} maxWidth="max-w-md">
+            <div className="flex-1 min-h-0 flex flex-col gap-4">
                 <div className="relative shrink-0">
                     <Search size={18} className="absolute left-3 top-3 text-slate-400" />
                     <input
@@ -195,7 +195,7 @@ const AddWordsModal = ({
                     />
                 </div>
 
-                <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 -mr-2 pr-2">
+                <div className="flex-1 min-h-0 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 -mr-2 pr-2">
                     {displayedResults.map(res => {
                         const isSentenceResult = listMode === 'sentences';
                         const data = isSentenceResult ? (res.item || res) : res;
