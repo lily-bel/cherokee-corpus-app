@@ -9,6 +9,18 @@ BIG QUESTIONS:
 searching "higoliya" does not show Matched form: higoliya
 
 
+Tone is gone??
+search something like "see" - the verb is VERY low
+prefixes and suffixes still there
+see sentence on agowhtiha rrd - weird
+agowhtiha ced MISSING other forms???
+
+rrd agowhtiha - "dual imperative", "plural"
+hide rrd by default
+searching in reverse aspiration doesn't work
+part of speech search for english
+
+
 TEST:
 Online Capabilities & Testing                                                                                 
   Online capabilities, specifically cloud backup and public packages, have not been tested yet.                                                                                                                     
