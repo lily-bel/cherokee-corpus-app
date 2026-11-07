@@ -58,7 +58,6 @@ Shorthand Form Ambiguity
 
 SMALL
 New Cherokee Narratives data
-Make bible and Cherokee Narratives installed by default
 22. Editable & Shared Packages                                                                                   
   Implement editable packages and sharing packages between people.                                                                                                                                  
 23. Basic & Advanced Modes Polish                                                                                

@@ -359,11 +359,13 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                 metadata.stats.notes = metadata.stats.notes || 0;
 
                 // Normalize Dictionary Data
-                const isAffixOnly = (posStr?: string): boolean => {
-                    if (!posStr) return false;
-                    const parts = posStr.split(',').map(p => p.trim().toLowerCase()).filter(Boolean);
-                    if (parts.length === 0) return false;
-                    return parts.every(p => p.includes('suffix') || p.includes('prefix'));
+                const isAffixEntry = (posStr?: string, translit?: string, syllabary?: string): boolean => {
+                    const posLower = (posStr || '').toLowerCase();
+                    if (posLower && ['prefix', 'suffix', 'pref', 'suf', 'affix'].some(w => posLower.includes(w))) return true;
+                    const parts = (translit || '').split(',').map(p => p.trim()).filter(Boolean);
+                    if (parts.some(p => p.startsWith('-') || p.endsWith('-'))) return true;
+                    if (syllabary && (syllabary.startsWith('-') || syllabary.endsWith('-'))) return true;
+                    return false;
                 };
 
                 const normalizedDictionary = dictionary.map((d: any) => {
@@ -448,7 +450,7 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                         PoS = parts.join(', ');
                     }
 
-                    if (isAffixOnly(PoS)) {
+                    if (isAffixEntry(PoS, translit, syllabary)) {
                         return null;
                     }
 
