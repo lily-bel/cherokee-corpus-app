@@ -405,7 +405,7 @@ export const PackageImportModal: React.FC<PackageImportModalProps> = ({ onClose,
                                         type="text"
                                         value={linkInput}
                                         onChange={e => setLinkInput(e.target.value)}
-                                        placeholder="e.g. https://site/.../packageId or packageId"
+                                        placeholder="e.g. dictionary.hanehlda.org//package/packageId or packageId"
                                         className="flex-1 px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl outline-none focus:border-amber-500 dark:text-white font-mono"
                                     />
                                     <button

@@ -1,21 +1,21 @@
-BIG QUESTIONS:                                                                                                     
-3. List Tab Study Tools & Integration                                                                            
-  The list tab in general needs some work. It's meant to be a studying tab, but obviously it doesn't have those    
-  features yet. Now that we're on the hanehla domain, we can do more with integration with Hanehla,  
-  but right now we don't have any study tools and the list tab is lacking.                                                                                                                                                                                         
-26. Mass Editor - I can use scripts in the package file instead!
-28. Login says unauthorized domain on hanehla
-29. Check words: uduha
+
+
+Login says unauthorized domain on hanehla
+Check words: uduha
 searching "higoliya" does not show Matched form: higoliya
 
 
-search something like "see" - the verb is VERY low
-different word forms search for english
 
 move ced pill to same location as words with reference forms
 optional large format search view???
 
 work on other forms page - it could have a table view? and a search?
+
+debouncing still lags sometimes if you type slow. I think this may have to do with displaying results rather than
+running the algorithm? not sure
+
+remove cherokee narratives from optional packages, remove optional packages entirely and just make the bible
+an installed package by default that can be hidden.
 
 prefixes and suffixes still appear in the app... I want them to be excluded at the data consolidation stage
 (the cherokee-data-consolidation project). I did this already but it didn't work. there's lots of prefix/suffixes
@@ -44,23 +44,16 @@ bottom bar on mobile
 too many sentence buttons?
 check sentences for issues
 
-data consolidation:
-remove all prefix/suffix etc
+
 
 DATA:
-8. Cherokee Narratives Data Fix                                                                                  
-  Cherokee Narratives needs to be edited and fixed on the data side.
-13. Data Consolidation: Animate / Inanimate Distinction                                                          
+Put in Maarten's cherokee narratives data
+Data Consolidation: Animate / Inanimate Distinction                                                          
   The data consolidation project does not keep track of the animate/inanimate words versus the just inanimate words.
   I need to maintain this distinction for Julie to have the 10 reference forms that the dictionary uses.           
-14. Noun Roots                                                                                                   
-  Eventually we will implement roots for nouns as well, but that is through the data side and through Julie.  
-20. Part of Speech Representation                                                                                
-  Part of speech is still not reflected in the app correctly. Not sure what I want to do with it given Julie's     
-  different way of representing part of speech, I don't know. at least standardize (vt = transitive verb etc)
-28. <em> issue in data      
-
-21. Shorthand Form Ambiguity                                                                                     
+Noun Roots                                                                                                   
+  Eventually we will implement roots for nouns as well, but that is through the data side and through Julie.     
+Shorthand Form Ambiguity                                                                                     
   The shorthand form for words should probably be fixed to change all of the ambiguous ones to just a              
   straightforward "no form" form, rather than defaulting to noun singular or third person present. 
             
@@ -68,9 +61,17 @@ DATA:
   
 
 SMALL
-9. Public Packages for Narratives & New Testament                                                                
-  Cherokee Narratives and the Cherokee New Testament packages should become public packages uploaded by myself. 
+New Cherokee Narratives data
+Make bible and Cherokee Narratives installed by default
 22. Editable & Shared Packages                                                                                   
   Implement editable packages and sharing packages between people.                                                                                                                                  
 23. Basic & Advanced Modes Polish                                                                                
   Basic and advanced modes need to be polished.                                                                    
+
+
+OTHER
+3. List Tab Study Tools & Integration                                                                            
+  The list tab in general needs some work. It's meant to be a studying tab, but obviously it doesn't have those    
+  features yet. Now that we're on the hanehla domain, we can do more with integration with Hanehla,  
+  but right now we don't have any study tools and the list tab is lacking.                                                                                                                                                                                         
+26. Mass Editor - I can use scripts in the package file instead!
