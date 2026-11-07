@@ -234,6 +234,7 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                         'ced': 'prioritize',
                         'kirk': 'other',
                         'ltu': 'other',
+                        'rrd': 'filter',
                         'mds': 'filter',
                         'msct': 'filter',
                         'cnmed': 'other',
