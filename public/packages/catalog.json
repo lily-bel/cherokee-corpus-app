@@ -26,6 +26,7 @@
       "stories": 17,
       "glosses": 3688
     },
-    "color": "#14b8a6"
+    "color": "#14b8a6",
+    "autoInstall": true
   }
 ]

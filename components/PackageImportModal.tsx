@@ -4,7 +4,7 @@ import { usePackageImport } from './usePackageHooks';
 import { Download, Upload, Check, Box, Book, BookOpen, ListIcon, X, LinkIcon } from './Icons';
 import { DictionaryDB } from '../firebase';
 
-interface CatalogItem {
+export interface CatalogItem {
     id: string;
     name: string;
     short_name?: string;
@@ -21,7 +21,7 @@ interface CatalogItem {
     autoInstall?: boolean;
 }
 
-const FALLBACK_CATALOG: CatalogItem[] = [
+export const FALLBACK_CATALOG: CatalogItem[] = [
     {
         id: 'cherokee-new-testament',
         name: 'Cherokee New Testament',
@@ -49,7 +49,8 @@ const FALLBACK_CATALOG: CatalogItem[] = [
             stories: 17,
             glosses: 3688
         },
-        color: '#14b8a6'
+        color: '#14b8a6',
+        autoInstall: true
     }
 ];
 

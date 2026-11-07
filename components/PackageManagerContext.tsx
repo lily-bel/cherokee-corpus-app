@@ -2,6 +2,40 @@ import React, { createContext, useContext, useState, useEffect, useMemo } from '
 import { getAllPackagesFromDB, savePackageToDB, deletePackageFromDB, transliterateToSyllabary } from '../utils';
 import { parsePackageZip } from './packageParser';
 import { deleteWidgetsByPackageId } from '../widgetUtils';
+import { auth, DictionaryDB } from '../firebase';
+
+const DEFAULT_CATALOG = [
+    {
+        id: 'cherokee-new-testament',
+        name: 'Cherokee New Testament',
+        short_name: 'BIBLE',
+        author: 'American Bible Society',
+        description: 'Full text of the Cherokee New Testament (27 books, 260 chapters).',
+        packageFile: 'cherokee_new_testament.zip',
+        stats: {
+            sentences: 7957,
+            stories: 27,
+            glosses: 0
+        },
+        color: '#ef4444',
+        autoInstall: true
+    },
+    {
+        id: 'cherokee-narratives',
+        name: 'Cherokee Narratives',
+        short_name: 'NARR',
+        author: 'Durbin Feeling, et al.',
+        description: 'Stories from Cherokee Narratives (edited by Durbin Feeling).',
+        packageFile: 'cherokee_narratives.zip',
+        stats: {
+            sentences: 361,
+            stories: 17,
+            glosses: 3688
+        },
+        color: '#14b8a6',
+        autoInstall: true
+    }
+];
 
 
 // --- Types ---
@@ -766,18 +800,17 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
 
                 // Auto-install packages marked with autoInstall in catalog
                 try {
-                    const catalog = await fetchJsonSafe<any[]>(`${import.meta.env.BASE_URL}packages/catalog.json`, []);
-                    if (Array.isArray(catalog)) {
-                        for (const item of catalog) {
-                            if (item.autoInstall && !loadedImportedPkgs.some(p => p.id === item.id) && !uninstalledPackages.includes(item.id)) {
-                                const pkgRes = await fetch(`${import.meta.env.BASE_URL}packages/${item.packageFile}`);
-                                if (pkgRes.ok) {
-                                    const blob = await pkgRes.blob();
-                                    const parsed = await parsePackageZip(blob, item.color);
-                                    loadedImportedPkgs.push(parsed.pkg);
-                                    loadedImportedData[parsed.pkg.id] = parsed.data;
-                                    await savePackageToDB(parsed.pkg, parsed.data);
-                                }
+                    const fetchedCatalog = await fetchJsonSafe<any[]>(`${import.meta.env.BASE_URL}packages/catalog.json`, DEFAULT_CATALOG);
+                    const catalog = (Array.isArray(fetchedCatalog) && fetchedCatalog.length > 0) ? fetchedCatalog : DEFAULT_CATALOG;
+                    for (const item of catalog) {
+                        if (item.autoInstall && !loadedImportedPkgs.some(p => p.id === item.id) && !uninstalledPackages.includes(item.id)) {
+                            const pkgRes = await fetch(`${import.meta.env.BASE_URL}packages/${item.packageFile}`);
+                            if (pkgRes.ok) {
+                                const blob = await pkgRes.blob();
+                                const parsed = await parsePackageZip(blob, item.color);
+                                loadedImportedPkgs.push(parsed.pkg);
+                                loadedImportedData[parsed.pkg.id] = parsed.data;
+                                await savePackageToDB(parsed.pkg, parsed.data);
                             }
                         }
                     }
@@ -840,6 +873,10 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                 localStorage.setItem('cherokee_app_uninstalled_packages', JSON.stringify(updated));
             }
         } catch (e) {}
+
+        if (auth.currentUser) {
+            DictionaryDB.setInstalledPackage(auth.currentUser.uid, pkg.id, true).catch(() => {});
+        }
     };
 
     const removePackage = (id: string) => {
@@ -861,6 +898,10 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                 localStorage.setItem('cherokee_app_uninstalled_packages', JSON.stringify(uninstalled));
             }
         } catch (e) {}
+
+        if (auth.currentUser) {
+            DictionaryDB.setInstalledPackage(auth.currentUser.uid, id, false).catch(() => {});
+        }
     };
 
     const togglePackage = (id: string) => {
