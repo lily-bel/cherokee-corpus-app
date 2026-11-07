@@ -15,6 +15,8 @@ different word forms search for english
 move ced pill to same location as words with reference forms
 optional large format search view???
 
+work on other forms page - it could have a table view? and a search?
+
 prefixes and suffixes still appear in the app... I want them to be excluded at the data consolidation stage
 (the cherokee-data-consolidation project). I did this already but it didn't work. there's lots of prefix/suffixes
 still there (ni- for example). I'm not sure where they're coming from, but they are unlabeled in part of speech.

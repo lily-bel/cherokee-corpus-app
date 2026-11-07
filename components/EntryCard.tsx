@@ -208,7 +208,7 @@ const EntryCard = ({ entry, customDictionaries, userNotes, userAudioMeta, userWo
       <div className="flex flex-col lg:flex-row lg:items-center lg:gap-6">
         {/* Left Column: Primary entry info */}
         <div className={`min-w-0 ${hasMiniPreview ? 'lg:w-[280px] xl:w-[320px] 2xl:w-[360px] shrink-0' : 'flex-1'}`}>
-          <div className="flex justify-between items-start mb-2 gap-3">
+          <div className="flex justify-between items-start mb-2 gap-3 w-full lg:w-[280px] xl:w-[320px] 2xl:w-[360px]">
             {isLinguist && rootEntry ? (
               <div className="flex-1 min-w-0">
                 <VerbMorphologyTemplate
