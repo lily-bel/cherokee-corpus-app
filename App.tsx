@@ -31,6 +31,7 @@ const DEFAULT_SETTINGS = {
     darkMode: false,
     zoomLevel: 0.8,
     enableRegex: false,
+    englishConjugations: true,
     showPosInLists: false,
     searchLangs: { syllabary: true, translit: true, english: true },
     searchScopes: { main: true, otherForms: true, sentences: false, notes: false, roots: true },
@@ -332,9 +333,16 @@ function App() {
     }, [settings.zoomLevel]);
 
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setQuery(inputValue);
+        if (inputValue === '') {
+            setQuery('');
             setResultLimit(50);
+            return;
+        }
+        const timer = setTimeout(() => {
+            React.startTransition(() => {
+                setQuery(inputValue);
+                setResultLimit(50);
+            });
         }, 300);
         return () => clearTimeout(timer);
     }, [inputValue]);
@@ -364,6 +372,7 @@ function App() {
                         ...prev, ...parsed,
                         dictionaryLevel: ['basic', 'default', 'linguist'].includes(parsed.dictionaryLevel) ? parsed.dictionaryLevel : 'default',
                         hideCustomization: typeof parsed.hideCustomization === 'boolean' ? parsed.hideCustomization : false,
+                        englishConjugations: parsed.englishConjugations !== false,
                         searchLangs: combinedLangs,
                         searchScopes: { ...prev.searchScopes, ...parsed.searchScopes }
                     }));
@@ -1903,25 +1912,33 @@ function App() {
         return { active: activeSlice, inactive: inactiveSlice, hasMore };
     }, [filteredResults, resultLimit]);
 
-    const isDefaultSearchSettings = useMemo(() => {
+    const isDefaultPerformSearchParams = useMemo(() => {
         if (posFilter !== "All") return false;
         if (settings?.enableRegex) return false;
+        if (settings?.englishConjugations === false) return false;
         const langs = settings?.searchLangs || {};
         if (langs.syllabary === false || langs.translit === false || langs.english === false) return false;
         const scopes = settings?.searchScopes || {};
         if (scopes.main === false || scopes.otherForms === false || scopes.roots === false || scopes.sentences || scopes.notes) return false;
+        return true;
+    }, [posFilter, settings?.enableRegex, settings?.englishConjugations, settings?.searchLangs, settings?.searchScopes]);
+
+    const isDefaultSearchSettings = useMemo(() => {
+        if (!isDefaultPerformSearchParams) return false;
         const activeFilters = searchScope === 'sentences' ? sentenceFilters : filters;
         if (Object.values(activeFilters).some(v => v === false)) return false;
         return true;
-    }, [posFilter, settings?.enableRegex, settings?.searchLangs, settings?.searchScopes, searchScope, sentenceFilters, filters]);
+    }, [isDefaultPerformSearchParams, searchScope, sentenceFilters, filters]);
 
     const defaultResults = useMemo(() => {
         if (isDefaultSearchSettings || !query) return [];
+        if (isDefaultPerformSearchParams) return searchResults;
         const isUserLibraryActive = packages.find(p => p.id === 'user')?.status === 'active';
         const combinedSentences = [...sentences, ...(isUserLibraryActive ? userSentences : [])];
         const defaultSettings = {
             ...settings,
             enableRegex: false,
+            englishConjugations: true,
             searchLangs: { syllabary: true, translit: true, english: true },
             searchScopes: { main: true, otherForms: true, sentences: false, notes: false, roots: true }
         };
@@ -1939,7 +1956,7 @@ function App() {
             rootMap,
             wordFormsLookupMap
         );
-    }, [isDefaultSearchSettings, query, packages, sentences, userSentences, settings, allData, entryToSentencesMap, customDictionaries, userNotes, searchScope, prioritizedSources, rootMap, wordFormsLookupMap]);
+    }, [isDefaultSearchSettings, isDefaultPerformSearchParams, searchResults, query, packages, sentences, userSentences, settings, allData, entryToSentencesMap, customDictionaries, userNotes, searchScope, prioritizedSources, rootMap, wordFormsLookupMap]);
 
     const filteredOutCount = useMemo(() => {
         if (isDefaultSearchSettings || !query || defaultResults.length === 0) return 0;
@@ -1966,6 +1983,7 @@ function App() {
         setSettings(s => ({
             ...s,
             enableRegex: false,
+            englishConjugations: true,
             searchLangs: { syllabary: true, translit: true, english: true },
             searchScopes: { main: true, otherForms: true, sentences: false, notes: false, roots: true },
         }));
@@ -2006,6 +2024,180 @@ function App() {
     // Manual Upload UI Removed
     // if (showManualUpload) ...
     // if (loading) ...
+
+    const renderedSearchResultsPane = useMemo(() => (
+        query ? (<>{paginatedResults.active.length === 0 && paginatedResults.inactive.length === 0 && <div className="text-center mt-12 text-slate-400">No results found</div>}{paginatedResults.active.map((item, index, array) => {
+                                    // Check if it's a Sentence (either wrapped in .item or direct with .id but no .Index)
+                                    const isSentence = item.item || (item.id && !item.Index);
+                                    const data = item.item || item;
+
+                                    if (isSentence) {
+                                        return (
+                                            <SentenceCard key={data.id} sentence={data} onClick={() => handleEntryClick(data)} customDictionaries={customDictionaries} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} personalWords={personalWords} onCreateWord={() => openWordModal(null)}
+                                                favorites={favorites}
+                                                customLists={customLists}
+                                                onToggleFavorite={toggleFavorite}
+                                                onToggleList={toggleInList}
+                                                onOpenNewListModal={() => setShowNewListModal(true)}
+                                                onReadInContext={handleReadInContext}
+                                                showToast={showToast}
+                                                settings={settings}
+                                            />
+                                        );
+                                    } else {
+                                        const itemId = item.id || item.Index || (item as any).merged_id;
+                                        const rootEntry = itemId ? rootMap?.get(itemId) : null;
+                                        const showRootHeaders = settings?.dictionaryLevel !== 'basic';
+                                        
+                                        // Look back to see if same root was rendered
+                                        let showRootHeader = false;
+                                        if (rootEntry && showRootHeaders) {
+                                            const prevItem = index > 0 ? array[index - 1] : null;
+                                            const prevIsSentence = prevItem ? (prevItem.item || (prevItem.id && !prevItem.Index && !prevItem.merged_id)) : true;
+                                            const prevEntry = prevIsSentence ? null : (prevItem?.item || prevItem);
+                                            const prevEntryId = prevEntry?.id || prevEntry?.Index || prevEntry?.merged_id;
+                                            const prevRootEntry = prevEntryId ? rootMap?.get(prevEntryId) : null;
+                                            const prevSlug = prevRootEntry?.slug || prevRootEntry?.root_slug;
+                                            const currSlug = rootEntry.slug || rootEntry.root_slug;
+                                            
+                                            if (!prevRootEntry || prevSlug !== currSlug) {
+                                                showRootHeader = true;
+                                            }
+                                        }
+
+                                        return (
+                                            <React.Fragment key={item.Index || item.id || (item as any).merged_id}>
+                                                {showRootHeader && rootEntry && (
+                                                    <div className="flex items-center gap-2.5 px-4 py-2 mt-4 mb-1">
+                                                        <div className="w-1.5 h-5 bg-[#cf8686] dark:bg-amber-400 rounded-full shrink-0" />
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em]">Root:</span>
+                                                            <button 
+                                                                onClick={() => handleViewRoot(rootEntry.slug || rootEntry.root_slug)}
+                                                                className="text-sm font-bold font-noto-cherokee text-[#b35248] dark:text-amber-400 hover:underline flex items-center gap-1 bg-[#ffe7e3] dark:bg-amber-950/50 px-2 py-0.5 rounded shadow-sm border border-[#f8c9c8] dark:border-amber-900/40"
+                                                            >
+                                                                {isEmptyRoot(rootEntry) ? '∅' : `-${rootEntry.root_h || rootEntry.root_g}-`}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                <div className={(rootEntry && showRootHeaders) ? "ml-4 pl-2 border-l-2 border-[#f8c9c8] dark:border-amber-400/20" : ""}>
+                                                    <EntryCard entry={item} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} settings={settings} searchQuery={query} />
+                                                </div>
+                                            </React.Fragment>
+                                        );
+                                    }
+                                })}
+
+
+
+                                    {paginatedResults.inactive.length > 0 && <><div className="px-4 py-2 bg-slate-50 dark:bg-slate-900/50 text-xs font-bold text-slate-400 uppercase tracking-widest border-y border-slate-100 dark:border-slate-800 mt-4">Filtered</div>{paginatedResults.inactive.map((entry, index, array) => {
+                                        if (entry.item && (entry.type === 'text' || entry.type === 'deep')) {
+                                            return <SentenceCard key={entry.item.id} sentence={entry.item} onClick={() => handleEntryClick(entry.item)} isDimmed={true} customDictionaries={customDictionaries} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} personalWords={personalWords} onCreateWord={() => openWordModal(null)}
+                                                favorites={favorites}
+                                                customLists={customLists}
+                                                onToggleFavorite={toggleFavorite}
+                                                onToggleList={toggleInList}
+                                                onOpenNewListModal={() => setShowNewListModal(true)}
+                                                onReadInContext={handleReadInContext}
+                                                showToast={showToast}
+                                                settings={settings}
+                                            />;
+                                        }
+                                        
+                                        const entryId = entry.id || entry.Index || (entry as any).merged_id;
+                                        const rootEntry = entryId ? rootMap?.get(entryId) : null;
+                                        const showRootHeaders = settings?.dictionaryLevel !== 'basic';
+                                        let showRootHeader = false;
+                                        if (rootEntry && showRootHeaders) {
+                                            const prevItem = index > 0 ? array[index - 1] : null;
+                                            const prevIsSentence = prevItem ? (prevItem.item && (prevItem.type === 'text' || prevItem.type === 'deep')) : true;
+                                            const prevEntry = prevIsSentence ? null : (prevItem?.item || prevItem);
+                                            const prevEntryId = prevEntry?.id || prevEntry?.Index || prevEntry?.merged_id;
+                                            const prevRootEntry = prevEntryId ? rootMap?.get(prevEntryId) : null;
+                                            const prevSlug = prevRootEntry?.slug || prevRootEntry?.root_slug;
+                                            const currSlug = rootEntry.slug || rootEntry.root_slug;
+                                            
+                                            if (!prevRootEntry || prevSlug !== currSlug) {
+                                                showRootHeader = true;
+                                            }
+                                        }
+
+                                        return (
+                                            <React.Fragment key={entry.Index || entry.id || (entry as any).merged_id}>
+                                                {showRootHeader && rootEntry && (
+                                                    <div className="flex items-center gap-2.5 px-4 py-2 mt-4 mb-1 opacity-60">
+                                                        <div className="w-1.5 h-5 bg-[#cf8686]/60 dark:bg-amber-400/60 rounded-full shrink-0" />
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em]">Root:</span>
+                                                            <button 
+                                                                onClick={() => handleViewRoot(rootEntry.slug || rootEntry.root_slug)}
+                                                                className="text-sm font-bold font-noto-cherokee text-[#b35248]/80 dark:text-amber-400/80 hover:underline flex items-center gap-1 bg-[#ffe7e3]/50 dark:bg-amber-950/30 px-2 py-0.5 rounded border border-[#f8c9c8]/50 dark:border-amber-900/20"
+                                                            >
+                                                                {isEmptyRoot(rootEntry) ? '∅' : `-${rootEntry.root_h || rootEntry.root_g}-`}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                <div className={(rootEntry && showRootHeaders) ? "ml-4 pl-2 border-l-2 border-[#f8c9c8]/50 dark:border-amber-400/10" : ""}>
+                                                    <EntryCard entry={entry} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} isDimmed={true} settings={settings} searchQuery={query} />
+                                                </div>
+                                            </React.Fragment>
+                                        );
+                                    })}</>}
+                                    {paginatedResults.hasMore && (
+                                        <div className="p-4">
+                                            <button onClick={() => setResultLimit(prev => prev + 50)} className="w-full py-3 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors">
+                                                Show More Results
+                                            </button>
+                                        </div>
+                                    )}
+                                    {/* Filtered Results Notice */}
+                                    {filteredOutCount > 0 && (
+                                        <div className="p-4 pt-2 pb-3 text-center">
+                                            <div className="text-xs text-slate-500 dark:text-slate-400">
+                                                {filteredOutCount} {filteredOutCount === 1 ? 'result' : 'results'} filtered by search settings
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={resetSearchFilters}
+                                                className="text-xs font-semibold text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 hover:underline mt-0.5 cursor-pointer"
+                                            >
+                                                Reset filters to default?
+                                            </button>
+                                        </div>
+                                    )}
+                                    {/* Create New Button */}
+                                    {!settings?.hideCustomization && (
+                                        <div className="p-4 pt-0">
+                                            <button
+                                                onClick={() => openWordModal(null)}
+                                                className="w-full py-3 border-2 border-dashed border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-bold rounded-xl hover:border-amber-400 hover:text-amber-600 dark:hover:border-amber-700 dark:hover:text-amber-500 transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                <Plus size={20} /> Create New {searchScope === 'sentences' ? 'Sentence' : 'Word'}
+                                            </button>
+                                        </div>
+                                    )}
+                                </>) : (
+                                    <div className="p-4">
+                                        {searchHistory.length > 0 ? (
+                                            <>
+                                                <div className="flex items-center justify-between mb-2"><h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Recent Searches</h3><button onClick={() => setSearchHistory([])} className="text-xs text-red-400 font-bold uppercase">Clear</button></div>
+                                                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                                                    {searchHistory.map((h, i) => (
+                                                        <div key={i} onClick={() => handleSearchTerm(h)} className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between active:bg-slate-50 dark:active:bg-slate-800 cursor-pointer">
+                                                            <div className="flex items-center gap-3 text-slate-600 dark:text-slate-300"><Clock size={16} className="text-slate-400" /><span>{h}</span></div>
+                                                            <button onClick={(e) => deleteHistoryItem(e, h)} className="p-1 text-slate-300 hover:text-slate-500"><X size={16} /></button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="flex flex-col items-center justify-center h-64 text-slate-300 dark:text-slate-700"><Book size={48} strokeWidth={1} className="mb-4 opacity-20" /><p>Type to search the dictionary</p></div>
+                                        )}
+                                    </div>
+                                
+    )), [query, paginatedResults, customDictionaries, userNotes, sourceMap, userAudioMeta, personalWords, userWordForms, favorites, customLists, settings, rootMap, filteredOutCount, searchScope, searchHistory, activeTab]);
 
     if (urlPackageId) {
         return (
@@ -2342,6 +2534,21 @@ function App() {
                                                     </button>
                                                 </div>
 
+                                                <div className="flex items-center justify-between pt-1">
+                                                    <div>
+                                                        <span className="text-xs font-medium text-slate-700 dark:text-slate-300 block">English Conjugations</span>
+                                                        <span className="text-[10px] text-slate-400 dark:text-slate-500 block">Match sister verb forms (e.g. see, saw, seen)</span>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setSettings(s => ({ ...s, englishConjugations: s.englishConjugations === false ? true : false }))}
+                                                        className={`transition-colors ${(settings.englishConjugations !== false) ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}
+                                                        title="Toggle English verb conjugation matching"
+                                                    >
+                                                        {(settings.englishConjugations !== false) ? <ToggleRight size={24} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={24} />}
+                                                    </button>
+                                                </div>
+
                                                 <div className="pt-2 text-center border-t border-slate-100 dark:border-slate-800">
                                                     <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Searchable Entries</div>
                                                     <div className="text-xs font-bold text-slate-500 dark:text-slate-400">{searchableCount}</div>
@@ -2350,177 +2557,7 @@ function App() {
                                         </div>
                                     )}
                                 </div>
-                                <div className="flex-1 overflow-y-auto">{query ? (<>{paginatedResults.active.length === 0 && paginatedResults.inactive.length === 0 && <div className="text-center mt-12 text-slate-400">No results found</div>}{paginatedResults.active.map((item, index, array) => {
-                                    // Check if it's a Sentence (either wrapped in .item or direct with .id but no .Index)
-                                    const isSentence = item.item || (item.id && !item.Index);
-                                    const data = item.item || item;
-
-                                    if (isSentence) {
-                                        return (
-                                            <SentenceCard key={data.id} sentence={data} onClick={() => handleEntryClick(data)} customDictionaries={customDictionaries} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} personalWords={personalWords} onCreateWord={() => openWordModal(null)}
-                                                favorites={favorites}
-                                                customLists={customLists}
-                                                onToggleFavorite={toggleFavorite}
-                                                onToggleList={toggleInList}
-                                                onOpenNewListModal={() => setShowNewListModal(true)}
-                                                onReadInContext={handleReadInContext}
-                                                showToast={showToast}
-                                                settings={settings}
-                                            />
-                                        );
-                                    } else {
-                                        const itemId = item.id || item.Index || (item as any).merged_id;
-                                        const rootEntry = itemId ? rootMap?.get(itemId) : null;
-                                        const showRootHeaders = settings?.dictionaryLevel !== 'basic';
-                                        
-                                        // Look back to see if same root was rendered
-                                        let showRootHeader = false;
-                                        if (rootEntry && showRootHeaders) {
-                                            const prevItem = index > 0 ? array[index - 1] : null;
-                                            const prevIsSentence = prevItem ? (prevItem.item || (prevItem.id && !prevItem.Index && !prevItem.merged_id)) : true;
-                                            const prevEntry = prevIsSentence ? null : (prevItem?.item || prevItem);
-                                            const prevEntryId = prevEntry?.id || prevEntry?.Index || prevEntry?.merged_id;
-                                            const prevRootEntry = prevEntryId ? rootMap?.get(prevEntryId) : null;
-                                            const prevSlug = prevRootEntry?.slug || prevRootEntry?.root_slug;
-                                            const currSlug = rootEntry.slug || rootEntry.root_slug;
-                                            
-                                            if (!prevRootEntry || prevSlug !== currSlug) {
-                                                showRootHeader = true;
-                                            }
-                                        }
-
-                                        return (
-                                            <React.Fragment key={item.Index || item.id || (item as any).merged_id}>
-                                                {showRootHeader && rootEntry && (
-                                                    <div className="flex items-center gap-2.5 px-4 py-2 mt-4 mb-1">
-                                                        <div className="w-1.5 h-5 bg-[#cf8686] dark:bg-amber-400 rounded-full shrink-0" />
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em]">Root:</span>
-                                                            <button 
-                                                                onClick={() => handleViewRoot(rootEntry.slug || rootEntry.root_slug)}
-                                                                className="text-sm font-bold font-noto-cherokee text-[#b35248] dark:text-amber-400 hover:underline flex items-center gap-1 bg-[#ffe7e3] dark:bg-amber-950/50 px-2 py-0.5 rounded shadow-sm border border-[#f8c9c8] dark:border-amber-900/40"
-                                                            >
-                                                                {isEmptyRoot(rootEntry) ? '∅' : `-${rootEntry.root_h || rootEntry.root_g}-`}
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                                <div className={(rootEntry && showRootHeaders) ? "ml-4 pl-2 border-l-2 border-[#f8c9c8] dark:border-amber-400/20" : ""}>
-                                                    <EntryCard entry={item} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} settings={settings} searchQuery={query} />
-                                                </div>
-                                            </React.Fragment>
-                                        );
-                                    }
-                                })}
-
-
-
-                                    {paginatedResults.inactive.length > 0 && <><div className="px-4 py-2 bg-slate-50 dark:bg-slate-900/50 text-xs font-bold text-slate-400 uppercase tracking-widest border-y border-slate-100 dark:border-slate-800 mt-4">Filtered</div>{paginatedResults.inactive.map((entry, index, array) => {
-                                        if (entry.item && (entry.type === 'text' || entry.type === 'deep')) {
-                                            return <SentenceCard key={entry.item.id} sentence={entry.item} onClick={() => handleEntryClick(entry.item)} isDimmed={true} customDictionaries={customDictionaries} userNotes={userNotes} onEditNote={handleEditSentenceNote} onEditSentence={handleEditSentence} onDeleteSentence={handleDeleteSentence} sourceMap={sourceMap} onSaveAudio={saveAudio} userAudioMeta={userAudioMeta} personalWords={personalWords} onCreateWord={() => openWordModal(null)}
-                                                favorites={favorites}
-                                                customLists={customLists}
-                                                onToggleFavorite={toggleFavorite}
-                                                onToggleList={toggleInList}
-                                                onOpenNewListModal={() => setShowNewListModal(true)}
-                                                onReadInContext={handleReadInContext}
-                                                showToast={showToast}
-                                                settings={settings}
-                                            />;
-                                        }
-                                        
-                                        const entryId = entry.id || entry.Index || (entry as any).merged_id;
-                                        const rootEntry = entryId ? rootMap?.get(entryId) : null;
-                                        const showRootHeaders = settings?.dictionaryLevel !== 'basic';
-                                        let showRootHeader = false;
-                                        if (rootEntry && showRootHeaders) {
-                                            const prevItem = index > 0 ? array[index - 1] : null;
-                                            const prevIsSentence = prevItem ? (prevItem.item && (prevItem.type === 'text' || prevItem.type === 'deep')) : true;
-                                            const prevEntry = prevIsSentence ? null : (prevItem?.item || prevItem);
-                                            const prevEntryId = prevEntry?.id || prevEntry?.Index || prevEntry?.merged_id;
-                                            const prevRootEntry = prevEntryId ? rootMap?.get(prevEntryId) : null;
-                                            const prevSlug = prevRootEntry?.slug || prevRootEntry?.root_slug;
-                                            const currSlug = rootEntry.slug || rootEntry.root_slug;
-                                            
-                                            if (!prevRootEntry || prevSlug !== currSlug) {
-                                                showRootHeader = true;
-                                            }
-                                        }
-
-                                        return (
-                                            <React.Fragment key={entry.Index || entry.id || (entry as any).merged_id}>
-                                                {showRootHeader && rootEntry && (
-                                                    <div className="flex items-center gap-2.5 px-4 py-2 mt-4 mb-1 opacity-60">
-                                                        <div className="w-1.5 h-5 bg-[#cf8686]/60 dark:bg-amber-400/60 rounded-full shrink-0" />
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em]">Root:</span>
-                                                            <button 
-                                                                onClick={() => handleViewRoot(rootEntry.slug || rootEntry.root_slug)}
-                                                                className="text-sm font-bold font-noto-cherokee text-[#b35248]/80 dark:text-amber-400/80 hover:underline flex items-center gap-1 bg-[#ffe7e3]/50 dark:bg-amber-950/30 px-2 py-0.5 rounded border border-[#f8c9c8]/50 dark:border-amber-900/20"
-                                                            >
-                                                                {isEmptyRoot(rootEntry) ? '∅' : `-${rootEntry.root_h || rootEntry.root_g}-`}
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                                <div className={(rootEntry && showRootHeaders) ? "ml-4 pl-2 border-l-2 border-[#f8c9c8]/50 dark:border-amber-400/10" : ""}>
-                                                    <EntryCard entry={entry} customDictionaries={customDictionaries} userNotes={userNotes} userAudioMeta={userAudioMeta} userWordForms={userWordForms} favorites={favorites} customLists={customLists} onClick={handleEntryClick} showPos={settings.showPosInLists} isDimmed={true} settings={settings} searchQuery={query} />
-                                                </div>
-                                            </React.Fragment>
-                                        );
-                                    })}</>}
-                                    {paginatedResults.hasMore && (
-                                        <div className="p-4">
-                                            <button onClick={() => setResultLimit(prev => prev + 50)} className="w-full py-3 bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors">
-                                                Show More Results
-                                            </button>
-                                        </div>
-                                    )}
-                                    {/* Filtered Results Notice */}
-                                    {filteredOutCount > 0 && (
-                                        <div className="p-4 pt-2 pb-3 text-center">
-                                            <div className="text-xs text-slate-500 dark:text-slate-400">
-                                                {filteredOutCount} {filteredOutCount === 1 ? 'result' : 'results'} filtered by search settings
-                                            </div>
-                                            <button
-                                                type="button"
-                                                onClick={resetSearchFilters}
-                                                className="text-xs font-semibold text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 hover:underline mt-0.5 cursor-pointer"
-                                            >
-                                                Reset filters to default?
-                                            </button>
-                                        </div>
-                                    )}
-                                    {/* Create New Button */}
-                                    {!settings?.hideCustomization && (
-                                        <div className="p-4 pt-0">
-                                            <button
-                                                onClick={() => openWordModal(null)}
-                                                className="w-full py-3 border-2 border-dashed border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-bold rounded-xl hover:border-amber-400 hover:text-amber-600 dark:hover:border-amber-700 dark:hover:text-amber-500 transition-colors flex items-center justify-center gap-2"
-                                            >
-                                                <Plus size={20} /> Create New {searchScope === 'sentences' ? 'Sentence' : 'Word'}
-                                            </button>
-                                        </div>
-                                    )}
-                                </>) : (
-                                    <div className="p-4">
-                                        {searchHistory.length > 0 ? (
-                                            <>
-                                                <div className="flex items-center justify-between mb-2"><h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Recent Searches</h3><button onClick={() => setSearchHistory([])} className="text-xs text-red-400 font-bold uppercase">Clear</button></div>
-                                                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-                                                    {searchHistory.map((h, i) => (
-                                                        <div key={i} onClick={() => handleSearchTerm(h)} className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between active:bg-slate-50 dark:active:bg-slate-800 cursor-pointer">
-                                                            <div className="flex items-center gap-3 text-slate-600 dark:text-slate-300"><Clock size={16} className="text-slate-400" /><span>{h}</span></div>
-                                                            <button onClick={(e) => deleteHistoryItem(e, h)} className="p-1 text-slate-300 hover:text-slate-500"><X size={16} /></button>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <div className="flex flex-col items-center justify-center h-64 text-slate-300 dark:text-slate-700"><Book size={48} strokeWidth={1} className="mb-4 opacity-20" /><p>Type to search the dictionary</p></div>
-                                        )}
-                                    </div>
-                                )}</div></div>
+                                <div className="flex-1 overflow-y-auto">{renderedSearchResultsPane}</div></div>
                         )
                         }
                         {activeTab === 'lists' && (
@@ -2542,7 +2579,8 @@ function App() {
                                     const activeSettings = (isModal || isModalSentences) ? {
                                         searchLangs: { syllabary: true, translit: true, english: true },
                                         searchScopes: { main: isModal, otherForms: isModal, sentences: isModalSentences, notes: false },
-                                        enableRegex: false
+                                        enableRegex: false,
+                                        englishConjugations: true
                                     } : settings;
                                     const activePos = (isModal || isModalSentences) ? "All" : posFilter;
                                     const activeNotes = (isModal || isModalSentences) ? {} : userNotes;
@@ -3120,6 +3158,21 @@ function App() {
                                                 className={`transition-colors shrink-0 ${settings.enableRegex ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}
                                             >
                                                 {settings.enableRegex ? <ToggleRight size={32} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={32} />}
+                                            </button>
+                                        </div>
+
+                                        {/* English Verb Conjugations */}
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex flex-col pr-4">
+                                                <span className="text-sm font-bold text-slate-700 dark:text-slate-200">English Verb Conjugations</span>
+                                                <span className="text-xs text-slate-400">Match other forms of English verbs (e.g. searching "see" also checks "saw", "sees", "seen", "seeing")</span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setSettings(s => ({ ...s, englishConjugations: s.englishConjugations === false ? true : false }))}
+                                                className={`transition-colors shrink-0 ${(settings.englishConjugations !== false) ? 'text-amber-600 dark:text-amber-400' : 'text-slate-300'}`}
+                                            >
+                                                {(settings.englishConjugations !== false) ? <ToggleRight size={32} className="fill-amber-100 dark:fill-amber-900" /> : <ToggleLeft size={32} />}
                                             </button>
                                         </div>
 

@@ -10,20 +10,16 @@ searching "higoliya" does not show Matched form: higoliya
 
 
 search something like "see" - the verb is VERY low
-prefixes and suffixes still there
-see sentence on agowhtiha rrd - weird
-agowhtiha ced MISSING other forms???
-
-rrd agowhtiha - "dual imperative", "plural"
-hide rrd by default
-searching in reverse aspiration doesn't work
 different word forms search for english
 
+move ced pill to same location as words with reference forms
+optional large format search view???
 
-Let's add a feature to search. I want to add a way for the search to check other english conjugations of the search
-query. So for example, if the user types see, it should check sees, seeing, saw, etc. These alt conjugations should
-be high priority, essentially the same as an exact match for that other form.
-
+prefixes and suffixes still appear in the app... I want them to be excluded at the data consolidation stage
+(the cherokee-data-consolidation project). I did this already but it didn't work. there's lots of prefix/suffixes
+still there (ni- for example). I'm not sure where they're coming from, but they are unlabeled in part of speech.
+If you can find where they're coming from I can probably just edit the raw data rather than you have to
+label all of them.
 
 interesting issue - ced spelling occasionally has issues with segment coloring - sometimes h moves through the
 word through phonological processes. In these cases sometimes the h can move across segments. In these cases,
@@ -44,6 +40,7 @@ Thoroughly check tone orthography + tone regex
 Package url needs to be ____/package/id
 bottom bar on mobile
 too many sentence buttons?
+check sentences for issues
 
 data consolidation:
 remove all prefix/suffix etc

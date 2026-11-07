@@ -1,4 +1,5 @@
 import React, { useContext } from 'react';
+import nlp from 'compromise';
 import { CorpusContext, type SurfaceSegment } from './components/CorpusContext';
 
 export const parseCSV = (csvText: string) => {
@@ -410,10 +411,14 @@ export const getAllUserAudioKeys = async () => {
 // Helper to normalize strings for robust matching (ignores tone numbers, glottal stops, apostrophes, colons, accents, spaces, punctuation)
 export const cleanStr = (s?: string) => {
   if (!s) return '';
-  return s.toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[1234¹²³⁴ʔ’'ʼ\s\-:_.,!?;:"()\[\]]/g, '');
+  const lower = s.toLowerCase();
+  if (/[^\x00-\x7F]/.test(lower)) {
+    return lower
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[1234¹²³⁴ʔ’'ʼ\s\-:_.,!?;:"()\[\]]/g, '');
+  }
+  return lower.replace(/[1234\s\-:_.,!?;:"()\[\]']/g, '');
 };
 
 /**
@@ -430,6 +435,68 @@ export function stripTone(str: string | null | undefined): string {
     .replace(/[:.,!?;:"()]/g, '')
     .trim();
 }
+
+/**
+ * Strips common English verb citation prefixes like "he's ", "she's ", "it's ", "he is ", "to ", etc.
+ */
+export const stripEnglishVerbPrefixes = (s: string): string => {
+  return (s || '').trim().replace(/^(?:(?:he|she|it|they|he\/she)(?:'s|\s+is|\s+are)?|he,\s*it's|to\s+(?:be\s+)?|to)\s+/i, '');
+};
+
+const verbConjugationCache = new Map<string, string[]>();
+
+/**
+ * Uses compromise NLP to extract sister verb conjugations and lemmatized forms for English queries.
+ * For example: "see" -> ["see", "saw", "sees", "seeing", "seen"]
+ * Handles bidirectional lookup (e.g. "saw" expands to "see", "sees", "seen", "seeing")
+ * and multi-word verb phrases like "to see", "look at", "wake up".
+ */
+export const getEnglishVerbConjugations = (query: string): string[] => {
+  if (!query) return [];
+  const cleanQ = query.trim().toLowerCase();
+  if (!/[a-z]/.test(cleanQ)) return [];
+
+  const cached = verbConjugationCache.get(cleanQ);
+  if (cached) return cached;
+
+  try {
+    const doc = nlp(cleanQ);
+    const verbs = doc.verbs();
+    if (verbs.length === 0) {
+      verbConjugationCache.set(cleanQ, []);
+      return [];
+    }
+    const conjugations = verbs.conjugate();
+    const forms = new Set<string>();
+
+    forms.add(cleanQ);
+    if (cleanQ.startsWith('to ')) {
+      forms.add(cleanQ.slice(3).trim());
+    }
+
+    for (const c of conjugations) {
+      if (!c) continue;
+      for (const val of Object.values(c)) {
+        if (typeof val === 'string' && val.trim()) {
+          const v = val.trim().toLowerCase();
+          if (v.startsWith('will ')) {
+            const stripped = v.slice(5).trim();
+            if (stripped) forms.add(stripped);
+          } else {
+            forms.add(v);
+          }
+        }
+      }
+    }
+
+    const result = Array.from(forms).filter(f => f.length > 0);
+    if (verbConjugationCache.size > 500) verbConjugationCache.clear();
+    verbConjugationCache.set(cleanQ, result);
+    return result;
+  } catch (e) {
+    return [];
+  }
+};
 
 /**
  * Smart transformation of regex patterns containing Cherokee tone digits or classes:
@@ -752,6 +819,10 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
   if (!query) return [];
   const lowerQuery = query.toLowerCase().trim();
   const nfcQuery = lowerQuery.normalize('NFC');
+  const normQuery = cleanStr(query);
+
+  const enableEnglishConjugations = settings?.englishConjugations !== false && !settings?.enableRegex;
+  const englishAltForms = enableEnglishConjugations ? getEnglishVerbConjugations(lowerQuery) : [];
 
   // Detect Tone in Query:
   // Diacritics: accents (\u0300-\u036f, áàâǎ etc.) or vowel length colon
@@ -847,25 +918,39 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
   };
 
   const queryWithTones = lowerQuery.replace(/[1234?]/g, m => ({ '1': '¹', '2': '²', '3': '³', '4': '⁴', '?': 'ʔ' }[m] || m));
+  const queryHasSyllabary = /[\u13A0-\u13FF\uAB70-\uABBF]/.test(lowerQuery);
+  const baseQueryLen = Math.max(lowerQuery.length, normQuery.length || 1);
 
   const testMatchScore = (str?: string, isCherokeeWord = false) => {
     if (!str) return 0;
-    if (regex && regex.test(str)) return 100;
-    
+    if (regex) return regex.test(str) ? 100 : 0;
+
+    // Fast skip: if query has no Cherokee syllabary, a syllabary string can never match
+    if (!queryHasSyllabary) {
+      const c0 = str.charCodeAt(0);
+      if ((c0 >= 0x13A0 && c0 <= 0x13FF) || (c0 >= 0xAB70 && c0 <= 0xABBF)) return 0;
+    }
+
     const fLower = str.toLowerCase();
-    const normF = cleanStr(str);
+    const normF = cleanStr(fLower);
+
+    // Fast substring pre-check: if neither fLower nor normF contains the query, it cannot match any tier
+    const hasLower = fLower.includes(lowerQuery) || (queryWithTones !== lowerQuery && fLower.includes(queryWithTones));
+    const hasNorm = normF.length > 0 && normQuery.length > 0 && normF.includes(normQuery);
+    if (!hasLower && !hasNorm) return 0;
+
     let s = 0;
 
     // 1. Exact Match (Exact case or normalized tone/punctuation match)
     if (fLower === lowerQuery || fLower === queryWithTones || (normF.length > 0 && normF === normQuery)) {
       s = 120;
-    } else {
+    } else if (str.includes(',') || str.includes(';') || str.includes('/')) {
       // Check comma/semicolon/slash-separated glosses or alternates for exact match
       const subParts = str.split(/[,;/]\s*/);
       if (subParts.length > 1) {
         for (const p of subParts) {
           const pLower = p.trim().toLowerCase();
-          const normP = cleanStr(p);
+          const normP = cleanStr(pLower);
           if (pLower === lowerQuery || pLower === queryWithTones || (normP.length > 0 && normP === normQuery)) {
             s = 120;
             break;
@@ -885,19 +970,148 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
         s = 70;
       }
       // 3. Contains Substring Match
-      else if (fLower.includes(lowerQuery) || fLower.includes(queryWithTones) || (normF.length > 0 && normF.includes(normQuery))) {
+      else {
         s = 15;
       }
     }
 
-    if (s > 0) {
-      // Boost shorter matching strings (ratio of query length to target string length)
-      const targetLen = Math.max(str.length, normF.length || 1);
-      const queryLen = Math.max(lowerQuery.length, normQuery.length || 1);
-      const ratio = Math.min(1.0, queryLen / targetLen);
-      s += (ratio * 35);
+    // Boost shorter matching strings (ratio of query length to target string length)
+    const targetLen = Math.max(str.length, normF.length || 1);
+    const ratio = Math.min(1.0, baseQueryLen / targetLen);
+    return s + (ratio * 35);
+  };
+
+  // Pre-compile English targets once per search call (instead of per entry/field)
+  const allEnglishQueries = [lowerQuery];
+  if (englishAltForms.length > 0) {
+    for (const alt of englishAltForms) {
+      if (alt !== lowerQuery) allEnglishQueries.push(alt);
     }
-    return s;
+  }
+  const compiledEnglishTargets = allEnglishQueries.map(q => {
+    const normQ = cleanStr(q);
+    return {
+      q,
+      normQ,
+      qLen: Math.max(q.length, normQ.length || 1),
+      isSimpleAscii: /^[a-z0-9]+$/.test(q) && q === normQ
+    };
+  });
+
+  const testEnglishMatchScore = (str?: string): number => {
+    if (!str) return 0;
+    if (regex) return regex.test(str) ? 100 : 0;
+
+    const fLower = str.toLowerCase();
+    let normF: string | null = null;
+    let stripped: string | null = null;
+    let normStripped: string | null = null;
+    let subParts: string[] | null = null;
+    const hasDelimiters = str.includes(',') || str.includes(';') || str.includes('/');
+
+    let bestScore = 0;
+
+    for (let i = 0; i < compiledEnglishTargets.length; i++) {
+      const { q, normQ, qLen, isSimpleAscii } = compiledEnglishTargets[i];
+
+      // Ultra-fast substring pre-check skips 99.5% of non-matching strings in nanoseconds
+      if (isSimpleAscii) {
+        if (!fLower.includes(q)) continue;
+      } else {
+        if (normF === null) normF = cleanStr(fLower);
+        if (!fLower.includes(q) && !(normF.length > 0 && normF.includes(normQ))) continue;
+      }
+
+      if (normF === null) normF = cleanStr(fLower);
+      let s = 0;
+
+      // 1. Exact Match
+      if (fLower === q || (normF.length > 0 && normF === normQ)) {
+        s = 120;
+      } else if (hasDelimiters) {
+        if (subParts === null) subParts = str.split(/[,;/]\s*/);
+        if (subParts.length > 1) {
+          for (let j = 0; j < subParts.length; j++) {
+            const pLower = subParts[j].trim().toLowerCase();
+            const normP = cleanStr(pLower);
+            if (pLower === q || (normP.length > 0 && normP === normQ)) {
+              s = 120;
+              break;
+            }
+          }
+        }
+      }
+
+      // Check stripped English verb prefixes (e.g. "to see" -> "see", "he's seeing" -> "seeing")
+      if (s === 0) {
+        if (stripped === null) {
+          stripped = stripEnglishVerbPrefixes(fLower);
+          normStripped = cleanStr(stripped);
+        }
+        if (stripped === q || (normStripped!.length > 0 && normStripped === normQ)) {
+          s = 120;
+        } else if (hasDelimiters) {
+          if (subParts === null) subParts = str.split(/[,;/]\s*/);
+          if (subParts.length > 1) {
+            for (let j = 0; j < subParts.length; j++) {
+              const pStripped = stripEnglishVerbPrefixes(subParts[j].trim().toLowerCase());
+              const normPStripped = cleanStr(pStripped);
+              if (pStripped === q || (normPStripped.length > 0 && normPStripped === normQ)) {
+                s = 120;
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      // 2. Starts With Match
+      if (s === 0) {
+        if (stripped === null) {
+          stripped = stripEnglishVerbPrefixes(fLower);
+          normStripped = cleanStr(stripped);
+        }
+        if (
+          fLower.startsWith(q) ||
+          (normF.length > 0 && normF.startsWith(normQ)) ||
+          (stripped.length > 0 && stripped.startsWith(q)) ||
+          (normStripped!.length > 0 && normStripped!.startsWith(normQ))
+        ) {
+          s = 70;
+        } else if (hasDelimiters) {
+          if (subParts === null) subParts = str.split(/[,;/]\s*/);
+          if (subParts.length > 1) {
+            for (let j = 0; j < subParts.length; j++) {
+              const pLower = subParts[j].trim().toLowerCase();
+              const pStripped = stripEnglishVerbPrefixes(pLower);
+              const normPStripped = cleanStr(pStripped);
+              if (
+                pLower.startsWith(q) ||
+                (pStripped.length > 0 && pStripped.startsWith(q)) ||
+                (normPStripped.length > 0 && normPStripped.startsWith(normQ))
+              ) {
+                s = 70;
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      // 3. Contains Substring Match
+      if (s === 0) {
+        s = 15;
+      }
+
+      const targetLen = Math.max(str.length, normF.length || 1);
+      const ratio = Math.min(1.0, qLen / targetLen);
+      const total = s + (ratio * 35);
+      if (total > bestScore) {
+        bestScore = total;
+      }
+    }
+
+    return bestScore;
   };
 
   // SENTENCE MODE
@@ -916,11 +1130,14 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
         const fields: string[] = [];
         if (activeLangs.translit) fields.push(s.translit);
         if (activeLangs.syllabary) fields.push(s.syllabary);
-        if (activeLangs.english) fields.push(s.english);
 
         for (const f of fields) {
           if (!f) continue;
           score = Math.max(score, testMatchScore(f));
+        }
+
+        if (activeLangs.english && s.english) {
+          score = Math.max(score, testEnglishMatchScore(s.english));
         }
       }
       return { item: s, score, type: 'text' };
@@ -939,12 +1156,36 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
         }
         return false;
       }
-      const fields = [entry.Entry, entry.Syllabary, entry.Definition];
-      return fields.some(f => f && testMatchScore(f) > 0);
+      if (activeLangs.translit && ((entry.Entry && testMatchScore(entry.Entry, true) > 0) || (entry.translit && testMatchScore(entry.translit, true) > 0))) return true;
+      if (activeLangs.syllabary && ((entry.Syllabary && testMatchScore(entry.Syllabary, true) > 0) || (entry.syllabary && testMatchScore(entry.syllabary, true) > 0))) return true;
+      if (activeLangs.english) {
+        if (entry.Definition && testEnglishMatchScore(entry.Definition) > 0) return true;
+        if (entry.definition && testEnglishMatchScore(entry.definition) > 0) return true;
+        if (entry.sources) {
+          for (const s of Object.values(entry.sources as Record<string, any>)) {
+            if (s.Translations && testEnglishMatchScore(s.Translations) > 0) return true;
+            if (s.Definition && testEnglishMatchScore(s.Definition) > 0) return true;
+            if (s.English && testEnglishMatchScore(s.English) > 0) return true;
+            if (s['English gloss 1'] && testEnglishMatchScore(s['English gloss 1']) > 0) return true;
+            if (s['English gloss 2'] && testEnglishMatchScore(s['English gloss 2']) > 0) return true;
+            if (s['English Glosses Combined'] && testEnglishMatchScore(s['English Glosses Combined']) > 0) return true;
+            if (s['Kirk Verb (English)'] && testEnglishMatchScore(s['Kirk Verb (English)']) > 0) return true;
+            if (s['Verb'] && testEnglishMatchScore(s['Verb']) > 0) return true;
+            if (s['Culturev_Entry'] && testEnglishMatchScore(s['Culturev_Entry']) > 0) return true;
+            if (s['_norm_engl'] && testEnglishMatchScore(s['_norm_engl']) > 0) return true;
+          }
+        }
+      }
+      return false;
     });
 
     const deepMatches: any[] = [];
     const seenSentences = new Set(textMatches.map(m => m.item.id));
+    const sentenceById = new Map<string, any>();
+    for (let i = 0; i < sentences.length; i++) {
+      const s = sentences[i];
+      if (s && s.id) sentenceById.set(s.id, s);
+    }
 
     dictMatches.forEach(entry => {
       const linkedSentences = Array.from(new Set([
@@ -955,7 +1196,7 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
       ]));
       linkedSentences.forEach(sId => {
         if (!seenSentences.has(sId)) {
-          const s = sentences.find(x => x.id === sId);
+          const s = sentenceById.get(sId);
           if (s) {
             deepMatches.push({ item: s, score: 25, type: 'deep', via: entry });
             seenSentences.add(sId);
@@ -967,7 +1208,6 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
     return [...textMatches, ...deepMatches].sort((a, b) => b.score - a.score);
   }
 
-  const normQuery = cleanStr(query);
   const combinedMode = getCombinedCedVerbsMode(settings);
 
   const getMatchTier = (s: number) => {
@@ -1001,10 +1241,10 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
   // --- DICTIONARY MODE LOOP: O(N) where N is number of base entries. ---
   const mappedResults = allData.map(entry => {
     if (entry.is_combined_part_b && combinedMode !== 'full') {
-      return { ...entry, score: 0 };
+      return null;
     }
     const hidePartBFromParent = !entry.is_combined_part_b && Boolean(entry.combined_part_b_id) && combinedMode === 'full';
-    const parentShimFormsSet = new Set<string>(Array.isArray(entry.shim?.forms) ? entry.shim.forms : []);
+    const parentShimFormsSet = hidePartBFromParent ? new Set<string>(Array.isArray(entry.shim?.forms) ? entry.shim.forms : []) : null;
     let score = 0;
     let matchedForm: { syllabary?: string; translit?: string; label?: string; tone?: string; tone1?: string; tone2?: string; matchedByTone?: boolean } | null = null;
     let mainMatchScore = 0;
@@ -1014,13 +1254,13 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
     const isPersonal = customDictionaries && customDictionaries[entry.Source];
 
     if (posFilter !== "All") {
-      if (!matchesPosFilter(entry.PoS, posFilter)) return { ...entry, score: 0 };
+      if (!matchesPosFilter(entry.PoS, posFilter)) return null;
     }
 
     // --- TONE SEARCH MODE (Strictly filters words without matching tone) ---
     if (queryHasTone) {
       if (!isCedEntry(entry)) {
-        return { ...entry, score: 0 };
+        return null;
       }
       let primaryToneScore = 0;
       let altSpellingMatchScore = 0;
@@ -1135,7 +1375,7 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
 
       // Strictly filter out words whose tone does not match
       if (mainMatchScore === 0 && otherFormMatchScore === 0) {
-        return { ...entry, score: 0 };
+        return null;
       }
 
       let activeMatchedForm = null;
@@ -1217,7 +1457,7 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
         if (entry.practical) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.practical, true));
         if (entry.surface_forms) {
           const baseSlot = entry.base_form_slot || (entry.is_combined_part_b ? 'infinitive' : 'present');
-          if (!hidePartBFromParent || !parentShimFormsSet.has(baseSlot)) {
+          if (!hidePartBFromParent || !parentShimFormsSet?.has(baseSlot)) {
             const val = entry.surface_forms[baseSlot];
             if (typeof val === 'string') mainMatchScore = Math.max(mainMatchScore, testMatchScore(val, true));
           }
@@ -1275,16 +1515,21 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
       cherokeeMainScore = mainMatchScore;
 
       if (activeLangs.english) {
-        if (entry.Definition) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.Definition));
-        if (entry.definition) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.definition));
-        if (entry.Definition_Long) mainMatchScore = Math.max(mainMatchScore, testMatchScore(entry.Definition_Long));
+        if (entry.Definition) mainMatchScore = Math.max(mainMatchScore, testEnglishMatchScore(entry.Definition));
+        if (entry.definition) mainMatchScore = Math.max(mainMatchScore, testEnglishMatchScore(entry.definition));
+        if (entry.Definition_Long) mainMatchScore = Math.max(mainMatchScore, testEnglishMatchScore(entry.Definition_Long));
         if (entry.sources) {
           for (const s of Object.values(entry.sources as Record<string, any>)) {
-            if (s.Translations) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.Translations));
-            if (s.Definition) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.Definition));
-            if (s.English) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s.English));
-            if (s['English gloss 1']) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s['English gloss 1']));
-            if (s['English gloss 2']) mainMatchScore = Math.max(mainMatchScore, testMatchScore(s['English gloss 2']));
+            if (s.Translations) mainMatchScore = Math.max(mainMatchScore, testEnglishMatchScore(s.Translations));
+            if (s.Definition) mainMatchScore = Math.max(mainMatchScore, testEnglishMatchScore(s.Definition));
+            if (s.English) mainMatchScore = Math.max(mainMatchScore, testEnglishMatchScore(s.English));
+            if (s['English gloss 1']) mainMatchScore = Math.max(mainMatchScore, testEnglishMatchScore(s['English gloss 1']));
+            if (s['English gloss 2']) mainMatchScore = Math.max(mainMatchScore, testEnglishMatchScore(s['English gloss 2']));
+            if (s['English Glosses Combined']) mainMatchScore = Math.max(mainMatchScore, testEnglishMatchScore(s['English Glosses Combined']));
+            if (s['Kirk Verb (English)']) mainMatchScore = Math.max(mainMatchScore, testEnglishMatchScore(s['Kirk Verb (English)']));
+            if (s['Verb']) mainMatchScore = Math.max(mainMatchScore, testEnglishMatchScore(s['Verb']));
+            if (s['Culturev_Entry']) mainMatchScore = Math.max(mainMatchScore, testEnglishMatchScore(s['Culturev_Entry']));
+            if (s['_norm_engl']) mainMatchScore = Math.max(mainMatchScore, testEnglishMatchScore(s['_norm_engl']));
           }
         }
       }
@@ -1360,7 +1605,7 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
         const baseSlot = entry.base_form_slot || (entry.is_combined_part_b ? 'infinitive' : 'present');
         for (const [k, val] of Object.entries(entry.surface_forms)) {
           if (k === baseSlot) continue;
-          if (hidePartBFromParent && parentShimFormsSet.has(k)) continue;
+          if (hidePartBFromParent && parentShimFormsSet?.has(k)) continue;
           if (typeof val === 'string' && activeLangs.translit) {
             const fScore = testMatchScore(val, true);
             if (isBetterMatch(fScore, true, otherFormMatchScore, otherFormIsMini)) {
@@ -1377,7 +1622,7 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
     let notesScore = 0;
     if (activeScopes.notes) {
       const note = isPersonal ? entry.Notes : userNotes[entry.Index];
-      if (note) notesScore = Math.max(notesScore, testMatchScore(note));
+      if (note) notesScore = Math.max(notesScore, testEnglishMatchScore(note));
     }
 
     let rootScore = 0;
@@ -1402,7 +1647,7 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
         }
       }
       if (activeLangs.english && rootEntry.definition) {
-        rootScore = Math.max(rootScore, testMatchScore(rootEntry.definition));
+        rootScore = Math.max(rootScore, testEnglishMatchScore(rootEntry.definition));
       }
       if (rootScore > 0) {
         // Homonym roots with same spelling but different slug will have distinct matchedRootKey
@@ -1420,6 +1665,10 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
       score = Math.max(mainMatchScore, notesScore, rootScore);
     } else {
       score = Math.max(mainMatchScore, otherFormMatchScore, notesScore, rootScore);
+    }
+
+    if (score <= 0) {
+      return null;
     }
 
     const isLinguist = settings?.dictionaryLevel === 'linguist';
@@ -1544,6 +1793,7 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
   const rootGroupBestScores = new Map<string, number>();
   const rootGroupBestTiers = new Map<string, number>();
   for (const item of mappedResults) {
+    if (!item) continue;
     if (item.matchedRootKey && item.score > 0) {
       const prevBestScore = rootGroupBestScores.get(item.matchedRootKey) || 0;
       if (item.score > prevBestScore) {
@@ -1556,8 +1806,7 @@ export const performSearch = (query: string, allData: any[], sentences: any[], e
     }
   }
 
-  const sortedResults = mappedResults
-    .filter(item => item.score > 0)
+  const sortedResults = (mappedResults.filter((item): item is any => item != null && item.score > 0))
     .sort((a, b) => {
       // 1. Group entries sharing the same matched root next to each other
       if (a.matchedRootKey && b.matchedRootKey && a.matchedRootKey === b.matchedRootKey) {
