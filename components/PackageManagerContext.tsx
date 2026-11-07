@@ -579,6 +579,7 @@ export const PackageManagerProvider: React.FC<{ children: React.ReactNode }> = (
                     if (c['cn-app-dictionary.csv_Practical'] || c['cn-app-dictionary.csv_Syllabary']) source = 'ced';
                     else if (c['learning-to-use-the-cherokee-verb.csv_Cherokee']) source = 'ltu';
                     else if (c['kirk-book-data.csv_Cherokee']) source = 'kirk';
+                    else if (c['lily-dict.csv_Source']) source = c['lily-dict.csv_Source'];
                     else if (c['lily-dict.csv_Cherokee'] || c['lily-dict.csv_Syllabary']) source = 'lily';
                     else if (surfaceSpelling || c['hierarchical-dict.json_Cherokee']) source = 'ced';
 

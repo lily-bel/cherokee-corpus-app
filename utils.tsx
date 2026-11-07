@@ -557,14 +557,14 @@ export function transformToneRegex(pattern: string): string {
 export function isCedEntry(entry?: any): boolean {
   if (!entry) return false;
   const s = (entry.Source || entry.source || '').toLowerCase().trim();
-  if (s === 'ced' || s.includes('durbin feeling') || s.includes('feeling 1975') || s.includes('cherokee nation')) return true;
+  if (s === 'ced' || s === 'rrd' || s.includes('durbin feeling') || s.includes('feeling 1975') || s.includes('cherokee nation')) return true;
   const sl = (entry.Source_Long || '').toLowerCase().trim();
-  if (sl.includes('durbin feeling') || sl.includes('feeling 1975') || sl.includes('cherokee nation') || sl === 'ced') return true;
+  if (sl.includes('durbin feeling') || sl.includes('feeling 1975') || sl.includes('cherokee nation') || sl === 'ced' || sl.includes('raven rock')) return true;
   if (entry.sources) {
     if (entry.sources['cn-app-dictionary.csv']) return true;
     if (entry.sources['hierarchical-dict.json']) return true;
     const lilySource = (entry.sources['lily-dict.csv']?.Source || '').toLowerCase().trim();
-    if (lilySource === 'ced' || lilySource.includes('feeling')) return true;
+    if (lilySource === 'ced' || lilySource === 'rrd' || lilySource.includes('feeling')) return true;
   }
   return false;
 }
@@ -572,8 +572,8 @@ export function isCedEntry(entry?: any): boolean {
 export function isCedForm(form?: any, entry?: any): boolean {
   if (form) {
     const s = (form.source || '').toLowerCase().trim();
-    if (s === 'ced' || s.includes('durbin feeling') || s.includes('feeling 1975')) return true;
-    if (s && s !== 'ced') return false;
+    if (s === 'ced' || s === 'rrd' || s.includes('durbin feeling') || s.includes('feeling 1975')) return true;
+    if (s && s !== 'ced' && s !== 'rrd') return false;
   }
   return isCedEntry(entry);
 }

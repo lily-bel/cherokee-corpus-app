@@ -210,11 +210,18 @@ const EntryDetail = ({ entry, settings, setSettings, customDictionaries, userNot
         return processFormsContextually(rawImportedForms);
     }, [rawImportedForms]);
 
-    // For the CED mini table: compute context ONLY among CED forms to hide unnecessary objects!
+    // For the reference mini table: compute context among CED/RRD forms to hide unnecessary objects!
     const cedForms = React.useMemo(() => {
-        const rawCed = rawImportedForms.filter(f => f.source === 'ced');
+        const entrySource = (e?.Source || e?.source || '').toLowerCase().trim();
+        const rawCed = rawImportedForms.filter(f => {
+            const s = (f.source || '').toLowerCase().trim();
+            if (s === 'ced') return true;
+            if (entrySource === 'rrd' && (s === 'rrd' || s === 'lily')) return true;
+            if (entrySource === 'lily' && (s === 'rrd' || s === 'lily')) return true;
+            return false;
+        });
         return processFormsContextually(rawCed);
-    }, [rawImportedForms]);
+    }, [rawImportedForms, e?.Source, e?.source]);
 
     const otherImportedForms = importedForms.filter(f => f.source !== 'ced' && f.pkgType !== 'official');
     

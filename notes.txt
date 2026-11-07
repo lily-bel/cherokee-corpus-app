@@ -9,7 +9,6 @@ BIG QUESTIONS:
 searching "higoliya" does not show Matched form: higoliya
 
 
-Tone is gone??
 search something like "see" - the verb is VERY low
 prefixes and suffixes still there
 see sentence on agowhtiha rrd - weird
@@ -18,7 +17,19 @@ agowhtiha ced MISSING other forms???
 rrd agowhtiha - "dual imperative", "plural"
 hide rrd by default
 searching in reverse aspiration doesn't work
-part of speech search for english
+different word forms search for english
+
+
+Let's add a feature to search. I want to add a way for the search to check other english conjugations of the search
+query. So for example, if the user types see, it should check sees, seeing, saw, etc. These alt conjugations should
+be high priority, essentially the same as an exact match for that other form.
+
+
+interesting issue - ced spelling occasionally has issues with segment coloring - sometimes h moves through the
+word through phonological processes. In these cases sometimes the h can move across segments. In these cases,
+currently the word changes the color of the h arbitrarily to match its new position. I would like it to keep
+the h the color of the segment it came from. Remember the other spellings do not have this issue, it is a
+CED orthography issue.
 
 
 TEST:
