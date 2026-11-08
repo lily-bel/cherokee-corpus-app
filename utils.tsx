@@ -3067,11 +3067,31 @@ export function resolveHdFormName(keyOrLabel: string | undefined): string | null
   if (!keyOrLabel) return null;
   const k = keyOrLabel.toLowerCase().trim();
 
+  // If piped key like 1s|3s|habitual, check subject strictly to avoid non-reference persons mapping to 3rd person slots
+  if (k.includes('|')) {
+    const parts = k.split('|');
+    const subj = parts[0].trim();
+    const tense = parts.length >= 3 ? parts[2].trim() : parts[1].trim();
+
+    if (subj === '3s') {
+      if (tense === 'present') return 'present';
+      if (tense === 'habitual' || tense === 'imperfective') return 'imperfective';
+      if (tense === 'past' || tense === 'completive past' || tense === 'perfective') return 'perfective';
+      if (tense === 'infinitive') return 'infinitive';
+    } else if (subj === '1s') {
+      if (tense === 'present') return 'present_1sg';
+    } else if (subj === '2s') {
+      if (tense === 'imperative' || tense === 'immediate') return 'imperative';
+    }
+    return null;
+  }
+
+  // Non-piped labels: disallow other persons from matching 3rd person reference slots
+  const hasOtherPerson = k.includes('1st') || k.includes('2nd') || k.includes('1s') || k.includes('2s') || k.includes('plural') || k.includes('dual') || k.includes('they') || k.includes('we') || k.includes('you');
+
   // 1. Present 3sg / Base
   if (
     k === 'present' ||
-    k === '3s|3s|present' ||
-    k === '3s|present' ||
     k === 'present 3sg' ||
     k === 'base' ||
     k === 'base form' ||
@@ -3085,9 +3105,6 @@ export function resolveHdFormName(keyOrLabel: string | undefined): string | null
   // 2. Present 1sg
   if (
     k === 'present_1sg' ||
-    k === '1s|3s|present' ||
-    k === '1s|3a|present' ||
-    k === '1s|present' ||
     k === '1st present' ||
     k.includes('1st person singular present') ||
     k.includes('1st person singular with inanimate') ||
@@ -3098,43 +3115,37 @@ export function resolveHdFormName(keyOrLabel: string | undefined): string | null
     return 'present_1sg';
   }
 
-  // 3. Imperfective / Habitual
-  if (
+  // 3. Imperfective / Habitual (3rd person only)
+  if (!hasOtherPerson && (
     k === 'imperfective' ||
     k === 'habitual' ||
-    k === '3s|3s|habitual' ||
-    k === '3s|habitual' ||
     k === '3rd habitual' ||
+    k === '3rd person singular present habitual' ||
     k.includes('present habitual') ||
     k.includes('habitual') ||
     k.includes('imperfective')
-  ) {
+  )) {
     return 'imperfective';
   }
 
-  // 4. Perfective / Past
-  if (
+  // 4. Perfective / Past (3rd person only)
+  if (!hasOtherPerson && (
     k === 'perfective' ||
     k === 'past' ||
-    k === '3s|3s|past' ||
-    k === '3s|past' ||
-    k === '3s|3s|completive past' ||
     k === 'completive past' ||
     k === '3rd past' ||
     k.includes('remote past') ||
     k.includes('completive past') ||
     k.includes('perfective') ||
     (k.includes('past') && !k.includes('habitual past'))
-  ) {
+  )) {
     return 'perfective';
   }
 
-  // 5. Imperative
-  if (
+  // 5. Imperative (2nd person only)
+  const is2nd = k.includes('2nd') || k.includes('2s');
+  if ((!hasOtherPerson || is2nd) && (
     k === 'imperative' ||
-    k === '2s|3s|imperative' ||
-    k === '2s|3a|imperative' ||
-    k === '2s|imperative' ||
     k === '2nd imperative' ||
     k.includes('immediate imperative') ||
     k.includes('2nd person singular imperative') ||
@@ -3143,19 +3154,17 @@ export function resolveHdFormName(keyOrLabel: string | undefined): string | null
     k.includes('imperative with animate') ||
     k.includes('2nd to 3rd imperative') ||
     k.includes('imperative')
-  ) {
+  )) {
     return 'imperative';
   }
 
-  // 6. Infinitive
-  if (
+  // 6. Infinitive (3rd person only)
+  if (!hasOtherPerson && (
     k === 'infinitive' ||
-    k === '3s|3s|infinitive' ||
-    k === '3s|infinitive' ||
     k === '3rd infinitive' ||
     k.includes('infinitive') ||
     k.includes('deverbative')
-  ) {
+  )) {
     return 'infinitive';
   }
 

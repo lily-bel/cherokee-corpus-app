@@ -8,16 +8,8 @@ searching "higoliya" does not show Matched form: higoliya
 
 optional large format search view???
 
-work on other forms page - it could have a table view? and a search?
-
 debouncing still lags sometimes if you type slow. I think this may have to do with displaying results rather than
 running the algorithm? not sure
-
-prefixes and suffixes still appear in the app... I want them to be excluded at the data consolidation stage
-(the cherokee-data-consolidation project). I did this already but it didn't work. there's lots of prefix/suffixes
-still there (ni- for example). I'm not sure where they're coming from, but they are unlabeled in part of speech.
-If you can find where they're coming from I can probably just edit the raw data rather than you have to
-label all of them.
 
 interesting issue - ced spelling occasionally has issues with segment coloring - sometimes h moves through the
 word through phonological processes. In these cases sometimes the h can move across segments. In these cases,
