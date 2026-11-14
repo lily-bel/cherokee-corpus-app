@@ -530,8 +530,6 @@ export const WordFormsModal: React.FC<WordFormsModalProps> = ({
         .map(p => p.id)
         .filter(subj => transitiveBySubject.has(subj));
 
-    const totalTransitiveCount = Array.from(transitiveBySubject.values()).reduce((sum, arr) => sum + arr.length, 0);
-
     const allTransitivesExpanded = transitiveSubjects.length > 0 && transitiveSubjects.every(s => expandedTransitive[s]);
     const toggleAllTransitives = () => {
         if (allTransitivesExpanded) {
