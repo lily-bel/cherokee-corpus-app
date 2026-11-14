@@ -6,7 +6,7 @@ searching "higoliya" does not show Matched form: higoliya
 
 
 
-optional large format search view???
+optional large format search view?
 
 debouncing still lags sometimes if you type slow. I think this may have to do with displaying results rather than
 running the algorithm? not sure
