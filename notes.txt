@@ -18,6 +18,12 @@ the h the color of the segment it came from. Remember the other spellings do not
 CED orthography issue.
 
 
+I added ui_issue.jpg. Please look at that. There is a pretty major issue on mobile where, when your top url bar is there,
+the bottom bar of the page gets really short and all the icons shrink. Please fix that!
+
+I would also love it if you could put the app logo in the topbar in place of the name Higoliya if possible. logo1.png
+
+
 TEST:
 Online Capabilities & Testing                                                                                 
   Online capabilities, specifically cloud backup and public packages, have not been tested yet.                                                                                                                     

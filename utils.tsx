@@ -2669,19 +2669,95 @@ export function segmentVerbForm(
     i++;
   }
 
-  const groups: { role: number; roleType: 'root' | 'pronoun' | 'aspect' | 'prepronominal' | 'final' | 'post_root' | 'middle_voice'; text: string }[] = [];
-  chars.forEach(item => {
-    if (groups.length > 0 && groups[groups.length - 1].role === item.role) {
-      groups[groups.length - 1].text += item.char;
+  // 5. preventGlottalCluster across stream: drop "'" if at index 0 or preceded by non-vowel
+  const vowels = new Set(['a', 'e', 'i', 'o', 'u', 'v']);
+  const filteredChars: typeof chars = [];
+  for (let idx = 0; idx < chars.length; idx++) {
+    if (chars[idx].char === "'" || chars[idx].char === '’') {
+      if (idx === 0 || !vowels.has(chars[idx - 1].char.toLowerCase())) {
+        continue;
+      }
+      filteredChars.push({ ...chars[idx], char: "'" });
     } else {
-      groups.push({ role: item.role, roleType: item.roleType, text: item.char });
+      filteredChars.push(chars[idx]);
+    }
+  }
+
+  const initialGroups: { role: number; roleType: 'root' | 'pronoun' | 'aspect' | 'prepronominal' | 'final' | 'post_root' | 'middle_voice'; text: string }[] = [];
+  filteredChars.forEach(item => {
+    if (initialGroups.length > 0 && initialGroups[initialGroups.length - 1].role === item.role && initialGroups[initialGroups.length - 1].roleType === item.roleType) {
+      initialGroups[initialGroups.length - 1].text += item.char;
+    } else {
+      initialGroups.push({ role: item.role, roleType: item.roleType, text: item.char });
     }
   });
 
-  return groups.map(g => ({
+  // Within each segment, convert segment-initial or post-vocalic hs -> s
+  const stream: { char: string; role: number; roleType: 'root' | 'pronoun' | 'aspect' | 'prepronominal' | 'final' | 'post_root' | 'middle_voice'; segIdx: number }[] = [];
+  initialGroups.forEach((g, segIdx) => {
+    const t = g.text.toLowerCase().replace(/(^|[aeiouv])hs/g, '$1s');
+    for (const ch of t) {
+      stream.push({ char: ch, role: g.role, roleType: g.roleType, segIdx });
+    }
+  });
+
+  // Apply CED classic orthography rules while keeping 'h' on its origin segment's role
+  const outStream: typeof stream = [];
+  let sIdx = 0;
+  while (sIdx < stream.length) {
+    const rem = stream.slice(sIdx).map(x => x.char).join('');
+    if (rem.startsWith('slh')) {
+      outStream.push({ ...stream[sIdx], char: 's' });
+      outStream.push({ ...stream[sIdx + 1], char: 'l' });
+      sIdx += 3;
+    } else if (rem.startsWith('tsh')) {
+      const hItem = stream[sIdx + 2];
+      outStream.push({ ...hItem, char: 'c' });
+      outStream.push({ ...hItem, char: 'h' });
+      sIdx += 3;
+    } else if (rem.startsWith('ts')) {
+      outStream.push({ ...stream[sIdx], char: 'j' });
+      sIdx += 2;
+    } else if (rem.startsWith('kh')) {
+      const hItem = stream[sIdx + 1];
+      outStream.push({ ...hItem, char: 'k' });
+      sIdx += 2;
+    } else if (rem.startsWith('k')) {
+      outStream.push({ ...stream[sIdx], char: 'g' });
+      sIdx += 1;
+    } else if (rem.startsWith('th')) {
+      const hItem = stream[sIdx + 1];
+      outStream.push({ ...hItem, char: 't' });
+      sIdx += 2;
+    } else if (rem.startsWith('t')) {
+      outStream.push({ ...stream[sIdx], char: 'd' });
+      sIdx += 1;
+    } else if (rem.startsWith('nh') || rem.startsWith('lh') || rem.startsWith('yh') || rem.startsWith('wh')) {
+      const resItem = stream[sIdx];
+      const hItem = stream[sIdx + 1];
+      outStream.push({ ...hItem, char: 'h' });
+      outStream.push({ ...resItem });
+      sIdx += 2;
+    } else {
+      outStream.push(stream[sIdx]);
+      sIdx += 1;
+    }
+  }
+
+  const outGroups: { role: number; roleType: 'root' | 'pronoun' | 'aspect' | 'prepronominal' | 'final' | 'post_root' | 'middle_voice'; text: string; segIdx: number }[] = [];
+  outStream.forEach(item => {
+    const prev = outGroups[outGroups.length - 1];
+    if (prev && prev.segIdx === item.segIdx && prev.role === item.role && prev.roleType === item.roleType) {
+      prev.text += item.char;
+    } else {
+      outGroups.push({ role: item.role, roleType: item.roleType, text: item.char, segIdx: item.segIdx });
+    }
+  });
+
+  return outGroups.map(g => ({
     role: g.role,
     roleType: g.roleType,
-    text: unrespellConsonants(preventGlottalCluster(g.text))
+    text: g.text
   }));
 }
 
@@ -2951,7 +3027,7 @@ export function segmentGroupsToSegments(
   pronominalSet: 'A' | 'B' | 'P2P' | string = 'A'
 ): SurfaceSegment[] {
   if (!groups || groups.length === 0) return [];
-  return groups.map(g => ({
+  const segs: SurfaceSegment[] = groups.map(g => ({
     role: (g.role === 3 || g.roleType === 'prepronominal') ? 'prepronominal'
         : (g.role === 1 || g.roleType === 'pronoun') ? 'pronoun'
         : (g.role === 6 || g.roleType === 'middle_voice') ? 'middle_voice'
@@ -2962,6 +3038,17 @@ export function segmentGroupsToSegments(
     text: g.text,
     set: (pronominalSet === 'B' ? 'B' : pronominalSet === 'P2P' ? 'P2P' : 'A') as any
   }));
+  const rootIdxs = segs.map((s, idx) => s.role === 'root' ? idx : -1).filter(idx => idx !== -1);
+  if (rootIdxs.length >= 2) {
+    const firstRoot = rootIdxs[0];
+    const lastRoot = rootIdxs[rootIdxs.length - 1];
+    for (let i = firstRoot + 1; i < lastRoot; i++) {
+      if (segs[i].role !== 'root') {
+        segs[i].underline = true;
+      }
+    }
+  }
+  return segs;
 }
 
 export function renderColorizedCherokee(
@@ -2990,13 +3077,19 @@ export function renderSegmentedSurface(
     return <span className="font-bold">{fullText}</span>;
   }
 
+  const rootIdxs = segments.map((s, idx) => s.role === 'root' ? idx : -1).filter(idx => idx !== -1);
+  const firstRootIdx = rootIdxs.length > 0 ? rootIdxs[0] : -1;
+  const lastRootIdx = rootIdxs.length > 0 ? rootIdxs[rootIdxs.length - 1] : -1;
+
   return (
     <span className="font-bold">
       {segments.map((seg, idx) => {
         if (!seg.text) return null;
+        const inSplitRoot = Boolean(seg.underline) || (firstRootIdx !== -1 && lastRootIdx > firstRootIdx && idx > firstRootIdx && idx < lastRootIdx);
+        const underlineCls = inSplitRoot ? ' underline underline-offset-2 decoration-black dark:decoration-white' : '';
         if (seg.role === 'prepronominal') {
           return (
-            <span key={idx} className="font-bold" style={{ color: 'rgb(48, 178, 133)' }} title="Prepronominal prefix">
+            <span key={idx} className={`font-bold${underlineCls}`} style={{ color: 'rgb(48, 178, 133)' }} title="Prepronominal prefix">
               {seg.text}
             </span>
           );
@@ -3013,48 +3106,48 @@ export function renderSegmentedSurface(
             setLabel = 'P2P';
           }
           return (
-            <span key={idx} className="font-bold" style={{ color }} title={`Pronoun (${setLabel})`}>
+            <span key={idx} className={`font-bold${underlineCls}`} style={{ color }} title={`Pronoun (${setLabel})`}>
               {seg.text}
             </span>
           );
         }
         if (seg.role === 'middle_voice') {
           return (
-            <span key={idx} className="font-bold" style={{ color: 'rgb(172, 172, 172)' }} title="Middle voice">
+            <span key={idx} className={`font-bold${underlineCls}`} style={{ color: 'rgb(172, 172, 172)' }} title="Middle voice">
               {seg.text}
             </span>
           );
         }
         if (seg.role === 'root') {
           return (
-            <span key={idx} className="font-bold underline underline-offset-2 text-black dark:text-white" title="Root">
+            <span key={idx} className="font-bold underline underline-offset-2 decoration-black dark:decoration-white text-black dark:text-white" title="Root">
               {seg.text}
             </span>
           );
         }
         if (seg.role === 'post_root') {
           return (
-            <span key={idx} className="font-bold" style={{ color: 'rgb(172, 172, 172)' }} title="Post-root morpheme">
+            <span key={idx} className={`font-bold${underlineCls}`} style={{ color: 'rgb(172, 172, 172)' }} title="Post-root morpheme">
               {seg.text}
             </span>
           );
         }
         if (seg.role === 'aspect') {
           return (
-            <span key={idx} className="font-bold" style={{ color: 'rgb(48, 178, 133)' }} title="Aspect suffix / Class ending">
+            <span key={idx} className={`font-bold${underlineCls}`} style={{ color: 'rgb(48, 178, 133)' }} title="Aspect suffix / Class ending">
               {seg.text}
             </span>
           );
         }
         if (seg.role === 'final') {
           return (
-            <span key={idx} className="font-bold" style={{ color: 'rgb(172, 172, 172)' }} title="Final suffix">
+            <span key={idx} className={`font-bold${underlineCls}`} style={{ color: 'rgb(172, 172, 172)' }} title="Final suffix">
               {seg.text}
             </span>
           );
         }
         return (
-          <span key={idx} className="font-bold" style={{ color: 'rgb(172, 172, 172)' }}>
+          <span key={idx} className={`font-bold${underlineCls}`} style={{ color: 'rgb(172, 172, 172)' }}>
             {seg.text}
           </span>
         );
@@ -3171,6 +3264,98 @@ export function resolveHdFormName(keyOrLabel: string | undefined): string | null
   return null;
 }
 
+export function fixClassicRoleTaggedSegmentation(
+  aspTagged: string | undefined,
+  surfTagged: string | undefined
+): string | undefined {
+  if (!aspTagged || aspTagged === '---') return surfTagged;
+  const aspSegs: { role: string; text: string }[] = [];
+  for (const part of String(aspTagged).split('-')) {
+    const pipeIdx = part.indexOf('|');
+    if (pipeIdx === -1) continue;
+    const role = part.slice(0, pipeIdx);
+    const text = part.slice(pipeIdx + 1).replace(/’/g, "'");
+    if (text) aspSegs.push({ role, text });
+  }
+  if (aspSegs.length === 0) return surfTagged;
+
+  const stream: { char: string; role: string; segIdx: number }[] = [];
+  aspSegs.forEach((seg, segIdx) => {
+    const t = seg.text.toLowerCase().replace(/(^|[aeiouv])hs/g, '$1s');
+    for (const ch of t) {
+      stream.push({ char: ch, role: seg.role, segIdx });
+    }
+  });
+
+  const outStream: typeof stream = [];
+  let i = 0;
+  while (i < stream.length) {
+    const rem = stream.slice(i).map(x => x.char).join('');
+    if (rem.startsWith('slh')) {
+      outStream.push({ ...stream[i], char: 's' });
+      outStream.push({ ...stream[i + 1], char: 'l' });
+      i += 3;
+    } else if (rem.startsWith('tsh')) {
+      const hItem = stream[i + 2];
+      outStream.push({ ...hItem, char: 'c' });
+      outStream.push({ ...hItem, char: 'h' });
+      i += 3;
+    } else if (rem.startsWith('ts')) {
+      outStream.push({ ...stream[i], char: 'j' });
+      i += 2;
+    } else if (rem.startsWith('kh')) {
+      const hItem = stream[i + 1];
+      outStream.push({ ...hItem, char: 'k' });
+      i += 2;
+    } else if (rem.startsWith('k')) {
+      outStream.push({ ...stream[i], char: 'g' });
+      i += 1;
+    } else if (rem.startsWith('th')) {
+      const hItem = stream[i + 1];
+      outStream.push({ ...hItem, char: 't' });
+      i += 2;
+    } else if (rem.startsWith('t')) {
+      outStream.push({ ...stream[i], char: 'd' });
+      i += 1;
+    } else if (rem.startsWith('nh') || rem.startsWith('lh') || rem.startsWith('yh') || rem.startsWith('wh')) {
+      const resItem = stream[i];
+      const hItem = stream[i + 1];
+      outStream.push({ ...hItem, char: 'h' });
+      outStream.push({ ...resItem });
+      i += 2;
+    } else {
+      outStream.push(stream[i]);
+      i += 1;
+    }
+  }
+
+  const groups: { role: string; text: string; segIdx: number }[] = [];
+  outStream.forEach(item => {
+    const prev = groups[groups.length - 1];
+    if (prev && prev.segIdx === item.segIdx && prev.role === item.role) {
+      prev.text += item.char;
+    } else {
+      groups.push({ role: item.role, text: item.char, segIdx: item.segIdx });
+    }
+  });
+
+  const newTagged = groups.filter(g => g.text).map(g => `${g.role}|${g.text}`).join('-');
+  if (surfTagged && surfTagged !== '---') {
+    const oldPlain = String(surfTagged)
+      .split('-')
+      .map(p => {
+        const idx = p.indexOf('|');
+        return idx === -1 ? '' : p.slice(idx + 1).replace(/’/g, "'");
+      })
+      .join('');
+    const newPlain = groups.map(g => g.text).join('');
+    if (oldPlain && newPlain !== oldPlain) {
+      return surfTagged;
+    }
+  }
+  return newTagged;
+}
+
 export function parseRoleTaggedSegmentation(taggedStr: string | undefined): SurfaceSegment[] {
   if (!taggedStr || taggedStr === '---') return [];
   const roleMap: Record<string, { role: SurfaceSegment['role']; color?: string; set?: 'A' | 'B' | 'P2P' }> = {
@@ -3196,6 +3381,16 @@ export function parseRoleTaggedSegmentation(taggedStr: string | undefined): Surf
     if (info.color) seg.color = info.color;
     if (info.set) seg.set = info.set;
     segments.push(seg);
+  }
+  const rootIdxs = segments.map((s, idx) => s.role === 'root' ? idx : -1).filter(idx => idx !== -1);
+  if (rootIdxs.length >= 2) {
+    const firstRoot = rootIdxs[0];
+    const lastRoot = rootIdxs[rootIdxs.length - 1];
+    for (let i = firstRoot + 1; i < lastRoot; i++) {
+      if (segments[i].role !== 'root') {
+        segments[i].underline = true;
+      }
+    }
   }
   return segments;
 }
@@ -4084,7 +4279,9 @@ export function resolveRoleTaggedSegments(
   } else if (style === 'reverse_aspiration') {
     taggedStr = form?.segmented_reverse_aspiration || (slot && rootEntry?.segmented_reverse_aspiration?.[slot]);
   } else {
-    taggedStr = form?.segmented_surface || (slot && rootEntry?.segmented_surface?.[slot]);
+    const rawSurf = form?.segmented_surface || (slot && rootEntry?.segmented_surface?.[slot]);
+    const rawAsp = form?.segmented_aspiration || (slot && rootEntry?.segmented_aspiration?.[slot]);
+    taggedStr = rawAsp ? fixClassicRoleTaggedSegmentation(rawAsp, rawSurf) : rawSurf;
   }
 
   if (taggedStr && typeof taggedStr === 'string') {

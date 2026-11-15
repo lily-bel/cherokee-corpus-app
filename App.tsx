@@ -2221,7 +2221,7 @@ function App() {
             <RainbowGradient />
             {!selectedEntry && !activeWidgetName && activeTab === 'search' && (
                 <header className="bg-[#af615d] dark:bg-slate-900 px-4 border-b border-slate-200 dark:border-slate-800 shadow-sm z-10 flex items-center justify-between shrink-0 h-12">
-                    <h1 className="font-noto-serif text-lg font-bold text-white dark:text-slate-100 flex items-baseline gap-2 truncate">ᏣᎳᎩ-English Dictionary<span className="text-xs font-sans font-medium text-white/80 dark:text-slate-400 tracking-wide shrink-0">(BETA)</span></h1>
+                    <h1 className="font-noto-serif text-lg font-bold text-white dark:text-slate-100 flex items-baseline gap-2 truncate">Higoliya<span className="text-xs font-sans font-medium text-white/80 dark:text-slate-400 tracking-wide shrink-0">(BETA)</span></h1>
                     <div className="flex items-center gap-1.5">
                         <UserAuthButton />
                         <button onClick={() => setShowSettingsModal(true)} className="p-1.5 hover:bg-white/10 dark:hover:bg-slate-800 rounded-full text-white dark:text-slate-300 transition-colors" title="Settings">

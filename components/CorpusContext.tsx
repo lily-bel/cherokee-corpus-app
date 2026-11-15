@@ -55,6 +55,7 @@ export interface SurfaceSegment {
     text: string;
     color?: string;
     set?: 'A' | 'B' | 'P2P';
+    underline?: boolean;
 }
 
 export interface Sentence {

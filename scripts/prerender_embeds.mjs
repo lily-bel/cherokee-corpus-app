@@ -114,9 +114,9 @@ function getMorphologyLine(entry, className, PoS) {
     if (pron) {
       setLabel = (pron.set === 'B' || pron.role === 'pron_b') ? 'Set B' : 'Set A';
     }
-    const root = segs.find(s => s.role === 'root');
-    if (root) {
-      rootText = root.text;
+    const rootSegs = segs.filter(s => s.role === 'root');
+    if (rootSegs.length > 0) {
+      rootText = rootSegs.map(s => s.text).join('');
     }
   }
 
@@ -127,8 +127,8 @@ function getMorphologyLine(entry, className, PoS) {
       else if (rawSurface.includes('pron_a|')) setLabel = 'Set A';
     }
     if (!rootText) {
-      const m = rawSurface.match(/root\|([^-\|]+)/);
-      if (m) rootText = m[1];
+      const matches = [...rawSurface.matchAll(/root\|([^-\|]+)/g)];
+      if (matches.length > 0) rootText = matches.map(m => m[1]).join('');
     }
   }
 

@@ -349,7 +349,7 @@ export const PackageLinkImportView: React.FC<PackageLinkImportViewProps> = ({
       </main>
 
       <footer className="p-4 text-center text-xs text-slate-400">
-        ᏣᎳᎩ-English Dictionary Corpus App
+        Higoliya
       </footer>
     </div>
   );
