@@ -791,7 +791,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
             </div>
 
             {/* Bottom Navigation Bar: Small Back & Next Buttons */}
-            <div className="min-h-[4rem] sm:min-h-[5rem] pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] px-4 sm:px-6 border-t border-slate-200/80 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md flex items-center justify-between shrink-0">
+            <div className="min-h-[4rem] sm:min-h-[5rem] py-2 px-4 sm:px-6 border-t border-slate-200/80 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md flex items-center justify-between shrink-0">
                 <div className="max-w-xl w-full mx-auto flex items-center justify-between">
                     <button
                         type="button"

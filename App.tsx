@@ -2907,7 +2907,7 @@ function App() {
                         }
                     </>
             </main >
-            <nav className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] px-1 flex justify-between shrink-0 min-h-[72px] md:min-h-[80px]">
+            <nav className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-2 px-1 flex justify-between shrink-0 min-h-[72px] md:min-h-[80px]">
                 <button onClick={() => { setActiveTab('search'); }} className={`flex flex-col items-center justify-center gap-1 py-2 rounded-lg flex-1 min-w-0 transition-colors ${activeTab === 'search' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
                     <Search size={22} strokeWidth={2} className="shrink-0 md:w-6 md:h-6" />
                     <span className="text-[9px] md:text-[10px] font-bold tracking-tight md:tracking-wide truncate w-full px-1 shrink-0">Search</span>
