@@ -11,17 +11,22 @@ optional large format search view?
 debouncing still lags sometimes if you type slow. I think this may have to do with displaying results rather than
 running the algorithm? not sure
 
-interesting issue - ced spelling occasionally has issues with segment coloring - sometimes h moves through the
-word through phonological processes. In these cases sometimes the h can move across segments. In these cases,
-currently the word changes the color of the h arbitrarily to match its new position. I would like it to keep
-the h the color of the segment it came from. Remember the other spellings do not have this issue, it is a
-CED orthography issue.
-
 
 I added ui_issue.jpg. Please look at that. There is a pretty major issue on mobile where, when your top url bar is there,
 the bottom bar of the page gets really short and all the icons shrink. Please fix that!
-
 I would also love it if you could put the app logo in the topbar in place of the name Higoliya if possible. logo1.png
+
+The manual json backup in the settings menu is old and broken. Please update it so it matches the online account
+backup formatting, and works properly. importing a json should have a big warning that it will override your logged
+in account's data!
+Please put export and import on the same line as two side by side buttons in the settings.
+Also Please add a feedback button! in that area in the settings. I want it to open a modal that just opens a
+text box where you can write your issue and an email address. Not sure the best way for me to receive these,
+please think of ideas and /grill-me so i can choose.
+
+
+feedback button, fix manual backup to match online format, and not let you import without a big disclaimer that
+it will override your logged in data.
 
 
 TEST:

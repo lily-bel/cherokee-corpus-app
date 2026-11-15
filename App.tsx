@@ -26,6 +26,7 @@ import { useAuth, CloudLibraryData } from './components/AuthContext';
 import { AuthModal } from './components/AuthModal';
 import { PackageLinkImportView } from './components/PackageLinkImportView';
 import { TutorialModal } from './components/TutorialModal';
+import logoImg from './logo1.png';
 
 const DEFAULT_SETTINGS = {
     darkMode: false,
@@ -2221,8 +2222,11 @@ function App() {
             <RainbowGradient />
             {!selectedEntry && !activeWidgetName && activeTab === 'search' && (
                 <header className="bg-[#af615d] dark:bg-slate-900 px-4 border-b border-slate-200 dark:border-slate-800 shadow-sm z-10 flex items-center justify-between shrink-0 h-12">
-                    <h1 className="font-noto-serif text-lg font-bold text-white dark:text-slate-100 flex items-baseline gap-2 truncate">Higoliya<span className="text-xs font-sans font-medium text-white/80 dark:text-slate-400 tracking-wide shrink-0">(BETA)</span></h1>
-                    <div className="flex items-center gap-1.5">
+                    <h1 className="flex items-center gap-2 min-w-0">
+                        <img src={logoImg} alt="Higoliya" className="h-10 w-10 rounded-lg object-contain shrink-0" />
+                        <span className="text-xs font-sans font-medium text-white/80 dark:text-slate-400 tracking-wide shrink-0">(BETA)</span>
+                    </h1>
+                    <div className="flex items-center gap-1.5 shrink-0">
                         <UserAuthButton />
                         <button onClick={() => setShowSettingsModal(true)} className="p-1.5 hover:bg-white/10 dark:hover:bg-slate-800 rounded-full text-white dark:text-slate-300 transition-colors" title="Settings">
                             <Menu size={22} strokeWidth={1.5} />
@@ -2230,7 +2234,7 @@ function App() {
                     </div>
                 </header>
             )}
-            <main className={`flex-1 overflow-hidden relative flex flex-col ${(selectedEntry || activeWidgetName) ? 'z-50' : 'z-0'}`}>
+            <main className={`flex-1 min-h-0 overflow-hidden relative flex flex-col ${(selectedEntry || activeWidgetName) ? 'z-50' : 'z-0'}`}>
                 <>
                         {activeTab === 'search' && (
                             <div className="flex flex-col h-full">
@@ -2794,34 +2798,34 @@ function App() {
                         }
                     </>
             </main >
-            <nav className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 pb-safe pt-2 px-1 flex justify-between shrink-0 h-[72px] md:h-[80px]">
-                <button onClick={() => { setActiveTab('search'); }} className={`flex flex-col items-center gap-1 py-2 rounded-lg flex-1 min-w-0 transition-colors ${activeTab === 'search' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
-                    <Search size={22} strokeWidth={2} className="md:w-6 md:h-6" />
-                    <span className="text-[9px] md:text-[10px] font-bold tracking-tight md:tracking-wide truncate w-full px-1">Search</span>
+            <nav className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] px-1 flex justify-between shrink-0 min-h-[72px] md:min-h-[80px]">
+                <button onClick={() => { setActiveTab('search'); }} className={`flex flex-col items-center justify-center gap-1 py-2 rounded-lg flex-1 min-w-0 transition-colors ${activeTab === 'search' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
+                    <Search size={22} strokeWidth={2} className="shrink-0 md:w-6 md:h-6" />
+                    <span className="text-[9px] md:text-[10px] font-bold tracking-tight md:tracking-wide truncate w-full px-1 shrink-0">Search</span>
                 </button>
-                <button onClick={() => { if (activeTab === 'lists') setListsView('all'); setActiveTab('lists'); }} className={`flex flex-col items-center gap-1 py-2 rounded-lg flex-1 min-w-0 transition-colors ${activeTab === 'lists' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
-                    <ListIcon size={22} strokeWidth={2} className="md:w-6 md:h-6" />
-                    <span className="text-[9px] md:text-[10px] font-bold tracking-tight md:tracking-wide truncate w-full px-1">Lists</span>
+                <button onClick={() => { if (activeTab === 'lists') setListsView('all'); setActiveTab('lists'); }} className={`flex flex-col items-center justify-center gap-1 py-2 rounded-lg flex-1 min-w-0 transition-colors ${activeTab === 'lists' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
+                    <ListIcon size={22} strokeWidth={2} className="shrink-0 md:w-6 md:h-6" />
+                    <span className="text-[9px] md:text-[10px] font-bold tracking-tight md:tracking-wide truncate w-full px-1 shrink-0">Lists</span>
                 </button>
-                <button onClick={() => { if (activeTab === 'reader') setReaderView('list'); setActiveTab('reader'); }} className={`flex flex-col items-center gap-1 py-2 rounded-lg flex-1 min-w-0 transition-colors ${activeTab === 'reader' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
-                    <BookOpen size={22} strokeWidth={2} className="md:w-6 md:h-6" />
-                    <span className="text-[9px] md:text-[10px] font-bold tracking-tight md:tracking-wide truncate w-full px-1">Reader</span>
+                <button onClick={() => { if (activeTab === 'reader') setReaderView('list'); setActiveTab('reader'); }} className={`flex flex-col items-center justify-center gap-1 py-2 rounded-lg flex-1 min-w-0 transition-colors ${activeTab === 'reader' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
+                    <BookOpen size={22} strokeWidth={2} className="shrink-0 md:w-6 md:h-6" />
+                    <span className="text-[9px] md:text-[10px] font-bold tracking-tight md:tracking-wide truncate w-full px-1 shrink-0">Reader</span>
                 </button>
                 {!settings?.hideCustomization && (
                     <>
-                        <button onClick={() => { if (activeTab === 'personal') setActiveDictionaryId(null); setActiveTab('personal'); }} className={`flex flex-col items-center gap-1 py-2 rounded-lg flex-1 min-w-0 transition-colors ${activeTab === 'personal' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
-                            <Book size={22} strokeWidth={2} className="md:w-6 md:h-6" />
-                            <span className="text-[9px] md:text-[10px] font-bold tracking-tight md:tracking-wide truncate w-full px-1">Collections</span>
+                        <button onClick={() => { if (activeTab === 'personal') setActiveDictionaryId(null); setActiveTab('personal'); }} className={`flex flex-col items-center justify-center gap-1 py-2 rounded-lg flex-1 min-w-0 transition-colors ${activeTab === 'personal' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
+                            <Book size={22} strokeWidth={2} className="shrink-0 md:w-6 md:h-6" />
+                            <span className="text-[9px] md:text-[10px] font-bold tracking-tight md:tracking-wide truncate w-full px-1 shrink-0">Collections</span>
                         </button>
-                        <button onClick={() => { setActiveTab('packages'); }} className={`flex flex-col items-center gap-1 py-2 rounded-lg flex-1 min-w-0 transition-colors ${activeTab === 'packages' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
-                            <Box size={22} strokeWidth={2} className="md:w-6 md:h-6" />
-                            <span className="text-[9px] md:text-[10px] font-bold tracking-tight md:tracking-wide truncate w-full px-1">Packages</span>
+                        <button onClick={() => { setActiveTab('packages'); }} className={`flex flex-col items-center justify-center gap-1 py-2 rounded-lg flex-1 min-w-0 transition-colors ${activeTab === 'packages' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
+                            <Box size={22} strokeWidth={2} className="shrink-0 md:w-6 md:h-6" />
+                            <span className="text-[9px] md:text-[10px] font-bold tracking-tight md:tracking-wide truncate w-full px-1 shrink-0">Packages</span>
                         </button>
                     </>
                 )}
-                <button onClick={() => { setActiveTab('widgets'); }} className={`flex flex-col items-center gap-1 py-2 rounded-lg flex-1 min-w-0 transition-colors ${activeTab === 'widgets' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
-                    <Layout size={22} strokeWidth={2} className="md:w-6 md:h-6" />
-                    <span className="text-[9px] md:text-[10px] font-bold tracking-tight md:tracking-wide truncate w-full px-1">Widgets</span>
+                <button onClick={() => { setActiveTab('widgets'); }} className={`flex flex-col items-center justify-center gap-1 py-2 rounded-lg flex-1 min-w-0 transition-colors ${activeTab === 'widgets' ? 'text-amber-700 dark:text-amber-400' : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'}`}>
+                    <Layout size={22} strokeWidth={2} className="shrink-0 md:w-6 md:h-6" />
+                    <span className="text-[9px] md:text-[10px] font-bold tracking-tight md:tracking-wide truncate w-full px-1 shrink-0">Widgets</span>
                 </button>
             </nav>
 
