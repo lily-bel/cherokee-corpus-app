@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Search, Book, Menu, X, Filter, Sliders, Clock, ListIcon, Folder, BookOpen, BookSolid, Download, ArrowLeft, Pencil, ChevronDown, Share, Trash2, Plus, ChevronUp, Minus, Check, ToggleLeft, ToggleRight, Box, Layout, UserIcon, HelpCircle } from './components/Icons';
+import { Search, Book, Menu, X, Filter, Sliders, Clock, ListIcon, Folder, BookOpen, BookSolid, Download, ArrowLeft, Pencil, ChevronDown, Share, Trash2, Plus, ChevronUp, Minus, Check, ToggleLeft, ToggleRight, Box, Layout, UserIcon, HelpCircle, AlertTriangle, MessageSquare } from './components/Icons';
 import { Toast, Modal, UserAuthButton } from './components/UI';
 import EntryCard from './components/EntryCard';
 import EntryDetail from './components/EntryDetail';
@@ -26,6 +26,7 @@ import { useAuth, CloudLibraryData } from './components/AuthContext';
 import { AuthModal } from './components/AuthModal';
 import { PackageLinkImportView } from './components/PackageLinkImportView';
 import { TutorialModal } from './components/TutorialModal';
+import { FeedbackModal } from './components/FeedbackModal';
 import logoImg from './logo1.png';
 
 const DEFAULT_SETTINGS = {
@@ -49,6 +50,58 @@ const DEFAULT_SETTINGS = {
     miniConjugationsColumns: 2 as 1 | 2,
     hideCustomization: false,
 };
+
+const REQUIRED_LIST_ORDER_KEYS = [
+    'favorites',
+    'folder:Official Lists',
+    'official_list_ced_verbs',
+    'folder:Auto Lists',
+    'builtin_audio',
+    'builtin_notes',
+    'builtin_glosses',
+    'builtin_entries',
+];
+
+interface ManualBackupData {
+    version?: number;
+    exportedAt?: string;
+    library: CloudLibraryData;
+    installedPackages?: string[];
+    settings?: Partial<typeof DEFAULT_SETTINGS>;
+    searchHistory?: string[];
+}
+
+function isPlainObject(val: unknown): val is Record<string, any> {
+    return Boolean(val) && typeof val === 'object' && !Array.isArray(val);
+}
+
+function normalizeSettings(parsed: any): typeof DEFAULT_SETTINGS {
+    if (!isPlainObject(parsed)) return { ...DEFAULT_SETTINGS };
+    const combinedLangs = { ...DEFAULT_SETTINGS.searchLangs, ...(isPlainObject(parsed.searchLangs) ? parsed.searchLangs : {}) };
+    if (!combinedLangs.syllabary && !combinedLangs.translit && !combinedLangs.english) {
+        combinedLangs.syllabary = true;
+        combinedLangs.translit = true;
+        combinedLangs.english = true;
+        console.warn("[SELF-HEAL] Automatically restored primary search languages from a corrupted null state.");
+    }
+    return {
+        ...DEFAULT_SETTINGS,
+        ...parsed,
+        dictionaryLevel: ['basic', 'default', 'linguist'].includes(parsed.dictionaryLevel) ? parsed.dictionaryLevel : 'default',
+        hideCustomization: typeof parsed.hideCustomization === 'boolean' ? parsed.hideCustomization : false,
+        englishConjugations: parsed.englishConjugations !== false,
+        searchLangs: combinedLangs,
+        searchScopes: { ...DEFAULT_SETTINGS.searchScopes, ...(isPlainObject(parsed.searchScopes) ? parsed.searchScopes : {}) }
+    };
+}
+
+function ensureRequiredListOrder(order: string[]): string[] {
+    const next = [...order];
+    REQUIRED_LIST_ORDER_KEYS.forEach(key => {
+        if (!next.includes(key)) next.push(key);
+    });
+    return next;
+}
 
 
 export type NavItem =
@@ -115,6 +168,7 @@ function App() {
     const [settings, setSettings] = useState(DEFAULT_SETTINGS);
     const [showSettingsModal, setShowSettingsModal] = useState(false);
     const [showTutorialModal, setShowTutorialModal] = useState(false);
+    const [showFeedbackModal, setShowFeedbackModal] = useState(false);
     const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
     const [showSearchSettingsPopover, setShowSearchSettingsPopover] = useState(false);
 
@@ -168,6 +222,21 @@ function App() {
     const hasInitialMergedRef = useRef(false);
     const prevUserIdRef = useRef<string | null>(null);
 
+    const getCurrentLibraryData = (): CloudLibraryData => ({
+        customDictionaries,
+        personalWords,
+        userSentences,
+        userGlosses: glosses.filter(g => g.source === 'user'),
+        userWordForms,
+        userNotes,
+        customLists,
+        customListOrder,
+        favorites,
+    });
+
+    const getInstalledPackageIds = (): string[] =>
+        packages.filter(p => p.type === 'imported').map(p => p.id);
+
     // Merge cloud data on login
     useEffect(() => {
         if (!user) {
@@ -184,18 +253,8 @@ function App() {
         const doMerge = async () => {
             isMergingRef.current = true;
             try {
-                const currentLocal: CloudLibraryData = {
-                    customDictionaries,
-                    personalWords,
-                    userSentences,
-                    userGlosses: glosses.filter(g => g.source === 'user'),
-                    userWordForms,
-                    userNotes,
-                    customLists,
-                    customListOrder,
-                    favorites
-                };
-                const installedIds = packages.filter(p => p.type === 'imported').map(p => p.id);
+                const currentLocal = getCurrentLibraryData();
+                const installedIds = getInstalledPackageIds();
                 const { mergedLibrary } = await loadAndMergeCloudData(currentLocal, installedIds);
 
                 if (mergedLibrary.customDictionaries) setCustomDictionaries(mergedLibrary.customDictionaries);
@@ -226,19 +285,7 @@ function App() {
         if (!user || isMergingRef.current || !hasInitialMergedRef.current) return;
 
         const timer = setTimeout(() => {
-            const currentLibrary: CloudLibraryData = {
-                customDictionaries,
-                personalWords,
-                userSentences,
-                userGlosses: glosses.filter(g => g.source === 'user'),
-                userWordForms,
-                userNotes,
-                customLists,
-                customListOrder,
-                favorites
-            };
-            const installedIds = packages.filter(p => p.type === 'imported').map(p => p.id);
-            syncLibraryToCloud(currentLibrary, installedIds);
+            syncLibraryToCloud(getCurrentLibraryData(), getInstalledPackageIds());
         }, 2500);
 
         return () => clearTimeout(timer);
@@ -258,19 +305,7 @@ function App() {
 
     const handleManualSync = async () => {
         if (!user) return;
-        const currentLibrary: CloudLibraryData = {
-            customDictionaries,
-            personalWords,
-            userSentences,
-            userGlosses: glosses.filter(g => g.source === 'user'),
-            userWordForms,
-            userNotes,
-            customLists,
-            customListOrder,
-            favorites
-        };
-        const installedIds = packages.filter(p => p.type === 'imported').map(p => p.id);
-        await syncLibraryToCloud(currentLibrary, installedIds);
+        await syncLibraryToCloud(getCurrentLibraryData(), getInstalledPackageIds());
     };
 
     const [showNewListModal, setShowNewListModal] = useState(false);
@@ -290,7 +325,9 @@ function App() {
     const [newDictionaryName, setNewDictionaryName] = useState('');
     const [dictionaryToDelete, setDictionaryToDelete] = useState<string | null>(null);
     const [showBackupConfirm, setShowBackupConfirm] = useState(false);
-    const restoreInputRef = useRef<any>(null);
+    const [pendingBackup, setPendingBackup] = useState<{ fileName: string; data: ManualBackupData } | null>(null);
+    const [backupConfirmText, setBackupConfirmText] = useState('');
+    const [isRestoringBackup, setIsRestoringBackup] = useState(false);
 
     const [renameData, setRenameData] = useState<{ type: string | null; target: string | null; value: string; initialEntryIndex?: string | null }>({ type: null, target: null, value: '', initialEntryIndex: null });
 
@@ -357,26 +394,7 @@ function App() {
 
                 if (savedHistory) setSearchHistory(JSON.parse(savedHistory));
                 if (savedSettings) {
-                    const parsed = JSON.parse(savedSettings);
-                    
-                    // Self-Healing Check: if persisted searchLangs disabled all 3 main langs,
-                    // we reset them to active defaults right during load.
-                    const combinedLangs = { ...DEFAULT_SETTINGS.searchLangs, ...parsed.searchLangs };
-                    if (!combinedLangs.syllabary && !combinedLangs.translit && !combinedLangs.english) {
-                        combinedLangs.syllabary = true;
-                        combinedLangs.translit = true;
-                        combinedLangs.english = true;
-                        console.warn("[SELF-HEAL] Automatically restored primary search languages from a corrupted null state.");
-                    }
-
-                    setSettings(prev => ({
-                        ...prev, ...parsed,
-                        dictionaryLevel: ['basic', 'default', 'linguist'].includes(parsed.dictionaryLevel) ? parsed.dictionaryLevel : 'default',
-                        hideCustomization: typeof parsed.hideCustomization === 'boolean' ? parsed.hideCustomization : false,
-                        englishConjugations: parsed.englishConjugations !== false,
-                        searchLangs: combinedLangs,
-                        searchScopes: { ...prev.searchScopes, ...parsed.searchScopes }
-                    }));
+                    setSettings(normalizeSettings(JSON.parse(savedSettings)));
                 }
 
 
@@ -424,13 +442,8 @@ function App() {
 
                 const savedOrder = localStorage.getItem('cherokee_app_list_order');
                 // Ensure default built-in lists are present in order
-                let order = savedOrder ? JSON.parse(savedOrder) : Object.keys(parsedLists);
-                const required = ['favorites', 'folder:Official Lists', 'official_list_ced_verbs', 'folder:Auto Lists', 'builtin_audio', 'builtin_notes', 'builtin_glosses', 'builtin_entries'];
-                required.forEach(key => {
-                    if (!order.includes(key)) order.push(key);
-                });
-
-                setCustomListOrder(order);
+                const rawOrder = savedOrder ? JSON.parse(savedOrder) : Object.keys(parsedLists);
+                setCustomListOrder(ensureRequiredListOrder(Array.isArray(rawOrder) ? rawOrder : Object.keys(parsedLists)));
 
                 const tutorialCompleted = localStorage.getItem('cherokee_app_tutorial_completed');
                 if (!tutorialCompleted) {
@@ -1347,37 +1360,133 @@ function App() {
     // Manual Upload Removed - Handled by CorpusContext
 
     const handleBackup = () => {
-        const data = { favorites, customLists, customListOrder, customDictionaries, personalWords, userNotes, settings, searchHistory };
-        downloadFile(JSON.stringify(data), `cherokee_backup_${Date.now()}.json`, 'application/json');
-        showToast("Backup saved", "success");
-    };
-    const handleRestore = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                if (!e.target) return;
-                const data = JSON.parse(e.target.result as string);
-                if (data.favorites) setFavorites(data.favorites);
-                if (data.customLists) setCustomLists(data.customLists);
-                if (data.customListOrder) setCustomListOrder(data.customListOrder);
-                if (data.customDictionaries || data.notebooks) setCustomDictionaries(data.customDictionaries || data.notebooks);
-                if (data.personalWords) setPersonalWords(data.personalWords);
-                if (data.userNotes) setUserNotes(data.userNotes);
-                // Audio meta is now managed by CorpusContext and IDB scanning, but if backup has it, maybe we should restore?
-                // The restore logic for audio meta is tricky because it depends on files in IDB.
-                // If we restore backup, we assume audio files are also restored or present?
-                // For now, let's skip restoring audio meta state directly as it auto-rebuilds.
-                if (data.settings) setSettings(data.settings);
-                if (data.searchHistory) setSearchHistory(data.searchHistory);
-                setActiveDictionaryId(null);
-                showToast("Data Restored!", "success");
-                setShowBackupConfirm(false);
-            } catch (err) { showToast("Invalid Backup File"); }
+        const backupPayload: ManualBackupData = {
+            version: 1,
+            exportedAt: new Date().toISOString(),
+            library: getCurrentLibraryData(),
+            installedPackages: getInstalledPackageIds(),
+            settings,
+            searchHistory,
         };
+        const dateStr = new Date().toISOString().slice(0, 10);
+        downloadFile(JSON.stringify(backupPayload, null, 2), `cherokee_backup_${dateStr}.json`, 'application/json');
+        showToast("Backup exported", "success");
+    };
+
+    const handleBackupFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        e.target.value = '';
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            try {
+                const raw = ev.target?.result;
+                if (typeof raw !== 'string') throw new Error('Empty file');
+                const data = JSON.parse(raw);
+                if (!isPlainObject(data) || !isPlainObject(data.library)) {
+                    throw new Error('Missing library payload');
+                }
+                const lib = data.library;
+                const invalidArrayField = ['personalWords', 'userSentences', 'userGlosses', 'customListOrder', 'favorites']
+                    .some(k => lib[k] !== undefined && !Array.isArray(lib[k]));
+                const invalidObjectField = ['customDictionaries', 'userWordForms', 'userNotes', 'customLists']
+                    .some(k => lib[k] !== undefined && !isPlainObject(lib[k]));
+                if (invalidArrayField || invalidObjectField) {
+                    throw new Error('Malformed library fields');
+                }
+
+                setPendingBackup({ fileName: file.name, data: data as ManualBackupData });
+                setBackupConfirmText('');
+                setShowSettingsModal(false);
+                setShowBackupConfirm(true);
+            } catch (err) {
+                console.warn('Invalid backup file:', err);
+                showToast("Invalid backup file format");
+            }
+        };
+        reader.onerror = () => showToast("Failed to read backup file");
         reader.readAsText(file);
-        e.target.value = null;
+    };
+
+    const closeBackupConfirm = () => {
+        if (isRestoringBackup) return;
+        setShowBackupConfirm(false);
+        setPendingBackup(null);
+        setBackupConfirmText('');
+    };
+
+    const handleRestore = async () => {
+        if (!pendingBackup || backupConfirmText.trim() !== 'Confirm') return;
+
+        setIsRestoringBackup(true);
+        isMergingRef.current = true;
+        try {
+            const { data } = pendingBackup;
+            const lib = data.library;
+
+            const nextCustomDictionaries = isPlainObject(lib.customDictionaries) ? lib.customDictionaries : {};
+            const nextPersonalWords = Array.isArray(lib.personalWords) ? lib.personalWords : [];
+            const nextUserSentences = Array.isArray(lib.userSentences) ? lib.userSentences : [];
+            const nextUserGlosses = Array.isArray(lib.userGlosses) ? lib.userGlosses : [];
+            const nextUserWordForms = isPlainObject(lib.userWordForms) ? lib.userWordForms : {};
+            const nextUserNotes = isPlainObject(lib.userNotes) ? lib.userNotes : {};
+            const nextCustomLists = isPlainObject(lib.customLists) ? lib.customLists : {};
+            const nextFavorites = Array.isArray(lib.favorites) ? lib.favorites : [];
+            const rawOrder = Array.isArray(lib.customListOrder) ? lib.customListOrder : Object.keys(nextCustomLists);
+            const nextCustomListOrder = ensureRequiredListOrder(rawOrder);
+
+            setCustomDictionaries(nextCustomDictionaries);
+            setPersonalWords(nextPersonalWords);
+            setUserSentences(nextUserSentences);
+            setUserGlosses(nextUserGlosses);
+            setUserWordForms(nextUserWordForms);
+            setUserNotes(nextUserNotes);
+            setCustomLists(nextCustomLists);
+            setCustomListOrder(nextCustomListOrder);
+            setFavorites(nextFavorites);
+
+            if (isPlainObject(data.settings)) {
+                setSettings(normalizeSettings(data.settings));
+            }
+            if (Array.isArray(data.searchHistory)) {
+                setSearchHistory(data.searchHistory);
+            }
+
+            setActiveDictionaryId(null);
+            setActiveListId(null);
+            setListsView('all');
+
+            if (user) {
+                const restoredLibrary: CloudLibraryData = {
+                    customDictionaries: nextCustomDictionaries,
+                    personalWords: nextPersonalWords,
+                    userSentences: nextUserSentences,
+                    userGlosses: nextUserGlosses,
+                    userWordForms: nextUserWordForms,
+                    userNotes: nextUserNotes,
+                    customLists: nextCustomLists,
+                    customListOrder: nextCustomListOrder,
+                    favorites: nextFavorites,
+                };
+                await syncLibraryToCloud(restoredLibrary, getInstalledPackageIds());
+                showToast("Backup imported & synced to account!", "success");
+            } else {
+                showToast("Backup imported!", "success");
+            }
+
+            setShowBackupConfirm(false);
+            setPendingBackup(null);
+            setBackupConfirmText('');
+        } catch (err) {
+            console.error('Failed to restore backup:', err);
+            showToast("Failed to import backup");
+        } finally {
+            setIsRestoringBackup(false);
+            setTimeout(() => {
+                isMergingRef.current = false;
+            }, 1000);
+        }
     };
 
     const handleRestoreDefaults = () => {
@@ -3238,6 +3347,21 @@ function App() {
                                         <UserIcon size={20} />
                                         <span>Cloud Account & Backup</span>
                                     </button>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={handleBackup}
+                                            className="flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold py-3 px-3 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                                        >
+                                            <Download size={18} />
+                                            <span>Export JSON</span>
+                                        </button>
+                                        <label className="flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold py-3 px-3 rounded-xl cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                                            <Share size={18} />
+                                            <span>Import JSON</span>
+                                            <input type="file" className="hidden" accept=".json,application/json" onChange={handleBackupFileSelect} />
+                                        </label>
+                                    </div>
                                     <button
                                         type="button"
                                         onClick={() => { setShowSettingsModal(false); setShowTutorialModal(true); }}
@@ -3246,8 +3370,14 @@ function App() {
                                         <HelpCircle size={20} />
                                         <span>View Startup Tutorial</span>
                                     </button>
-                                    <button onClick={handleBackup} className="w-full flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold py-3 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700"><Download size={20} /> Backup Data (JSON)</button>
-                                    <label className="w-full flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold py-3 rounded-xl cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700"><Share size={20} /><span>Restore Data</span><input type="file" className="hidden" accept=".json" onChange={(e) => { setShowSettingsModal(false); setShowBackupConfirm(true); restoreInputRef.current = e; }} /></label>
+                                    <button
+                                        type="button"
+                                        onClick={() => { setShowSettingsModal(false); setShowFeedbackModal(true); }}
+                                        className="w-full flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold py-3 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                                    >
+                                        <MessageSquare size={20} />
+                                        <span>Send Feedback</span>
+                                    </button>
                                 </div>
                             </div>
 
@@ -3286,12 +3416,84 @@ function App() {
                 );
             })()}
             {
-                showBackupConfirm && (
-                    <Modal title="Restore Backup?" onClose={() => setShowBackupConfirm(false)}>
-                        <p className="text-slate-600 dark:text-slate-300 mb-6">This will <strong>overwrite</strong> all your current collections, lists, and settings. This action cannot be undone.</p>
-                        <button onClick={() => handleRestore(restoreInputRef.current)} className="w-full bg-red-600 text-white font-bold py-3 rounded-lg">Yes, Overwrite Everything</button>
-                    </Modal>
-                )
+                showBackupConfirm && pendingBackup && (() => {
+                    const lib = pendingBackup.data.library;
+                    const counts = {
+                        collections: Object.keys(lib.customDictionaries || {}).length,
+                        words: (lib.personalWords || []).length,
+                        sentences: (lib.userSentences || []).length,
+                        glosses: (lib.userGlosses || []).length,
+                        lists: Object.keys(lib.customLists || {}).length,
+                        favorites: (lib.favorites || []).length,
+                    };
+                    const isConfirmed = backupConfirmText.trim() === 'Confirm';
+                    return (
+                        <Modal title="Import Backup & Overwrite Data?" onClose={closeBackupConfirm}>
+                            <div className="space-y-4">
+                                <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/50 border-2 border-red-300 dark:border-red-800 text-red-900 dark:text-red-100 space-y-2">
+                                    <div className="flex items-center gap-2 font-extrabold text-sm text-red-700 dark:text-red-300 uppercase tracking-wide">
+                                        <AlertTriangle size={20} className="shrink-0" />
+                                        <span>Destructive Overwrite Warning</span>
+                                    </div>
+                                    <p className="text-sm leading-relaxed">
+                                        Importing this JSON backup will <strong>permanently overwrite</strong> all of your current collections, words, sentences, glosses, word forms, notes, lists, favorites, and settings on this device. This cannot be undone.
+                                    </p>
+                                    {user ? (
+                                        <p className="text-sm leading-relaxed font-semibold bg-red-100 dark:bg-red-900/50 border border-red-300 dark:border-red-700 rounded-lg p-2.5 text-red-900 dark:text-red-100">
+                                            You are signed in as <span className="font-mono underline">{user.email || user.displayName || user.uid}</span>. Importing this file will also <strong>override your logged-in account&apos;s online cloud data</strong>!
+                                        </p>
+                                    ) : (
+                                        <p className="text-xs text-red-800 dark:text-red-200">
+                                            If you later sign in to an account, keep in mind that importing replaces your local data before syncing.
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 space-y-1">
+                                    <div className="font-bold text-slate-800 dark:text-slate-100 truncate">
+                                        File: {pendingBackup.fileName}
+                                    </div>
+                                    <div className="text-slate-500 dark:text-slate-400">
+                                        Contains: {counts.collections} collections, {counts.words} words, {counts.sentences} sentences, {counts.glosses} glosses, {counts.lists} lists, {counts.favorites} favorites
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5">
+                                        Type <code className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-red-600 dark:text-red-400 font-mono">Confirm</code> to overwrite your data
+                                    </label>
+                                    <input
+                                        type="text"
+                                        autoFocus
+                                        value={backupConfirmText}
+                                        onChange={(e) => setBackupConfirmText(e.target.value)}
+                                        placeholder="Confirm"
+                                        className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-100 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-200 dark:focus:ring-red-900/40 font-mono"
+                                    />
+                                </div>
+
+                                <div className="flex gap-2.5 pt-1">
+                                    <button
+                                        type="button"
+                                        onClick={closeBackupConfirm}
+                                        disabled={isRestoringBackup}
+                                        className="flex-1 py-2.5 px-4 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors disabled:opacity-60"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleRestore}
+                                        disabled={!isConfirmed || isRestoringBackup}
+                                        className="flex-1 py-2.5 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                    >
+                                        {isRestoringBackup ? 'Overwriting...' : 'Overwrite Everything'}
+                                    </button>
+                                </div>
+                            </div>
+                        </Modal>
+                    );
+                })()
             }
             {
                 showWordModal && (
@@ -3354,6 +3556,14 @@ function App() {
                 settings={settings}
                 setSettings={setSettings}
                 onOpenAuth={() => setShowAuthModal(true)}
+            />
+
+            <FeedbackModal
+                isOpen={showFeedbackModal}
+                onClose={() => setShowFeedbackModal(false)}
+                user={user}
+                appVersion="1.0.2"
+                onSuccess={(msg) => showToast(msg, 'success')}
             />
 
             {navStack.map((item, index) => {

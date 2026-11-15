@@ -12,10 +12,6 @@ debouncing still lags sometimes if you type slow. I think this may have to do wi
 running the algorithm? not sure
 
 
-I added ui_issue.jpg. Please look at that. There is a pretty major issue on mobile where, when your top url bar is there,
-the bottom bar of the page gets really short and all the icons shrink. Please fix that!
-I would also love it if you could put the app logo in the topbar in place of the name Higoliya if possible. logo1.png
-
 The manual json backup in the settings menu is old and broken. Please update it so it matches the online account
 backup formatting, and works properly. importing a json should have a big warning that it will override your logged
 in account's data!
